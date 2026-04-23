@@ -43,7 +43,7 @@ Under your control, LoopFlow handles the tedious work — data updates, drawing 
 ## Quick Start
 
 Prefer to watch rather than read?
-→ [Meet the Monkey](./docs/slideshow.html) — visual intro
+→ [Meet the Monkey](https://chihyutsai-oli.github.io/LoopFlow/slideshow.html) — visual intro
 → [Tutorial Series on YouTube](https://www.youtube.com/playlist?list=PLiJmu8T_uzJIjokbOcpvvCoHdQn5SJ2NB) — full workflow walkthrough
 
 ### Installation

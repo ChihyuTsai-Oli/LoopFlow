@@ -43,7 +43,7 @@
 ## 快速開始
 
 比起文字更愛看影片嗎？
-→ [Meet the Monkey](./docs/slideshow.html) — 視覺概念介紹
+→ [Meet the Monkey](https://chihyutsai-oli.github.io/LoopFlow/slideshow.html) — 視覺概念介紹
 → [YouTube 教學系列](https://www.youtube.com/playlist?list=PLiJmu8T_uzJIjokbOcpvvCoHdQn5SJ2NB) — 完整工作流程示範
 
 ### 安裝方式
