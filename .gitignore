@@ -13,6 +13,13 @@
 !CHANGELOG.md
 !build.ps1
 
+# GitHub 設定資料夾
+!.github/
+!.github/**/
+!.github/**/*.md
+!.github/**/*.yml
+!.github/**/*.yaml
+
 # 文檔資料夾
 !docs/
 !docs/**/

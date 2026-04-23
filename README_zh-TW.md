@@ -99,9 +99,9 @@
 
 ## 支持與社群
 
-- 討論區 - 提問、分享想法
-- 回報問題 - 發現 bug？告訴我們
-- 貢獻指南 - 想幫忙？我們歡迎，非常歡迎
+- [討論區](https://github.com/ChihyuTsai-Oli/LoopFlow/discussions) — 提問、分享想法
+- [回報問題](https://github.com/ChihyuTsai-Oli/LoopFlow/issues) — 發現 bug？告訴我
+- 貢獻指南 — 想幫忙？開個 Issue 聊聊
 
 ## 關於開發者
 

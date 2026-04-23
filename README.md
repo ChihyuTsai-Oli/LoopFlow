@@ -98,9 +98,9 @@ Built from real design challenges, refined through actual use. It's not perfect 
 
 ## Support & Community
 
-- Discussions - Ask questions, share ideas
-- Report Issues - Found a bug? Let us know
-- Contributing - Want to help? We welcome it
+- [Discussions](https://github.com/ChihyuTsai-Oli/LoopFlow/discussions) — Ask questions, share ideas
+- [Report Issues](https://github.com/ChihyuTsai-Oli/LoopFlow/issues) — Found a bug? Let us know
+- Contributing — Want to help? Open an issue and let's talk
 
 ## About the Creator
 
