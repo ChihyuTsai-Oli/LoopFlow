@@ -1,0 +1,49 @@
+# 忽略所有檔案
+*
+*/
+
+# 但保留以下檔案和資料夾
+
+# 根目錄必要檔案
+!.gitignore
+!README.md
+!README_zh-TW.md
+!LICENSE
+!CREDITS.md
+!CHANGELOG.md
+!build.ps1
+
+# 文檔資料夾
+!docs/
+!docs/**/
+!docs/*.md
+!docs/**/*.md
+!docs/**/.gitkeep
+!docs/*.html
+!docs/**/*.svg
+
+# 發佈資料夾
+!releases/
+!releases/**/
+!releases/**/*.py
+!releases/**/*.bat
+!releases/**/*.rhc
+!releases/**/*.xlsx
+!releases/**/*.ps1
+!releases/**/*.txt
+!releases/**/*.md
+!releases/**/*.3dm
+
+# 系統排除
+**/__pycache__/
+**/*.pyc
+**/.DS_Store
+**/Thumbs.db
+
+# Cursor IDE（本機設定，不同步）
+.cursorrules
+.cursor/
+
+# 本機個人備忘（不發布）
+GitHub_Commands.md
+MEMO.md
