@@ -14,7 +14,6 @@
 從設計到出圖，全部在Rhino完成 (對，不包含Render)
 在你掌控之下，交由 LoopFlow 自動化處理數據與圖紙更新等瑣事，將時間完整的留給你的設計，或是一杯咖啡
 
-
 **LoopFlow 能做什麼？**
 
 - **設計自由**: 按你的方式建模——沒有範本、沒有限制 (好啦還是有一點，真的只是一點)
@@ -50,8 +49,8 @@
 
 1. 從[發佈版本](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest)下載最新版本
 2. 解壓縮後，安裝腳本（擇一）：
-   - **2a.** 執行 `install_LoopFlow.bat`，自動將 `.py` 複製到 scripts 資料夾
-   - **2b.** 手動將 `Data/` 中所有 `.py` 複製到 `%AppData%\McNeel\Rhinoceros\8.0\scripts\LoopFlow\`
+  - **2a.** 執行 `install_LoopFlow.bat`，自動將 `.py` 複製到 scripts 資料夾
+  - **2b.** 手動將 `Data/` 中所有 `.py` 複製到 `%AppData%\McNeel\Rhinoceros\8.0\scripts\LoopFlow\`
 3. 將 `LoopFlow.rhc` 拖曳至 Rhino 畫面中，工具列出現
 4. 以上步驟可以在 Rhino 開啟時進行
 5. 移除方式：Option > ToolBars > 選取LoopFlow > 下拉式功能表 Edit > Delete
@@ -79,6 +78,7 @@
 有些構想及功能正陸續開發中：
 
 **預計擴展功能（計畫中）**
+
 - Grasshopper 表單製作工具及數量計算
 - 擴展 Tag 類型以支援自訂元數據
 - 擴增圖號命名規則
@@ -86,6 +86,7 @@
 - 圖目錄連結系統
 
 **實驗功能（有技術困難，不保證能完成）**
+
 - 門窗、設備 2D/3D圖塊混用管理系統（技術研究階段）
 
 ## 關於可靠性
@@ -114,6 +115,7 @@
 LoopFlow 是單人項目，我維護它、增加功能、修bug、以及盡我可能的回應問題
 
 這意味著：
+
 - 這是設計師在實際工作中驗證的工具
 - 回應時間可能不會太迅速
 - 我無法承諾某個功能何時完成
@@ -125,8 +127,8 @@ LoopFlow 採用 MIT 授權發佈。詳見[授權](./LICENSE)檔案
 
 ## 也許你還有興趣
 
-- [LoopFlow_Rhino-to-Octane-Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Octane-Sync) — Rhino 到 OctaneRender 同步
-- [LoopFlow_Rhino-to-Blender-Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Blender-Sync) — Rhino 到 Blender 同步
+- [LoopFlow｜Rhino to Octane Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Octane-Sync)
+- [LoopFlow｜Rhino to Blender Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Blender-Sync)
 
 ## 特別致謝
 
@@ -135,4 +137,3 @@ LoopFlow 採用 MIT 授權發佈。詳見[授權](./LICENSE)檔案
 ---
 
 *最後更新：2026 年 4 月*
-

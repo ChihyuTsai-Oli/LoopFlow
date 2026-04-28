@@ -127,8 +127,8 @@ LoopFlow is released under the MIT License. See [LICENSE](./LICENSE) for details
 
 ## You Might Also Like
 
-- [LoopFlow_Rhino-to-Octane-Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Octane-Sync)
-- [LoopFlow_Rhino-to-Blender-Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Blender-Sync)
+- [LoopFlow｜Rhino to Octane Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Octane-Sync)
+- [LoopFlow｜Rhino to Blender Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Blender-Sync)
 
 ## Special Thanks
 
