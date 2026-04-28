@@ -50,8 +50,8 @@ Prefer to watch rather than read?
 
 1. Download the latest release from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest)
 2. Extract the ZIP, then install the scripts (choose one):
-   - **2a.** Run `install_LoopFlow.bat` — copies `.py` files to the scripts folder automatically
-   - **2b.** Manually copy all `.py` files from `Data/` to `%AppData%\McNeel\Rhinoceros\8.0\scripts\LoopFlow\`
+  - **2a.** Run `install_LoopFlow.bat` — copies `.py` files to the scripts folder automatically
+  - **2b.** Manually copy all `.py` files from `Data/` to `%AppData%\McNeel\Rhinoceros\8.0\scripts\LoopFlow\`
 3. Drag `LoopFlow.rhc` into the Rhino viewport — toolbar appears
 4. All of the above can be done while Rhino is open
 5. To uninstall: Options > Toolbars > select LoopFlow > Edit dropdown > Delete
@@ -79,6 +79,7 @@ Command Reference [USER_GUIDE](./docs/USER_GUIDE.md)
 Some ideas and features are in active development:
 
 **Planned Features (Planned)**
+
 - Grasshopper form builder with quantity calculations
 - Extended tag types for custom metadata
 - Expanded drawing number naming rules
@@ -86,6 +87,7 @@ Some ideas and features are in active development:
 - Drawing index link system
 
 **Experimental (Technical challenges, not guaranteed)**
+
 - Window/door and equipment 2D/3D block management system (technical research phase)
 
 ## About Reliability
@@ -113,6 +115,7 @@ Built from real design challenges, refined through actual use. It's not perfect 
 LoopFlow is a solo project. I maintain it, respond to issues, and fix bugs myself.
 
 What this means:
+
 - You get a tool verified by a real designer in actual work
 - Response time is human speed (within a week typically)
 - I can't promise when a feature will be complete
@@ -121,6 +124,11 @@ What this means:
 ## License
 
 LoopFlow is released under the MIT License. See [LICENSE](./LICENSE) for details.
+
+## You Might Also Like
+
+- [LoopFlow_Rhino-to-Octane-Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Octane-Sync)
+- [LoopFlow_Rhino-to-Blender-Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Blender-Sync)
 
 ## Special Thanks
 
