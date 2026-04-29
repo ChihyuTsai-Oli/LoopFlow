@@ -40,7 +40,6 @@
 !releases/**/*.txt
 !releases/**/*.md
 !releases/**/*.3dm
-!releases/**/*.zip
 
 # 系統排除
 **/__pycache__/
