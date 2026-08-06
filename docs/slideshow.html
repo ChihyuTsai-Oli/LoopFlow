@@ -36,17 +36,69 @@
     pointer-events: none;
   }
 
-  #left-zone, #right-zone {
+  .page-zone {
     position: absolute;
     top: 0;
+    bottom: 0;
     height: 100%;
-    width: 50%;
+    width: clamp(88px, 14vw, 180px);
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.88);
     cursor: pointer;
     z-index: 10;
   }
 
-  #left-zone  { left: 0; cursor: w-resize; }
-  #right-zone { right: 0; cursor: e-resize; }
+  #left-zone  { left: 0; }
+  #right-zone { right: 0; }
+
+  .page-zone::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    border-top: 3px solid currentColor;
+    border-left: 3px solid currentColor;
+    opacity: 0;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+    transition: opacity 160ms ease, transform 160ms ease;
+  }
+
+  #left-zone::before {
+    left: 28px;
+    transform: translate(8px, -50%) rotate(-45deg);
+  }
+
+  #right-zone::before {
+    right: 28px;
+    transform: translate(-8px, -50%) rotate(135deg);
+  }
+
+  .page-zone:hover::before,
+  .page-zone:focus-visible::before {
+    opacity: 1;
+  }
+
+  #left-zone:hover::before,
+  #left-zone:focus-visible::before {
+    transform: translate(0, -50%) rotate(-45deg);
+  }
+
+  #right-zone:hover::before,
+  #right-zone:focus-visible::before {
+    transform: translate(0, -50%) rotate(135deg);
+  }
+
+  .page-zone:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.75);
+    outline-offset: -4px;
+  }
+
+  @media (hover: none) {
+    .page-zone::before { opacity: 0.55; }
+  }
 
   #counter {
     position: fixed;
@@ -65,8 +117,8 @@
 
 <div id="slide-container">
   <img id="slide-img" src="" alt="diagram">
-  <div id="left-zone"  onclick="prev()"></div>
-  <div id="right-zone" onclick="next()"></div>
+  <button id="left-zone" class="page-zone" type="button" aria-label="上一頁" title="上一頁"></button>
+  <button id="right-zone" class="page-zone" type="button" aria-label="下一頁" title="下一頁"></button>
 </div>
 
 <div id="counter"></div>
@@ -102,9 +154,18 @@
   function next() { show(current + 1); }
   function prev() { show(current - 1); }
 
+  document.getElementById('left-zone').addEventListener('click', prev);
+  document.getElementById('right-zone').addEventListener('click', next);
+
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'ArrowRight' || e.key === ' ') next();
-    if (e.key === 'ArrowLeft') prev();
+    if (e.key === 'ArrowRight' || e.key === ' ') {
+      e.preventDefault();
+      next();
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      prev();
+    }
   });
 
   show(0);
