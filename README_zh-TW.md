@@ -1,139 +1,69 @@
 # LoopFlow
 
-> **擁抱循環、讓它流暢**
->
-> - LoopFlow 不是另外一個BIM系統
-> - 他的精神是半自動化，你參與每個環節、你掌控一切，你為自己贏得下午茶時間
+[English](./README.md)
 
-## 我們的遭遇
+> **擁抱循環，讓它流暢。**
 
-你熱愛 Rhino 的設計自由度。但每次修改設計，就要手動更新數十張圖紙。也許你也試圖尋找其他解決方案，卻失去了那份自由度，被困在範本和規則中
+LoopFlow 是一套運行於 Rhino 8 的半自動化設計與出圖工具。它不是另一個 BIM 系統，也不要求使用固定範本或參數化流程；你仍然掌控每個步驟，LoopFlow 負責資料更新、圖紙同步與其他重複工作。
 
-## 我正試圖做到這件事
-
-從設計到出圖，全部在Rhino完成 (對，不包含Render)
-在你掌控之下，交由 LoopFlow 自動化處理數據與圖紙更新等瑣事，將時間完整的留給你的設計，或是一杯咖啡
-
-**LoopFlow 能做什麼？**
-
-- **設計自由**: 按你的方式建模——沒有範本、沒有限制 (好啦還是有一點，真的只是一點)
-- **效率提升**: 停止無意義的重複勞動
-- **完全掌控**: 你決定什麼要自動化，什麼保持手動
-- **更新圖紙**: 一鍵更新物件數據、一鍵更新 2D 圖紙
-- **實戰驗證**: 已穩定運行數個實際設計案
-- **高品質Render的外部支援**: 像是Enscape般的簡單操作，同步外部Render引擎，生產高品質圖片
+從模型資料到 Layout 出圖，主要流程都在 Rhino 中完成。LoopFlow 已在多個實際設計專案中使用，目標是保留 Rhino 的設計自由，同時減少設計變更後的重複整理。
 
 ## 主要功能
 
-- 自動 2D/3D 同步：修改 3D 模型，所有 2D 圖紙同步更新
-- UUID 追蹤：唯一識別碼，作為資訊鏈傳遞路徑
-- 靈活的自動化：你決定什麼自動、什麼手動
-- 無設計限制：按你想要的方式建模——沒有參數限制、沒有範本
-- (另案發布) 外部Render引擎整合：同步Point、Block、Camera，透過Proxy代理、Scatter等方式自動對齊燈具、家具；以及維持編輯好的材質，只單純替換模型等功能
-- 承上，配合的軟體有 OctaneRender Standalone / Blender，原則上，Point跟Block的同步邏輯，會與 LoopFlow 繪圖邏輯一致。同樣的資料可以同時用在2D圖說與3D Rendering
+- 以 Dictionary 與 UserText 管理模型資料。
+- 使用 UUID 維持物件與資料之間的關聯。
+- 修改 3D 模型後，重新產生並更新相關 2D 圖說。
+- 建立櫃體、Tag Block、圖紙編號、剖立面索引及其他出圖資料。
+- 透過視覺化面板檢查物件資料與 Tag 狀態。
+- 支援 Worksession 多人協作與資料同步。
+- 採半自動化流程，由使用者決定何時執行與更新。
+
+完整指令與操作方式請參考 [LoopFlow 使用說明](./docs/USER_GUIDE_TW.md)。
 
 ## 系統需求
 
-- Rhino：8.0（Section Tools為必須）
-- 作業系統：Windows 10/11
-- Python：3.9+（Rhino 8 已內建）
-- 選用：OctaneRender Standalone 2025.6+ / Blender 4.5+（Render）
+- Rhino 8
+- Rhino Section Tools
+- Windows 10 或 Windows 11
+- Python 3.9 以上版本（Rhino 8 已內建）
 
 ## 快速開始
 
-比起文字更愛看影片嗎？
-→ [Meet the Monkey](https://chihyutsai-oli.github.io/LoopFlow/slideshow.html) — 視覺概念介紹
-→ [YouTube 教學系列](https://www.youtube.com/playlist?list=PLiJmu8T_uzJIjokbOcpvvCoHdQn5SJ2NB) — 完整工作流程示範
+- [YouTube 教學系列](https://www.youtube.com/playlist?list=PLiJmu8T_uzJIjokbOcpvvCoHdQn5SJ2NB)：完整工作流程示範
 
-### 安裝方式
+### 安裝
 
-1. 從[發佈版本](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest)下載最新版本
-2. 解壓縮後，安裝腳本（擇一）：
-  - **2a.** 執行 `install_LoopFlow.bat`，自動將 `.py` 複製到 scripts 資料夾
-  - **2b.** 手動將 `Data/` 中所有 `.py` 複製到 `%AppData%\McNeel\Rhinoceros\8.0\scripts\LoopFlow\`
-3. 將 `LoopFlow.rhc` 拖曳至 Rhino 畫面中，工具列出現
-4. 以上步驟可以在 Rhino 開啟時進行
-5. 移除方式：Option > ToolBars > 選取LoopFlow > 下拉式功能表 Edit > Delete
+1. 從 [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 下載最新版本並解壓縮。
+2. 執行 `install_LoopFlow.bat`；或手動將 `Python/` 中的 `.py` 檔案複製到 `%AppData%\McNeel\Rhinoceros\8.0\scripts\LoopFlow\`。
+3. 將 `LoopFlow.rhc` 拖曳到 Rhino 視窗中載入工具列。
 
-### 怎麼進行？
+以上步驟可在 Rhino 開啟時進行。若要移除工具列，請在 Rhino 的 Toolbars 設定中選取 LoopFlow 後刪除。
 
-1. Worksession模式，多人協同作業與自動更新
-2. 以字典定義為依據，自動寫入數據至模型中，不用手Key
-3. 一鍵生成預定樣式櫃體，自動判定板材位置與尺寸
-4. 視覺化UI面板，快速檢視物件數據
-5. 使用 Rhino Sections 建立剖立面
-6. Layout圖紙自動編號，同時寫入圖框中
-7. 建立材質 Tag Block，穿透 Detail View 吸取剖面物件數據
-8. 建立剖面索引 Tag Block，綁定 Tag 與 Detail View
-9. 一鍵注入數據至所有 Tag Blocks
-10. 數據貫通所有圖面、圖紙、圖號、索引、編號、高程、尺寸等
+## 基本工作流程
 
-從此以後，每次設計改動都自動同步
-所有步驟，隨意往返、任意流動
+1. 依專案 Dictionary 將資料寫入 Rhino 模型。
+2. 視需要建立櫃體，並使用資料面板檢查物件資訊。
+3. 使用 Rhino Section Tools 建立剖面與立面。
+4. 建立 Layout 編號、材質 Tag 與剖立面索引 Tag。
+5. 將最新資料寫入 Tag Blocks，讓模型、圖面與圖紙資訊保持一致。
 
-指令說明 [USER_GUIDE_TW](./docs/USER_GUIDE_TW.md)
+各步驟可依專案狀況反覆執行，不需要固定成單一路徑。
 
-## 開發路線圖
+## 支援與回報
 
-有些構想及功能正陸續開發中：
+- [Discussions](https://github.com/ChihyuTsai-Oli/LoopFlow/discussions)：提問與分享使用經驗
+- [Issues](https://github.com/ChihyuTsai-Oli/LoopFlow/issues)：回報錯誤或提出建議
+- [Changelog](./CHANGELOG.md)：查看已發布版本內容
 
-**預計擴展功能（計畫中）**
+LoopFlow 是由設計師在實際工作中發展的單人專案，維護與回覆速度會依工作狀況調整。
 
-- Grasshopper 表單製作工具及數量計算
-- 擴展 Tag 類型以支援自訂元數據
-- 擴增圖號命名規則
-- 擴增櫃體部件辨識系統 (BOM)
-- 圖目錄連結系統
+## 相關專案
 
-**實驗功能（有技術困難，不保證能完成）**
+外部渲染同步功能由獨立專案提供，不包含在 LoopFlow 本體中：
 
-- 門窗、設備 2D/3D圖塊混用管理系統（技術研究階段）
-
-## 關於可靠性
-
-在真實的設計困境中，透過實際使用持續改進
-他現在還不是完美的，但已經足夠救我一命
-
-- 內部穩定版運行：6 個月
-- 實戰記錄：已經歷數個實際設計案
-- 目前成熟度：可用於設計團隊
-
-## 支持與社群
-
-- [討論區](https://github.com/ChihyuTsai-Oli/LoopFlow/discussions) — 提問、分享想法
-- [回報問題](https://github.com/ChihyuTsai-Oli/LoopFlow/issues) — 發現 bug？告訴我
-- 貢獻指南 — 想幫忙？開個 Issue 聊聊
-
-## 關於開發者
-
-- 我是一位擁有 20 年經驗的建築和室內設計師，職涯跨越整個建築產業：建築師事務所、室內設計、營造廠、駐地監造和建設公司，熟悉每個環每個環節的困難與挑戰
-- 但我沒有任何程式開發背景，英語也不是我的母語，這一切都因為AI的協助而成為可能
-- 如果有任何人因為 LoopFlow 而受惠，將會是我的榮幸
-
-## 一個人的項目
-
-LoopFlow 是單人項目，我維護它、增加功能、修bug、以及盡我可能的回應問題
-
-這意味著：
-
-- 這是設計師在實際工作中驗證的工具
-- 回應時間可能不會太迅速
-- 我無法承諾某個功能何時完成
-- 忙碌的設計案期間，進度會更慢
-
-## 授權
-
-LoopFlow 採用 MIT 授權發佈。詳見[授權](./LICENSE)檔案
-
-## 也許你還有興趣
-
-- [LoopFlow｜Rhino to Octane Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Octane-Sync/blob/main/README_zh-TW.md)
 - [LoopFlow｜Rhino to Blender Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Blender-Sync/blob/main/README_zh-TW.md)
+- [LoopFlow｜Rhino to Octane Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Octane-Sync/blob/main/README_zh-TW.md)
 
-## 特別致謝
+## 授權與致謝
 
-容忍我無時無刻都黏在電腦前盯著AI的太太
-
----
-
-*最後更新：2026 年 4 月*
+LoopFlow 採用 [MIT License](./LICENSE) 發布。開發背景與致謝請參考 [CREDITS](./CREDITS.md)。
