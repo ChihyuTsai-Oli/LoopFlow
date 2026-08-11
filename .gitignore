@@ -6,6 +6,7 @@
 
 # 根目錄必要檔案
 !.gitignore
+!AGENTS.md
 !README.md
 !README_zh-TW.md
 !LICENSE
