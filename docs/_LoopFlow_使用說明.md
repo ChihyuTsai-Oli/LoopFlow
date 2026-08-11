@@ -2,6 +2,8 @@
 
 本文件記錄目前 1.x 對使用者可見的行為，也是重構期間不得無意改變的操作契約。完整逐步教學仍以 `USER_GUIDE_TW.md` 與 `Dictionary_GUIDE_TW.md` 為準。
 
+2.0 採乾淨重建；本文件是理解舊工作流與建立測試案例的參考，不要求開發中的半成品持續可供正式使用。命名與操作若經使用者裁決可在 2.0 改變，但必須記錄於 `_LoopFlow_命名與資料契約.md`，並在發布前完成新版使用說明。
+
 ## 產品定位
 
 LoopFlow 是 Rhino 8 的半自動化設計與出圖工具。使用者決定何時執行每個步驟；程式負責 Dictionary、UserText、UUID、Registry、Section、Tag、Layout 與 2D 圖說之間的資料整理與同步。
@@ -86,5 +88,6 @@ LoopFlow 是 Rhino 8 的半自動化設計與出圖工具。使用者決定何�
 - `Dictionary_GUIDE_TW.md`：公開 Dictionary 規格。
 - `_LoopFlow_使用說明.md`：重構期間的行為契約。
 - `_LoopFlow_系統設定.md`：目前技術設定與檔案責任。
+- `_LoopFlow_命名與資料契約.md`：2.0 Dictionary、命名、schema 與 migration 的權威來源。
 - `_LoopFlow_重構計畫.md`：目標架構、順序與不做事項。
 - `architecture/PROGRESS.md`：當前進度、檢查、限制與下一步。

@@ -4,7 +4,7 @@
 
 ## 目標
 
-LoopFlow 不再以「每個按鈕一支完整 Python」作為架構邊界。使用者仍看到原指令，但入口只呼叫 command catalog；Tag、Dictionary、Registry、Nexus、Layout、Cabinet 等邏輯依一起變動的功能群管理。
+LoopFlow 不再以「每個按鈕一支完整 Python」作為架構邊界。2.0 會先重新定義工作流、Dictionary、命名與資料契約，再讓指令入口只呼叫 command catalog；Tag、Registry、Nexus、Layout、Cabinet 等邏輯依一起變動的功能群管理。
 
 重構要解決：
 
@@ -14,12 +14,24 @@ LoopFlow 不再以「每個按鈕一支完整 Python」作為架構邊界。使�
 - `LF_Nexus.py`、`LF_Cabinet_Suite.py` 同時承擔 UI、規則、I/O 與流程。
 - 路徑、相依、RHC、README、安裝器與發行內容不一致。
 
+## 重構模式裁決
+
+本輪採「新版乾淨重建、正式發布時一次切換」：
+
+- `main`、`v1.0.0` 與既有 release payload 凍結為舊版參考與回復點。
+- 2.0 在隔離的 `src/`、安裝位置、設定、資料與測試專案建立，不要求開發中的指令可供正式使用。
+- 不把舊程式逐支包進新架構，也不以 compatibility wrapper 維持半套新舊系統。
+- 開發仍按階段、功能群與 commit 建造；每段都有自動／contract 測試，避免最後才發現底層錯誤。
+- 主要工作流全部接通後，再集中進行 Rhino 端到端實機測試與使用者驗收。
+- 舊專案若需升級，由獨立 migration 工具一次轉換；新核心不長期雙讀／雙寫舊格式。
+
 ## 共同原則
 
 - 採 feature-first package：`entrypoints`、`features`、`platform`、`foundation`。
 - 小型 feature 可是一支模組；不強迫 application/domain 多層結構。
 - 指令入口最終只呼叫 command catalog，不保存第二份邏輯。
-- P0 安全修復先在現有架構完成，不等待 package。
+- Dictionary、命名與資料契約先定義，完成前不建立正式 feature。
+- P0 安全要求直接納入 2.0 新實作；只有使用者明確要求維護舊版時才另開 1.x hotfix。
 - Python-first；只有實際可重現的 host、生命週期、型別或效能問題才評估 C#。
 - `main` 維持穩定 1.x；2.0 在隔離分支與安裝環境開發。
 - 2.0 不新增功能，不把延後構想偷渡進穩定化工作。
@@ -84,7 +96,8 @@ tools/
 ### UserText／Dictionary
 
 - 盤點 `LF_TAG-*`、中英文 key、prefix 掃描與所有 consumer。
-- 定義 canonical key、legacy aliases、讀取優先序與資料遷移。
+- 定義 2.0 canonical key、schema version、驗證規則與獨立資料遷移。
+- 新核心不散落 legacy aliases；舊名稱只由 migration scanner／converter 辨識。
 - 未決定前只能偵測／預覽，不批次改正式專案。
 
 ### Project path／環境
@@ -95,7 +108,7 @@ tools/
 
 ### Data/System layer
 
-- 統一完整 layer path、prefix、大小寫與 legacy alias。
+- 統一完整 layer path、prefix、大小寫與 2.0 canonical taxonomy。
 - Rhino platform 負責查詢／建立；feature 不複製 layer helper。
 
 ### Space 判定
@@ -110,63 +123,58 @@ tools/
 - selection、lock、visibility、object color 必須 snapshot／restore。
 - 成功、取消與失敗路徑都需驗證。
 
-## 遷移順序
+## 新版建造順序
 
-### L1：回復點與 import spike
+### S1：完整工作流與依賴盤點
 
-- 保持 `main` 可發布，使用 `v2-development` 整合。
-- 保存 Tag、Registry、Dictionary、Nexus、Layout、Cabinet golden fixtures。
-- 驗證 Rhino 8 entrypoint → package import、reload、不同工作目錄與安裝路徑。
-- 若 package loading 不可靠，改用模組化 source + build-time flatten／bundle。
+- 依實際操作順序列出 Dictionary → Nexus／UserText → UUID／Space → Registry → Section／Layout → Tag → Infuser → Cabinet／2D／Worksession。
+- 對每一步記錄輸入、輸出、producer、consumer、副作用、失敗條件與現有衝突。
+- 既有 1.x 只作觀察與 fixture 來源，不在此階段修改。
 
-### L2：最小骨架
+### S2：Dictionary、命名與資料契約
 
-- 建立 bootstrap、command catalog、result/error、logging、version。
-- catalog 記錄 handler、相關檔案、docs、selection、undo 與副作用。
+- 完成 `_LoopFlow_命名與資料契約.md` 的欄位、layer、UserText、Registry、Tag、檔案與設定盤點。
+- 由使用者確認工作語彙與顯示名稱；AI 定義 canonical ID、型別、schema version 與 validator。
+- 建立合法／錯誤／缺值／舊版 fixtures 與 migration 範圍。
+- 契約未定案前不建立正式 feature。
 
-### L3：Tag 垂直切片
+### S3：最小新架構與載入驗證
 
-- 先以 `LF_Tagger_Grab` 驗證 entrypoint → feature → Rhino platform。
-- 操作結果不變，舊入口只剩薄 wrapper。
-- 若人或 AI 無法由 catalog 一次找到完整脈絡，合併過度分散的模組。
+- 建立全新的 `src/`、bootstrap、command catalog、result／error、logging、version、validator 與測試骨架。
+- 驗證 Rhino 8 package import、reload、不同工作目錄與隔離安裝位置。
+- 若 module loading 不可靠，使用模組化 source + build-time flatten／bundle。
 
-### L4：Tag／Dictionary 全群
+### S4：依工作流接入核心功能
 
-- 遷移 Grab、Index、Layout ID、Laser、TAG-O、Data Viewer。
-- 每組 key／prefix 衝突先寫 decision record。
-- 完成後舊入口不得保留 UserText key 與讀寫邏輯副本。
+1. Config、Naming、Result、Logging、Rhino platform。
+2. Dictionary 讀取與驗證。
+3. Nexus、UserText、UUID、Space、Boundary。
+4. Registry 與 Excel；直接實作原子 lock／pending／validate／replace。
+5. Section、Layout、Anchor、Extract、Duplicate。
+6. Tag、Data Viewer、TAG-O。
+7. Infuser All／Part。
+8. Cabinet、2D、Worksession。
 
-### L5：Registry／Nexus
+每一段完成即跑純邏輯、fixture、資料契約與失敗路徑測試；不必等待可供正式使用才測試。
 
-- Dictionary loading → file platform。
-- dimensions／elevation／space → feature rules + Rhino geometry platform。
-- UUID／boundary validation → Nexus feature。
-- JSON push → registry service；XLSX → Excel platform；dialog → Rhino UI platform。
-- 先讓舊 UI 呼叫新 feature，最後才移出大型檔案。
+### S5：端到端實機測試
 
-### L6：Layout／Infuser／Worksession
+- 主要工作流接通後，以隔離 Rhino 8 與測試 `.3dm` 按真實操作順序執行。
+- 驗證正常、取消、失敗、中斷、重複執行、來源文件狀態與 last good output。
+- 跨功能錯誤回到契約或所屬 feature 修正，不在測試層加入臨時特例。
 
-- 合併 Infuser All／Part 的資料查找、warning 與 layout 寫入。
-- Duplicate Layout、Anchor Frame、Extract CP 改走 Rhino platform。
-- watcher 只管理 event lifecycle，實際同步交給 feature。
+### S6：Migration、Build 與一次切換
 
-### L7：Cabinet／2D
-
-- 先拆 UI 與 handler，再比較 Suite、2D Cabinet、Shelf Gap、DW 規則。
-- 幾何純計算留在 feature；Rhino bake 放 platform。
-- 本階段不改 UI 或輸出幾何。
-
-### L8：Build／RHP
-
-- 核心入口穩定後才讓 `src/` 成為唯一可編輯來源。
+- 建立獨立舊專案 scanner、預覽、備份、converter、2.0 validator 與 rollback。
 - command catalog 產生或驗證 RHC／docs。
 - build 產 release payload、ZIP、檔案清單與 hash。
-- 依新 package 重新驗證 RHP，不套用舊「24 個攤平腳本」假設。
+- 重新驗證 RHP，不套用舊攤平腳本假設。
+- RC 與實機驗收通過後一次合入 `main`，發布 2.0；不保留施工用相容層。
 
 ## Git 與環境隔離
 
 - 2.0 工作由 `codex/v2-<scope>` 合入 `v2-development`。
-- P0 若需先發布 1.x，從 `main` 開 hotfix，驗證／發布後再同步整合線。
+- `main` 原則上凍結；只有使用者明確要求舊版緊急修補時才從 `main` 開 hotfix。
 - RC 通過才合入 `main` 並建立 `v2.0.0`。
 - Dev scripts、toolbar、config、Registry、log 與 `.3dm` 必須與 1.x 分離。
 - 升級測試只對 1.x 資料副本執行。
@@ -208,7 +216,7 @@ RHP 是 L8 包裝工作，不是當前功能。需重新驗證 Rhino Script Proj
 
 ## 2.0 完成條件
 
-- Registry／installer P0 可先安全供 1.x 使用。
+- Registry／installer P0 安全要求已完整實作於 2.0；若另有 1.x hotfix，須獨立記錄。
 - Tag、Dictionary、space、Registry、path、version 各有唯一來源。
 - 所有指令經 command catalog；舊 `.py` 只剩入口。
 - `LF_Nexus.py`、`LF_Cabinet_Suite.py` 不再混合 UI、規則、I/O 與流程。

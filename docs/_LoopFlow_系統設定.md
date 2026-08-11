@@ -13,6 +13,14 @@
 | 目標版本 | `v2.0.0` |
 | Runtime | Rhino 8 / CPython 3.9 / Windows |
 
+## 2.0 開發模式
+
+- `main`、`v1.0.0` 與 `releases/LoopFlow/` 作為舊版行為與回復參考，不在重構過程逐支改造成半新半舊系統。
+- 2.0 在新的 `src/`、隔離安裝、設定、資料與測試專案中乾淨建立，正式發布時一次切換。
+- 開始建立 feature 前，先完成 `_LoopFlow_命名與資料契約.md` 的工作流、Dictionary、UserText、layer、Registry 與 Tag 定義。
+- 新核心只接受 2.0 canonical contract；舊專案支援由獨立 migration 工具負責。
+- 每個建造階段仍須有自動測試；完整 Rhino 實機測試於主要工作流接通後執行。
+
 ## 目前 Repo 結構
 
 ```text
@@ -118,6 +126,7 @@ Registry P0 完成前，以上 timeout 不代表 lock／replace 已達安全規�
 ## 文件與程式註解規則
 
 - 維護 SSOT：本文件、`_LoopFlow_使用說明.md`、`_LoopFlow_重構計畫.md`、`architecture/PROGRESS.md`。
+- Dictionary、命名與 schema SSOT：`_LoopFlow_命名與資料契約.md`。
 - 內部維護文件與新增／修改註解使用繁體中文。
 - 模組整體目的、流程、設定、契約、副作用與回復方式寫入 docs。
 - 程式只保留必要 docstring、難以由程式本身看出的原因、API 限制與安全 invariant。

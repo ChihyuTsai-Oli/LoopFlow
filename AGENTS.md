@@ -8,8 +8,9 @@ AI 必須依序完整讀取：
 
 1. `docs/_LoopFlow_使用說明.md`
 2. `docs/_LoopFlow_系統設定.md`
-3. `docs/_LoopFlow_重構計畫.md`
-4. `docs/architecture/PROGRESS.md`
+3. `docs/_LoopFlow_命名與資料契約.md`
+4. `docs/_LoopFlow_重構計畫.md`
+5. `docs/architecture/PROGRESS.md`
 
 公開的 `README.md`、`README_zh-TW.md`、`docs/USER_GUIDE*.md` 與 `docs/Dictionary_GUIDE*.md` 是使用者文件，不是重構指令的權威來源；改變使用行為時仍須同步更新。
 
@@ -18,8 +19,16 @@ AI 必須依序完整讀取：
 - `main` 在 2.0 正式發布前維持穩定 1.x。
 - `v2-development` 是 2.0 整合分支，不直接承接未分批的大型修改。
 - 每項工作從 `v2-development` 建立 `codex/v2-<scope>` 短期分支。
-- 1.x P0 修復從 `main` 建立獨立 hotfix，發布後再同步至 `v2-development`。
+- `main` 原則上凍結；僅在使用者明確要求維護 1.x 時，才建立獨立 hotfix，發布後再同步必要修正至 `v2-development`。
 - `v1.0.0` tag 與 Release 永不移動或覆寫。
+
+## 重構模式
+
+- 2.0 採「新版乾淨重建、正式發布時一次切換」，不要求開發中的新舊指令互相相容。
+- `main` 與既有 release payload 作為唯讀舊版參考；新程式在隔離的 `src/`、安裝位置與測試資料建立。
+- 先完成整體工作流、Dictionary、命名與資料契約，再建立程式架構與接入功能。
+- 新核心不長期保留 legacy alias、雙寫或 compatibility wrapper；舊專案轉換集中於獨立 migration 工具。
+- 建造過程仍分批提交並做自動測試；Rhino 端到端實機測試在主要工作流串接完成後集中進行。
 
 ## 文件與語言
 
@@ -32,10 +41,10 @@ AI 必須依序完整讀取：
 ## AI 作業流程
 
 1. 確認 repo、branch、origin、upstream 與乾淨工作樹；只用 fast-forward pull。
-2. 讀取上述四份文件，從 `PROGRESS.md` 找到目前階段、限制與下一步。
+2. 讀取上述五份文件，從 `PROGRESS.md` 找到目前階段、限制與下一步。
 3. 建立短期工作分支，只處理一個 P0 或一條 feature。
-4. 修改前保存該功能的 golden workflow／fixture；不得以正式專案資料作測試。
-5. 完成後執行可用的靜態檢查與實機驗證，不得將未執行項目寫成通過。
+4. 命名契約尚未定案前，不建立正式 feature；先完成依賴盤點、schema 與 fixtures。
+5. 每段完成後執行自動測試與契約檢查；主要工作流串接後再以測試專案做 Rhino 端到端實機驗證。
 6. 同步更新使用說明、系統設定與 `PROGRESS.md`；記錄 commit、檢查、限制和下一步。
 7. 檢查 diff 後提交、推送短期分支，再依使用者授權合入整合分支。
 
