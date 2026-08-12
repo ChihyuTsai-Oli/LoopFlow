@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LoopFlow 2.0 — 模擬執行流程</title>
+<style>
+:root{
+  --bg:#0e1014; --bg2:#141821; --panel:#171b25; --line:#252b39; --line2:#323a4d;
+  --tx:#dbe0ea; --tx2:#a6afc2; --tx3:#79839a;
+  --codex:#e0a458; --codex-d:#3a2c18;
+  --claude:#5fb8c4; --claude-d:#16323a;
+  --mono:"Cascadia Mono",Consolas,"SF Mono","Roboto Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei","PingFang TC","Noto Sans TC","Hiragino Sans",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);
+  font-size:15.5px;line-height:1.85;letter-spacing:.01em;-webkit-font-smoothing:antialiased}
+.wrap{display:grid;grid-template-columns:264px minmax(0,1fr);gap:0;max-width:1500px;margin:0 auto}
+
+/* ---- TOC ---- */
+nav{position:sticky;top:0;height:100vh;overflow-y:auto;padding:26px 14px 40px 22px;
+  border-right:1px solid var(--line);background:var(--bg)}
+nav .brand{font-size:12px;letter-spacing:.16em;color:var(--tx3);text-transform:uppercase;margin-bottom:6px}
+nav .bt{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:20px;line-height:1.4}
+nav a{display:block;color:var(--tx2);text-decoration:none;font-size:12.8px;padding:3.5px 9px;
+  border-radius:5px;border-left:2px solid transparent;line-height:1.5}
+nav a:hover{color:var(--tx);background:var(--bg2)}
+nav a.l1{margin-top:16px;font-weight:650;font-size:13.4px;color:var(--tx)}
+nav a.l2{padding-left:16px}
+nav a.l1.codex{color:var(--codex);border-left-color:var(--codex)}
+nav a.l1.claude{color:var(--claude);border-left-color:var(--claude)}
+nav a.l2.codex:hover{border-left-color:var(--codex)}
+nav a.l2.claude:hover{border-left-color:var(--claude)}
+
+/* ---- content ---- */
+main{padding:44px 52px 120px;min-width:0}
+.doctitle{font-size:29px;font-weight:700;letter-spacing:.01em;margin:0 0 6px;line-height:1.35}
+.meta{color:var(--tx3);font-size:12.5px;margin:0 0 30px;padding-bottom:22px;border-bottom:1px solid var(--line)}
+p{margin:0 0 15px}
+strong{color:#fff;font-weight:650}
+hr{border:0;border-top:1px solid var(--line);margin:38px 0}
+ul,ol{margin:0 0 16px;padding-left:22px}
+li{margin:5px 0}
+li>ul{margin:6px 0 2px}
+code{font-family:var(--mono);font-size:.875em;background:#1d2230;color:#e8c07d;
+  padding:1.5px 5px;border-radius:4px;border:1px solid #262d3d;word-break:break-word}
+strong code{color:#f0cf9a}
+pre.code{background:#12161f;border:1px solid var(--line);border-left:3px solid var(--line2);
+  border-radius:7px;padding:15px 17px;overflow-x:auto;margin:0 0 18px}
+pre.code code{background:none;border:0;padding:0;color:#b9c4d8;font-size:13px;line-height:1.72;white-space:pre}
+
+/* ---- chapters ---- */
+.chapter{padding-top:12px}
+.chapter h1{font-size:25px;font-weight:700;margin:0 0 26px;padding:0 0 14px;
+  display:flex;align-items:center;gap:13px;flex-wrap:wrap;border-bottom:2px solid var(--line)}
+.tagpill{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 11px;border-radius:20px;white-space:nowrap}
+.chapter.codex h1{border-bottom-color:var(--codex)}
+.chapter.codex .tagpill{background:var(--codex-d);color:var(--codex);border:1px solid #5c4626}
+.chapter.claude h1{border-bottom-color:var(--claude)}
+.chapter.claude .tagpill{background:var(--claude-d);color:var(--claude);border:1px solid #2b5661}
+
+h2{font-size:19px;font-weight:660;margin:38px 0 14px;line-height:1.45}
+h3{font-size:16px;font-weight:640;margin:28px 0 11px;color:var(--tx)}
+.chapter.codex h2{color:#f0c68c}
+.chapter.claude h2{color:#93d5de}
+h2.stage{display:flex;align-items:center;gap:11px}
+h2.stage .num{display:inline-flex;align-items:center;justify-content:center;
+  width:27px;height:27px;border-radius:7px;font-size:13px;font-weight:700;font-family:var(--mono);flex:none}
+.chapter.claude h2.stage .num{background:var(--claude-d);color:var(--claude);border:1px solid #2b5661}
+.chapter.codex h2.stage .num{background:var(--codex-d);color:var(--codex);border:1px solid #5c4626}
+
+/* ---- tables ---- */
+.tw{overflow-x:auto;margin:0 0 22px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:600px;font-size:13.6px}
+th{background:#1b2130;color:var(--tx);font-weight:660;text-align:left;
+  padding:11px 14px;border-bottom:1px solid var(--line2);white-space:nowrap;font-size:13px}
+td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;
+  color:var(--tx2);line-height:1.72}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:rgba(255,255,255,.016)}
+tbody tr:hover{background:rgba(255,255,255,.038)}
+td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
+.chapter table td strong{color:#fff}
+
+/* ---- responsive ---- */
+@media (max-width:1080px){
+  .wrap{grid-template-columns:1fr}
+  nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:20px 22px}
+  nav a{display:inline-block;margin:2px 4px 2px 0}
+  nav a.l2{display:none}
+  main{padding:30px 22px 80px}
+  .doctitle{font-size:24px}
+  .chapter h1{font-size:21px}
+}
+@media print{
+  nav{display:none} body{background:#fff;color:#111}
+  .tw,table,td,th{border-color:#bbb} main{padding:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav><div class="brand">LoopFlow 2.0</div>
+<div class="bt">模擬執行流程</div>
+<a class="l1 codex" href="#CodeX-模擬執行流程">CodeX 模擬執行流程</a>
+<a class="l2 codex" href="#第一次建立模型到完成圖面">第一次建立模型到完成圖面</a>
+<a class="l2 codex" href="#模型修改後-資料如何延續到最末端">模型修改後，資料如何延續到最末端</a>
+<a class="l1 claude" href="#Claude-Code-模擬執行流程">Claude Code 模擬執行流程</a>
+<a class="l2 claude" href="#前提-這條流程同時跑在兩個文件上">前提：這條流程同時跑在兩個文件上</a>
+<a class="l2 claude" href="#階段-1-開案與環境檢查-3D-文件">階段 1｜開案與環境檢查（3D 文件）</a>
+<a class="l2 claude" href="#階段-2-Type-Catalog-與-Layer-3D-文件">階段 2｜Type Catalog 與 Layer（3D 文件）</a>
+<a class="l2 claude" href="#階段-3-建模-3D-文件">階段 3｜建模（3D 文件）</a>
+<a class="l2 claude" href="#階段-4-資料化-先掃描-後套用-3D-文件">階段 4｜資料化：先掃描，後套用（3D 文件）</a>
+<a class="l2 claude" href="#階段-5-發布-Registry-3D-文件-exchange">階段 5｜發布 Registry（3D 文件 → `exchange/`）</a>
+<a class="l2 claude" href="#階段-6-剖面與-View-註冊-3D-文件">階段 6｜剖面與 View 註冊（3D 文件）</a>
+<a class="l2 claude" href="#階段-7-圖面化-2D-文件">階段 7｜圖面化（2D 文件）</a>
+<a class="l2 claude" href="#階段-8-Sheet-與圖框-2D-文件">階段 8｜Sheet 與圖框（2D 文件）</a>
+<a class="l2 claude" href="#階段-9-Tag-綁定-2D-文件">階段 9｜Tag 綁定（2D 文件）</a>
+<a class="l2 claude" href="#階段-10-同步顯示值-2D-文件">階段 10｜同步顯示值（2D 文件）</a>
+<a class="l2 claude" href="#階段-11-健康檢查與修復-2D-文件">階段 11｜健康檢查與修復（2D 文件）</a>
+<a class="l2 claude" href="#完整變更循環-把磁磚牆從-240-改成-260">完整變更循環：把磁磚牆從 240 改成 260</a>
+<a class="l2 claude" href="#中斷-取消與失敗時停在哪裡">中斷、取消與失敗時停在哪裡</a>
+<a class="l2 claude" href="#第一階段最小可用範圍">第一階段最小可用範圍</a>
+<a class="l2 claude" href="#與-CodeX-流程的主要差異">與 CodeX 流程的主要差異</a></nav>
+<main><h1 class="doctitle" id="LoopFlow-2-0-模擬執行流程">LoopFlow 2.0 — 模擬執行流程</h1>
+<p>本文件把 <code>LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md</code> 的建議轉成可實際理解的操作鏈，協助判斷這些原則是否符合工作習慣。兩份流程由不同 AI 獨立推導，走同一條資料鏈但在細節與優先序上有差異，並列以便對照。</p>
+<ul><li>決策項目與建議強度：<code>LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md</code>（<code>ECO-*</code>／<code>ED-*</code> 編號皆指向該表）</li><li>資料實體、真相邊界與現況盤點：<code>LOOPFLOW_DATA_ECOSYSTEM.md</code></li><li>本文件不維護決策答案；使用者的裁決一律寫在決策表，不在此重複。</li></ul>
+<p><code>LF_*</code> 名稱是 <strong>2.0 概念指令名稱，不是已完成的按鈕或最終命名</strong>；<code>! _Clipping*</code> 則是 Rhino 8 內建指令。兩份流程都尚未經 Rhino 實機驗證。</p>
+<hr>
+<section class="chapter codex" id="CodeX-模擬執行流程">
+<h1><span class="tagpill">CodeX</span>模擬執行流程</h1>
+<h2 id="第一次建立模型到完成圖面">第一次建立模型到完成圖面</h2>
+<div class="tw"><table><thead><tr><th>步驟</th><th>使用的指令／動作</th><th>做了什麼</th><th>產生的結果與下一步</th></tr></thead><tbody><tr><td>1. 開啟專案</td><td><code>LF_Project_Open</code>／啟動檢查</td><td>解析這台電腦的 <code>%LOOPFLOW_WORKFILES_ROOT%</code>，找到 Dictionary、<code>exchange/</code>、3D／2D 工作檔；驗證 Rhino 文件單位與版本</td><td>若不是 cm，依 ED-12 建議先阻擋並說明，不讓錯誤單位進入資料鏈；通過後建立 <code>project_id</code> context</td></tr><tr><td>2. 驗證 Dictionary</td><td><code>LF_Dictionary_Validate</code></td><td>讀取中文 Dictionary，檢查 schema、18 欄、Type ID、重複值、估算單位與必要欄位</td><td>產生只讀 Validation Report；錯誤先修正，通過後得到版本化 Type Catalog</td></tr><tr><td>3. 同步 Type 與 Layer</td><td><code>LF_Type_Sync</code></td><td>依 Type Catalog 建立或更新人類可讀的中英雙語 Rhino layers；Type ID 與 layer path 分開保存</td><td>使用者得到建模 layer；不自動建立會累積的 <code>DNA_REF_</code> 線，也不因 layer 改名改變 Type ID</td></tr><tr><td>4. 建立 3D 模型</td><td>Rhino 一般建模／Cabinet 等 LoopFlow 工具</td><td>使用者在對應 layer 建立、修改 Block 或幾何；Cabinet 依 local frame 保存板件方向</td><td>此時幾何是設計成果，但尚未直接假設所有資料都正確；下一步先掃描預覽</td></tr><tr><td>5. 掃描資料影響</td><td><code>LF_Nexus_Scan</code></td><td>根據 Type、幾何、Space、Elevation 與既有 metadata，找出缺 ID、重複 ID、未知 Type、尺寸與前置條件問題</td><td>只產生 Impact Report，不修改模型；重複 UUID 會列出原件、複本與受影響 Tag，不立即換號</td></tr><tr><td>6. 套用模型資料</td><td><code>LF_Nexus_Apply</code></td><td>使用者確認報告後，才建立／修復 Object ID，寫入 Type reference、Space ID、高程、尺寸及允許的 Instance override</td><td>形成可驗證的 Model Objects；任何 ID 變更同時保存 old→new mapping，失敗可回復</td></tr><tr><td>7. 發布 Registry</td><td><code>LF_Publish_Registry</code></td><td>將已通過驗證的 Type／Object／Space 資料寫入 pending，驗證完成後 atomic replace 為 current revision</td><td>例如產生 Registry revision <code>42</code>；2D 文件只讀這個快照，不直接修改 Registry，也不在找不到檔案時自建空檔</td></tr><tr><td>8. 建立剖面／平面</td><td><code>! _ClippingSections</code></td><td>從 LoopFlow 工具列直接呼叫 Rhino 8 內建 Section 指令，建立 Clipping Plane／Section</td><td>Rhino 產生剖面定義；LoopFlow 不複製 Rhino 功能本體，也不為此建立 Python entrypoint</td></tr><tr><td>9. 建立連動圖面</td><td><code>! _ClippingDrawings</code></td><td>Rhino 依 Clipping Plane 產生 linked Generated Drawing</td><td>得到可由 Rhino 更新的原始 Section 成果；它仍不是供長期人工修改的 Editable Drawing</td></tr><tr><td>10. 註冊 View</td><td><code>LF_View_Register</code></td><td>綁定 Clipping Plane、Generated Drawing 與 Detail，保存 <code>view_id</code>、方向、比例及穩定 2D↔3D transform</td><td>之後 Laser 由正式 transform 定位，不再用名稱包含與可變 bbox 中心猜測</td></tr><tr><td>11. 產生可編輯圖面</td><td><code>LF_Drawing_Materialize</code></td><td>檢查是否已有同一 <code>view_id</code> 的前次產出，讓使用者選擇「新增、取代、略過」；複製成 Editable Drawing</td><td>產生 <code>drawing_id</code>、來源 Registry／View revision 與 <code>generated</code> 狀態；不改變使用者原有 layer lock、visibility、selection</td></tr><tr><td>12. 人工整理圖面</td><td>Rhino 一般 2D 編輯</td><td>使用者修改線稿、補線、刪除不需要內容或調整圖層</td><td>Drawing 轉為 <code>modified</code>；LoopFlow 記得來源但不會靜默覆寫人工成果</td></tr><tr><td>13. 建立 Sheet</td><td><code>LF_Sheet_Create</code> 或 <code>LF_Sheet_Duplicate</code></td><td>建立 Layout、Detail、圖框與 Sheet metadata；複製時產生新 <code>sheet_id</code>／<code>drawing_id</code>／<code>tag_id</code></td><td>圖號與 Layout 名稱由 metadata 算出；一般 Tag 可依 ED-13 保留模型來源，Index Tag 目標必須重審</td></tr><tr><td>14. 建立 Tag 綁定</td><td><code>LF_Tag_Grab</code>／<code>LF_Tag_Laser</code>／<code>LF_Tag_Index</code></td><td>Grab 直接選模型來源；Laser 由圖面點位經 View transform 找候選；Index 選目標 View／Sheet</td><td>Tag 保存 <code>source_object_id</code>、<code>view_id</code>、<code>drawing_id</code>、<code>sheet_id</code> 與 template version；位置只協助定位，不作資料真相</td></tr><tr><td>15. 顯示最新資料</td><td><code>LF_Sync_Current_Sheet</code> 或 <code>LF_Sync_All</code></td><td>從 Registry revision <code>42</code> 依 Tag Template 產生高程、材料、圖號、圖名等顯示值</td><td>Tag 記錄 <code>last_synced_revision=42</code>；<code>lock_state</code> 的人工鎖定值不被覆寫</td></tr><tr><td>16. 交付前檢查</td><td><code>LF_Health_Check</code></td><td>唯讀檢查 unbound、orphaned、stale、view missing、template outdated、schema mismatch 等狀態</td><td>產生 Issue Report；不必先由 Infuser 塗色，也不修改使用者物件色</td></tr><tr><td>17. 選擇性修復</td><td><code>LF_Repair_Preview</code> → <code>LF_Repair_Apply</code></td><td>先顯示問題原因、會改哪些 ID／Tag／Drawing，再由使用者選擇重新綁定、同步、保留、脫離或略過</td><td>每項修復保存結果與復原資訊；完成後重新跑 Health，直到交付範圍內問題關閉</td></tr></tbody></table></div>
+<h2 id="模型修改後-資料如何延續到最末端">模型修改後，資料如何延續到最末端</h2>
+<p>以下用一個具體例子串起變更循環：</p>
+<ol><li>使用者把 3D 磁磚牆高度由 240 cm 改成 260 cm。</li><li>執行 <code>LF_Nexus_Scan</code>，系統辨認同一個 <code>object_id</code> 的幾何與高程資料改變，只顯示影響，不建立新 ID。</li><li>使用者確認後執行 <code>LF_Nexus_Apply</code>，模型物件更新為新資料；接著 <code>LF_Publish_Registry</code> 發布 revision <code>43</code>。</li><li>既有 Tag 的 <code>last_synced_revision</code> 仍是 <code>42</code>，Health 因此判定 <code>stale_data</code>；既有 Editable Drawing 的 source revision 也是 <code>42</code>，判定 <code>drawing_stale</code>。</li><li>使用者先用 Rhino 內建 <code>! _UpdateClippingDrawings</code> 更新 linked Generated Drawing。這一步只更新 Rhino 的原始 Section 成果，不直接覆寫已人工修改的 Editable Drawing。</li><li>執行 <code>LF_Drawing_Materialize</code>，系統找到既有 <code>modified</code> Drawing，要求選擇：<ul><li>保留舊圖並另建 revision <code>43</code> 的 Drawing；</li><li>預覽後明確取代；</li><li>保留現況並標成 detached；</li><li>這次略過，繼續保持 stale。</li></ul></li><li>使用者選擇後，執行 <code>LF_Sync_Current_Sheet</code>；未鎖定的 Tag 從 revision <code>43</code> 更新高度，人工鎖定欄位維持原值。</li><li>再執行 <code>LF_Health_Check</code>，已同步的 Tag 回到 healthy；若 Drawing 刻意保留舊版，報告會保留其 stale／detached 狀態與理由，不假裝問題不存在。</li></ol>
+<p>因此完整資料鏈是：</p>
+<pre class="code" data-lang="text"><code>Dictionary Type
+→ Rhino Layer／3D Object
+→ Nexus Scan／Apply
+→ Registry Revision
+→ Rhino Clipping Section／Generated Drawing
+→ View Registration
+→ Editable Drawing
+→ Sheet Metadata
+→ Tag Binding／Template Render
+→ Health Report
+→ Previewed Repair</code></pre>
+<p>這條鏈的核心效果是：3D 資料可以一路傳到圖框與 Tag，但每個階段都有明確 ID、revision、預覽與人工停點；任何更新都不以「方便」為理由靜默換 ID、重綁來源或覆蓋人工圖面。</p>
+<hr>
+</section>
+<section class="chapter claude" id="Claude-Code-模擬執行流程">
+<h1><span class="tagpill">Claude Code</span>模擬執行流程</h1>
+<p>這一版走同一條資料鏈，但在三件事上刻意寫得比較細：<strong>每一步在哪個 Rhino 文件執行</strong>、<strong>失敗或取消時會停在哪裡</strong>、以及<strong>哪些是第一階段就必須有、哪些可以晚點補</strong>。</p>
+<p>全文用同一個案子當例子：一間住宅，主臥室有一面磁磚牆（Type <code>WL-14</code>，<code>02_Wall_牆面::Tiles.磁磚</code>，高 240 cm）和一個開關面板（Type <code>EL-05</code>，<code>06_EL_電控系統::Switch.開關面板</code>，Block instance，高程基準 <code>BC</code>）。</p>
+<h2 id="前提-這條流程同時跑在兩個文件上">前提：這條流程同時跑在兩個文件上</h2>
+<p>CodeX 版流程沒有明講這一點，但它決定了很多步驟為什麼要那樣設計。</p>
+<div class="tw"><table><thead><tr><th>角色</th><th>檔案</th><th>負責</th></tr></thead><tbody><tr><td>3D 文件</td><td><code>LoopFlow_3D.3dm</code></td><td>建模、資料化、剖面定義、發布 Registry</td></tr><tr><td>2D 文件</td><td><code>LoopFlow_2D.3dm</code></td><td>圖面整理、Layout、圖框、Tag、出圖</td></tr><tr><td>交換層</td><td><code>%LOOPFLOW_WORKFILES_ROOT%\exchange\</code></td><td>Registry 快照，兩個文件之間唯一的資料通道</td></tr><tr><td>Worksession</td><td><code>LoopFlow.rws</code></td><td>讓 2D 文件看得到 3D 幾何（給對照與定位用）</td></tr></tbody></table></div>
+<p>現行 1.x 的隱性要求是「3D、2D、Registry 必須同資料夾」，因為程式從目前作用中的 <code>.3dm</code> 推導路徑。2.0 改成由 <code>%LOOPFLOW_WORKFILES_ROOT%</code> 解析，這個限制才會消失——但<strong>兩個文件的分工本身要保留</strong>，因為使用者實際就是這樣工作的。</p>
+<hr>
+<h2 class="stage" id="階段-1-開案與環境檢查-3D-文件"><span class="num">1</span>開案與環境檢查（3D 文件）</h2>
+<p><strong>指令 <code>LF_Project_Open</code></strong> → 解析本機環境變數、確認工作檔根目錄存在、載入 Dictionary 與 <code>exchange/</code> 位置、讀取 <code>doc.ModelUnitSystem</code> → 建立本次工作階段的 <code>project_id</code> context，並在命令列印出<strong>實際生效的設定值</strong>（Dictionary 路徑、Registry 路徑、文件單位、規則來源）。</p>
+<p>這一步刻意做兩件現況沒有的事：</p>
+<ul><li><strong>印出實際生效值</strong>。現況 config 有 import fallback（<code>_LF_Registry</code> 的 8.0／120.0 vs config 的 20.0／30.0），加上各腳本 reload 時機不一，使用者無法確認「我改的設定到底有沒有生效」。</li><li><strong>偵測文件單位</strong>。依 ED-12 我的建議，這裡<strong>一定要偵測並顯示</strong>；至於非 cm 時是擋下還是只警告，屬於可調策略。</li></ul>
+<p>失敗行為：環境變數缺失或目錄不存在 → 顯示變數名稱與設定方式後<strong>停止</strong>，不猜測磁碟機、不建立任何檔案。</p>
+<h2 class="stage" id="階段-2-Type-Catalog-與-Layer-3D-文件"><span class="num">2</span>Type Catalog 與 Layer（3D 文件）</h2>
+<p><strong>指令 <code>LF_Dictionary_Validate</code></strong> → 讀取中文 Dictionary，檢查 <code>schema_version</code>、欄位完整性、Type ID 唯一性、<code>type_category</code> 與 layer 群組是否相符、估算單位是否在允許清單內 → 產生<strong>唯讀</strong> Validation Report。</p>
+<p>依 ED-01，<code>_03_ID編號</code> 在載入時就拆成 <code>type_category</code> + <code>type_sequence</code>（Excel 仍維持單欄，使用者維護方式不變）。於是這裡多出一條免費的檢查：<code>WL-14</code> 必須位於 <code>02_Wall_牆面</code> 底下；如果有人把它放進 <code>03_Floor_地坪</code>，這一步就會擋下來。現況沒有任何機制會發現這件事。</p>
+<p><strong>指令 <code>LF_Type_Sync</code></strong> → 依 Type Catalog 建立或更新 Rhino layer，並把 <code>type_id</code> 寫成 layer 的正式屬性 → 使用者得到可建模的 layer 樹。</p>
+<p>與現況 Dict-to-Layer 的差別（依 ECO-10 與 ED-11）：</p>
+<ul><li>不再每次新增 92 條 <code>DNA_REF_</code> 參考線。若你確認這些線有用途，改由獨立的 <code>LF_Type_Sample</code> 產生，且重跑時<strong>先清除前次產物</strong>再重建。</li><li>材質建立與 layer 建立分開成兩個明確動作，不是一個指令的隱藏副作用。</li><li>不執行 <code>ZoomExtents</code>——不改變使用者的視圖。</li></ul>
+<h2 class="stage" id="階段-3-建模-3D-文件"><span class="num">3</span>建模（3D 文件）</h2>
+<p>使用者用 Rhino 一般工具或 <code>LF_Cabinet_Suite</code> 在對應 layer 建立幾何。這階段 LoopFlow 不介入，只有一個約束：<strong>Cabinet 產生前先確認目標 layer</strong>，避免現況「在當前 layer 產生櫃體 → Nexus 把 <code>_CB.*</code> 全部清成 <code>-</code>」的靜默清空。</p>
+<h2 class="stage" id="階段-4-資料化-先掃描-後套用-3D-文件"><span class="num">4</span>資料化：先掃描，後套用（3D 文件）</h2>
+<p>這是整條流程中我認為最需要改變操作習慣的一段。現況 <code>TagTrigger</code> 是「一鍵掃描全模型並直接寫入」；2.0 拆成兩個指令。</p>
+<p><strong>指令 <code>LF_Nexus_Scan</code></strong> → 依 Type、幾何、Space、Elevation 前置條件掃描全部 M3D 物件，但<strong>不寫入任何東西</strong> → 產生 Impact Report，例如：</p>
+<pre class="code" data-lang="text"><code>待建立 Object ID：18 個
+重複 Object ID：2 組（4 個物件）
+  · 主臥磁磚牆 (WL-14)  ← 原件，已被 3 個 Tag 引用
+  · 主臥磁磚牆 (WL-14)  ← 2026-08-10 複製產生，無 Tag 引用
+未知 Type：1 個（layer 不在 Dictionary 內）
+前置條件不成立：1 個
+  · 開關面板 (EL-05) 高程基準為 BC，但此物件不是 Block instance
+空間未命中：3 個（區分「室外」與「未涵蓋」）</code></pre>
+<p><strong>指令 <code>LF_Nexus_Apply</code></strong> → 使用者在報告上逐項決定後才執行寫入 → 產生帶穩定 ID 的 Model Objects，並保存 <code>old_id → new_id</code> mapping。</p>
+<p>這樣做直接解掉三個現況問題：</p>
+<div class="tw"><table><thead><tr><th>現況</th><th>2.0 行為</th><th>對應建議</th></tr></thead><tbody><tr><td>重複 UUID 時原件與複本<strong>都</strong>被換新號，既有 Tag 一起斷，只回報數量</td><td>報告列出雙方、標示哪一個有 Tag 引用；預設保留有引用的一方，另一方發新號</td><td>ECO-11</td></tr><tr><td><code>BC</code> 用在非 Block 物件上時靜默退回 BH，Tag 仍顯示 BC</td><td>前置條件不成立<strong>直接列為錯誤</strong>，不寫入該物件的高程</td><td>ED-06</td></tr><tr><td>空間未命中一律寫 <code>EXT</code>，之後無法分辨「室外」與「漏掉」</td><td>兩者分成不同結果，TAG-O 的覆蓋檢查才可信</td><td>ED-07</td></tr></tbody></table></div>
+<p><code>_05</code>／<code>_06</code>／<code>_07</code> 依 ED-08 的建議，這階段先<strong>寫入但標為「規則未定義」</strong>，等確定有 consumer 後再回頭定方向規則。</p>
+<p>失敗行為：Apply 過程中斷 → 已寫入部分保留、mapping 已落地，重跑 Scan 會顯示剩餘項目，不需要從頭來。</p>
+<h2 class="stage" id="階段-5-發布-Registry-3D-文件-exchange"><span class="num">5</span>發布 Registry（3D 文件 → <code>exchange/</code>）</h2>
+<p><strong>指令 <code>LF_Publish_Registry</code></strong> → 把已驗證的 Type／Object／Space 寫入 <code>registry.pending.json</code>，驗證通過後 atomic replace 成 <code>registry.current.json</code>，前一版保留為 <code>registry.previous.json</code> → 得到 revision <code>42</code>。</p>
+<p>三個與現況的差異：</p>
+<ul><li><strong>只發布有 consumer 的欄位</strong>。現況 18 欄裡有 11 欄沒有任何行為 consumer，卻全部被寫進 Registry 變成事實上的公開 API。2.0 把它們放進明確的 extension 區，或先不發布。</li><li><strong>不建立沒有 consumer 的區段</strong>。現況的 <code>Layout_Map</code> 只寫不讀、<code>Tag_Links</code> 連呼叫者都沒有。</li><li><strong>Reader 永不寫入</strong>。這是 ECO-06 的實作重點，下一階段就會用到。</li></ul>
+<h2 class="stage" id="階段-6-剖面與-View-註冊-3D-文件"><span class="num">6</span>剖面與 View 註冊（3D 文件）</h2>
+<p><strong>Rhino 內建 <code>! _ClippingSections</code></strong> → 建立 Clipping Plane → Rhino 產生剖面定義。</p>
+<p><strong>Rhino 內建 <code>! _ClippingDrawings</code></strong> → 產生 linked Generated Drawing → 得到可由 Rhino 自行更新的原始剖面成果。</p>
+<p><strong>指令 <code>LF_View_Register</code></strong> → 把 Clipping Plane、Generated Drawing、目標 Detail 綁在一起，保存 <code>view_id</code>、視線方向、比例與<strong>固定的 2D↔3D 轉換矩陣</strong> → 之後所有定位都用這個矩陣。</p>
+<p>這一步是我在複核裡認為最值得投資的地方。現況 Laser 的對位基準是<strong>每次執行時重算</strong>的兩個 bbox 中心：3D 側把所有可見 brep 與剖面求交、2D 側取 anchor frame 內所有 curve/hatch。結果是——你在剖面圖上多畫一條線，之後所有 Laser 綁定的落點就偏移，而且沒有任何紀錄能看出偏移了多少。</p>
+<p>需要的資訊 Rhino 都已經提供（Clipping Plane 自帶 <code>Plane</code>，Detail 自帶 <code>PageToWorldTransform</code>，現行程式也已經在用）。缺的只是<strong>把它固化下來</strong>，而不是每次重猜。</p>
+<h2 class="stage" id="階段-7-圖面化-2D-文件"><span class="num">7</span>圖面化（2D 文件）</h2>
+<p><strong>指令 <code>LF_Drawing_Materialize</code></strong> → 先查詢同一個 <code>view_id</code> 是否已有前次產出 → 若有，讓使用者選「新增版本 / 取代 / 略過」；若無，直接建立 → 產生 <code>drawing_id</code>、記錄來源 <code>view_id</code> 與 Registry revision <code>42</code>、狀態設為 <code>generated</code>。</p>
+<p>依 ED-05，這個「先辨識前次產出」是 Drawing lifecycle 的第一個功能，先於任何狀態機。現況 Extract 每次無條件複製，跑兩次就是兩份完全重疊的線，且無法分辨。同時要修掉一個現況副作用：<code>ensure_layer()</code> 會把目標 layer 解鎖且不還原。</p>
+<h3 id="一個順帶解決-Laser-的提案">一個順帶解決 Laser 的提案</h3>
+<p>既然 Materialize 這一刻同時握有「3D 物件」與「剛生成的 2D 線」，建議在這裡<strong>一次算出每條線的來源 <code>object_id</code>，存成 drawing 的來源索引</strong>。</p>
+<p>這樣 Laser 就從「每次對全模型求交後射線判斷」變成「點選最近的已標記線，讀出它的 <code>object_id</code>」：</p>
+<div class="tw"><table><thead><tr><th>比較項目</th><th>現況 Laser</th><th>改用來源索引</th></tr></thead><tbody><tr><td>每次綁定的計算量</td><td>全模型 brep × 剖面求交</td><td>查表</td></tr><tr><td>對位是否會漂移</td><td>會（見階段 6）</td><td>不會，關聯在生成當下就固定</td></tr><tr><td>多候選如何處理</td><td>依距離聚類，容差 200 cm（=2 公尺，過寬）</td><td>該點附近有幾條不同來源的線，直接列出</td></tr><tr><td>是否需要 Worksession 附掛 3D</td><td>必須</td><td>不必（但仍建議附掛以便對照）</td></tr></tbody></table></div>
+<p>計算量其實沒有增加——只是把現在每次綁定都做一遍的事，改成生成時做一次。</p>
+<p><strong>但這一項需要 Rhino 實機 spike 驗證</strong>：要確認 Rhino 的 Clipping Drawing 輸出能不能穩定對應回來源物件，或者退而由 LoopFlow 自行以剖面交線做鄰近比對。在 spike 通過前，先按階段 6 的固定 transform 做即可，兩者不衝突。</p>
+<p><strong>使用者接著做人工整理</strong> → 補線、刪除不需要的內容、調整圖層 → Drawing 狀態轉為 <code>modified</code>，LoopFlow 從此不會靜默取代它。</p>
+<h2 class="stage" id="階段-8-Sheet-與圖框-2D-文件"><span class="num">8</span>Sheet 與圖框（2D 文件）</h2>
+<p><strong>指令 <code>LF_Sheet_Create</code></strong> → 建立 Layout、Detail、圖框，寫入 Sheet metadata（discipline / level / series / sequence / title …）→ Layout 名稱 <code>IN 101.01__一樓平面配置圖</code> 由 metadata <strong>算出來</strong>，不是資料本身。</p>
+<p>依我對 ECO-05 的評估（一般建議、可分階段），第一階段只要做到「metadata 是產生名稱的來源」就夠了，完整的 Sheet 管理介面可以晚一點；因為這條的失敗是可回復的——名稱弄亂了，重跑一次就會修好。</p>
+<p><strong>指令 <code>LF_Sheet_Duplicate</code></strong> → 複製版面 → <strong>建立全新的 <code>sheet_id</code>／<code>drawing_id</code>／<code>tag_id</code></strong>，並產出一份待確認清單。</p>
+<p>依 ED-13，這裡有一個必須當場處理、不能留給事後 Health 的項目：<strong>Index Tag 的目標必須清除或重新指定</strong>。現況複製後 Index Tag 沿用來源頁的 <code>.Target_DV_ID</code>，Infuser 認為「目標找得到、綁定正常」而不標紅，於是新頁的剖面索引安靜地指向來源頁的圖號。這是整份複核裡唯一連 Health 檢查都抓不到的錯誤。</p>
+<p>另外不使用系統剪貼簿複製（現況 <code>_-CopyToClipboard</code> 會覆蓋使用者剪貼簿內容且不還原）。</p>
+<h2 class="stage" id="階段-9-Tag-綁定-2D-文件"><span class="num">9</span>Tag 綁定（2D 文件）</h2>
+<p>三種綁定意圖都保留，因為它們對應三種不同的使用情境：</p>
+<div class="tw"><table><thead><tr><th>指令</th><th>使用者做的動作</th><th>結果</th></tr></thead><tbody><tr><td><code>LF_Tag_Grab</code></td><td>直接點選要標的模型物件</td><td>Tag 存下 <code>source_object_id</code>，來源明確無歧義</td></tr><tr><td><code>LF_Tag_Laser</code></td><td>在剖面圖上點位置</td><td>經固定 transform（或來源索引）找到候選；多候選時列出讓使用者選定，並記錄這是 <code>ambiguous</code> 解法</td></tr><tr><td><code>LF_Tag_Index</code></td><td>選另一張圖 / 另一個 View</td><td>Tag 存下 <code>target_view_id</code>／<code>target_sheet_id</code>，顯示的圖號由 Sheet metadata 產生</td></tr></tbody></table></div>
+<p>每個 Tag 一律保存：<code>tag_id</code>、<code>source_object_id</code>、<code>view_id</code>、<code>drawing_id</code>、<code>sheet_id</code>、<code>template_version</code>、<code>lock_state</code>。</p>
+<p>依 ED-02，鎖定改成單一 <code>lock_state</code>。現況三支程式規則不一致——Laser 只認 <code>NoUpdate</code>、Infuser／Grab／Index 只認「不更新」——所以一個用「不更新」鎖住的 Tag，Infuser 會尊重，Laser 卻允許你重新綁定。</p>
+<p>門窗與家具 Tag 不再使用 <code>NAME_PARSED</code> 這個哨兵值假裝有來源，改為正式的 source type。</p>
+<h2 class="stage" id="階段-10-同步顯示值-2D-文件"><span class="num">10</span>同步顯示值（2D 文件）</h2>
+<p><strong>指令 <code>LF_Sync_Current_Sheet</code>（或 <code>LF_Sync_All</code>）</strong> → 讀 Registry revision <code>42</code>，依 Tag Template 把欄位對應成顯示值 → Tag 記錄 <code>last_synced_revision = 42</code>。</p>
+<p>以磁磚牆的高度 Tag 為例，Template 宣告的對應是：</p>
+<pre class="code" data-lang="text"><code>TAG_HEIGHT
+  attr_ch_key  &lt;- elevation.basis.label     → &quot;BH&quot;
+  attr_ch_val  &lt;- elevation.display         → &quot;+240&quot;
+  attr_mat_key &lt;- type.category             → &quot;WL&quot;
+  attr_mat_val &lt;- type.sequence             → &quot;14&quot;
+  attr_note    &lt;- type.display_name         → &quot;磁磚牆面&quot;</code></pre>
+<p><code>type.category</code> / <code>type.sequence</code> 直接來自階段 2 拆好的欄位，不需要在這裡對 <code>_03</code> 字串做 <code>split(&quot;-&quot;, 1)</code>——這也順帶解掉「ID 本身含連字號會被誤拆」的問題。</p>
+<p><code>lock_state</code> 為鎖定的 Tag 完全跳過，人工填的值原樣保留。</p>
+<h2 class="stage" id="階段-11-健康檢查與修復-2D-文件"><span class="num">11</span>健康檢查與修復（2D 文件）</h2>
+<p><strong>指令 <code>LF_Health_Check</code></strong> → <strong>完全唯讀</strong>掃描，依 metadata 判定狀態 → 產生 Issue Report。</p>
+<p>這一步與現況 TAG-O 有本質差異。現況 TAG-O 只比對物件的 RGB 顏色，因此：必須先跑 Infuser 塗色才能檢查（先改資料才能檢查資料）、使用者自訂過顏色的 Tag 會誤判、而 Infuser 清除提示時會把 ColorSource 設回 ByLayer，<strong>破壞使用者原本的物件顏色</strong>。</p>
+<p>第一階段能可靠判定的狀態只有這幾種，建議先只做這些：</p>
+<div class="tw"><table><thead><tr><th>狀態</th><th>判定依據</th><th>第一階段可做</th></tr></thead><tbody><tr><td><code>unbound</code></td><td>沒有 <code>source_object_id</code></td><td>可</td></tr><tr><td><code>orphaned</code></td><td><code>source_object_id</code> 不在 Registry</td><td>可</td></tr><tr><td><code>manual_locked</code></td><td><code>lock_state</code></td><td>可</td></tr><tr><td><code>stale_data</code></td><td>Tag revision &lt; Registry revision</td><td>可</td></tr><tr><td><code>drawing_stale</code></td><td>Drawing source revision &lt; 目前 revision</td><td>可</td></tr><tr><td><code>ambiguous</code> / <code>view_missing</code> / <code>template_outdated</code> / <code>schema_mismatch</code></td><td>需要候選集合、<code>view_id</code>、<code>template_version</code>、<code>schema_version</code></td><td>待對應契約完成</td></tr></tbody></table></div>
+<p><strong>指令 <code>LF_Repair_Preview</code> → <code>LF_Repair_Apply</code></strong> → 先顯示「會改哪些 ID／Tag／Drawing、原值是什麼」，使用者逐項選擇重新綁定 / 同步 / 保留 / 脫離 / 略過 → 每項修復保存結果與復原資訊。</p>
+<hr>
+<h2 id="完整變更循環-把磁磚牆從-240-改成-260">完整變更循環：把磁磚牆從 240 改成 260</h2>
+<p>這是實務上最常發生的事，也是檢驗整條鏈是否成立的標準案例。</p>
+<div class="tw"><table><thead><tr><th>#</th><th>在哪</th><th>指令／動作</th><th>發生什麼</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>3D</td><td>Rhino 一般編輯</td><td>使用者把牆拉高 20 cm</td><td>幾何改變，<code>object_id</code> 不變</td></tr><tr><td>2</td><td>3D</td><td><code>LF_Nexus_Scan</code></td><td>比對後發現此物件的高程與尺寸已變</td><td>報告顯示「1 個物件資料需更新」，<strong>不建立新 ID、不寫入</strong></td></tr><tr><td>3</td><td>3D</td><td><code>LF_Nexus_Apply</code></td><td>使用者確認後寫入新高程</td><td>Model Object 更新，ID 與既有 Tag 關聯完全不動</td></tr><tr><td>4</td><td>3D</td><td><code>LF_Publish_Registry</code></td><td>pending → validate → replace</td><td>產生 revision <code>43</code>，<code>previous</code> 保留 <code>42</code></td></tr><tr><td>5</td><td>2D</td><td><code>LF_Health_Check</code></td><td>Tag 的 <code>last_synced_revision=42</code> &lt; <code>43</code>；Drawing source revision 也是 <code>42</code></td><td>報告：3 個 Tag <code>stale_data</code>、1 張圖 <code>drawing_stale</code>。<strong>此時什麼都還沒被改</strong></td></tr><tr><td>6</td><td>2D</td><td><code>! _UpdateClippingDrawings</code></td><td>Rhino 更新 linked Generated Drawing</td><td>原始剖面成果變新，<strong>已人工修改的 Editable Drawing 不受影響</strong></td></tr><tr><td>7</td><td>2D</td><td><code>LF_Drawing_Materialize</code></td><td>偵測到既有 Drawing 狀態是 <code>modified</code></td><td>要求選擇：另建 revision <code>43</code> 版本 / 預覽後取代 / 標為 detached / 這次略過</td></tr><tr><td>8</td><td>2D</td><td><code>LF_Sync_Current_Sheet</code></td><td>未鎖定的 Tag 從 revision <code>43</code> 取值</td><td>高度 Tag 從 <code>+240</code> 變成 <code>+260</code>；鎖定的 Tag 原值不動</td></tr><tr><td>9</td><td>2D</td><td><code>LF_Health_Check</code></td><td>重新判定</td><td>已同步的 Tag 回到 healthy；若第 7 步選了「略過」，報告會<strong>繼續保留</strong> <code>drawing_stale</code> 與原因，不假裝問題消失</td></tr></tbody></table></div>
+<p>關鍵在第 5 步和第 7 步：<strong>檢查不修改任何東西</strong>，而<strong>任何可能覆蓋人工成果的動作都要先問</strong>。現況這兩點都不成立——TAG-O 要先靠 Infuser 塗色才能檢查，Extract 則是直接再複製一份。</p>
+<hr>
+<h2 id="中斷-取消與失敗時停在哪裡">中斷、取消與失敗時停在哪裡</h2>
+<p>這是 ECO-08 的實際意義，也是現況最薄弱的地方。每個階段都要能明確回答「我按了 Esc 之後現在是什麼狀態」。</p>
+<div class="tw"><table><thead><tr><th>階段</th><th>中途取消</th><th>執行失敗</th></tr></thead><tbody><tr><td>開案</td><td>無副作用</td><td>顯示缺少的設定，不建立任何檔案</td></tr><tr><td>Dictionary 驗證</td><td>無副作用（唯讀）</td><td>列出全部錯誤列，不部分套用</td></tr><tr><td>Type Sync</td><td>已建立的 layer 保留，重跑補齊</td><td>報告哪些 layer 失敗，不留半套</td></tr><tr><td>Nexus Scan</td><td>無副作用（唯讀）</td><td>同上</td></tr><tr><td>Nexus Apply</td><td>已寫入部分保留、mapping 已落地，重跑 Scan 顯示剩餘</td><td>同左，並標明中斷點</td></tr><tr><td>Publish</td><td><code>current</code> 不變，<code>pending</code> 留著供檢查</td><td><code>current</code> 與 <code>previous</code> 都完好</td></tr><tr><td>Materialize</td><td>不留半份圖</td><td>已建立的部分可用同一 <code>drawing_id</code> 辨識並清除</td></tr><tr><td>Sheet 複製</td><td>不留半頁</td><td>待確認清單仍產出</td></tr><tr><td>Tag 綁定</td><td>Tag 維持原綁定</td><td>同左</td></tr><tr><td>同步</td><td>已同步的 Tag 保留其 revision，未處理的維持舊值</td><td>同左，報告列出未完成範圍</td></tr><tr><td>Health</td><td>無副作用（唯讀）</td><td>部分結果仍可顯示，標明未檢查範圍</td></tr><tr><td>Repair</td><td>未套用的項目不變</td><td>已套用項目可依復原資訊回退</td></tr></tbody></table></div>
+<p>另外三個現況會「順手改掉使用者東西」的行為，在 2.0 都要還原：selection、layer lock／visibility、物件顏色。</p>
+<hr>
+<h2 id="第一階段最小可用範圍">第一階段最小可用範圍</h2>
+<p>這條鏈不需要全部做完才能開始用。若要讓「模型 → 圖面 → Tag」跑通一次，最少需要：</p>
+<p><strong>必須有</strong>（缺一條鏈就斷）</p>
+<ol><li><code>LF_Project_Open</code>：路徑解析 + 單位偵測</li><li><code>LF_Dictionary_Validate</code> + <code>LF_Type_Sync</code>：Type Catalog 與 layer</li><li><code>LF_Nexus_Scan</code> / <code>LF_Nexus_Apply</code>：Object ID 與資料（含 ID 變更預覽）</li><li><code>LF_Publish_Registry</code>：安全發布 + revision</li><li><code>LF_View_Register</code>：固定 transform</li><li><code>LF_Drawing_Materialize</code>：冪等的可編輯圖面</li><li><code>LF_Tag_Grab</code> + <code>LF_Sync_*</code>：最簡單的綁定與同步</li><li><code>LF_Health_Check</code>：前述五種可靠狀態</li></ol>
+<p><strong>可以晚一輪</strong></p>
+<ul><li><code>LF_Tag_Laser</code>（有 Grab 就能出圖，Laser 是效率工具）</li><li><code>LF_Sheet_Duplicate</code>（可以先手動建頁）</li><li>完整 Drawing 狀態機（先有冪等就夠）</li><li>Cabinet／2D 工具重建（現有 1.x 版本可以繼續用到最後）</li><li><code>_09_實作數量</code>、<code>_05</code>/<code>_06</code>/<code>_07</code> 的方向規則（都還沒有 consumer）</li></ul>
+<p><strong>建議最先動工的一項</strong>：階段 4 的 Scan／Apply 拆分。它同時解掉 UUID 不可逆損失（ECO-11）、BC 靜默錯誤（ED-06）與空間未命中歧義（ED-07），而且不依賴其他任何新契約。</p>
+<hr>
+<h2 id="與-CodeX-流程的主要差異">與 CodeX 流程的主要差異</h2>
+<p>兩版的資料鏈結論一致，差異在細節與優先序：</p>
+<div class="tw"><table><thead><tr><th>項目</th><th>CodeX 版</th><th>Claude 版</th></tr></thead><tbody><tr><td>文件分工</td><td>未區分 3D／2D</td><td>每步標明執行文件，並說明 Worksession 角色</td></tr><tr><td>Nexus</td><td>Scan → Apply 兩步</td><td>相同，但明列 Impact Report 實際內容與三個現況問題的對應</td></tr><tr><td>Laser</td><td>用固定 View transform 定位</td><td>相同，另提議在 Materialize 時建立來源索引，讓 Laser 退化成查表（需 spike 驗證）</td></tr><tr><td>Sheet metadata</td><td>強烈建議、一次到位</td><td>一般建議、可分階段（失敗可回復）</td></tr><tr><td>非 cm 專案</td><td>直接阻擋</td><td>偵測與顯示是必須；阻擋只是可調的預設策略</td></tr><tr><td>Health 狀態</td><td>列出十種</td><td>第一階段只做五種可靠判定的，其餘標註前置需求</td></tr><tr><td>失敗行為</td><td>未展開</td><td>每階段列出取消與失敗時的狀態</td></tr><tr><td>施工順序</td><td>未排</td><td>給出最小可用範圍與建議最先動工項目</td></tr></tbody></table></div>
+<p>兩版都指向同一個核心：<strong>每個階段都有明確 ID、revision、預覽與人工停點，任何更新都不以「方便」為理由靜默換 ID、重綁來源或覆蓋人工成果。</strong></p>
+</section></main>
+</div>
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('nav a'));
+  var targets=links.map(function(a){return document.getElementById(a.getAttribute('href').slice(1));});
+  function upd(){
+    var y=window.scrollY+140, best=-1;
+    for(var i=0;i<targets.length;i++){ if(targets[i]&&targets[i].offsetTop<=y) best=i; }
+    links.forEach(function(a,i){ a.style.background = (i===best)?'#1e2432':''; });
+  }
+  window.addEventListener('scroll',upd,{passive:true}); upd();
+})();
+</script>
+</body>
+</html>

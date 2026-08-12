@@ -16,6 +16,14 @@
 - `ref/LOOPFLOW_DATA_ECOSYSTEM.md`
 - `ref/LOOPFLOW_DATA_ECOSYSTEM_REVIEW_Claude_Code.md`
 
+同目錄的相關文件：
+
+| 文件 | 負責 |
+|---|---|
+| `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` | 待使用者裁決的 `ECO-*`／`ED-*` 項目與 AI 建議強度；裁決結果的唯一來源 |
+| `LOOPFLOW_WORKFLOW_SIMULATION.md` | 依上述建議推導的兩份完整操作鏈（CodeX 版與 Claude Code 版），供對照與檢驗工作習慣 |
+| `LOOPFLOW_WORKFLOW_SIMULATION.html` | 同內容的深色好讀版，可直接以瀏覽器開啟 |
+
 本文的「現況事實」可由現行程式或 Dictionary 交叉確認，但不等於 2.0 必須沿用；由靜態讀碼推論的 Rhino 行為仍須實機測試。所有尚待使用者確認的原則與實務問題集中在 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`，不在本文件維護第二份答案。
 
 ## 不可遺失的工作邏輯
