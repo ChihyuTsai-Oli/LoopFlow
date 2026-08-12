@@ -97,7 +97,7 @@ LF_2D_DW_Gen.py
 LF_Sync_Worksession.py
 ```
 
-這是開發期暫定清單，不是凍結的公開契約。功能增減、入口檔名或 repo 內路徑改變時，應同步更新本節與測試工具列；正式安裝／RC 驗證才改用隔離的 `%APPDATA%` 開發安裝位置。
+這是開發期暫定清單，不是凍結的公開契約。功能增減、入口檔名或 repo 內路徑改變時，應同步更新本節與測試工具列。2.0 正式版會封裝為完整安裝檔／可安裝套件，不要求使用者逐一建立按鈕或管理 Python 路徑；RC 才在隔離位置驗證該安裝成果。封裝技術到發佈階段再決定，不預先鎖定 RHI、Package Manager 或獨立安裝器。
 
 ## 模組責任
 
@@ -181,7 +181,7 @@ Registry P0 完成前，以上 timeout 不代表 lock／replace 已達安全規�
 
 - `build.ps1` 將 `releases/LoopFlow/` 打包成 ZIP。
 - 現有穩定資產為 `releases/LoopFlow_v1.0.0.zip`。
-- 2.0 build 最終需產生 payload、ZIP、檔案清單與 SHA-256，並驗證 RHC／shared resources。
+- 2.0 build 最終需產生完整可安裝套件、檔案清單、版本 manifest 與 checksum，並驗證所有 shared resources；實際封裝技術於發佈階段評估。
 - RHP 需等 package 穩定後重新做 Rhino 8 spike；不可沿用舊的攤平腳本假設。
 
 ## 文件與程式註解規則
