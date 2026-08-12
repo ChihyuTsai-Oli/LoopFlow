@@ -263,13 +263,23 @@ nav{position:sticky;top:0;height:100vh;overflow-y:auto;padding:26px 14px 40px 22
   border-right:1px solid var(--line);background:var(--bg)}
 nav .brand{font-size:12px;letter-spacing:.16em;color:var(--tx3);text-transform:uppercase;margin-bottom:6px}
 nav .bt{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:20px;line-height:1.4}
+nav .nav-group{margin:0 0 9px}
+nav .nav-group summary{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:8px 9px;border-radius:6px;border-left:2px solid transparent;cursor:pointer;
+  list-style:none;font-size:13.4px;font-weight:650;line-height:1.45;user-select:none}
+nav .nav-group summary::-webkit-details-marker{display:none}
+nav .nav-group summary::after{content:"›";font-size:18px;line-height:1;color:var(--tx3);
+  transform:rotate(0);transition:transform .16s ease}
+nav .nav-group[open] summary::after{transform:rotate(90deg)}
+nav .nav-group summary:hover{background:var(--bg2)}
+nav .nav-group.codex summary{color:var(--codex);border-left-color:var(--codex)}
+nav .nav-group.claude summary{color:var(--claude);border-left-color:var(--claude)}
+nav .nav-items{padding:4px 0 7px}
 nav a{display:block;color:var(--tx2);text-decoration:none;font-size:12.8px;padding:3.5px 9px;
   border-radius:5px;border-left:2px solid transparent;line-height:1.5}
 nav a:hover{color:var(--tx);background:var(--bg2)}
-nav a.l1{margin-top:16px;font-weight:650;font-size:13.4px;color:var(--tx)}
+nav a.overview{margin:1px 0 3px;padding-left:16px;font-size:12.3px;color:var(--tx3)}
 nav a.l2{padding-left:16px}
-nav a.l1.codex{color:var(--codex);border-left-color:var(--codex)}
-nav a.l1.claude{color:var(--claude);border-left-color:var(--claude)}
 nav a.l2.codex:hover{border-left-color:var(--codex)}
 nav a.l2.claude:hover{border-left-color:var(--claude)}
 
@@ -332,11 +342,14 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 @media (max-width:1080px){
   .wrap{grid-template-columns:1fr}
   nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:20px 22px}
-  nav a{display:inline-block;margin:2px 4px 2px 0}
-  nav a.l2{display:none}
+  nav .nav-group{display:inline-block;width:min(330px,100%);margin:0 8px 8px 0;vertical-align:top}
+  nav a{display:block}
   main{padding:30px 22px 80px}
   .doctitle{font-size:24px}
   .chapter h1{font-size:21px}
+}
+@media (max-width:720px){
+  nav .nav-group{display:block;width:100%;margin-right:0}
 }
 @media print{
   nav{display:none} body{background:#fff;color:#111}
@@ -353,7 +366,18 @@ JS = """
     for(var i=0;i<targets.length;i++){ if(targets[i]&&targets[i].offsetTop<=y) best=i; }
     links.forEach(function(a,i){ a.style.background = (i===best)?'#1e2432':''; });
   }
-  window.addEventListener('scroll',upd,{passive:true}); upd();
+  function revealHash(){
+    if(!window.location.hash) return;
+    links.forEach(function(a){
+      if(a.getAttribute('href')===window.location.hash){
+        var group=a.closest('details');
+        if(group) group.open=true;
+      }
+    });
+  }
+  window.addEventListener('scroll',upd,{passive:true});
+  window.addEventListener('hashchange',revealHash);
+  revealHash(); upd();
 })();
 """
 
@@ -382,10 +406,26 @@ def render(md: str) -> str:
     body = close_chapters(body)
 
     nav = ['<div class="brand">LoopFlow 2.0</div>', '<div class="bt">模擬執行流程</div>']
+    group_open = False
+    group_index = 0
     for level, title, sid, variant in toc:
-        nav.append(
-            '<a class="l%d %s" href="#%s">%s</a>' % (level, variant, sid, html.escape(title))
-        )
+        if level == 1:
+            if group_open:
+                nav.extend(["</div>", "</details>"])
+            group_index += 1
+            open_attr = " open" if group_index == 1 else ""
+            nav.append('<details class="nav-group %s"%s>' % (variant, open_attr))
+            nav.append('<summary>%s</summary>' % html.escape(title))
+            nav.append('<div class="nav-items">')
+            nav.append('<a class="overview %s" href="#%s">流程總覽</a>' % (variant, sid))
+            group_open = True
+        else:
+            nav.append(
+                '<a class="l%d %s" href="#%s">%s</a>'
+                % (level, variant, sid, html.escape(title))
+            )
+    if group_open:
+        nav.extend(["</div>", "</details>"])
 
     return PAGE % (CSS, "\n".join(nav), body, JS)
 

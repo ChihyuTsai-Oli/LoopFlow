@@ -25,13 +25,23 @@ nav{position:sticky;top:0;height:100vh;overflow-y:auto;padding:26px 14px 40px 22
   border-right:1px solid var(--line);background:var(--bg)}
 nav .brand{font-size:12px;letter-spacing:.16em;color:var(--tx3);text-transform:uppercase;margin-bottom:6px}
 nav .bt{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:20px;line-height:1.4}
+nav .nav-group{margin:0 0 9px}
+nav .nav-group summary{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:8px 9px;border-radius:6px;border-left:2px solid transparent;cursor:pointer;
+  list-style:none;font-size:13.4px;font-weight:650;line-height:1.45;user-select:none}
+nav .nav-group summary::-webkit-details-marker{display:none}
+nav .nav-group summary::after{content:"›";font-size:18px;line-height:1;color:var(--tx3);
+  transform:rotate(0);transition:transform .16s ease}
+nav .nav-group[open] summary::after{transform:rotate(90deg)}
+nav .nav-group summary:hover{background:var(--bg2)}
+nav .nav-group.codex summary{color:var(--codex);border-left-color:var(--codex)}
+nav .nav-group.claude summary{color:var(--claude);border-left-color:var(--claude)}
+nav .nav-items{padding:4px 0 7px}
 nav a{display:block;color:var(--tx2);text-decoration:none;font-size:12.8px;padding:3.5px 9px;
   border-radius:5px;border-left:2px solid transparent;line-height:1.5}
 nav a:hover{color:var(--tx);background:var(--bg2)}
-nav a.l1{margin-top:16px;font-weight:650;font-size:13.4px;color:var(--tx)}
+nav a.overview{margin:1px 0 3px;padding-left:16px;font-size:12.3px;color:var(--tx3)}
 nav a.l2{padding-left:16px}
-nav a.l1.codex{color:var(--codex);border-left-color:var(--codex)}
-nav a.l1.claude{color:var(--claude);border-left-color:var(--claude)}
 nav a.l2.codex:hover{border-left-color:var(--codex)}
 nav a.l2.claude:hover{border-left-color:var(--claude)}
 
@@ -94,11 +104,14 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 @media (max-width:1080px){
   .wrap{grid-template-columns:1fr}
   nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:20px 22px}
-  nav a{display:inline-block;margin:2px 4px 2px 0}
-  nav a.l2{display:none}
+  nav .nav-group{display:inline-block;width:min(330px,100%);margin:0 8px 8px 0;vertical-align:top}
+  nav a{display:block}
   main{padding:30px 22px 80px}
   .doctitle{font-size:24px}
   .chapter h1{font-size:21px}
+}
+@media (max-width:720px){
+  nav .nav-group{display:block;width:100%;margin-right:0}
 }
 @media print{
   nav{display:none} body{background:#fff;color:#111}
@@ -110,7 +123,10 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <div class="wrap">
 <nav><div class="brand">LoopFlow 2.0</div>
 <div class="bt">模擬執行流程</div>
-<a class="l1 codex" href="#CodeX-模擬執行流程">CodeX 模擬執行流程</a>
+<details class="nav-group codex" open>
+<summary>CodeX 模擬執行流程</summary>
+<div class="nav-items">
+<a class="overview codex" href="#CodeX-模擬執行流程">流程總覽</a>
 <a class="l2 codex" href="#前提-資料會跨越兩個-Rhino-文件">前提｜資料會跨越兩個 Rhino 文件</a>
 <a class="l2 codex" href="#階段-1-開案與確認環境-3D-文件">階段 1｜開案與確認環境（3D 文件）</a>
 <a class="l2 codex" href="#階段-2-驗證-Dictionary-與建立建模-Layer-3D-文件">階段 2｜驗證 Dictionary 與建立建模 Layer（3D 文件）</a>
@@ -127,7 +143,12 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <a class="l2 codex" href="#階段-13-交付前檢查與選擇性修復-2D-文件">階段 13｜交付前檢查與選擇性修復（2D 文件）</a>
 <a class="l2 codex" href="#完整變更循環-磁磚牆由-240-cm-改成-260-cm">完整變更循環｜磁磚牆由 240 cm 改成 260 cm</a>
 <a class="l2 codex" href="#從開案到交付的一條線">從開案到交付的一條線</a>
-<a class="l1 claude" href="#Claude-Code-模擬執行流程">Claude Code 模擬執行流程</a>
+</div>
+</details>
+<details class="nav-group claude">
+<summary>Claude Code 模擬執行流程</summary>
+<div class="nav-items">
+<a class="overview claude" href="#Claude-Code-模擬執行流程">流程總覽</a>
 <a class="l2 claude" href="#前提-這條流程同時跑在兩個文件上">前提：這條流程同時跑在兩個文件上</a>
 <a class="l2 claude" href="#階段-1-開案與環境檢查-3D-文件">階段 1｜開案與環境檢查（3D 文件）</a>
 <a class="l2 claude" href="#階段-2-Type-Catalog-與-Layer-3D-文件">階段 2｜Type Catalog 與 Layer（3D 文件）</a>
@@ -143,7 +164,9 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <a class="l2 claude" href="#完整變更循環-把磁磚牆從-240-改成-260">完整變更循環：把磁磚牆從 240 改成 260</a>
 <a class="l2 claude" href="#中斷-取消與失敗時停在哪裡">中斷、取消與失敗時停在哪裡</a>
 <a class="l2 claude" href="#第一階段最小可用範圍">第一階段最小可用範圍</a>
-<a class="l2 claude" href="#與-CodeX-流程的主要差異">與 CodeX 流程的主要差異</a></nav>
+<a class="l2 claude" href="#與-CodeX-流程的主要差異">與 CodeX 流程的主要差異</a>
+</div>
+</details></nav>
 <main><h1 class="doctitle" id="LoopFlow-2-0-模擬執行流程">LoopFlow 2.0 — 模擬執行流程</h1>
 <p>本文件把 <code>LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md</code> 的建議轉成可實際理解的操作鏈，協助判斷這些原則是否符合工作習慣。兩份流程由不同 AI 獨立推導，走同一條資料鏈但在細節與優先序上有差異，並列以便對照。</p>
 <ul><li>決策項目與建議強度：<code>LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md</code>（<code>ECO-*</code>／<code>ED-*</code> 編號皆指向該表）</li><li>資料實體、真相邊界與現況盤點：<code>LOOPFLOW_DATA_ECOSYSTEM.md</code></li><li>本文件不維護決策答案；使用者的裁決一律寫在決策表，不在此重複。</li></ul>
@@ -355,7 +378,18 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
     for(var i=0;i<targets.length;i++){ if(targets[i]&&targets[i].offsetTop<=y) best=i; }
     links.forEach(function(a,i){ a.style.background = (i===best)?'#1e2432':''; });
   }
-  window.addEventListener('scroll',upd,{passive:true}); upd();
+  function revealHash(){
+    if(!window.location.hash) return;
+    links.forEach(function(a){
+      if(a.getAttribute('href')===window.location.hash){
+        var group=a.closest('details');
+        if(group) group.open=true;
+      }
+    });
+  }
+  window.addEventListener('scroll',upd,{passive:true});
+  window.addEventListener('hashchange',revealHash);
+  revealHash(); upd();
 })();
 </script>
 </body>
