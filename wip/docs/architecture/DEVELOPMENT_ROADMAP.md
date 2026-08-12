@@ -1,6 +1,6 @@
 # LoopFlow 2.0 — 任務切分與開發路徑
 
-本文件把 2.0 重構拆成可在單一工作時段完成、驗證、提交與推送的工作單位。功能細節以所屬契約文件為準；進度狀態只記錄於 `PROGRESS.md`。
+本文件把 2.0 重構拆成可在單一工作時段完成、驗證、提交與推送的工作單位。功能細節以所屬契約文件為準；進度狀態只記錄於 `PROGRESS.md`。現行順序建立於資料生態藍圖之前；`LOOPFLOW_DATA_ECOSYSTEM.md` 確立後，須依確認的工作鏈與依賴重新排序，不能把本表當成不可變架構。
 
 ## 執行規則
 
@@ -15,7 +15,7 @@
 
 | ID | 任務／建議分支 scope | 前置 | 主要產出 | 完成檢查與安全停點 |
 |---|---|---|---|---|
-| LF-A01 | 現況工作流與依賴盤點／`workflow-inventory` | 無 | Dictionary → Nexus → UserText／UUID／Space → Registry → Layout／Tag／Infuser → Cabinet／2D／Worksession 的 producer、consumer、副作用與失敗條件 | 盤點表可追溯至現行程式；只改文件，可安全換機 |
+| LF-A01 | 現況工作流與依賴盤點／`workflow-inventory` | 無 | `LOOPFLOW_DATA_ECOSYSTEM.md`：完整工作鏈、資料實體，以及 23 支現行程式的 producer、consumer、副作用與保留意圖 | 盤點表可追溯至現行程式；只改文件，可安全換機 |
 | LF-A02 | Dictionary 欄位盤點／`dictionary-inventory` | A01 | 現行 XLSX 欄位、型別、版本列、允許值、使用者顯示名稱與 consumer 對照 | 範例檔與指南交叉核對；未裁決欄位明確標記 |
 | LF-A03 | 命名與識別契約／`naming-contract` | A01–A02 | canonical UserText key、UUID、完整 layer path、Space identity、指令與檔名規則 | 使用者裁決已記錄；禁止直接改正式資料 |
 | LF-A04 | Registry／Tag 資料契約／`registry-tag-contract` | A01–A03 | schema version、Registry object、Tag Block、Producer／Consumer 與 migration 邊界 | 合法、缺值、未知版本及舊版案例可描述 |

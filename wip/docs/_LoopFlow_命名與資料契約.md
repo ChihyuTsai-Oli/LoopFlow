@@ -17,6 +17,7 @@
 - 舊專案若需要升級，由獨立 migration scanner／converter 處理，不把相容程式混入日常 command。
 - `main`、`v1.0.0` 與 Release ZIP 保留舊規則；2.0 在隔離安裝與測試資料上使用新規則。
 - 名稱的語意由使用者確認；AI 負責盤點依賴、提出衝突與可理解選項。
+- 整條工作鏈、資料實體與真相邊界以 `architecture/LOOPFLOW_DATA_ECOSYSTEM.md` 為上位藍圖；本文件負責把已確認原則落成可驗證 schema。
 
 ## 必須盤點的命名層級
 

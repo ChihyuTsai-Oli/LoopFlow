@@ -13,3 +13,5 @@ wip/
 大型 Rhino 工作檔、人工測試輸出與可由 Dropbox 同步的素材不放進 repo。其本機根目錄由環境變數 `LOOPFLOW_WORKFILES_ROOT` 指定，電腦對照與設定方式見工作區根目錄 `工作檔路徑.md`。
 
 重構採用 `%LOOPFLOW_WORKFILES_ROOT%\LoopFlow_Dictionary.xlsx` 的中文版本；Rhino 與其他程式產生／讀取的即時 JSON 放在同一工作檔根目錄的 `exchange/`，不提交 Git。
+
+總體工作鏈、資料實體與 23 支現行程式的保留意圖，先讀 `docs/architecture/LOOPFLOW_DATA_ECOSYSTEM.md`；欄位與 Nexus 細項再讀 `NEXUS_DICTIONARY_DECISION_MENU.md`。

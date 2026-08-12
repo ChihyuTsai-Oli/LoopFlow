@@ -6,6 +6,8 @@
 
 LoopFlow 不再以「每個按鈕一支完整 Python」作為架構邊界。2.0 會先重新定義工作流、Dictionary、命名與資料契約，再讓指令入口只呼叫 command catalog；Tag、Registry、Nexus、Layout、Cabinet 等邏輯依一起變動的功能群管理。
 
+總體資料生態、工作鏈、資料實體、23 支現行程式的保留意圖與可翻案做法，以 `architecture/LOOPFLOW_DATA_ECOSYSTEM.md` 為起點。程式架構服務工作鏈，不反過來限制工作方式。
+
 重構要解決：
 
 - UserText／Dictionary key 有多套版本。
@@ -39,33 +41,35 @@ LoopFlow 不再以「每個按鈕一支完整 Python」作為架構邊界。2.0 
 ## 目標結構
 
 ```text
-wip/src/
-  loopflow/
-    bootstrap.py
-    command_catalog.py
-    features/
-      tagging/
-      nexus/
-      layout/
-      cabinet/
-      drawing2d/
-    platform/
-      rhino/
-      registry.py
-      dictionary_files.py
-      excel.py
-    foundation/
-      config.py
-      paths.py
-      logging.py
-      results.py
-      atomic_io.py
-      dependencies.py
-      version.py
-  entrypoints/
-tests/
-docs/
-tools/
+wip/
+  src/
+    loopflow/
+      bootstrap.py
+      command_catalog.py
+      features/
+        tagging/
+        nexus/
+        layout/
+        cabinet/
+        drawing2d/
+      platform/
+        rhino/
+        registry.py
+        dictionary_files.py
+        excel.py
+      foundation/
+        config.py
+        paths.py
+        logging.py
+        results.py
+        atomic_io.py
+        dependencies.py
+        version.py
+    entrypoints/
+  tests/
+  fixtures/
+  docs/
+  tools/
 ```
 
 ## Track 0：先處理安全問題

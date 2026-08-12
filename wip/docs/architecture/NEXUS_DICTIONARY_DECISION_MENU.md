@@ -1,6 +1,6 @@
 # LoopFlow 2.0 — Nexus／Dictionary 現況盤點與決策菜單
 
-本文件記錄 1.0 程式與實際 Dictionary 的靜態盤點結果，作為 2.0 開始寫程式前的討論菜單。它不是要沿用舊架構，也不代表所有現況都是正確規格。
+本文件記錄 1.0 程式與實際 Dictionary 的靜態盤點結果，作為欄位與 Nexus 細節的討論菜單。整條工作鏈、資料實體與上位原則先以 `LOOPFLOW_DATA_ECOSYSTEM.md` 為準；本文件後續會依該藍圖重排。它不是要沿用舊架構，也不代表所有現況都是正確規格。
 
 ## 盤點狀態
 
@@ -168,7 +168,7 @@ flowchart LR
 | ND-04 | 模型單位 | A. 所有 LoopFlow 專案固定 cm，非 cm 直接阻擋；B. 支援 Rhino 任意單位並明確換算；C. 延續混合字串 | 若實務專案全是 cm，建議 **A**；否則 **B**，但成本較高 |
 | ND-05 | 缺值 | A. 內部使用 typed null，只有畫面／Tag 顯示 `-`；B. 所有層都保存 `-` 字串 | **A**；避免把缺值誤當真實文字或數字 |
 | ND-06 | Dictionary 中的計算欄 | A. 保留欄位定義，但 row value 不作預設；B. 從 Dictionary 移除；C. 允許 row 預設覆寫計算 | **A**；schema 可見、所有權仍清楚 |
-| ND-07 | Layer taxonomy | A. 2.0 沿用目前英文 layer path；B. 改成中英雙語；C. 另訂新分類 | 暫建議 **A**；顯示翻譯不要放進 machine path |
+| ND-07 | Layer taxonomy | A. 採用目前 Dropbox 中文版的中英雙語 layer path；B. 改為英文 path、中文只顯示；C. 另訂新分類 | 已選定中文版作重構來源；仍須依 ECO-02 將 layer path 與穩定 Type ID 分離 |
 | ND-08 | 專案檔案位置 | **已定案**：Dictionary 與即時交換 JSON 位於各專案的 Dropbox 工作檔根目錄，以環境變數解析；JSON 預設整理於 `exchange/` | 家中電腦使用相同變數名稱、不同實體路徑 |
 
 ### 第二輪：固定 Nexus 的核心語意
@@ -183,7 +183,7 @@ flowchart LR
 | ND-14 | UUID 範圍與複製 | A. 專案全域唯一，複製產生新 UUID；B. 只在每個 `.3dm` 唯一；C. 複製保留 UUID | 建議 **A**；Tag／Registry 的跨檔關聯需另用 mapping |
 | ND-15 | Construction Status | A. Dictionary 給預設、物件可 override，並提供 Reset to default；B. Dictionary 每次強制覆寫；C. 只由物件維護 | 建議 **A** |
 | ND-16 | Quantity | A. 現在定義計算規則；B. schema 先保留但明確標為人工／外部值；C. 2.0 移除 | 若尚無可靠算法，建議 **B**，不再宣稱 Nexus 會計算 |
-| ND-17 | Remarks 預設 | A. 預設空白；B. 保留 `Follow the white rabbit.`；C. 每個 layer 另訂正式備註 | 建議 **A** |
+| ND-17 | Remarks 預設 | A. 預設空白；B. 保留 `我是備註，UCCU`；C. 每個 Type 另訂正式備註 | 建議 **A**；`20_DW` 的正式操作說明可另設 instruction 欄位 |
 
 ### 第三輪：固定下游交換與延後功能的邊界
 
