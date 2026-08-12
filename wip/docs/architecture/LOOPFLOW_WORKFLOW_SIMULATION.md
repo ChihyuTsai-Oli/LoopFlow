@@ -8,6 +8,8 @@
 
 `LF_*` 名稱是 **2.0 概念指令名稱，不是已完成的按鈕或最終命名**；`! _Clipping*` 則是 Rhino 8 內建指令。兩份流程都尚未經 Rhino 實機驗證。
 
+> 本文件有一份深色好讀版 `LOOPFLOW_WORKFLOW_SIMULATION.html`，是**由本檔產生的衍生檔，不要手動編輯**。修改本檔後執行 `python wip/tools/build_workflow_html.py` 重新產生；`--check` 可驗證兩者是否一致。
+
 ---
 
 # CodeX 模擬執行流程

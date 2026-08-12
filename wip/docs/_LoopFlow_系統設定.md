@@ -48,10 +48,14 @@ wip/
     _LoopFlow_*.md        # 重構維護 SSOT
     architecture/LOOPFLOW_DATA_ECOSYSTEM.md
     architecture/LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md
+    architecture/LOOPFLOW_WORKFLOW_SIMULATION.md
+    architecture/LOOPFLOW_WORKFLOW_SIMULATION.html  # 衍生檔，由 tools 產生，勿手改
     architecture/NEXUS_DICTIONARY_DECISION_MENU.md
     architecture/DEVELOPMENT_ROADMAP.md
     architecture/PROGRESS.md
     architecture/ref/    # 已合併的原始評閱與歷史參考，不是現行 SSOT
+  tools/
+    build_workflow_html.py  # 由流程 md 產生 html；`--check` 可驗證是否過期
   src/                    # 2.0 原始碼（後續建立）
   tests/                  # 自動測試（後續建立）
   fixtures/               # 可提交的輕量測試資料（後續建立）

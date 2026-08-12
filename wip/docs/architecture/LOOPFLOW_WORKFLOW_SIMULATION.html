@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>LoopFlow 2.0 — 模擬執行流程</title>
 <style>
+/* ---- 色票與字體 ---- */
 :root{
   --bg:#0e1014; --bg2:#141821; --panel:#171b25; --line:#252b39; --line2:#323a4d;
   --tx:#dbe0ea; --tx2:#a6afc2; --tx3:#79839a;
@@ -19,7 +20,7 @@ body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);
   font-size:15.5px;line-height:1.85;letter-spacing:.01em;-webkit-font-smoothing:antialiased}
 .wrap{display:grid;grid-template-columns:264px minmax(0,1fr);gap:0;max-width:1500px;margin:0 auto}
 
-/* ---- TOC ---- */
+/* ---- 側邊目錄 ---- */
 nav{position:sticky;top:0;height:100vh;overflow-y:auto;padding:26px 14px 40px 22px;
   border-right:1px solid var(--line);background:var(--bg)}
 nav .brand{font-size:12px;letter-spacing:.16em;color:var(--tx3);text-transform:uppercase;margin-bottom:6px}
@@ -34,10 +35,9 @@ nav a.l1.claude{color:var(--claude);border-left-color:var(--claude)}
 nav a.l2.codex:hover{border-left-color:var(--codex)}
 nav a.l2.claude:hover{border-left-color:var(--claude)}
 
-/* ---- content ---- */
+/* ---- 內文 ---- */
 main{padding:44px 52px 120px;min-width:0}
 .doctitle{font-size:29px;font-weight:700;letter-spacing:.01em;margin:0 0 6px;line-height:1.35}
-.meta{color:var(--tx3);font-size:12.5px;margin:0 0 30px;padding-bottom:22px;border-bottom:1px solid var(--line)}
 p{margin:0 0 15px}
 strong{color:#fff;font-weight:650}
 hr{border:0;border-top:1px solid var(--line);margin:38px 0}
@@ -51,7 +51,7 @@ pre.code{background:#12161f;border:1px solid var(--line);border-left:3px solid v
   border-radius:7px;padding:15px 17px;overflow-x:auto;margin:0 0 18px}
 pre.code code{background:none;border:0;padding:0;color:#b9c4d8;font-size:13px;line-height:1.72;white-space:pre}
 
-/* ---- chapters ---- */
+/* ---- 章節（CodeX / Claude） ---- */
 .chapter{padding-top:12px}
 .chapter h1{font-size:25px;font-weight:700;margin:0 0 26px;padding:0 0 14px;
   display:flex;align-items:center;gap:13px;flex-wrap:wrap;border-bottom:2px solid var(--line)}
@@ -72,7 +72,12 @@ h2.stage .num{display:inline-flex;align-items:center;justify-content:center;
 .chapter.claude h2.stage .num{background:var(--claude-d);color:var(--claude);border:1px solid #2b5661}
 .chapter.codex h2.stage .num{background:var(--codex-d);color:var(--codex);border:1px solid #5c4626}
 
-/* ---- tables ---- */
+/* ---- 引言區塊 ---- */
+blockquote{margin:0 0 20px;padding:13px 18px;background:#151a24;
+  border-left:3px solid var(--line2);border-radius:0 7px 7px 0;color:var(--tx2);font-size:14.6px}
+blockquote strong{color:var(--tx)}
+
+/* ---- 表格 ---- */
 .tw{overflow-x:auto;margin:0 0 22px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
 table{border-collapse:collapse;width:100%;min-width:600px;font-size:13.6px}
 th{background:#1b2130;color:var(--tx);font-weight:660;text-align:left;
@@ -85,7 +90,7 @@ tbody tr:hover{background:rgba(255,255,255,.038)}
 td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 .chapter table td strong{color:#fff}
 
-/* ---- responsive ---- */
+/* ---- 響應式與列印 ---- */
 @media (max-width:1080px){
   .wrap{grid-template-columns:1fr}
   nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:20px 22px}
@@ -129,6 +134,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <p>本文件把 <code>LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md</code> 的建議轉成可實際理解的操作鏈，協助判斷這些原則是否符合工作習慣。兩份流程由不同 AI 獨立推導，走同一條資料鏈但在細節與優先序上有差異，並列以便對照。</p>
 <ul><li>決策項目與建議強度：<code>LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md</code>（<code>ECO-*</code>／<code>ED-*</code> 編號皆指向該表）</li><li>資料實體、真相邊界與現況盤點：<code>LOOPFLOW_DATA_ECOSYSTEM.md</code></li><li>本文件不維護決策答案；使用者的裁決一律寫在決策表，不在此重複。</li></ul>
 <p><code>LF_*</code> 名稱是 <strong>2.0 概念指令名稱，不是已完成的按鈕或最終命名</strong>；<code>! _Clipping*</code> 則是 Rhino 8 內建指令。兩份流程都尚未經 Rhino 實機驗證。</p>
+<blockquote>本文件有一份深色好讀版 <code>LOOPFLOW_WORKFLOW_SIMULATION.html</code>，是<strong>由本檔產生的衍生檔，不要手動編輯</strong>。修改本檔後執行 <code>python wip/tools/build_workflow_html.py</code> 重新產生；<code>--check</code> 可驗證兩者是否一致。</blockquote>
 <hr>
 <section class="chapter codex" id="CodeX-模擬執行流程">
 <h1><span class="tagpill">CodeX</span>模擬執行流程</h1>
