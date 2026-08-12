@@ -50,6 +50,7 @@ wip/
     architecture/NEXUS_DICTIONARY_DECISION_MENU.md
     architecture/DEVELOPMENT_ROADMAP.md
     architecture/PROGRESS.md
+    architecture/ref/    # 已合併的原始評閱與歷史參考，不是現行 SSOT
   src/                    # 2.0 原始碼（後續建立）
   tests/                  # 自動測試（後續建立）
   fixtures/               # 可提交的輕量測試資料（後續建立）
@@ -189,6 +190,7 @@ Registry P0 完成前，以上 timeout 不代表 lock／replace 已達安全規�
 - 任務切分、依賴順序與雙機安全停點：`architecture/DEVELOPMENT_ROADMAP.md`。
 - Dictionary、命名與 schema SSOT：`_LoopFlow_命名與資料契約.md`。
 - 完整工作鏈、資料實體、真相邊界與 23 支現行程式意圖：`architecture/LOOPFLOW_DATA_ECOSYSTEM.md`。
+- 已合併的原始藍圖與獨立複核：`architecture/ref/`；只供追溯，不取代整合後藍圖。
 - Nexus／Dictionary 的 1.0 靜態盤點、衝突與待決定選項：`architecture/NEXUS_DICTIONARY_DECISION_MENU.md`。
 - 內部維護文件與新增／修改註解使用繁體中文。
 - 模組整體目的、流程、設定、契約、副作用與回復方式寫入 docs。

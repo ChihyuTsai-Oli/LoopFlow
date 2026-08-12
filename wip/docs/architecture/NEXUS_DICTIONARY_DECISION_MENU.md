@@ -62,7 +62,7 @@ flowchart LR
 - 工作表：`LoopFlow_Dictionary`
 - 使用範圍：`A1:R94`
 - 標題：`LoopFlow Dictionary v1.0`
-- 資料列：92；`__Rhino Layer` 與 `_03_ID Number` 都沒有重複
+- 資料列：92；`__Rhino Layer` 與 `_03_ID編號` 都沒有重複
 - 欄位：18；沒有公式
 - `_01`、`_05`、`_06`、`_07`、`_09`、`_11`、`_12` 與四個 `_CB` 欄目前全部留白
 - 欄名採中文，例如 `_01_空間名稱`、`_02_建構狀態`、`_CB.01_板材類型`
@@ -76,23 +76,25 @@ flowchart LR
 | 欄位 | 現行來源／寫入者 | 主要 consumer | 現況問題 |
 |---|---|---|---|
 | `__Rhino Layer` | Dictionary；Layer to Dict 反向匯出 | Nexus、layer 建立、Push 範圍 | 選定版本為中英雙語 path；同時是顯示 path 與主鍵，`M3D::` 前綴由程式另加 |
-| `_01_Space Name` | Nexus 由 boundary 計算 | Registry、TAG-O | boundary 實際用另一個 key `Space_Name`；重疊與樓層未定義 |
-| `_02_Construction Status` | Dictionary 預設；物件既有值受保護 | Registry、標註流程 | UI 說結構層預設 Existing，但程式實際先看 Dictionary；重設規則不明 |
-| `_03_ID Number` | Dictionary | Push、Laser、Infuser、Tag | `-` 會略過 Push；Infuser 又把第一個 `-` 當結構分隔符 |
-| `_04_ID Name` | Dictionary | Laser、Infuser、Nexus 輔助 UI | 顯示名稱與機器識別未分離 |
-| `_05_Width W` | Nexus bbox 計算 | Registry／後續資料 | 世界座標與物件局部方向未定義；儲存為字串 |
-| `_06_Depth D` | Nexus bbox 計算 | Registry／後續資料 | 同上 |
-| `_07_Height H` | Nexus bbox 計算 | Registry／後續資料 | 同上 |
-| `_08_Unit` | Dictionary | Registry／報表構想 | 實際值與公開指南不一致；可用值未驗證 |
-| `_09_Quantity` | 物件既有值受保護 | Registry／報表構想 | 23 支程式中找不到計算 producer；指南卻稱由 Nexus 計算 |
-| `_10_Elevation Basis` | Dictionary | Nexus、Infuser | `CH` 的程式行為目前等同 `BH`，語意未實作 |
-| `_11_Elevation Value` | Nexus | Registry、Infuser | 是帶 `+`／`±0`／`TH / BH` 的顯示字串，不是指南所稱單純數字 |
-| `_12_UUID` | Nexus | Push、Grab、Laser、Registry | 全模型掃描與 M3D scope 混用；複製／舊資料修復政策未定 |
-| `_13_備註` | Dictionary 預設；物件既有值受保護 | Registry | 91 個 layer 的預設為 `我是備註，UCCU`，需確認是否只是測試字串 |
-| `_CB.01_Panel_Type` | Cabinet；Nexus 條件保留或清為 `-` | Registry、Cabinet／2D | Cabinet layer 判定與實際生成位置可能不同 |
-| `_CB.02_Length_L` | Cabinet；Nexus 條件保留或清為 `-` | Registry、Cabinet／2D | 依尺寸排序推導 L，不一定等於語意方向 |
-| `_CB.03_Width_W` | Cabinet；Nexus 條件保留或清為 `-` | Registry、Cabinet／2D | 同上 |
-| `_CB.04_Thickness_T` | Cabinet；Nexus 條件保留或清為 `-` | Registry、Cabinet／2D | 同上 |
+| `_01_空間名稱` | Nexus 由 boundary 計算 | TAG-O 空間覆蓋 | boundary 實際用另一個 key `Space_Name`；重疊與樓層未定義 |
+| `_02_建構狀態` | Dictionary 預設；物件既有值受保護 | 無已知行為 consumer | 重設與未來報表規則不明 |
+| `_03_ID編號` | Dictionary | Push、Laser、Infuser、Tag | 92 筆皆為類別碼-序號；Infuser 以第一個 `-` 拆分 |
+| `_04_ID名稱` | Dictionary | Laser、Infuser、Nexus 輔助 UI | 92 筆中並非唯一，只能作顯示名稱 |
+| `_05_寬度W` | Nexus bbox 計算 | 無已知行為 consumer | 世界座標與物件局部方向未定義；儲存為字串 |
+| `_06_深度D` | Nexus bbox 計算 | 無已知行為 consumer | 同上 |
+| `_07_高度H` | Nexus bbox 計算 | 無已知行為 consumer | 同上 |
+| `_08_單位` | Dictionary | 無已知行為 consumer | 是工程估算單位，不是 Rhino 模型單位 |
+| `_09_實作數量` | 無 producer，只在缺值時補 `-` | 無已知行為 consumer | 指南稱 Nexus 計算，但程式不存在 |
+| `_10_高程基準` | Dictionary | Nexus、Infuser | 同時承擔幾何規則與顯示標籤；`CH` 取底面，非 Block 的 `BC` 靜默退回底面 |
+| `_11_高程計算` | Nexus | Infuser | 是帶 `+`／`±0`／`TH / BH` 的顯示字串，不是單純數值 |
+| `_12_UUID` | Nexus | Push、Grab、Laser、Infuser、TAG-O | 重複時原件與複本都可能換號並切斷 Tag；需 mapping／rollback |
+| `_13_備註` | Dictionary 預設；物件既有值受保護 | 無已知行為 consumer | 91 個 layer 的預設為 `我是備註，UCCU`，需確認是否只是測試字串 |
+| `_CB.01_板材類型` | Cabinet；Nexus 條件保留或清為 `-` | 無已知行為 consumer | Cabinet layer 判定與實際生成位置可能不同 |
+| `_CB.02_長度L` | Cabinet；Nexus 條件保留或清為 `-` | 無已知行為 consumer | 現況依尺寸排序，丟失已有 local direction |
+| `_CB.03_寬度W` | Cabinet；Nexus 條件保留或清為 `-` | 無已知行為 consumer | 同上 |
+| `_CB.04_厚度T` | Cabinet；Nexus 條件保留或清為 `-` | 無已知行為 consumer | 同上 |
+
+完整 producer／consumer、非 Dictionary key 與無 consumer 項目，以整合後的 `LOOPFLOW_DATA_ECOSYSTEM.md` 為準。
 
 ## 設定盤點
 
@@ -114,6 +116,7 @@ flowchart LR
 
 ### 散落在 config 外的隱性設定
 
+- 專案目錄的 `NamingRules_Config.json` 另行控制 separator、baseline、圖號／REF_ID 格式與 prefix pattern。
 - Space 預設值 `EXT`、boundary 命中採「第一個」與 bottom-center 取樣點。
 - 高程 slab 關鍵字、`200.0`、`2000.0`、`50.0`、`0.01`、`+1.0` 等容差與補正值。
 - 尺寸小數一位、UUID4 uppercase、缺值 sentinel `-`。
@@ -165,7 +168,8 @@ flowchart LR
 | ND-01 | 程式欄位 ID 與中英文顯示 | A. 固定英文 machine key，中文／英文只做顯示標籤；B. 完整中文 key；C. 保留任意字尾、只認 prefix | **A**；最適合穩定 schema 與多語文件 |
 | ND-02 | Dictionary 的責任 | A. layer／類型的預設資料；B. 同時保存每個物件的即時資料；C. 只做 layer 清單 | **A**；物件即時資料留在 UserText／Registry |
 | ND-03 | 欄位所有權 | A. 每欄固定 `dictionary_default / computed / object_override / external`；B. 繼續按程式分支猜測 | **A**；這是 Nexus 可拆分的前提 |
-| ND-04 | 模型單位 | A. 所有 LoopFlow 專案固定 cm，非 cm 直接阻擋；B. 支援 Rhino 任意單位並明確換算；C. 延續混合字串 | 若實務專案全是 cm，建議 **A**；否則 **B**，但成本較高 |
+| ND-04a | Rhino 模型文件單位 | A. 固定 cm，非 cm 直接阻擋；B. 支援任意模型單位並明確換算 | 現行工具全部按 cm 設計但從未驗證；建議 **A**，仍待使用者確認 |
+| ND-04b | `_08_單位` 與 `_09_實作數量` | A. 建立估算單位 enum 與單位→幾何量規則；B. `_09` 先定義為人工／外部值；C. 移除估算功能 | 這是工程估算單位，與 Rhino 單位無關；若算法未定，先 **B** |
 | ND-05 | 缺值 | A. 內部使用 typed null，只有畫面／Tag 顯示 `-`；B. 所有層都保存 `-` 字串 | **A**；避免把缺值誤當真實文字或數字 |
 | ND-06 | Dictionary 中的計算欄 | A. 保留欄位定義，但 row value 不作預設；B. 從 Dictionary 移除；C. 允許 row 預設覆寫計算 | **A**；schema 可見、所有權仍清楚 |
 | ND-07 | Layer taxonomy | A. 採用目前 Dropbox 中文版的中英雙語 layer path；B. 改為英文 path、中文只顯示；C. 另訂新分類 | 已選定中文版作重構來源；仍須依 ECO-02 將 layer path 與穩定 Type ID 分離 |
@@ -190,12 +194,12 @@ flowchart LR
 | ID | 要決定什麼 | 選項 | 建議 |
 |---|---|---|---|
 | ND-18 | Registry payload | A. 版本化 typed schema + 明確 extension 區；B. 將全部 UserText 原樣快照 | **A**；避免任意欄位變成永久 API |
-| ND-19 | `_03` 的 Tag 語意 | A. 將要顯示的兩個值做成獨立欄位；B. 固定 `_03` 的連字號格式；C. 不再拆分 | 建議 **A**；需確認目前 Tag 上兩段文字各代表什麼 |
+| ND-19 | `_03` 的 Tag 語意 | A. 將類別碼與序號做成獨立 typed 欄位；B. 固定 `_03` 的連字號格式；C. 不再拆分 | 92 筆資料與 Infuser 已確認兩段是類別碼／序號，建議 **A** |
 | ND-20 | Tag 鎖定欄位 | A. 單一 canonical boolean／enum；B. 繼續辨識多種文字 key | **A**；舊 key 只由 migration 處理 |
 | ND-21 | `Layer to Dict` | A. 明確只匯出 layer defaults，另做 object data export；B. 改為彙總 object UserText；C. 取消反向匯出 | 建議 **A**；避免 layer 與 object 資料混為一談 |
 | ND-22 | `20_DW` 特例 | A. 保留單一 DW 類型及 child-layer 排除規則；B. 每個 DW child 都進 Dictionary；C. 重新分類 | 需依目前門窗工作方式決定 |
 | ND-23 | Cabinet `_CB.*` | A. 現在凍結四欄語意，程式延後；B. 等 Cabinet 重構時再決定 | 建議 **A**；避免 Nexus／Registry 先做錯介面 |
-| ND-24 | Cabinet 方向 | A. L／W／T 依 panel local frame；B. 依三邊大小排序；C. 依 current layer／類型各自規則 | 建議 **A**，但需先確認板材方向定義 |
+| ND-24 | Cabinet 方向 | A. L／W／T 依 panel local frame；B. 依三邊大小排序；C. 依 current layer／類型各自規則 | 現行 `make_part()` 已持有 true W／H／D，只在寫入前被排序抹除；建議 **A** |
 | ND-25 | Dictionary 驗證強度 | A. 重複、未知欄、錯型別、錯單位直接阻擋並列清單；B. 警告後盡量執行 | 核心欄位建議 **A**；未知 extension 可另設允許區 |
 
 ## 不需要使用者逐項選擇的技術修正
@@ -208,7 +212,9 @@ flowchart LR
 - 所有讀取操作避免在 constructor 產生寫入副作用。
 - config fallback 只保留一個來源；所有入口有一致的 reload／啟動規則。
 - 重複 UUID、未知 layer、略過物件都要列入可見報告，不再靜默覆蓋。
+- ID 變更先預覽、保留一方、列出受影響 Tag，並保存舊新 mapping 供復原。
 - warning 狀態使用資料欄位，不以 Rhino 物件顏色作唯一真相；清除 warning 不破壞使用者原色。
+- 每個會產生幾何或改寫資料的指令定義冪等重跑政策，並復原 layer／selection／visibility 等 Rhino 狀態。
 - 硬編碼 debug 路徑、散落 magic numbers 與寬鬆 `except` 逐 feature 收斂。
 - 舊欄位 alias、舊 Tag key 與舊 layer 名只由 migration scanner 辨識，不進入 2.0 日常核心。
 
@@ -225,7 +231,8 @@ flowchart LR
 ```text
 ND-01=A
 ND-02=A
-ND-04=A（所有專案固定 cm）
+ND-04a=A（所有專案固定 cm）
+ND-04b=B（數量先作人工／外部值）
 ND-07=A
 ```
 

@@ -1,15 +1,22 @@
-# LoopFlow 2.0 — 資料生態與工作鏈藍圖
+# LoopFlow 2.0 — 資料生態與工作鏈整合藍圖
 
-本文件是 LoopFlow 2.0 的總體起點。它先從 1.x 全部 23 支 Python 還原現有功能與使用意圖，再提出可翻案、可反覆修訂的新資料生態。確立前仍是提案；確立後，Dictionary、Nexus、Section、Tag、圖框、Registry、任務拆分與使用指南都必須服從本文件。
+本文件是 LoopFlow 2.0 的總體起點。它整合第一版資料生態藍圖與 Claude Code 的獨立複核，從 1.x 全部 23 支 Python 還原現有功能、實際資料流與使用意圖，再提出可翻案、可反覆修訂的新資料生態。工作邏輯必須維持，現行分檔、命名、資料結構與建構方式都可以重新設計。
 
 ## 文件狀態
 
 - 建立日期：2026-08-12
-- 盤點基準：`releases/LoopFlow/Python/` 全部 23 支 Python，共 5,800 行
+- 盤點基準：`releases/LoopFlow/Python/` 全部 23 支 Python；Dropbox 中文版 Dictionary 共 18 欄、92 筆 Type
 - 程式基準最後異動：`087ed73`；本次只讀取與建檔，未修改產品程式碼
 - 工作檔基準：Dropbox 中文版 `LoopFlow_Dictionary.xlsx`
-- 驗證層級：靜態閱讀與資料依賴盤點；尚未完成 Rhino 8 實機行為驗證
+- 驗證層級：兩次獨立靜態讀碼、producer／consumer 搜尋與 Dictionary 統計；尚未完成 Rhino 8 實機、舊專案資料與 Tag Block definition 驗證
 - 定位：工作邏輯必須維持，程式邊界、指令名稱、資料結構與建構方式都可以重新設計
+
+兩份未合併的來源原文保存在：
+
+- `ref/LOOPFLOW_DATA_ECOSYSTEM.md`
+- `ref/LOOPFLOW_DATA_ECOSYSTEM_REVIEW_Claude_Code.md`
+
+本文的「現況事實」可由現行程式或 Dictionary 交叉確認，但不等於 2.0 必須沿用；「建議」仍待使用者確認；由靜態讀碼推論的 Rhino 行為仍須實機測試。
 
 ## 不可遺失的工作邏輯
 
@@ -39,11 +46,12 @@ flowchart LR
     V --> R["Registry Revision<br/>Validated Snapshot"]
 
     M --> VR["View Recipe<br/>Section／Plan Definition"]
-    VR --> GD["Generated Drawing<br/>Rhino Section Result"]
+    VR --> RG["View Registration<br/>Stable Transform"]
+    RG --> GD["Generated Drawing<br/>Rhino Section Result"]
     GD --> ED["Editable Drawing<br/>Preserved Manual Work"]
 
     R --> TG["Tag Binding & Template"]
-    VR --> TG
+    RG --> TG
     ED --> TG
 
     SH["Sheet Metadata"] --> TB["Title Block／Index"]
@@ -59,17 +67,23 @@ flowchart LR
 
 | 實體 | 建議穩定 ID | 唯一真相 | 不應承擔 |
 |---|---|---|---|
-| Project | `project_id` | 同一套模型、圖面、Dictionary 與 Registry 的專案範圍 | 依資料夾名稱猜身分 |
+| Project | `project_id` | 同一套模型、圖面、Dictionary、Registry 與工作檔根目錄 | 依目前開啟檔案或資料夾名稱猜身分 |
 | Type | `type_id` | Dictionary 的物件類型、預設值、欄位規則與允許 Tag | 保存每個物件的即時數值 |
 | Rhino Layer | 不作永久資料 ID | 人類分類、選取、顯示與建模入口 | 成為 Tag／Registry 的唯一關聯鍵 |
 | Model Object | `object_id` | 3D 幾何與單一實例的實際資料／覆寫值 | 保存圖框名稱或 Layout 順序 |
 | Space | `space_id` | 空間邊界、顯示名稱、樓層與判定規則 | 只靠可變的空間名稱作關聯 |
-| View Recipe | `view_id` | Section／平面的位置、方向、轉換、比例與來源範圍 | 保存完整物件資料 |
+| View Recipe | `view_id` | Section／平面的位置、方向、穩定座標轉換、比例與來源範圍 | 每次從可變 bbox 重新猜對位基準 |
 | Drawing | `drawing_id` | 某次 View 生成後的 2D 成果與人工編修狀態 | 靜默回寫 3D 或假裝永遠最新 |
 | Sheet | `sheet_id` | 圖種、樓層、區域、系列、序號、圖名、版次與狀態 | 從 Layout 名稱反向猜全部 metadata |
 | Tag | `tag_id` | Tag 類型、來源綁定、顯示模板、人工鎖定與同步狀態 | 複製保存整份模型資料 |
 | Registry Revision | `revision` | 某次成功發布的不可變、已驗證資料快照 | 取代 3D 模型成為人工編輯來源 |
 | Health Issue | `issue_id` | 斷線、過期、衝突、原因、建議修復與處理結果 | 只靠物件顏色表示狀態 |
+
+### Project 與工作檔根目錄
+
+現行 1.x 隱性要求 3D、2D 與 Registry 位於同一資料夾，因為程式從目前作用中的 `.3dm` 推導 Registry 路徑。若 2D 另存到別處，Infuser／TAG-O 可能在錯誤位置建立空 Registry，再把全部 Tag 當成 broken。
+
+2.0 將這個慣例改成明確契約：Project 綁定 `%LOOPFLOW_WORKFILES_ROOT%`，Dictionary 與 Rhino／Blender／Octane 交換 JSON 由同一個 project resolver 解析；Registry consumer 在來源缺失或無效時只回報，不得因讀取而建立空檔或修改 Tag。
 
 ### Layer 與 Type 分離
 
@@ -102,6 +116,17 @@ Dictionary 提供類型預設；模型物件保存實例真相。有效值採一
 
 使用者必須能看到值的來源，並能執行「恢復 Dictionary 預設」，而不是靠手動刪除 UserText 猜測結果。
 
+### 模型單位與工程估算單位分離
+
+現行 Rhino 工作模型與幾何工具按 cm 設計，但 1.x 從未驗證 `ModelUnitSystem`。Dictionary 的 `_08_單位` 則是工程估算單位，現有值包含 `組`、`坪`、`cm`、`才`、`台`、`mm`、`m3`、`座`、`片`、`樘`，不是 Rhino 文件單位。
+
+2.0 必須分成兩份契約：
+
+- 模型文件單位：啟動時驗證；非 cm 是阻擋還是換算仍待裁決。
+- 工程估算單位：定義允許值、量綱，以及 `_09_實作數量` 對應的幾何計算規則。
+
+所有帶量綱的常數都要具名並標註單位，不能再以無說明的 `200.0`、`1.0`、`0.2` 決定空間、高程、Laser 或 Cabinet 行為。
+
 ## 標準工作鏈
 
 | 階段 | 使用者意圖 | 主要輸入 | 主要產出 | 前進條件 |
@@ -110,16 +135,81 @@ Dictionary 提供類型預設；模型物件保存實例真相。有效值採一
 | W2 建模 | 建立與調整設計 | Rhino layer、幾何、Block | 3D Model Objects | 物件可被分類 |
 | W3 資料化 | 注入與覆寫實例資料 | Type defaults、幾何、Space、Elevation | 帶穩定 ID 的 Model Objects | 必填資料與 ID 通過驗證 |
 | W4 發布 | 提供跨文件可讀資料 | 已驗證 Model Objects | Registry Revision | pending 完整驗證並發布成功 |
-| W5 建立 View | 定義剖面、立面、平面 | 模型、Section plane、顯示範圍 | View Recipe、Rhino Section 結果 | View 有穩定 ID 與轉換資訊 |
-| W6 圖面化 | 取得可獨立編輯的線稿 | Section 結果 | Editable Drawing | 人工成果與來源關係已記錄 |
-| W7 建立 Sheet | 安排 Layout 與圖框 | Drawing、Sheet metadata | Layout、Detail、圖框、圖號 | Sheet metadata 完整 |
-| W8 建立 Tag | 由圖面位置綁定模型來源 | Drawing/View、Registry、Tag Template | 綁定完成的 Tag | 來源唯一或經使用者選定 |
-| W9 同步 | 把最新資料延續到圖框與 Tag | Registry Revision、Sheet metadata | 更新的 Tag／圖框顯示 | 不覆寫人工鎖定內容 |
-| W10 健康檢查 | 找出並修復資料鏈問題 | 全部 ID、revision 與狀態 | Issue Report、Repair Result | 修復可追蹤且可復原 |
+| W5 建立 View | 定義剖面、立面、平面 | 模型、Section plane、顯示範圍 | View Recipe、Rhino Section 結果 | View 有穩定 `view_id` |
+| W6 註冊 View | 固化 2D↔3D 對位 | Clipping Plane、Detail transform | 可重用的 View transform | 不依可變 bbox／名稱重新猜測 |
+| W7 圖面化 | 取得可獨立編輯的線稿 | Section 結果 | Editable Drawing | 前次產出與人工成果可辨識 |
+| W8 建立 Sheet | 安排 Layout 與圖框 | Drawing、Sheet metadata | Layout、Detail、圖框、圖號 | Sheet metadata 完整 |
+| W9 建立 Tag | 由直接選取或圖面位置綁定模型 | Drawing／View、Registry、Tag Template | 綁定完成的 Tag | 來源唯一或經使用者選定 |
+| W10 同步 | 把最新資料延續到圖框與 Tag | Registry Revision、Sheet metadata | 更新的 Tag／圖框顯示 | 不覆寫人工鎖定內容 |
+| W11 健康檢查 | 找出並修復資料鏈問題 | 全部 ID、revision 與狀態 | Issue Report、Repair Result | 修復可追蹤且可復原 |
 
-每個階段都必須可以單獨重跑，並清楚回報成功、略過、警告、失敗與取消；不可把所有階段綁成一次不可中斷的大操作。
+每個階段都必須可以單獨預覽、執行、重跑與復原，並清楚回報成功、略過、警告、失敗與取消；不可把所有階段綁成一次不可中斷的大操作。
+
+## 現行資料所有權盤點
+
+以下是 1.x 的實際 producer／consumer，不代表 2.0 欄名。Consumer 只列真正讀取後產生行為者，不把「原樣存進 Registry」算成使用。
+
+| 現行欄位 | Producer／寫入規則 | 實際 Consumer | 2.0 要處理的問題 |
+|---|---|---|---|
+| `__Rhino Layer` | Dictionary 人工維護 | Nexus 建層、比對、Layer-to-Dict | 改為 Type 對 layer mapping |
+| `_01_空間名稱` | Nexus 依 bbox 底面中心判定 | TAG-O 空間覆蓋 | 改用 `space_id`；處理重疊與多樓層 |
+| `_02_建構狀態` | Dictionary 預設，Instance 可保留 | 無行為 consumer | 確認未來報表／顯示用途 |
+| `_03_ID編號` | Dictionary 每次覆寫 | Infuser 拆兩段、Laser 顯示、Push 過濾 | 現有 92 列皆為類別碼-序號；建議拆 `type_category`／`type_sequence` |
+| `_04_ID名稱` | Dictionary 每次覆寫 | Infuser note、Laser 候選 | 不是唯一 ID，只作顯示名稱 |
+| `_05_寬度W` | Nexus 幾何計算 | 無行為 consumer | 各 Type 的 W／D／H 語意待定 |
+| `_06_深度D` | Nexus 幾何計算 | 無行為 consumer | 同上 |
+| `_07_高度H` | Nexus 幾何計算 | 無行為 consumer | 同上 |
+| `_08_單位` | Dictionary | 無行為 consumer | 工程估算單位，不是模型單位 |
+| `_09_實作數量` | 無真正 producer，只補 `-` | 無行為 consumer | 是否實作及單位→幾何規則待定 |
+| `_10_高程基準` | Dictionary | Nexus 計算 `_11`、Infuser 顯示 | 幾何規則與顯示標籤必須分離 |
+| `_11_高程計算` | Nexus 計算顯示字串 | Infuser | 內部 typed 數值與顯示格式分離 |
+| `_12_UUID` | Nexus 自動建立／修復 | Push、Grab、Laser、Infuser、TAG-O | 重建會切斷 Tag；改為可追溯 ID migration |
+| `_13_備註` | Dictionary 預設，Instance 可保留 | 無行為 consumer | 測試預設與正式 instruction 分離 |
+| `_CB.01_板材類型` | Cabinet 產生／BOM Update | 無行為 consumer | 保留製作資料意圖，先定 BOM consumer |
+| `_CB.02_長度L` | Cabinet 產生／BOM Update | 無行為 consumer | 改用 panel local frame |
+| `_CB.03_寬度W` | Cabinet 產生／BOM Update | 無行為 consumer | 同上 |
+| `_CB.04_厚度T` | Cabinet 產生／BOM Update | 無行為 consumer | 同上 |
+
+目前 18 欄中有 11 個欄位沒有可驗證的行為 consumer。這不表示一律刪除，而表示新 Registry 不能再把所有 UserText 無條件升格為永久公開 API。每個 canonical 欄位都要有 owner、型別、producer、consumer、缺值規則與 migration；其餘放入明確 extension 區。
+
+`_03_ID編號` 的 92 筆現值全部符合「字母類別碼-數字序號」，且類別碼與 12 個頂層 Type 群組一一對應。2.0 可直接以 `type_category` 與 `type_sequence` 保存，組合字串降為顯示格式。需注意 `MP` 同時出現在 MEP 類別碼與 2D layer 前綴，兩者必須屬於不同命名空間。
+
+`_10_高程基準` 目前同時負責幾何規則與 Tag 顯示標籤：BH 取 bbox 底、TH 取 bbox 頂、CH 實際也取底但顯示 CH、BC 僅在 Block instance 取插入點，否則靜默退回底部。2.0 應將 `basis_id`、顯示標籤、幾何規則與可驗證前置條件分開；前置不成立時明確報錯，不得顯示 BC 卻計算 BH。
+
+### 非 Dictionary 的持久化 key
+
+| 現行 key | Producer | Consumer／狀態 | 2.0 去向 |
+|---|---|---|---|
+| `Space_Name` | Boundary Setter | Nexus、TAG-O | `space_id` + 顯示名稱 |
+| `Source_UUID` | Grab／Laser | Infuser、TAG-O | `source_object_id` |
+| `NAME_PARSED` | Grab | Infuser 特例 | 移除哨兵值，改正式 source type |
+| `.Auto_*` | Grab 解析 Block 名稱 | Infuser | migration／adapter，不作核心真相 |
+| `.Target_DV_ID` | Tagger Index | Infuser | `target_view_id`／`target_sheet_id` |
+| `Category`／`REF_ID` | Index／Infuser／Layout ID | Tag 顯示 | Template render output |
+| `DWG_NO`／`DWG_NAME` | Layout ID | 圖框顯示 | Sheet metadata render output |
+| `attr_*` | Infuser | Tag Block 文字 | Tag Template output |
+| `Role`／`Target_CP` | Anchor Frame | **無讀取者** | 不承接；建立真正 View Registration |
+| `LOCK`／`不更新`／`NoUpdate` 類 key | 人工 | 各 Tagger／Infuser 規則不一致 | 單一正式 `lock_state` |
+
+### 已確認沒有 repo 內 consumer 的現行項目
+
+這些項目不承接為 2.0 契約，但真正刪除前仍要確認沒有 repo 外工具依賴：
+
+- `_LoopFlow_Config.py` 的 `CEILING_KEYWORDS`。
+- `LAYER_CABINET_NAME` 的實際函式用途。
+- Anchor Frame 的 `Role`／`Target_CP`。
+- Registry 的 `Tag_Links`、`push_tag_links()` 與 `Layout_Map`。
+- WHITE_LIST 中實際被較早分支略過的 `_12_UUID`。
+- `LF_Cabinet_Suite.py` 的舊硬編碼 debug 路徑。
 
 ## Section 與可編輯圖面的建構原則
+
+### 現況校正
+
+- `LF_Anchor_Frame.py` 寫入的 `Role`／`Target_CP` 在 repo 中沒有 consumer；Laser 並未讀取它們。
+- Laser 實際以「ObjectName 包含 Clipping Plane 名稱」尋找封閉曲線，再用當下 2D 與 3D 幾何的聯集 bbox 中心對位。
+- 新增／刪除 2D 線稿、改變 hatch、修改或隱藏 3D 幾何，都可能讓日後 Laser 落點漂移；每次全模型求交也有額外成本。這些行為來自讀碼推論，仍須 Rhino 實機驗證。
+- Clipping Plane 的 Plane 與 Detail 的 `PageToWorldTransform` 已存在；2.0 缺的是把必要資訊固化成 View Recipe，而不是沿用名稱與 bbox 猜測。
 
 Section 中段應拆成三個概念，而不是複製後就失去來源：
 
@@ -127,7 +217,9 @@ Section 中段應拆成三個概念，而不是複製後就失去來源：
 2. **Generated Result**：Rhino Section／Clipping Drawing 生成的原始成果，可重建。
 3. **Editable Drawing**：供使用者編修的圖面成果，保存 `view_id`、生成 revision 與人工狀態。
 
-建議的 Drawing 狀態：
+Drawing lifecycle 的第一個可測條件是**冪等重跑**：系統必須辨識前次產出，讓使用者選擇取代、新增或略過，並復原原有 layer lock、visibility 與 selection。現行 Extract 每次直接複製，沒有來源、去重與 revision，且會解鎖目標 layer 而不還原。
+
+完成冪等基礎後，再導入以下 Drawing 狀態：
 
 | 狀態 | 意義 | 自動處理界線 |
 |---|---|---|
@@ -163,10 +255,11 @@ manual_overrides
 health_state
 ```
 
-現行 Grab 與 Laser 代表兩個不同且都應保留的使用意圖：
+現行 Grab、Laser 與 Index 代表三個不同且都應保留的使用意圖：
 
 - Grab：使用者直接選擇明確來源。
-- Laser：使用者在 Section 圖面點位置，系統由 View 轉換回 3D 搜尋候選來源；多候選時由使用者選定。
+- Laser：使用者在 Section 圖面點位置，系統由已註冊的 View transform 轉回 3D 搜尋候選來源；多候選時由使用者選定。
+- Index：把 Tag 綁到另一個 View／Sheet，由 Sheet metadata 產生引用圖號。
 
 綁定完成後，顯示資料從 Registry 依 Object ID 取得。圖面幾何協助定位，但不應成為資料真相。
 
@@ -182,6 +275,8 @@ TAG_HEIGHT
     attr_mat_val <- type.display_name
     attr_note    <- object.note
 ```
+
+鎖定改為單一 `lock_state`；目前 `LOCK`、`不更新`、`NoUpdate` 在不同指令的辨識規則並不一致。Tag 檢查必須唯讀，顏色只能放在可還原的提示層，不得清除使用者原有物件色。
 
 ## Sheet、圖框與索引
 
@@ -210,9 +305,13 @@ IN 101.01__一樓平面配置圖
 
 而不是從這個字串反向猜出 discipline、series 與 sequence。如此未來改命名格式、插頁、調整順序或建立多套交付格式時，不必破壞圖框與 Section Index Tag。
 
+複製 Sheet 時必須建立新的 `sheet_id`、`drawing_id` 與 `tag_id`。一般 Tag 是否保留相同 `source_object_id` 由複製政策決定；Index Tag 不得無聲沿用來源頁的 `.Target_DV_ID`，而要重新指向或標為待確認。複製結果需列出所有失效、保留與待確認綁定，也不應依賴會覆蓋使用者系統剪貼簿的流程。
+
 ## Registry 與 revision 傳遞
 
-Registry 是唯讀發布快照，不是人工資料庫。每次成功發布至少包含：
+Registry 是唯讀發布快照，不是人工資料庫。現況只有 `Objects` 有實際讀寫鏈；`Layout_Map` 只寫不讀，`Tag_Links` 的寫入函式沒有呼叫者。2.0 的每個 Registry 區段都必須有已知 producer 與 consumer，否則不建立。
+
+每次成功發布至少包含：
 
 ```text
 schema_version
@@ -237,6 +336,8 @@ registry.pending.json
 → 保留 registry.previous.json
 ```
 
+Reader 在檔案缺失、錯誤或版本不相容時只回報，不得在 constructor 或讀取動作中自建空 Registry；任何 consumer 在來源無效時都必須停止寫入下游成果。
+
 每個下游成果保存自己最後使用的 `revision`：
 
 ```text
@@ -250,20 +351,38 @@ Model revision
 
 ## Health 與 Repair
 
-| 狀態 | 意義 | 建議處理 |
-|---|---|---|
-| `healthy` | 來源存在、schema 相容且使用最新 revision | 不處理 |
-| `stale_data` | Registry 有新 revision，顯示尚未更新 | 重新同步顯示值 |
-| `unbound` | 尚未指定來源 | Grab、Laser 或其他綁定方式 |
-| `orphaned` | 原來源已刪除或移出專案 | 選新來源、刻意脫離或保留問題 |
-| `ambiguous` | 定位得到多個候選來源 | 顯示候選並由使用者確認 |
-| `view_missing` | View／Detail／Section 不存在 | 重新連結或保留為 detached |
-| `drawing_stale` | 3D／View 已更新，Editable Drawing 尚未更新 | 比對後保留、重建或另建 |
-| `template_outdated` | Tag Block definition／template 版本落後 | 保留位置與綁定後升級模板 |
-| `manual_locked` | 使用者禁止自動更新 | 尊重鎖定並列入報告 |
-| `schema_mismatch` | 來源版本不相容 | 停止寫入，要求 migration 或正確版本 |
+1.x 的 TAG-O 把警示顏色當成唯一狀態來源；必須先由 Infuser 修改文件後才能檢查，且清除提示時可能破壞使用者物件色。2.0 Health Engine 必須以正式 metadata 唯讀判斷，顏色只作可復原提示。
 
-Health Engine 必須從正式 metadata 判斷。顏色只作視覺提示，清除提示時不得破壞使用者原本顏色。
+| 狀態 | 意義 | 前置資料需求 | 建置時機 |
+|---|---|---|---|
+| `unbound` | 尚未指定來源 | `source_object_id` | 核心 Tag 契約 |
+| `orphaned` | 原來源不存在 | Object ID + Registry | 核心 Tag 契約 |
+| `manual_locked` | 使用者禁止自動更新 | 單一 `lock_state` | 核心 Tag 契約 |
+| `stale_data` | Registry 已更新，顯示未同步 | Registry revision + Tag sync revision | Registry 核心 |
+| `schema_mismatch` | 來源版本不相容 | `schema_version` | Registry 核心 |
+| `ambiguous` | 定位得到多個候選 | candidate set + binding result | Laser／Binding |
+| `view_missing` | View／Detail／Section 不存在 | `view_id` | View Registration |
+| `drawing_stale` | 3D／View 已更新，Drawing 未更新 | `drawing_id` + source revision | Drawing lifecycle |
+| `template_outdated` | Tag Template／Block 版本落後 | `template_version` | Template system |
+| `healthy` | 所有適用前置皆有效且為最新 | 依該 Tag／Drawing 適用狀態 | 各契約到位後 |
+
+Health 不只回報結果，也要記錄原因、建議修復、預覽、使用者選擇與 repair result。任何修復不得偷偷重綁、重建 ID、覆寫人工成果或刪除圖面。
+
+## 現況高風險與 2.0 約束
+
+| 優先 | 現況事實／待實機確認 | 2.0 約束 |
+|---|---|---|
+| P0 | 重複 UUID 時，原件與複本都可能換新 UUID，既有 Tag 斷線且沒有舊新對照 | ID 變更先掃描、預覽、保留一方、列出受影響 Tag、建立可回復 mapping |
+| P0 | Registry reader 可在錯誤專案路徑自建空檔，Infuser 再覆寫全部 Tag 顯示 | project resolver 唯一；read 無寫入副作用；來源無效時停止修改 |
+| P1 | Laser 對位取決於當下 2D／3D bbox，正常編輯可能造成漂移 | View transform 固化並可驗證 |
+| P1 | Extract 重跑會重複幾何，並改變 layer lock | 每個產生命令定義冪等政策與狀態復原 |
+| P1 | Duplicate Layout 會覆蓋剪貼簿，Index Tag 可能仍指向來源頁且看似正常 | 新身分、綁定重審與明確報告 |
+| P1 | TAG-O 只讀顏色；Infuser 清提示時可能破壞使用者顏色 | Health 使用 metadata；presentation 可還原 |
+| P1 | `BC` 在非 Block 上靜默退回 BH，但 Tag 仍顯示 BC | rule、label、前置條件分離；條件不成立即明確錯誤 |
+| P2 | Dict-to-Layer 同時建 material、layer UserString、`DNA_REF_` 線並 ZoomExtents；重跑累積參考線 | 四種責任分離，每項有明確用途與重跑政策 |
+| P2 | Cabinet 可在錯誤 layer 生成後被 Nexus 清空 `_CB.*`；方向資料又被排序抹平 | 生成前驗證 Type／layer；沿 panel local frame 保留方向 |
+| P2 | naming config 與 Registry fallback 值形成多個設定來源 | schema／user setting／fallback 單一且可檢查 |
+| P2 | `Role`／`Target_CP`、`Layout_Map`、`Tag_Links` 等只寫不讀 | 無 consumer 的舊結構不承接為 2.0 契約 |
 
 ## 23 支現行 Python：功能、意圖與 2.0 去向
 
@@ -271,16 +390,16 @@ Health Engine 必須從正式 metadata 判斷。顏色只作視覺提示，清�
 
 | 現行檔案 | 現行功能 | 必須保留的意圖 | 2.0 建議責任 |
 |---|---|---|---|
-| `_LoopFlow_Config.py` | 集中 Dictionary、layer、顏色、Block、Layout、lock 等常數 | 專案有可理解且可調的設定 | 拆成 schema／catalog／真正的 user settings；內部契約不可假裝成自由設定 |
+| `_LoopFlow_Config.py` | 集中多數常數，但仍有外部 naming config、fallback 衝突與死設定 | 專案有可理解且可調的設定 | Schema／catalog／user settings 分離；啟動時顯示實際生效值 |
 | `_LF_Debug.py` | 將 exception、traceback、時間與 context 寫入 log | 錯誤可追蹤且不只顯示「失敗」 | Foundation logging；每個 operation 使用一致 stage／result |
-| `_LF_Registry.py` | 建立 Registry、lock、讀寫 Objects／Layout_Map／Tag_Links | 跨 3D／2D 文件共享最後有效資料 | Registry Publisher／Reader；加入 schema、真正 exclusive lock、pending、validate、atomic replace |
-| `_LF_NamingRules.py` | 從 JSON 或預設規則解析 Layout 名稱、產生 DWG_NO／REF_ID | 圖號格式可配置且能批次一致更新 | Sheet Naming Service；輸入 Sheet metadata，不再以 Layout 字串作主要資料來源 |
+| `_LF_Registry.py` | Objects 活用；Layout_Map 只寫不讀；Tag_Links 無呼叫；constructor 可能寫檔 | 跨 3D／2D 文件共享最後有效資料 | 無副作用 Reader + 安全 Publisher；schema、lock、pending、validate、atomic replace |
+| `_LF_NamingRules.py` | 從 `NamingRules_Config.json` 或 fallback 解析 Layout 名稱、產生 DWG_NO／REF_ID | 圖號格式可配置且能批次一致更新 | Sheet Naming Service；輸入 Sheet metadata，不再以 Layout 字串作真相 |
 
 ### Dictionary、模型與發布
 
 | 現行檔案 | 現行功能 | 必須保留的意圖 | 2.0 建議責任 |
 |---|---|---|---|
-| `LF_Nexus.py` | Dict to Layer、TagTrigger、TagChecker、Layer to Dict、Boundary Setter、尺寸／高程／空間／UUID、Push 入口與 UI | 提供一個可查看、執行、檢查核心資料工作的入口 | 保留 Nexus 名稱作 Project Console；實際工作交給 Type、Model Data、Space、Elevation、Dimension、Validation、Publish services |
+| `LF_Nexus.py` | Dict-to-Layer、TagTrigger、TagChecker、Layer-to-Dict、Boundary、尺寸／高程／空間／UUID、Push 與 UI；另有 material、DNA_REF、Zoom 副作用 | 提供一個可查看、執行、檢查核心資料工作的入口 | Nexus 作 Project Console；工作交給 Type、Model Data、Space、Elevation、Dimension、Validation、Publish services |
 | `LF_Dictionary_Editor.py` | 找到並開啟 XLSX | 使用者能直接維護 Dictionary | Dictionary command；改由 `LOOPFLOW_WORKFILES_ROOT` resolver 開啟指定中文版本 |
 | `LF_Data_Viewer.py` | 唯讀顯示選取物件的全部 UserText | 隨時檢查物件或 Tag 實際資料 | Inspector；顯示 canonical 值、來源、revision、override 與 health，不只列 raw UserText |
 | `LF_Push_3D_to_JSON.py` | 掃描 M3D solids，依 UUID 將全部 UserText、layer、時間推入 Registry | 明確發布 3D 資料供其他文件使用 | Model Publisher；只發布版本化 schema 欄位與 extension，不把所有 UserText 無條件變成永久 API |
@@ -290,30 +409,43 @@ Health Engine 必須從正式 metadata 判斷。顏色只作視覺提示，清�
 
 | 現行檔案 | 現行功能 | 必須保留的意圖 | 2.0 建議責任 |
 |---|---|---|---|
-| `LF_Anchor_Frame.py` | 由 Section 幾何與 Text Dot 建 bbox frame，寫 `Target_CP`／`Role`，供 Laser 做 2D→3D 對位 | Section 圖面位置能映射回 3D View | View Registration；以 `view_id` 與正式座標轉換取代名稱包含比對與 bbox 猜測 |
-| `LF_Extract_CP.py` | 複製 Visible／Hatch／Curve 到 Extract layer，改 ByLayer，形成可獨立編輯副本 | Section 成果可脫離即時顯示並人工修改 | Drawing Materializer；建立 `drawing_id`、來源 revision、狀態與保護人工編修的更新流程 |
-| `LF_Duplicate_Layout.py` | 複製 Layout 尺寸、Detail、圖框、Tag 等物件並產 `_Copy_N` 名稱 | 能快速從標準版面建立新 Sheet | Sheet Duplicator／Template；複製時建立新 `sheet_id`／`tag_id`，保留模板但不複製錯誤身分 |
+| `LF_Anchor_Frame.py` | 由 Section 幾何與 Text Dot 建 bbox frame；`Role`／`Target_CP` 無 consumer，Laser 靠名稱與 bbox | Section 圖面位置能映射回 3D View | 從零建立 View Registration，以 `view_id` 與正式 transform 取代名稱／bbox 猜測 |
+| `LF_Extract_CP.py` | 複製 Visible／Hatch／Curve 到 Extract；無來源、去重、revision，會解鎖 layer | Section 成果可脫離即時顯示並人工修改 | Drawing Materializer；冪等、狀態復原、來源 revision、保護人工成果 |
+| `LF_Duplicate_Layout.py` | 以系統剪貼簿複製整頁；Tag 身分與 Index target 可能一併複製 | 能快速從標準版面建立新 Sheet | Sheet Duplicator／Template；新身分、綁定重審、不覆蓋剪貼簿 |
 
 ### Tag、資料注入與健康檢查
 
 | 現行檔案 | 現行功能 | 必須保留的意圖 | 2.0 建議責任 |
 |---|---|---|---|
 | `LF_Tagger_Grab.py` | 在 Layout Detail 內直接選目標；一般物件綁 UUID，DW／Item 從 Block 名稱解析 shadow fields | 使用者可以直接指定確定來源 | Direct Binding command；所有來源都轉成明確 ID，名稱解析只作 migration／輔助，不用 `NAME_PARSED` 假來源 |
-| `LF_Tagger_Laser.py` | 由 Detail 點位、Anchor／CP 轉回 3D 射線，依正面與距離選物件；重疊時人工選擇 | 從 Section 圖面位置快速找到 3D 資料來源 | Spatial Binding command；使用正式 View transform、候選與 ambiguous 狀態，綁定後保存 Object ID |
+| `LF_Tagger_Laser.py` | 由 Detail 點位、名稱與可變 bbox 轉回 3D 射線；依正面與距離選物件 | 從 Section 圖面位置快速找到 3D 資料來源 | Spatial Binding；正式 View transform、candidate set 與 ambiguous 狀態 |
 | `LF_Tagger_Index.py` | 將 Section／Elevation Index Tag 綁到某個 Detail View GUID | 剖面索引能跟隨目標圖面改名或換頁 | Sheet／View Reference Binding；保存目標 `view_id`／`sheet_id`，顯示值由 Sheet metadata 產生 |
-| `LF_Tagger_Layout_ID.py` | 依 Layout 順序與 `.01` baseline 自動命名，寫圖框 DWG_NO／DWG_NAME，發布 Layout_Map | 全案圖號、圖名、圖框與索引一致 | Sheet Catalog／Naming command；metadata-first，排序與命名只是可重算輸出 |
+| `LF_Tagger_Layout_ID.py` | 依 Layout 順序與 `.01` baseline 命名、寫圖框，另發布無 consumer 的 Layout_Map | 全案圖號、圖名、圖框與索引一致 | Sheet Catalog／Naming；metadata-first，排序與命名只是可重算輸出 |
 | `LF_Infuser_Part.py` | 更新目前 Layout Tag；依 Source_UUID／Detail 找資料，處理 lock、未綁定、斷線與顏色 | 局部、安全、可反覆把最新資料注入 Tag | Tag Renderer／Synchronizer；依 template mapping 更新，保存 revision，回傳正式 health，不以顏色作真相 |
 | `LF_Infuser_All.py` | 對全部 Layout 呼叫 Part，統計成功／未綁定／斷線／鎖定 | 一次檢查與同步整份圖說 | Batch Tag Synchronizer；和 Part 使用同一 service，只改 scope |
-| `LF_TAG-O.py` | 讀警示顏色找 unbound／broken Tag，檢查每個 Space 是否有 Finish Tag | 在交付前確認 Tag 存活與空間覆蓋 | Health Dashboard／Repair Center；以 metadata／revision 判斷，提供導航、修復與可追蹤結果 |
+| `LF_TAG-O.py` | 以顏色判定 unbound／broken，以空間名稱字串檢查覆蓋 | 在交付前確認 Tag 存活與空間覆蓋 | 唯讀 Health Dashboard／Repair Center；以 ID／revision 判斷並追蹤修復 |
 
 ### Cabinet 與 2D 輔助生產
 
 | 現行檔案 | 現行功能 | 必須保留的意圖 | 2.0 建議責任 |
 |---|---|---|---|
-| `LF_Cabinet_Suite.py` | 產生櫃體板件／門片、Shelf／Divider，寫 `_CB.*`，依幾何猜板件與更新 BOM 尺寸 | 快速建立可攜帶製作資料的櫃體模型 | Cabinet feature；與核心共用 Object／Type schema，板件 local frame 與 BOM contract 先定義，UI／幾何可延後重建 |
+| `LF_Cabinet_Suite.py` | 產生板件／門片、Shelf／Divider 與 BOM；layer 契約不一致，local direction 被排序丟失，幾何猜測可能覆寫人工更正 | 快速建立可攜帶製作資料的櫃體模型 | Cabinet feature；共用 Object／Type schema，保留 local frame，人工 override 有明確所有權 |
 | `LF_2D_Cabinet_Gen.py` | 由選取矩形與櫃體類型產生群組化 2D 櫃體符號 | 快速補充可人工編輯的標準 2D 圖例 | Drawing Tool；輸出有 tool/version metadata，但不必成為核心資料真相 |
 | `LF_2D_Shelf_Gap.py` | 依矩形、方向、板厚與目標間距計算分隔並畫層板線 | 快速建立規則化 2D 細節 | Drawing Tool；保留獨立小工具，使用共用單位／結果／復原規則 |
 | `LF_2D_DW_Gen.py` | 以開口兩點、方向與門窗類型產生框、扇、軌道、開啟弧與輔助線 | 快速建立標準門窗 2D 符號 | Drawing Tool／Template Generator；幾何規則獨立，不承擔門窗資料身分 |
+
+## 必須保存的領域知識
+
+乾淨重建不代表丟掉現行規則。以下「不好看但承載實務知識」的部分，在對應 feature 重建前必須另建現行規則清單與 fixtures：
+
+- 高程的樓層線搜尋，以及 BH／TH／CH／BC／TH-BH 的判定與顯示。
+- Laser 的 Detail transform、鏡射、Y 軸反轉、射線方向與候選聚類。
+- Space boundary 的命中點、重疊、多樓層與 `EXT` 規則。
+- Cabinet 板件 local frame、名稱推測、render gap 與 BOM 容差。
+- 2D DW 的 11 種門窗幾何與各項 cm 常數。
+- Dict-to-Layer 的 material、layer UserString、`DNA_REF_` 與視圖副作用各自的原始目的。
+
+每條記錄規則、輸入、輸出、常數、單位、現行副作用、保留／翻案結論與代表 fixture。這是避免「架構變乾淨，但舊功能消失」的回歸基線。
 
 ## 現行機制：保留意圖、翻案做法
 
@@ -321,14 +453,14 @@ Health Engine 必須從正式 metadata 判斷。顏色只作視覺提示，清�
 |---|---|
 | Dictionary 是建模與資料化入口 | 用完整 layer path 或欄名字尾作永久身分 |
 | Nexus 提供核心工作總覽與明確手動步驟 | Nexus 單檔同時做 UI、幾何、Excel、資料規則與發布 |
-| Rhino Section 是剖面／平面的主要生成能力 | 複製後完全失去來源、無法判斷 stale |
-| Extract 後圖面可以獨立編輯 | 更新時無法區分自動成果與人工修改 |
+| Rhino Section 是剖面／平面的主要生成能力 | 名稱包含與可變 bbox 作 2D↔3D 對位 |
+| Extract 後圖面可以獨立編輯 | 無來源、無冪等、重跑疊加或改變使用者 layer 狀態 |
 | Grab、Laser 與 Index 三種綁定意圖 | `NAME_PARSED`、名稱包含、bbox 與顏色被當成正式關聯 |
 | Part／All 兩種同步範圍 | 每種 Tag 在 Python 中硬寫一套欄位 mapping |
 | 圖號規則可以設定、全案一致 | 從 Layout 名稱與順序反推 Sheet 資料 |
-| TAG-O 在交付前檢查存活與覆蓋 | 先跑 Infuser 塗色，再以物件顏色判斷真實狀態 |
-| Cabinet／2D 工具可延後但持續存在 | 讓它們自行發明欄位、單位與錯誤處理 |
-| 使用者控制更新時機與人工例外 | 一鍵流程靜默重綁、覆寫或刪除成果 |
+| TAG-O 在交付前檢查存活與覆蓋 | 先修改文件／塗色才能檢查真實狀態 |
+| Cabinet／2D 的實務幾何知識 | 無單位裸常數、方向排序與無主人工值 |
+| 使用者控制更新時機與人工例外 | 一鍵流程靜默重綁、換 ID、覆寫或刪除成果 |
 
 ## 擴充模型
 
@@ -339,7 +471,7 @@ Health Engine 必須從正式 metadata 判斷。顏色只作視覺提示，清�
 | 新增模型類型 | 增加 Type Catalog row／definition 與必要 validator |
 | 新增資料欄位 | 加 schema field、單一 producer、consumer mapping 與 fixture |
 | 新增 Tag | 加 Tag Template 與 Block asset；沿用 Binding／Renderer／Health |
-| 新增 Section／平面類型 | 加 View Recipe adapter；沿用 Drawing lifecycle |
+| 新增 Section／平面類型 | 加 View Recipe adapter；沿用 Registration／Drawing lifecycle |
 | 新增圖號格式 | 加 Naming Rule；不改 Sheet metadata |
 | 新增輸出格式或外部工具 | 消費版本化 Registry，不直接掃描任意 UserText |
 | 新增健康規則 | 加 rule 與 repair action；不利用新顏色假裝資料欄位 |
@@ -352,39 +484,71 @@ Health Engine 必須從正式 metadata 判斷。顏色只作視覺提示，清�
 1. **五分鐘開始**：從一個 3D 物件到第一個正確 Tag。
 2. **核心概念**：Type、Object、Space、View、Drawing、Sheet、Tag。
 3. **標準工作流程**：每一步的前置、輸入、輸出與下一步。
-4. **Section 與可編輯圖面**：建立、脫離、修改、過期與更新。
+4. **Section 與可編輯圖面**：建立、註冊、脫離、修改、過期與更新。
 5. **Tag 與圖框**：綁定、模板、命名、同步。
 6. **健康與修復**：每個狀態代表什麼、如何安全處理。
 7. **Dictionary 管理**：人類欄名、Type、預設值與驗證。
 8. **進階設定與擴充**：新增 Type、Tag、命名規則與 adapter。
-9. **開發者契約**：schema、ID、revision、Registry 與 migration。
+9. **開發者契約**：schema、ID、revision、Registry、migration 與領域規則 fixtures。
 
-每個使用者指令只需回答：用途、在哪裡執行、執行前需要什麼、會修改什麼、成功後得到什麼、下一步是什麼。
+每個使用者指令只需回答：用途、在哪裡執行、執行前需要什麼、會修改什麼、重跑會怎樣、成功後得到什麼、失敗如何復原、下一步是什麼。
 
 ## 建議先確認的生態原則
 
-以下是後續細項決策的上位原則，目前先作建議基線：
+以下是後續細項決策的上位原則。兩次複核方向一致，目前仍列為「建議採用，待使用者確認」：
 
 | ID | 原則 | 建議 |
 |---|---|---|
-| ECO-01 | Dictionary 是 Type Catalog；3D Object 是 Instance truth | 採用 |
-| ECO-02 | Layer 是人類分類入口，不是永久資料 ID | 採用 |
-| ECO-03 | Section 圖面可獨立編輯；任何更新不得靜默覆寫人工成果 | 採用 |
-| ECO-04 | Tag 綁定穩定 Object／View／Sheet ID；圖面位置只協助定位 | 採用 |
-| ECO-05 | Sheet metadata 是圖框與命名真相；Layout 名稱是輸出 | 採用 |
-| ECO-06 | Registry 是版本化唯讀發布快照，不是另一份人工資料庫 | 採用 |
-| ECO-07 | 狀態、revision 與問題是正式資料；顏色只作提示 | 採用 |
-| ECO-08 | 每階段可單獨執行、驗證、重跑與復原 | 採用 |
+| ECO-01 | Dictionary 是 Type Catalog；3D Object 是 Instance truth | 建議採用 |
+| ECO-02 | Layer 是人類分類入口，不是永久資料 ID | 建議採用 |
+| ECO-03 | Section 圖面可獨立編輯；任何更新不得靜默覆寫人工成果 | 建議採用 |
+| ECO-04 | Tag 綁定穩定 Object／View／Sheet ID；圖面位置只協助定位 | 建議採用 |
+| ECO-05 | Sheet metadata 是圖框與命名真相；Layout 名稱是輸出 | 建議採用 |
+| ECO-06 | Registry 是版本化唯讀發布快照，不是另一份人工資料庫 | 建議採用 |
+| ECO-07 | 狀態、revision 與問題是正式資料；顏色只作可還原提示 | 建議採用 |
+| ECO-08 | 每階段可單獨執行、驗證、重跑與復原 | 建議採用 |
+| ECO-09 | 量綱明確：模型單位先驗證；估算單位分離；所有量綱常數具名並標註單位 | 建議採用 |
+| ECO-10 | 每個產生幾何或改寫資料的指令都定義冪等重跑政策，並能辨識前次產出 | 建議採用 |
+| ECO-11 | ID 的產生與變更可追溯；自動換 ID 前先報告、預覽、建立 mapping 並可回復 | 建議採用 |
 
 這些原則確立後，再把 `NEXUS_DICTIONARY_DECISION_MENU.md` 的 ND-01～ND-25 依本工作鏈重排；接著裁決 Space、Elevation、Dimension、Tag Template、Sheet naming、Drawing lifecycle 與 Registry schema 的細節。
 
+## 下一輪裁決順序
+
+### 先列為安全必做，不改變工作語意
+
+1. UUID 掃描與換號的預覽、影響清單、mapping 與 rollback。
+2. Project path resolver、Registry reader 無副作用、pending／validate／atomic replace。
+3. 列出死設定、死欄位與無 consumer 區段；真正刪除前仍確認沒有 repo 外工具依賴。
+4. 建立現行幾何與判定規則清單，作為 fixtures 來源。
+
+### 證據已足，建議優先確認
+
+- `_03_ID編號` 現行語意是類別碼＋序號；2.0 拆成兩個 typed 欄位。
+- Tag lock 統一為單一正式欄位。
+- Cabinet L／W／T 使用 panel local frame，不再將三邊排序後猜方向。
+- 模型文件單位與 `_08` 工程估算單位分成兩題。
+- Drawing lifecycle 先完成冪等產出，再擴充完整狀態機。
+
+### 必須由使用者回答
+
+1. `CH` 是否刻意表示「天花高度，但幾何取物件底面」？`BC` 是否固定量到 Block 插入點？
+2. Space boundary 實際是否會重疊？一個專案是否有多樓層 boundary 同時存在？
+3. 不同 Type 的寬、深、高各自如何定義？旋轉物件要依 world 還是 local frame？
+4. `_09_實作數量` 是否要實作？每種 `_08` 單位對應哪個幾何量？
+5. `我是備註，UCCU` 是否只是測試字串？`20_DW` 操作說明是否應移到 instruction？
+6. `DNA_REF_` 參考線原本用來做什麼？2.0 是否仍需要可視化 Type 樣本？
+7. Rhino 文件不是 cm 時，要直接阻擋，還是允許明確換算？
+
 ## 本文件的確立門檻
 
-- 使用者確認工作鏈沒有遺失實際作業目的。
+- 使用者確認 W1～W11 工作鏈沒有遺失實際作業目的。
 - 23 支現行程式的「保留意圖」與「可翻案做法」分類合理。
-- Type／Object／View／Drawing／Sheet／Tag／Registry 的真相邊界清楚。
-- Section 人工編修的保護方式與 stale 行為完成裁決。
+- Type／Object／Space／View／Drawing／Sheet／Tag／Registry 的真相邊界清楚。
+- ECO-01～ECO-11 完成確認。
+- Section 人工編修、View transform、冪等重跑與 stale 行為完成裁決。
 - Tag、圖框、索引、健康檢查都能沿 ID 與 revision 追溯來源。
+- 現行幾何與判定知識已列入規則清單及 fixtures，不因乾淨重建消失。
 - 後續新增 Type、Tag、View 或命名規則不需改寫整條工作鏈。
 
 確立前可以多次修改本文件。確立後若要改上位原則，需同時檢查所有下游契約與 migration 影響，不在單一 feature 中偷偷改變。

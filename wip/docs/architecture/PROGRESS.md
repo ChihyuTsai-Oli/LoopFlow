@@ -5,7 +5,7 @@
 - 整合分支：`v2-development`
 - 建立基準：`main` / `b09d650d5ba1a618c0ce8de154af2b961292e066`
 - 穩定回復點：`v1.0.0` / `1479ba5f57d79f4048dd858f8afb0ff439c9fe66`
-- 狀態：23 支 Python 的功能與意圖已重新核對；資料生態與完整工作鏈藍圖已建立，等待反覆討論與確立；尚未修改產品程式碼
+- 狀態：Codex 初版與 Claude Code 獨立複核已整理成單一資料生態藍圖；兩份來源移入 `architecture/ref/`；等待使用者反覆討論與確立，尚未修改產品程式碼
 
 ## AI 接手入口
 
@@ -65,7 +65,8 @@ fixture 與預期結果應在對應功能建造前完成；實機結果則在主
 | 2026-08-12 | 任務切分與開發路徑 | 建立 A–G 階段、任務依賴、分支 scope、完成檢查與雙機安全停點 | 已記錄 | Nexus 僅列核心工作軌；詳細拆分另建專用文件 |
 | 2026-08-12 | Nexus／Dictionary 靜態盤點 | 逐檔閱讀 23 支 Python；檢查實際 XLSX 的 18 欄、92 列、值域與格式；對照公開指南；建立設定、衝突與 ND-01～ND-25 決策菜單 | 通過 | 尚未執行 Rhino 實機與舊專案資料抽樣；所有 ND 項目仍待使用者裁決，產品程式碼未修改 |
 | 2026-08-12 | 資料生態與工作鏈藍圖 | 重新核對 23 支 Python 的功能、輸入輸出、UserText／Registry／Section／Tag／Layout 依賴；建立 Type→Object→Registry→View→Drawing→Sheet→Tag→Health 的總體說明 | 已建立 | 上位 ECO 原則與 Section 人工編修生命週期尚待使用者反覆討論、確立；未修改產品程式碼 |
+| 2026-08-12 | 資料生態獨立複核與整合 | 合併 Codex 藍圖與 Claude Code 複核；校正 Anchor／Registry／Dict-to-Layer 現況，加入 18 欄所有權、W6 View Registration、Health 前置、P0／P1 風險、領域規則保存與 ECO-09～11；原文移入 `architecture/ref/` | 已建立 | 所有 Rhino 行為仍屬靜態推論，需實機驗證；產品程式碼與工作檔未修改 |
 
 ## 下一步
 
-先由使用者檢視 `LOOPFLOW_DATA_ECOSYSTEM.md`，確認工作鏈完整、23 支現行程式的保留意圖合理，並反覆修訂 ECO-01～ECO-08。上位藍圖確立後，重排並裁決 `NEXUS_DICTIONARY_DECISION_MENU.md` 的細項，再將答案落入 `_LoopFlow_命名與資料契約.md`、schema fixtures 與 validator 規格。使用者確認契約前，不開始正式功能程式碼。
+先由使用者檢視整合後的 `LOOPFLOW_DATA_ECOSYSTEM.md`，確認 W1～W11、23 支現行程式的保留意圖、P0／P1 風險與 ECO-01～ECO-11。接著依文件列出的七個實務問題討論，再重排並裁決 `NEXUS_DICTIONARY_DECISION_MENU.md` 細項，將答案落入 `_LoopFlow_命名與資料契約.md`、現行領域規則清單、schema fixtures 與 validator 規格。使用者確認契約前，不開始正式功能程式碼。
