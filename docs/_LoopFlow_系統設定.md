@@ -40,6 +40,46 @@ build.ps1
 
 目前 `releases/LoopFlow/Python/` 同時是可編輯來源與 release payload。只有在 package 骨架、import spike 與 build 驗證完成後，才切換為 `src/` 唯一來源。
 
+## 重構期間的 Rhino 測試入口
+
+重構期間直接從 repo 執行開發中的入口，不必先複製到 `%APPDATA%`。Rhino 測試按鈕固定指向 `entrypoints/`，不要直接指向仍會調整的 `features/`、`platform/` 或 `foundation/` 內部模組：
+
+```text
+E:\_GitHub\LoopFlow\src\entrypoints\
+```
+
+按鈕巨集格式：
+
+```text
+_-ScriptEditor _Run "E:\_GitHub\LoopFlow\src\entrypoints\LF_Nexus.py"
+```
+
+目前預計的使用者入口如下；共用模組 `_LoopFlow_Config.py`、`_LF_Debug.py`、`_LF_NamingRules.py`、`_LF_Registry.py` 不建立按鈕：
+
+```text
+LF_Nexus.py
+LF_Dictionary_Editor.py
+LF_Data_Viewer.py
+LF_Push_3D_to_JSON.py
+LF_Tagger_Grab.py
+LF_Tagger_Laser.py
+LF_Tagger_Index.py
+LF_Tagger_Layout_ID.py
+LF_TAG-O.py
+LF_Infuser_Part.py
+LF_Infuser_All.py
+LF_Anchor_Frame.py
+LF_Extract_CP.py
+LF_Duplicate_Layout.py
+LF_Cabinet_Suite.py
+LF_2D_Cabinet_Gen.py
+LF_2D_Shelf_Gap.py
+LF_2D_DW_Gen.py
+LF_Sync_Worksession.py
+```
+
+這是開發期暫定清單，不是凍結的公開契約。功能增減、入口檔名或 repo 內路徑改變時，應同步更新本節與測試工具列；正式安裝／RC 驗證才改用隔離的 `%APPDATA%` 開發安裝位置。
+
 ## 模組責任
 
 | 模組／功能群 | 責任 |
