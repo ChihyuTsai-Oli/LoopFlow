@@ -9,9 +9,10 @@ AI 必須依序完整讀取：
 1. `docs/_LoopFlow_使用說明.md`
 2. `docs/_LoopFlow_系統設定.md`
 3. `docs/_LoopFlow_命名與資料契約.md`
-4. `docs/_LoopFlow_重構計畫.md`
-5. `docs/architecture/DEVELOPMENT_ROADMAP.md`
-6. `docs/architecture/PROGRESS.md`
+4. `docs/architecture/NEXUS_DICTIONARY_DECISION_MENU.md`
+5. `docs/_LoopFlow_重構計畫.md`
+6. `docs/architecture/DEVELOPMENT_ROADMAP.md`
+7. `docs/architecture/PROGRESS.md`
 
 公開的 `README.md`、`README_zh-TW.md`、`docs/USER_GUIDE*.md` 與 `docs/Dictionary_GUIDE*.md` 是使用者文件，不是重構指令的權威來源；改變使用行為時仍須同步更新。
 
@@ -42,7 +43,7 @@ AI 必須依序完整讀取：
 ## AI 作業流程
 
 1. 確認 repo、branch、origin、upstream 與乾淨工作樹；只用 fast-forward pull。
-2. 讀取上述五份文件，從 `PROGRESS.md` 找到目前階段、限制與下一步。
+2. 讀取上述文件，從 `PROGRESS.md` 找到目前階段、限制與下一步。
 3. 建立短期工作分支，只處理一個 P0 或一條 feature。
 4. 命名契約尚未定案前，不建立正式 feature；先完成依賴盤點、schema 與 fixtures。
 5. 每段完成後執行自動測試與契約檢查；主要工作流串接後再以測試專案做 Rhino 端到端實機驗證。

@@ -34,6 +34,7 @@ docs/
   USER_GUIDE*.md          # 公開使用指南
   Dictionary_GUIDE*.md    # 公開 Dictionary 指南
   _LoopFlow_*.md          # 繁中維護 SSOT
+  architecture/NEXUS_DICTIONARY_DECISION_MENU.md
   architecture/DEVELOPMENT_ROADMAP.md
   architecture/PROGRESS.md
 build.ps1
@@ -169,6 +170,7 @@ Registry P0 完成前，以上 timeout 不代表 lock／replace 已達安全規�
 - 維護 SSOT：本文件、`_LoopFlow_使用說明.md`、`_LoopFlow_重構計畫.md`、`architecture/PROGRESS.md`。
 - 任務切分、依賴順序與雙機安全停點：`architecture/DEVELOPMENT_ROADMAP.md`。
 - Dictionary、命名與 schema SSOT：`_LoopFlow_命名與資料契約.md`。
+- Nexus／Dictionary 的 1.0 靜態盤點、衝突與待決定選項：`architecture/NEXUS_DICTIONARY_DECISION_MENU.md`。
 - 內部維護文件與新增／修改註解使用繁體中文。
 - 模組整體目的、流程、設定、契約、副作用與回復方式寫入 docs。
 - 程式只保留必要 docstring、難以由程式本身看出的原因、API 限制與安全 invariant。

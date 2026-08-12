@@ -4,7 +4,7 @@
 
 ## 狀態
 
-- 階段：準備盤點
+- 階段：1.0 靜態盤點完成，等待使用者依 `architecture/NEXUS_DICTIONARY_DECISION_MENU.md` 裁決
 - 套用版本：LoopFlow `v2.0.0`
 - 舊版參考：`v1.0.0`
 - 原則：新版乾淨定義；舊版資料不在開發中零散改寫
@@ -41,6 +41,8 @@
 | 待盤點 |  |  |  |  |  |  |  | 未定案 |
 
 只有完成 Producer／Consumer 追蹤後才能改名，不能只因名稱看起來不清楚就直接替換。
+
+1.0 的實際欄位、producer／consumer、指南衝突與使用者選項已整理於 `architecture/NEXUS_DICTIONARY_DECISION_MENU.md`。該文件是討論輸入；使用者的裁決應回寫本文件，成為 2.0 正式契約。
 
 ## Dictionary 定義工作
 
