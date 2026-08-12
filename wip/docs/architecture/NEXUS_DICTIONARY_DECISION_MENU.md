@@ -5,7 +5,7 @@
 ## 盤點狀態
 
 - 日期：2026-08-12
-- 範圍：`releases/LoopFlow/Python/` 全部 23 支 Python、`LoopFlow_Dictionary.xlsx`、繁中使用指南與 Dictionary 指南
+- 範圍：`releases/LoopFlow/Python/` 全部 23 支 Python、Dropbox 中文版 `LoopFlow_Dictionary.xlsx`、repo 英文舊版、繁中使用指南與 Dictionary 指南
 - 方法：逐檔閱讀、Python 靜態依賴搜尋、XLSX 結構與畫面檢查
 - 尚未執行：Rhino 8 實機操作、舊專案資料抽樣、多人／雙機同時寫入測試
 - 結論：已足夠開始規格裁決；使用者確認關鍵語意前，不修改產品程式碼
@@ -57,7 +57,7 @@ flowchart LR
 
 ## 實際 Dictionary 快照
 
-`releases/LoopFlow/LoopFlow_Dictionary.xlsx` 的實際狀態：
+重構採用 `%LOOPFLOW_WORKFILES_ROOT%\LoopFlow_Dictionary.xlsx`。公司電腦實際檔案為 `D:\Dropbox\LoopFlow_Series\Workfiles\WIP_loopflow\LoopFlow_Dictionary.xlsx`；repo release 內的英文版本只作比較。所選中文版的實際狀態：
 
 - 工作表：`LoopFlow_Dictionary`
 - 使用範圍：`A1:R94`
@@ -65,16 +65,17 @@ flowchart LR
 - 資料列：92；`__Rhino Layer` 與 `_03_ID Number` 都沒有重複
 - 欄位：18；沒有公式
 - `_01`、`_05`、`_06`、`_07`、`_09`、`_11`、`_12` 與四個 `_CB` 欄目前全部留白
-- `_13_Remarks` 有 91 列為 `Follow the white rabbit.`，只有 `20_DW` 留白
-- 單位值實際包含 `cm`、`mm`、`m2`、`m3`、`set`、`sheet`、`unit`、`DW`
-- `sheet ` 與 `unit ` 有 4 個尾端空白；loader 目前會 trim，但原始檔仍不乾淨
+- 欄名採中文，例如 `_01_空間名稱`、`_02_建構狀態`、`_CB.01_板材類型`
+- `_13_備註` 有 91 列為 `我是備註，UCCU`；`20_DW` 為正式操作說明
+- 單位值實際包含 `cm`、`mm`、`m3`、`坪`、`座`、`才`、`樘`、`片`、`組`、`台`
+- 沒有發現尾端空白值
 - 高程基準實際包含 `BH`、`TH`、`BC`、`CH`、`TH/BH`
 
 ### 18 欄的現行所有權
 
 | 欄位 | 現行來源／寫入者 | 主要 consumer | 現況問題 |
 |---|---|---|---|
-| `__Rhino Layer` | Dictionary；Layer to Dict 反向匯出 | Nexus、layer 建立、Push 範圍 | 同時是顯示 path 與主鍵；`M3D::` 前綴由程式另加 |
+| `__Rhino Layer` | Dictionary；Layer to Dict 反向匯出 | Nexus、layer 建立、Push 範圍 | 選定版本為中英雙語 path；同時是顯示 path 與主鍵，`M3D::` 前綴由程式另加 |
 | `_01_Space Name` | Nexus 由 boundary 計算 | Registry、TAG-O | boundary 實際用另一個 key `Space_Name`；重疊與樓層未定義 |
 | `_02_Construction Status` | Dictionary 預設；物件既有值受保護 | Registry、標註流程 | UI 說結構層預設 Existing，但程式實際先看 Dictionary；重設規則不明 |
 | `_03_ID Number` | Dictionary | Push、Laser、Infuser、Tag | `-` 會略過 Push；Infuser 又把第一個 `-` 當結構分隔符 |
@@ -87,7 +88,7 @@ flowchart LR
 | `_10_Elevation Basis` | Dictionary | Nexus、Infuser | `CH` 的程式行為目前等同 `BH`，語意未實作 |
 | `_11_Elevation Value` | Nexus | Registry、Infuser | 是帶 `+`／`±0`／`TH / BH` 的顯示字串，不是指南所稱單純數字 |
 | `_12_UUID` | Nexus | Push、Grab、Laser、Registry | 全模型掃描與 M3D scope 混用；複製／舊資料修復政策未定 |
-| `_13_Remarks` | Dictionary 預設；物件既有值受保護 | Registry | 幾乎所有 layer 的預設是測試字串，可能污染物件資料 |
+| `_13_備註` | Dictionary 預設；物件既有值受保護 | Registry | 91 個 layer 的預設為 `我是備註，UCCU`，需確認是否只是測試字串 |
 | `_CB.01_Panel_Type` | Cabinet；Nexus 條件保留或清為 `-` | Registry、Cabinet／2D | Cabinet layer 判定與實際生成位置可能不同 |
 | `_CB.02_Length_L` | Cabinet；Nexus 條件保留或清為 `-` | Registry、Cabinet／2D | 依尺寸排序推導 L，不一定等於語意方向 |
 | `_CB.03_Width_W` | Cabinet；Nexus 條件保留或清為 `-` | Registry、Cabinet／2D | 同上 |
@@ -128,13 +129,13 @@ flowchart LR
 
 | ID | 衝突／風險 | 影響 |
 |---|---|---|
-| CF-01 | 公開 Dictionary 指南使用中文欄位與不存在的 `LoopFlow_Dictionary_TW.xlsx`；實際檔為英文欄位 | 使用者照文件製表可能無法正確讀取 |
+| CF-01 | repo release 是英文 Dictionary，Dropbox 另有同檔名中文版本；重構已指定 Dropbox 中文版 | resolver 若仍從 repo 或 Rhino 文件資料夾找檔，會讀到錯誤版本 |
 | CF-02 | 程式常用 `_01_` 等 prefix 找第一欄，不依賴完整欄名 | 同 prefix 多欄時會靜默選錯；改字尾看似成功卻無 schema 保證 |
 | CF-03 | 指南稱 layer 重複列會略過；程式 dict mapping 實際是後列覆蓋前列 | 資料錯誤不會被清楚阻擋 |
 | CF-04 | 指南稱 `_09_Quantity` 由 Nexus 計算；程式沒有 producer | 報表數量來源不可信 |
 | CF-05 | 指南稱 `_11` 是 cm 數字；程式寫入顯示字串 | 排序、計算、交換資料容易失敗 |
 | CF-06 | 指南沒列 `BC`，實際 XLSX 與程式使用；`CH` 又沒有獨立算法 | 高程結果可能語意錯誤 |
-| CF-07 | Dictionary 單位、layer 名稱與指南示例不同 | 文件、現有專案與新版契約無法直接視為同一版本 |
+| CF-07 | 中文 Dictionary 與 repo 英文 Dictionary 的單位、layer path、備註與欄名不同 | 兩者不可混用或依同檔名推定 schema |
 | CF-08 | `_01_*` 與 boundary 的 `Space_Name` 是兩套 key | 空間名稱來源與更新責任不清楚 |
 | CF-09 | Space 只看 bottom-center XY 且取第一個 boundary | 重疊空間、多樓層、跨界物件結果不穩定 |
 | CF-10 | 一般幾何以 World bbox 算 W／D／H；Block 使用另一套算法 | 旋轉後的同一物件可能得到不同尺寸 |
@@ -147,7 +148,7 @@ flowchart LR
 | CF-17 | `Layer to Dict` 讀 layer UserStrings，不是指南所稱 object UserText | 反向同步名稱容易造成錯誤期待 |
 | CF-18 | 反向匯出使用 `[NEW]`、`[DELETED]`、`[MODIFIED]`、`[EXCLUDED]` 混入主鍵 | 主鍵同時承擔狀態顯示，不利機器驗證 |
 | CF-19 | `_02`、`_09`、`_13` 以 prefix 保護，只驗存在或沿用物件值 | Dictionary 更新後無明確的繼承、覆寫、重設方式 |
-| CF-20 | `_13` 幾乎全部是 `Follow the white rabbit.` | 可能把測試字串寫入大量正式物件與 Registry |
+| CF-20 | 中文版 `_13` 有 91 列為 `我是備註，UCCU` | 可能把測試字串寫入大量正式物件與 Registry |
 | CF-21 | Cabinet 產物可在 current layer，BOM 更新卻只處理 `04_CB`；Nexus 也靠 layer 判定 `_CB` | Cabinet 資料可能被略過或清成 `-` |
 | CF-22 | Infuser 把 `_03` 第一個 `-` 拆成兩個 Tag 值 | 一般 ID 若包含連字號會被誤解 |
 | CF-23 | Tag lock、warning color 與缺值規則分散且不一致 | 重構單一 Tagger 時可能破壞其他 Tag 流程 |
@@ -168,7 +169,7 @@ flowchart LR
 | ND-05 | 缺值 | A. 內部使用 typed null，只有畫面／Tag 顯示 `-`；B. 所有層都保存 `-` 字串 | **A**；避免把缺值誤當真實文字或數字 |
 | ND-06 | Dictionary 中的計算欄 | A. 保留欄位定義，但 row value 不作預設；B. 從 Dictionary 移除；C. 允許 row 預設覆寫計算 | **A**；schema 可見、所有權仍清楚 |
 | ND-07 | Layer taxonomy | A. 2.0 沿用目前英文 layer path；B. 改成中英雙語；C. 另訂新分類 | 暫建議 **A**；顯示翻譯不要放進 machine path |
-| ND-08 | 專案檔案位置 | A. 每個 `.3dm` 同資料夾固定一份 Dictionary／Registry；B. 可指定共享路徑；C. 每個模型各自一份 | 現行工作流建議 **A**；共享需求若存在需先說明 |
+| ND-08 | 專案檔案位置 | **已定案**：Dictionary 與即時交換 JSON 位於各專案的 Dropbox 工作檔根目錄，以環境變數解析；JSON 預設整理於 `exchange/` | 家中電腦使用相同變數名稱、不同實體路徑 |
 
 ### 第二輪：固定 Nexus 的核心語意
 

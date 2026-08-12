@@ -8,6 +8,7 @@
 - 套用版本：LoopFlow `v2.0.0`
 - 舊版參考：`v1.0.0`
 - 原則：新版乾淨定義；舊版資料不在開發中零散改寫
+- Dictionary 盤點來源：`%LOOPFLOW_WORKFILES_ROOT%\LoopFlow_Dictionary.xlsx` 中文版本；repo release 的英文版本只作舊版比較
 
 ## 核心裁決
 
@@ -43,6 +44,8 @@
 只有完成 Producer／Consumer 追蹤後才能改名，不能只因名稱看起來不清楚就直接替換。
 
 1.0 的實際欄位、producer／consumer、指南衝突與使用者選項已整理於 `architecture/NEXUS_DICTIONARY_DECISION_MENU.md`。該文件是討論輸入；使用者的裁決應回寫本文件，成為 2.0 正式契約。
+
+使用者已指定採用中文 Dictionary 作為內容與 layer taxonomy 的重構來源；是否直接使用完整中文欄名作為 machine key，仍須與多語顯示方式一起裁決，不能只由檔案版本反推。
 
 ## Dictionary 定義工作
 

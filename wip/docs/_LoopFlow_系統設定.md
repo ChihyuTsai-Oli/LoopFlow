@@ -13,6 +13,15 @@
 | 目標版本 | `v2.0.0` |
 | Runtime | Rhino 8 / CPython 3.9 / Windows |
 
+## 重構工作檔根目錄
+
+- 本機環境變數：`LOOPFLOW_WORKFILES_ROOT`
+- 公司電腦：`D:\Dropbox\LoopFlow_Series\Workfiles\WIP_loopflow`
+- 採用 Dictionary：`%LOOPFLOW_WORKFILES_ROOT%\LoopFlow_Dictionary.xlsx`
+- 交換 JSON：`%LOOPFLOW_WORKFILES_ROOT%\exchange\`
+
+重構採用 Dropbox 的中文欄位／中英雙語 layer Dictionary。`releases/LoopFlow/LoopFlow_Dictionary.xlsx` 的英文版本保留為 1.x 參考，不作 2.0 的即時工作來源。程式只讀環境變數，不寫死公司路徑；環境變數缺少或目錄不存在時，應停止相關操作並顯示設定方式。
+
 ## 2.0 開發模式
 
 - `main`、`v1.0.0` 與 `releases/LoopFlow/` 作為舊版行為與回復參考，不在重構過程逐支改造成半新半舊系統。
@@ -153,6 +162,8 @@ Registry P0 完成前，以上 timeout 不代表 lock／replace 已達安全規�
 - Ceiling／mirror keywords 與 `INVERT_Y`。
 
 完整實際值以 `_LoopFlow_Config.py` 為準；文件改動時必須核對程式，不建立第二份可執行設定。
+
+上表描述 1.x 現況。2.0 的 Dictionary resolver 改由 `LOOPFLOW_WORKFILES_ROOT` 加固定檔名取得；Rhino 文件所在資料夾不再是 Dictionary 的主要搜尋位置。
 
 ## 不屬於使用者設定的契約
 
