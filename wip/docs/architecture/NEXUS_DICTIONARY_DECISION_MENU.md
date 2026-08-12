@@ -1,6 +1,6 @@
 # LoopFlow 2.0 — Nexus／Dictionary 現況盤點與決策菜單
 
-本文件記錄 1.0 程式與實際 Dictionary 的靜態盤點結果，作為欄位與 Nexus 細節的討論菜單。整條工作鏈、資料實體與上位原則先以 `LOOPFLOW_DATA_ECOSYSTEM.md` 為準；本文件後續會依該藍圖重排。它不是要沿用舊架構，也不代表所有現況都是正確規格。
+本文件記錄 1.0 程式與實際 Dictionary 的靜態盤點結果，作為欄位與 Nexus 細節的討論菜單。整條工作鏈與資料實體以 `LOOPFLOW_DATA_ECOSYSTEM.md` 為準；尚待確認的上位原則與實務語意以 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` 為唯一編輯區。本文件後續會依已確認答案重排。它不是要沿用舊架構，也不代表所有現況都是正確規格。
 
 ## 盤點狀態
 

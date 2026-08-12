@@ -47,6 +47,7 @@ wip/
   docs/
     _LoopFlow_*.md        # 重構維護 SSOT
     architecture/LOOPFLOW_DATA_ECOSYSTEM.md
+    architecture/LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md
     architecture/NEXUS_DICTIONARY_DECISION_MENU.md
     architecture/DEVELOPMENT_ROADMAP.md
     architecture/PROGRESS.md
@@ -204,6 +205,7 @@ Registry P0 完成前，以上 timeout 不代表 lock／replace 已達安全規�
 - 任務切分、依賴順序與雙機安全停點：`architecture/DEVELOPMENT_ROADMAP.md`。
 - Dictionary、命名與 schema SSOT：`_LoopFlow_命名與資料契約.md`。
 - 完整工作鏈、資料實體、真相邊界與 23 支現行程式意圖：`architecture/LOOPFLOW_DATA_ECOSYSTEM.md`。
+- 使用者可直接編輯的上位原則與實務待決事項：`architecture/LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`。
 - 已合併的原始藍圖與獨立複核：`architecture/ref/`；只供追溯，不取代整合後藍圖。
 - Nexus／Dictionary 的 1.0 靜態盤點、衝突與待決定選項：`architecture/NEXUS_DICTIONARY_DECISION_MENU.md`。
 - 內部維護文件與新增／修改註解使用繁體中文。

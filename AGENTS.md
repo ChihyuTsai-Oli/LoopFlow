@@ -10,10 +10,11 @@ AI 必須依序完整讀取：
 2. `wip/docs/_LoopFlow_系統設定.md`
 3. `wip/docs/_LoopFlow_命名與資料契約.md`
 4. `wip/docs/architecture/LOOPFLOW_DATA_ECOSYSTEM.md`
-5. `wip/docs/architecture/NEXUS_DICTIONARY_DECISION_MENU.md`
-6. `wip/docs/_LoopFlow_重構計畫.md`
-7. `wip/docs/architecture/DEVELOPMENT_ROADMAP.md`
-8. `wip/docs/architecture/PROGRESS.md`
+5. `wip/docs/architecture/LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`
+6. `wip/docs/architecture/NEXUS_DICTIONARY_DECISION_MENU.md`
+7. `wip/docs/_LoopFlow_重構計畫.md`
+8. `wip/docs/architecture/DEVELOPMENT_ROADMAP.md`
+9. `wip/docs/architecture/PROGRESS.md`
 
 公開的 `README.md`、`README_zh-TW.md`、`docs/USER_GUIDE*.md` 與 `docs/Dictionary_GUIDE*.md` 是使用者文件，不是重構指令的權威來源；改變使用行為時仍須同步更新。重構中的文件、原始碼、fixtures 與測試統一放在 `wip/`；Dropbox 工作檔路徑依上一層 `工作檔路徑.md` 解析，不得寫死單一電腦的絕對路徑。
 

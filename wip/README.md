@@ -14,4 +14,4 @@ wip/
 
 重構採用 `%LOOPFLOW_WORKFILES_ROOT%\LoopFlow_Dictionary.xlsx` 的中文版本；Rhino 與其他程式產生／讀取的即時 JSON 放在同一工作檔根目錄的 `exchange/`，不提交 Git。
 
-總體工作鏈、資料實體與 23 支現行程式的保留意圖，先讀 `docs/architecture/LOOPFLOW_DATA_ECOSYSTEM.md`；欄位與 Nexus 細項再讀 `NEXUS_DICTIONARY_DECISION_MENU.md`。
+總體工作鏈、資料實體與 23 支現行程式的保留意圖，先讀 `docs/architecture/LOOPFLOW_DATA_ECOSYSTEM.md`；使用者可直接填寫的待決定事項讀 `docs/architecture/LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`；欄位與 Nexus 細項再讀 `NEXUS_DICTIONARY_DECISION_MENU.md`。

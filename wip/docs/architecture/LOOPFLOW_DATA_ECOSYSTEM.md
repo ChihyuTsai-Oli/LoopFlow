@@ -16,7 +16,7 @@
 - `ref/LOOPFLOW_DATA_ECOSYSTEM.md`
 - `ref/LOOPFLOW_DATA_ECOSYSTEM_REVIEW_Claude_Code.md`
 
-本文的「現況事實」可由現行程式或 Dictionary 交叉確認，但不等於 2.0 必須沿用；「建議」仍待使用者確認；由靜態讀碼推論的 Rhino 行為仍須實機測試。
+本文的「現況事實」可由現行程式或 Dictionary 交叉確認，但不等於 2.0 必須沿用；由靜態讀碼推論的 Rhino 行為仍須實機測試。所有尚待使用者確認的原則與實務問題集中在 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`，不在本文件維護第二份答案。
 
 ## 不可遺失的工作邏輯
 
@@ -122,7 +122,7 @@ Dictionary 提供類型預設；模型物件保存實例真相。有效值採一
 
 2.0 必須分成兩份契約：
 
-- 模型文件單位：啟動時驗證；非 cm 是阻擋還是換算仍待裁決。
+- 模型文件單位：啟動時驗證；非 cm 的阻擋／換算規則見決策表 ED-12。
 - 工程估算單位：定義允許值、量綱，以及 `_09_實作數量` 對應的幾何計算規則。
 
 所有帶量綱的常數都要具名並標註單位，不能再以無說明的 `200.0`、`1.0`、`0.2` 決定空間、高程、Laser 或 Cabinet 行為。
@@ -305,7 +305,7 @@ IN 101.01__一樓平面配置圖
 
 而不是從這個字串反向猜出 discipline、series 與 sequence。如此未來改命名格式、插頁、調整順序或建立多套交付格式時，不必破壞圖框與 Section Index Tag。
 
-複製 Sheet 時必須建立新的 `sheet_id`、`drawing_id` 與 `tag_id`。一般 Tag 是否保留相同 `source_object_id` 由複製政策決定；Index Tag 不得無聲沿用來源頁的 `.Target_DV_ID`，而要重新指向或標為待確認。複製結果需列出所有失效、保留與待確認綁定，也不應依賴會覆蓋使用者系統剪貼簿的流程。
+複製 Sheet 時必須建立新的 `sheet_id`、`drawing_id` 與 `tag_id`。一般 Tag 是否保留相同 `source_object_id` 見決策表 ED-13；Index Tag 不得無聲沿用來源頁的 `.Target_DV_ID`，而要重新指向或標為待確認。複製結果需列出所有失效、保留與待確認綁定，也不應依賴會覆蓋使用者系統剪貼簿的流程。
 
 ## Registry 與 revision 傳遞
 
@@ -536,52 +536,16 @@ Health 不只回報結果，也要記錄原因、建議修復、預覽、使用�
 
 每個使用者指令只需回答：用途、在哪裡執行、執行前需要什麼、會修改什麼、重跑會怎樣、成功後得到什麼、失敗如何復原、下一步是什麼。
 
-## 建議先確認的生態原則
+## 待確認事項與安全前置
 
-以下是後續細項決策的上位原則。兩次複核方向一致，目前仍列為「建議採用，待使用者確認」：
+需要使用者決定的 ECO-01～ECO-11、已有證據的建議與實務語意問題，已拆至 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`。使用者可直接編輯該文件，AI 再依結果回寫本藍圖與下游契約。
 
-| ID | 原則 | 建議 |
-|---|---|---|
-| ECO-01 | Dictionary 是 Type Catalog；3D Object 是 Instance truth | 建議採用 |
-| ECO-02 | Layer 是人類分類入口，不是永久資料 ID | 建議採用 |
-| ECO-03 | Section 圖面可獨立編輯；任何更新不得靜默覆寫人工成果 | 建議採用 |
-| ECO-04 | Tag 綁定穩定 Object／View／Sheet ID；圖面位置只協助定位 | 建議採用 |
-| ECO-05 | Sheet metadata 是圖框與命名真相；Layout 名稱是輸出 | 建議採用 |
-| ECO-06 | Registry 是版本化唯讀發布快照，不是另一份人工資料庫 | 建議採用 |
-| ECO-07 | 狀態、revision 與問題是正式資料；顏色只作可還原提示 | 建議採用 |
-| ECO-08 | 每階段可單獨執行、驗證、重跑與復原 | 建議採用 |
-| ECO-09 | 量綱明確：模型單位先驗證；估算單位分離；所有量綱常數具名並標註單位 | 建議採用 |
-| ECO-10 | 每個產生幾何或改寫資料的指令都定義冪等重跑政策，並能辨識前次產出 | 建議採用 |
-| ECO-11 | ID 的產生與變更可追溯；自動換 ID 前先報告、預覽、建立 mapping 並可回復 | 建議採用 |
+不改變工作語意的安全前置仍屬藍圖要求：
 
-這些原則確立後，再把 `NEXUS_DICTIONARY_DECISION_MENU.md` 的 ND-01～ND-25 依本工作鏈重排；接著裁決 Space、Elevation、Dimension、Tag Template、Sheet naming、Drawing lifecycle 與 Registry schema 的細節。
-
-## 下一輪裁決順序
-
-### 先列為安全必做，不改變工作語意
-
-1. UUID 掃描與換號的預覽、影響清單、mapping 與 rollback。
-2. Project path resolver、Registry reader 無副作用、pending／validate／atomic replace。
-3. 列出死設定、死欄位與無 consumer 區段；真正刪除前仍確認沒有 repo 外工具依賴。
+1. UUID 掃描與換號要有預覽、影響清單、mapping 與 rollback。
+2. Project path resolver 必須唯一；Registry reader 無副作用；發布使用 pending／validate／atomic replace。
+3. 死設定、死欄位與無 consumer 區段在刪除前仍確認沒有 repo 外工具依賴。
 4. 建立現行幾何與判定規則清單，作為 fixtures 來源。
-
-### 證據已足，建議優先確認
-
-- `_03_ID編號` 現行語意是類別碼＋序號；2.0 拆成兩個 typed 欄位。
-- Tag lock 統一為單一正式欄位。
-- Cabinet L／W／T 使用 panel local frame，不再將三邊排序後猜方向。
-- 模型文件單位與 `_08` 工程估算單位分成兩題。
-- Drawing lifecycle 先完成冪等產出，再擴充完整狀態機。
-
-### 必須由使用者回答
-
-1. `CH` 是否刻意表示「天花高度，但幾何取物件底面」？`BC` 是否固定量到 Block 插入點？
-2. Space boundary 實際是否會重疊？一個專案是否有多樓層 boundary 同時存在？
-3. 不同 Type 的寬、深、高各自如何定義？旋轉物件要依 world 還是 local frame？
-4. `_09_實作數量` 是否要實作？每種 `_08` 單位對應哪個幾何量？
-5. `我是備註，UCCU` 是否只是測試字串？`20_DW` 操作說明是否應移到 instruction？
-6. `DNA_REF_` 參考線原本用來做什麼？2.0 是否仍需要可視化 Type 樣本？
-7. Rhino 文件不是 cm 時，要直接阻擋，還是允許明確換算？
 
 ## 本文件的確立門檻
 
