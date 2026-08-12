@@ -9,7 +9,7 @@
 
 ## AI 接手入口
 
-本 repo 已建立自足的繁中維護文件。AI 開始前依序讀取根目錄 `AGENTS.md`、`docs/_LoopFlow_使用說明.md`、`docs/_LoopFlow_系統設定.md`、`docs/_LoopFlow_命名與資料契約.md`、`docs/_LoopFlow_重構計畫.md`，最後讀本文件確認即時進度。外部分析檔不再是必要輸入。
+本 repo 已建立自足的繁中維護文件。AI 開始前依序讀取根目錄 `AGENTS.md`、`docs/_LoopFlow_使用說明.md`、`docs/_LoopFlow_系統設定.md`、`docs/_LoopFlow_命名與資料契約.md`、`docs/_LoopFlow_重構計畫.md`、`docs/architecture/DEVELOPMENT_ROADMAP.md`，最後讀本文件確認即時進度。外部分析檔不再是必要輸入。
 
 ## Release 回復資產
 
@@ -60,7 +60,8 @@ fixture 與預期結果應在對應功能建造前完成；實機結果則在主
 | 2026-08-12 | 文件 SSOT 建置 | 建立繁中使用說明、系統設定、重構計畫與 repo AI 規則；Markdown 本機連結檢查 | 通過 | 既有大型程式標頭與英文註解依 feature 批次遷移，不做一次性翻譯 |
 | 2026-08-12 | 重構模式裁決 | 新版乾淨重建、一次切換；命名與 Dictionary 契約先於程式架構 | 通過 | 尚未開始命名盤點與產品程式碼修改 |
 | 2026-08-12 | 開發測試入口 | Rhino 測試按鈕暫定直接指向 repo 的 `src/entrypoints/`；功能或路徑變動時同步更新系統設定與工具列 | 已記錄 | 入口檔尚未建立；正式安裝／RC 另用隔離 `%APPDATA%` 路徑 |
+| 2026-08-12 | 任務切分與開發路徑 | 建立 A–G 階段、任務依賴、分支 scope、完成檢查與雙機安全停點 | 已記錄 | Nexus 僅列核心工作軌；詳細拆分另建專用文件 |
 
 ## 下一步
 
-從 `v2-development` 建立 `codex/v2-naming-contract`，先盤點整套工作流及所有名稱、Dictionary、UserText、圖層、Tag、Registry 與跨 repo 資料交換。使用者確認契約前，不開始正式功能程式碼。
+依 `DEVELOPMENT_ROADMAP.md` 從 LF-A01「現況工作流與依賴盤點」開始，再進行 Dictionary 與命名契約。完成 A01–A04 後另建 Nexus 專用拆分文件；使用者確認契約前，不開始正式功能程式碼。

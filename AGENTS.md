@@ -10,7 +10,8 @@ AI 必須依序完整讀取：
 2. `docs/_LoopFlow_系統設定.md`
 3. `docs/_LoopFlow_命名與資料契約.md`
 4. `docs/_LoopFlow_重構計畫.md`
-5. `docs/architecture/PROGRESS.md`
+5. `docs/architecture/DEVELOPMENT_ROADMAP.md`
+6. `docs/architecture/PROGRESS.md`
 
 公開的 `README.md`、`README_zh-TW.md`、`docs/USER_GUIDE*.md` 與 `docs/Dictionary_GUIDE*.md` 是使用者文件，不是重構指令的權威來源；改變使用行為時仍須同步更新。
 
