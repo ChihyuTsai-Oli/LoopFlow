@@ -14,62 +14,184 @@
 
 # CodeX 模擬執行流程
 
-## 第一次建立模型到完成圖面
+這一版改用一個實際案例走完全程：住宅主臥室有一面磁磚牆（Type `WL-14`，高 240 cm）與一個開關面板（Type `EL-05`，高程基準 `BC`）。重點不是展示所有按鈕，而是讓每一步都能回答：**在哪個文件操作、做了什麼、留下什麼結果、什麼情況必須停下來。**
 
-| 步驟 | 使用的指令／動作 | 做了什麼 | 產生的結果與下一步 |
+## 前提｜資料會跨越兩個 Rhino 文件
+
+| 角色 | 檔案／位置 | 負責內容 | 寫入權限 |
 | --- | --- | --- | --- |
-| 1. 開啟專案 | `LF_Project_Open`／啟動檢查 | 解析這台電腦的 `%LOOPFLOW_WORKFILES_ROOT%`，找到 Dictionary、`exchange/`、3D／2D 工作檔；驗證 Rhino 文件單位與版本 | 若不是 cm，依 ED-12 建議先阻擋並說明，不讓錯誤單位進入資料鏈；通過後建立 `project_id` context |
-| 2. 驗證 Dictionary | `LF_Dictionary_Validate` | 讀取中文 Dictionary，檢查 schema、18 欄、Type ID、重複值、估算單位與必要欄位 | 產生只讀 Validation Report；錯誤先修正，通過後得到版本化 Type Catalog |
-| 3. 同步 Type 與 Layer | `LF_Type_Sync` | 依 Type Catalog 建立或更新人類可讀的中英雙語 Rhino layers；Type ID 與 layer path 分開保存 | 使用者得到建模 layer；不自動建立會累積的 `DNA_REF_` 線，也不因 layer 改名改變 Type ID |
-| 4. 建立 3D 模型 | Rhino 一般建模／Cabinet 等 LoopFlow 工具 | 使用者在對應 layer 建立、修改 Block 或幾何；Cabinet 依 local frame 保存板件方向 | 此時幾何是設計成果，但尚未直接假設所有資料都正確；下一步先掃描預覽 |
-| 5. 掃描資料影響 | `LF_Nexus_Scan` | 根據 Type、幾何、Space、Elevation 與既有 metadata，找出缺 ID、重複 ID、未知 Type、尺寸與前置條件問題 | 只產生 Impact Report，不修改模型；重複 UUID 會列出原件、複本與受影響 Tag，不立即換號 |
-| 6. 套用模型資料 | `LF_Nexus_Apply` | 使用者確認報告後，才建立／修復 Object ID，寫入 Type reference、Space ID、高程、尺寸及允許的 Instance override | 形成可驗證的 Model Objects；任何 ID 變更同時保存 old→new mapping，失敗可回復 |
-| 7. 發布 Registry | `LF_Publish_Registry` | 將已通過驗證的 Type／Object／Space 資料寫入 pending，驗證完成後 atomic replace 為 current revision | 例如產生 Registry revision `42`；2D 文件只讀這個快照，不直接修改 Registry，也不在找不到檔案時自建空檔 |
-| 8. 建立剖面／平面 | `! _ClippingSections` | 從 LoopFlow 工具列直接呼叫 Rhino 8 內建 Section 指令，建立 Clipping Plane／Section | Rhino 產生剖面定義；LoopFlow 不複製 Rhino 功能本體，也不為此建立 Python entrypoint |
-| 9. 建立連動圖面 | `! _ClippingDrawings` | Rhino 依 Clipping Plane 產生 linked Generated Drawing | 得到可由 Rhino 更新的原始 Section 成果；它仍不是供長期人工修改的 Editable Drawing |
-| 10. 註冊 View | `LF_View_Register` | 綁定 Clipping Plane、Generated Drawing 與 Detail，保存 `view_id`、方向、比例及穩定 2D↔3D transform | 之後 Laser 由正式 transform 定位，不再用名稱包含與可變 bbox 中心猜測 |
-| 11. 產生可編輯圖面 | `LF_Drawing_Materialize` | 檢查是否已有同一 `view_id` 的前次產出，讓使用者選擇「新增、取代、略過」；複製成 Editable Drawing | 產生 `drawing_id`、來源 Registry／View revision 與 `generated` 狀態；不改變使用者原有 layer lock、visibility、selection |
-| 12. 人工整理圖面 | Rhino 一般 2D 編輯 | 使用者修改線稿、補線、刪除不需要內容或調整圖層 | Drawing 轉為 `modified`；LoopFlow 記得來源但不會靜默覆寫人工成果 |
-| 13. 建立 Sheet | `LF_Sheet_Create` 或 `LF_Sheet_Duplicate` | 建立 Layout、Detail、圖框與 Sheet metadata；複製時產生新 `sheet_id`／`drawing_id`／`tag_id` | 圖號與 Layout 名稱由 metadata 算出；一般 Tag 可依 ED-13 保留模型來源，Index Tag 目標必須重審 |
-| 14. 建立 Tag 綁定 | `LF_Tag_Grab`／`LF_Tag_Laser`／`LF_Tag_Index` | Grab 直接選模型來源；Laser 由圖面點位經 View transform 找候選；Index 選目標 View／Sheet | Tag 保存 `source_object_id`、`view_id`、`drawing_id`、`sheet_id` 與 template version；位置只協助定位，不作資料真相 |
-| 15. 顯示最新資料 | `LF_Sync_Current_Sheet` 或 `LF_Sync_All` | 從 Registry revision `42` 依 Tag Template 產生高程、材料、圖號、圖名等顯示值 | Tag 記錄 `last_synced_revision=42`；`lock_state` 的人工鎖定值不被覆寫 |
-| 16. 交付前檢查 | `LF_Health_Check` | 唯讀檢查 unbound、orphaned、stale、view missing、template outdated、schema mismatch 等狀態 | 產生 Issue Report；不必先由 Infuser 塗色，也不修改使用者物件色 |
-| 17. 選擇性修復 | `LF_Repair_Preview` → `LF_Repair_Apply` | 先顯示問題原因、會改哪些 ID／Tag／Drawing，再由使用者選擇重新綁定、同步、保留、脫離或略過 | 每項修復保存結果與復原資訊；完成後重新跑 Health，直到交付範圍內問題關閉 |
+| 3D 文件 | `LoopFlow_3D.3dm` | 建模、資料注入、剖面定義、發布 Registry | 可修改模型與發布資料 |
+| 2D 文件 | `LoopFlow_2D.3dm` | 可編輯圖面、Layout、圖框、Tag、出圖 | 只讀 Registry，不回寫 3D 真相 |
+| 交換層 | `%LOOPFLOW_WORKFILES_ROOT%\exchange\` | 保存版本化 Registry 快照 | 只由發布流程取代 current |
+| Worksession | `LoopFlow.rws` | 讓 2D 文件看見 3D 幾何，供定位與核對 | 不作為 metadata 真相來源 |
 
-## 模型修改後，資料如何延續到最末端
+這個邊界讓「模型資料」與「圖面人工成果」不會互相覆寫。以下每一階段結束後都可安全停工；換電腦時，只要 Git 程式與 Dropbox 工作檔都已同步，就能從最後完成的 revision 繼續。
 
-以下用一個具體例子串起變更循環：
+---
 
-1. 使用者把 3D 磁磚牆高度由 240 cm 改成 260 cm。
-2. 執行 `LF_Nexus_Scan`，系統辨認同一個 `object_id` 的幾何與高程資料改變，只顯示影響，不建立新 ID。
-3. 使用者確認後執行 `LF_Nexus_Apply`，模型物件更新為新資料；接著 `LF_Publish_Registry` 發布 revision `43`。
-4. 既有 Tag 的 `last_synced_revision` 仍是 `42`，Health 因此判定 `stale_data`；既有 Editable Drawing 的 source revision 也是 `42`，判定 `drawing_stale`。
-5. 使用者先用 Rhino 內建 `! _UpdateClippingDrawings` 更新 linked Generated Drawing。這一步只更新 Rhino 的原始 Section 成果，不直接覆寫已人工修改的 Editable Drawing。
-6. 執行 `LF_Drawing_Materialize`，系統找到既有 `modified` Drawing，要求選擇：
-   - 保留舊圖並另建 revision `43` 的 Drawing；
-   - 預覽後明確取代；
-   - 保留現況並標成 detached；
-   - 這次略過，繼續保持 stale。
-7. 使用者選擇後，執行 `LF_Sync_Current_Sheet`；未鎖定的 Tag 從 revision `43` 更新高度，人工鎖定欄位維持原值。
-8. 再執行 `LF_Health_Check`，已同步的 Tag 回到 healthy；若 Drawing 刻意保留舊版，報告會保留其 stale／detached 狀態與理由，不假裝問題不存在。
+## 階段 1｜開案與確認環境（3D 文件）
 
-因此完整資料鏈是：
+**指令 `LF_Project_Open`** → 解析本機 `%LOOPFLOW_WORKFILES_ROOT%` → 找到中文 Dictionary、`exchange/`、3D／2D 工作檔 → 檢查 Rhino 版本、文件單位與 `project_id`。
+
+使用者會先看到一張「本次實際設定」摘要，而不是讓程式在背景猜路徑。若公司電腦與家中電腦的 Dropbox 路徑不同，只需要各自設定環境變數，專案資料本身不寫死磁碟機代號。
+
+> **成功結果**：建立本次工作階段 context，後續指令都使用同一組路徑與專案 ID。
+>
+> **必須停下**：Dictionary 或 exchange 不存在、文件不是預期專案、單位不符政策。此時不建立空白 Registry，也不修改模型。
+
+## 階段 2｜驗證 Dictionary 與建立建模 Layer（3D 文件）
+
+**指令 `LF_Dictionary_Validate`** → 讀取 Dropbox 中的中文 Dictionary → 檢查 schema、18 欄、Type ID、重複值、估算單位與必要欄位 → 產生只讀 Validation Report。
+
+驗證通過後，**指令 `LF_Type_Sync`** → 依 Type Catalog 建立或更新中英雙語 Rhino layers → 將穩定的 `type_id` 與可改名的 layer path 分開保存。
+
+以本例來說，`WL-14` 會對應到磁磚牆 layer，`EL-05` 會對應到開關面板 layer；未來 layer 改名不會讓既有物件失去 Type 身分。
+
+> **成功結果**：得到版本化 Type Catalog 與可直接建模的 layer。
+>
+> **必須停下**：Type ID 重複、欄位不足或單位無法解讀。錯誤只寫入報告，不用半套資料建立 layer。
+
+## 階段 3｜建立 3D 模型（3D 文件）
+
+**Rhino 一般建模／Cabinet 等 LoopFlow 工具** → 使用者在對應 layer 建立牆、開關、櫃體與其他幾何 → Block instance 與 Cabinet 板件依自己的 local frame 保存方向。
+
+此時 3D 幾何是設計成果，但還不是已發布的資料。把物件放進正確 layer 只代表「候選 Type」，不能取代 Nexus 對 ID、Space、高程與尺寸的檢查。
+
+> **安全停點**：模型可正常存檔；尚未執行 Nexus 時，2D 端仍沿用上一個已發布 revision，不會讀到半成品。
+
+## 階段 4｜掃描影響，不先修改模型（3D 文件）
+
+**指令 `LF_Nexus_Scan`** → 掃描 Type、幾何、Space、Elevation 與既有 metadata → 找出缺少 ID、重複 ID、未知 Type、尺寸異動及前置條件問題 → 顯示 Impact Report。
+
+例如複製磁磚牆後產生重複 UUID，報告會同時列出原件、複本與可能受影響的 Tag；開關面板的 `BC` 基準若無法解析，也會明確列為阻擋項目。Scan 本身不換號、不寫 UserText、不發布 Registry。
+
+> **成功結果**：使用者在動手前知道「會改哪些物件、哪些下游圖面會受影響」。
+>
+> **取消結果**：關閉報告即可，模型維持原狀。
+
+## 階段 5｜確認後套用資料（3D 文件）
+
+**指令 `LF_Nexus_Apply`** → 使用者勾選要接受的項目 → 建立或修復 Object ID → 寫入 Type reference、Space ID、高程、尺寸與允許的 Instance override → 再次驗證結果。
+
+任何 ID 變更都要保存 `old_id → new_id` mapping；若中途有一個物件寫入失敗，這一批就不能被當成完成，更不能直接發布。
+
+> **成功結果**：得到一批可追蹤、可驗證的 Model Objects。
+>
+> **失敗結果**：回到套用前狀態並保留錯誤報告；不留下半批新 ID。
+
+## 階段 6｜發布可供 2D 使用的 Registry（3D 文件 → exchange）
+
+**指令 `LF_Publish_Registry`** → 把已通過驗證的 Type／Object／Space 寫入 `registry.pending.json` → 完整驗證 → atomic replace 成 `registry.current.json` → 保留上一版為 recovery point。
+
+假設本次發布為 revision `42`，2D 文件從此只讀 revision `42`。它不直接讀尚在修改的 3D UserText，也不在 Registry 遺失時自行建立空檔。
+
+> **成功結果**：命令列顯示 revision、物件數、發布時間與前一版位置。
+>
+> **必須停下**：pending 驗證失敗時，current 仍維持上一個健康 revision。
+
+## 階段 7｜建立剖面與 Rhino 連動圖面（3D 文件）
+
+**Rhino 內建 `! _ClippingSections`** → 建立 Clipping Plane／Section。接著 **Rhino 內建 `! _ClippingDrawings`** → 由 Clipping Plane 產生 linked Generated Drawing。
+
+LoopFlow 工具列可直接放這兩個 Rhino 巨集；2.0 安裝包只需保留按鈕與圖示設定，不需要複製 Rhino 的 Section 程式，也不需要為它多包一層 Python entrypoint。
+
+> **成功結果**：得到可由 Rhino 更新的原始 Generated Drawing。它仍是「機器產物」，不是供長期人工編修的正式圖面。
+
+## 階段 8｜註冊 View 與固定座標關係（3D／2D 邊界）
+
+**指令 `LF_View_Register`** → 綁定 Clipping Plane、Generated Drawing 與對應 Detail → 保存 `view_id`、方向、比例、來源 revision 與穩定的 2D↔3D transform。
+
+這個 transform 是後續 Laser Tag 的正式定位依據。名稱與 bounding-box 中心可以協助檢查，但不能再擔任唯一配對規則。
+
+> **成功結果**：系統知道「這張 2D View 看的是哪個 3D 剖面，以及兩邊座標如何互換」。
+>
+> **必須停下**：配對不唯一或 transform 無法驗證時，不允許建立看似成功但來源不明的 View。
+
+## 階段 9｜產生可獨立編輯的 Drawing（2D 文件）
+
+**指令 `LF_Drawing_Materialize`** → 從已註冊 View 複製一份 Editable Drawing → 建立 `drawing_id` → 記錄 `view_id`、Registry revision `42` 與初始狀態 `generated`。
+
+使用者接著可在 Rhino 內補線、刪除雜線、調圖層或加入說明；一旦人工編輯，Drawing 轉為 `modified`。LoopFlow 只記錄它來自哪裡，不會在下次更新時靜默覆蓋。
+
+若同一 View 已有 Drawing，系統先提供「另建新版、預覽後取代、略過」；不自動刪除舊圖，也不改變使用者原有的 layer lock、visibility 與 selection。
+
+> **成功結果**：Generated Drawing 保持可更新，Editable Drawing 保持可人工修改，兩者責任分開。
+
+## 階段 10｜建立 Sheet 與圖框 metadata（2D 文件）
+
+**指令 `LF_Sheet_Create`** → 建立 Layout、Detail、圖框與 Sheet metadata。若以 **`LF_Sheet_Duplicate`** 複製，系統會產生新的 `sheet_id`、`drawing_id` 與 `tag_id`，不沿用舊身分。
+
+圖號與 Layout 名稱由 metadata 算出，不把檔名或文字內容當資料真相。一般 Tag 可以保留同一模型來源；Index Tag 指向哪張 View／Sheet，複製後必須重新確認。
+
+> **成功結果**：一張 Sheet 可以明確回答自己包含哪些 View、Drawing 與 Tag。
+>
+> **失敗結果**：若自動命名規則還不足以決定圖號，先標為待確認，不私自猜出正式圖號。
+
+## 階段 11｜建立 Tag 綁定（2D 文件）
+
+**指令 `LF_Tag_Grab`** → 直接選取模型來源；**`LF_Tag_Laser`** → 將圖面點位經 View transform 轉回 3D 並列出候選；**`LF_Tag_Index`** → 選擇目標 View／Sheet。
+
+三種 Tag 最後都建立明確 binding，至少保存 `source_object_id`、`view_id`、`drawing_id`、`sheet_id` 與 template version。幾何位置只用來尋找候選，確認後以 ID 維持關係。
+
+> **成功結果**：Tag 能說明「顯示哪個來源的哪個欄位」，不只記得自己放在哪裡。
+>
+> **取消結果**：候選不唯一時回到選擇畫面；沒有確認就不建立半綁定 Tag。
+
+## 階段 12｜同步顯示資料（2D 文件）
+
+**指令 `LF_Sync_Current_Sheet`** 或 **`LF_Sync_All`** → 從 Registry revision `42` 讀取材料、高程、圖號與圖名 → 套用 Tag Template → 更新未鎖定欄位 → 保存 `last_synced_revision=42`。
+
+人工鎖定值由 `lock_state` 保護。同步不是重新猜來源；如果 binding 已失效，系統會回報 orphaned，而不是就近抓另一個物件補上。
+
+> **成功結果**：同一來源在不同 Sheet 上以相同規則顯示，人工例外也有明確紀錄。
+
+## 階段 13｜交付前檢查與選擇性修復（2D 文件）
+
+**指令 `LF_Health_Check`** → 唯讀檢查第一階段能可靠判定的 `unbound`、`orphaned`、`stale_data`、`view_missing`、`template_outdated` → 產生可依 Sheet、View、Tag 篩選的 Issue Report。
+
+需要處理時，**`LF_Repair_Preview`** → 顯示原因、建議動作與會變更的 ID／Tag／Drawing；使用者確認後才執行 **`LF_Repair_Apply`** → 重新綁定、同步、保留、脫離或略過 → 再跑一次 Health。
+
+Health 不必依賴 Infuser 先塗色，也不修改使用者物件顏色。尚未具備可靠前置資料的狀態只標成「暫不可判定」，不製造假警報。
+
+> **完成結果**：交付範圍內的問題都有明確狀態；刻意保留的舊版也會留下理由，而不是被報表假裝成 healthy。
+
+---
+
+## 完整變更循環｜磁磚牆由 240 cm 改成 260 cm
+
+第一次出圖完成後，設計修改必須沿同一條鏈傳到最末端，但不能覆蓋人工整理過的圖面：
+
+| 順序 | 使用者動作 | 系統判斷 | 可見結果／下一步 |
+| --- | --- | --- | --- |
+| 1 | 在 3D 文件把 `WL-14` 磁磚牆由 240 cm 改成 260 cm | 物件仍有相同 `object_id`，只是幾何與高程資料改變 | 舊 Registry revision `42` 仍可供 2D 使用 |
+| 2 | 執行 `LF_Nexus_Scan` | 找出變更物件，以及引用它的 View、Drawing、Tag | Impact Report 顯示影響，但尚未寫入 |
+| 3 | 確認後執行 `LF_Nexus_Apply`、`LF_Publish_Registry` | 新資料驗證通過 | 發布 revision `43`，revision `42` 成為 recovery point |
+| 4 | 在 2D 文件執行 `LF_Health_Check` | Tag 的 `last_synced_revision` 與 Drawing 的 source revision 仍是 `42` | 分別標示 `stale_data`、`drawing_stale` |
+| 5 | 執行 Rhino 內建 `! _UpdateClippingDrawings` | Rhino 更新 linked Generated Drawing | 人工修改過的 Editable Drawing 完全不被碰觸 |
+| 6 | 執行 `LF_Drawing_Materialize` | 發現既有 Drawing 狀態為 `modified` | 選擇另建 revision `43`、預覽後取代、標成 detached，或本次略過 |
+| 7 | 執行 `LF_Sync_Current_Sheet` | 依既有 ID binding 讀取 revision `43` | 未鎖定 Tag 顯示 260 cm；人工鎖定欄位不變 |
+| 8 | 再執行 `LF_Health_Check` | 重新比較 binding 與 revision | 已同步項目回到 healthy；刻意保留的舊圖維持 stale／detached 並附理由 |
+
+## 從開案到交付的一條線
 
 ```text
-Dictionary Type
-→ Rhino Layer／3D Object
-→ Nexus Scan／Apply
-→ Registry Revision
-→ Rhino Clipping Section／Generated Drawing
-→ View Registration
-→ Editable Drawing
-→ Sheet Metadata
-→ Tag Binding／Template Render
-→ Health Report
-→ Previewed Repair
+LF_Project_Open：確認本機工作路徑與專案
+→ LF_Dictionary_Validate：把中文 Dictionary 驗證成 Type Catalog
+→ LF_Type_Sync：把 Type 轉成可建模 Layer
+→ Rhino 建模：建立 3D 設計成果
+→ LF_Nexus_Scan：先預覽資料問題與下游影響
+→ LF_Nexus_Apply：確認後注入穩定 ID 與 metadata
+→ LF_Publish_Registry：發布可供 2D 讀取的 revision
+→ ClippingSections／ClippingDrawings：由 Rhino 建立原始剖面圖
+→ LF_View_Register：固定 3D 與 2D 的 View 關係
+→ LF_Drawing_Materialize：建立不會被靜默覆寫的 Editable Drawing
+→ LF_Sheet_Create：建立 Sheet、Detail 與圖框 metadata
+→ LF_Tag_*：以 ID 綁定模型、View、Drawing 與 Sheet
+→ LF_Sync_*：依 Registry 與 Template 更新顯示值
+→ LF_Health_Check／Repair：檢查、預覽並選擇性修復
 ```
 
-這條鏈的核心效果是：3D 資料可以一路傳到圖框與 Tag，但每個階段都有明確 ID、revision、預覽與人工停點；任何更新都不以「方便」為理由靜默換 ID、重綁來源或覆蓋人工圖面。
+這條鏈的核心效果是：3D 資料可以一路傳到圖框與 Tag，而且每一步都留下可理解的產物與安全停點。即使功能日後增減或路徑改變，只要維持 ID、revision、寫入權與人工確認四個契約，整個生態仍能穩定擴充。
 
 ---
 
@@ -81,7 +203,7 @@ Dictionary Type
 
 ## 前提：這條流程同時跑在兩個文件上
 
-CodeX 版流程沒有明講這一點，但它決定了很多步驟為什麼要那樣設計。
+兩版都把這項分工視為核心前提；Claude 版以下會進一步從現行程式與改造風險解釋原因。
 
 | 角色 | 檔案 | 負責 |
 | --- | --- | --- |
@@ -345,13 +467,14 @@ TAG_HEIGHT
 
 | 項目 | CodeX 版 | Claude 版 |
 | --- | --- | --- |
-| 文件分工 | 未區分 3D／2D | 每步標明執行文件，並說明 Worksession 角色 |
+| 閱讀視角 | 以使用者操作、可見結果與安全停點串起完整旅程 | 以現有程式盤點、風險與第一階段施工範圍深入補充 |
+| 文件分工 | 明列 3D／2D、exchange 與寫入權邊界 | 每步標明執行文件，並說明 Worksession 角色 |
 | Nexus | Scan → Apply 兩步 | 相同，但明列 Impact Report 實際內容與三個現況問題的對應 |
 | Laser | 用固定 View transform 定位 | 相同，另提議在 Materialize 時建立來源索引，讓 Laser 退化成查表（需 spike 驗證） |
 | Sheet metadata | 強烈建議、一次到位 | 一般建議、可分階段（失敗可回復） |
 | 非 cm 專案 | 直接阻擋 | 偵測與顯示是必須；阻擋只是可調的預設策略 |
-| Health 狀態 | 列出十種 | 第一階段只做五種可靠判定的，其餘標註前置需求 |
-| 失敗行為 | 未展開 | 每階段列出取消與失敗時的狀態 |
-| 施工順序 | 未排 | 給出最小可用範圍與建議最先動工項目 |
+| Health 狀態 | 操作流程先呈現五種可靠判定，其餘顯示為暫不可判定 | 說明各狀態的現行限制與前置需求 |
+| 失敗行為 | 每階段標明成功結果、取消／失敗結果或安全停點 | 依現行程式問題列出取消與失敗時的具體狀態 |
+| 施工順序 | 以一條端到端工作鏈表達各階段交接契約 | 給出最小可用範圍與建議最先動工項目 |
 
 兩版都指向同一個核心：**每個階段都有明確 ID、revision、預覽與人工停點，任何更新都不以「方便」為理由靜默換 ID、重綁來源或覆蓋人工成果。**
