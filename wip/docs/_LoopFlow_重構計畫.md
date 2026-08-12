@@ -19,7 +19,7 @@ LoopFlow 不再以「每個按鈕一支完整 Python」作為架構邊界。2.0 
 本輪採「新版乾淨重建、正式發布時一次切換」：
 
 - `main`、`v1.0.0` 與既有 release payload 凍結為舊版參考與回復點。
-- 2.0 在隔離的 `src/`、安裝位置、設定、資料與測試專案建立，不要求開發中的指令可供正式使用。
+- 2.0 在隔離的 `wip/src/`、安裝位置、設定、資料與測試專案建立，不要求開發中的指令可供正式使用。
 - 不把舊程式逐支包進新架構，也不以 compatibility wrapper 維持半套新舊系統。
 - 開發仍按階段、功能群與 commit 建造；每段都有自動／contract 測試，避免最後才發現底層錯誤。
 - 主要工作流全部接通後，再集中進行 Rhino 端到端實機測試與使用者驗收。
@@ -39,7 +39,7 @@ LoopFlow 不再以「每個按鈕一支完整 Python」作為架構邊界。2.0 
 ## 目標結構
 
 ```text
-src/
+wip/src/
   loopflow/
     bootstrap.py
     command_catalog.py
@@ -140,7 +140,7 @@ tools/
 
 ### S3：最小新架構與載入驗證
 
-- 建立全新的 `src/`、bootstrap、command catalog、result／error、logging、version、validator 與測試骨架。
+- 建立全新的 `wip/src/`、bootstrap、command catalog、result／error、logging、version、validator 與測試骨架。
 - 驗證 Rhino 8 package import、reload、不同工作目錄與隔離安裝位置。
 - 若 module loading 不可靠，使用模組化 source + build-time flatten／bundle。
 

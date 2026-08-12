@@ -16,7 +16,7 @@
 ## 2.0 開發模式
 
 - `main`、`v1.0.0` 與 `releases/LoopFlow/` 作為舊版行為與回復參考，不在重構過程逐支改造成半新半舊系統。
-- 2.0 在新的 `src/`、隔離安裝、設定、資料與測試專案中乾淨建立，正式發布時一次切換。
+- 2.0 在新的 `wip/src/`、隔離安裝、設定、資料與測試專案中乾淨建立，正式發布時一次切換。
 - 開始建立 feature 前，先完成 `_LoopFlow_命名與資料契約.md` 的工作流、Dictionary、UserText、layer、Registry 與 Tag 定義。
 - 新核心只接受 2.0 canonical contract；舊專案支援由獨立 migration 工具負責。
 - 每個建造階段仍須有自動測試；完整 Rhino 實機測試於主要工作流接通後執行。
@@ -33,27 +33,33 @@ releases/LoopFlow/
 docs/
   USER_GUIDE*.md          # 公開使用指南
   Dictionary_GUIDE*.md    # 公開 Dictionary 指南
-  _LoopFlow_*.md          # 繁中維護 SSOT
-  architecture/NEXUS_DICTIONARY_DECISION_MENU.md
-  architecture/DEVELOPMENT_ROADMAP.md
-  architecture/PROGRESS.md
+wip/
+  README.md
+  docs/
+    _LoopFlow_*.md        # 重構維護 SSOT
+    architecture/NEXUS_DICTIONARY_DECISION_MENU.md
+    architecture/DEVELOPMENT_ROADMAP.md
+    architecture/PROGRESS.md
+  src/                    # 2.0 原始碼（後續建立）
+  tests/                  # 自動測試（後續建立）
+  fixtures/               # 可提交的輕量測試資料（後續建立）
 build.ps1
 ```
 
-目前 `releases/LoopFlow/Python/` 同時是可編輯來源與 release payload。只有在 package 骨架、import spike 與 build 驗證完成後，才切換為 `src/` 唯一來源。
+目前 `releases/LoopFlow/Python/` 同時是可編輯來源與 release payload。只有在 package 骨架、import spike 與 build 驗證完成後，才切換為 `wip/src/` 唯一來源。
 
 ## 重構期間的 Rhino 測試入口
 
 重構期間直接從 repo 執行開發中的入口，不必先複製到 `%APPDATA%`。Rhino 測試按鈕固定指向 `entrypoints/`，不要直接指向仍會調整的 `features/`、`platform/` 或 `foundation/` 內部模組：
 
 ```text
-E:\_GitHub\LoopFlow\src\entrypoints\
+E:\_GitHub\LoopFlow\wip\src\entrypoints\
 ```
 
 按鈕巨集格式：
 
 ```text
-_-ScriptEditor _Run "E:\_GitHub\LoopFlow\src\entrypoints\LF_Nexus.py"
+_-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Nexus.py"
 ```
 
 目前預計的使用者入口如下；共用模組 `_LoopFlow_Config.py`、`_LF_Debug.py`、`_LF_NamingRules.py`、`_LF_Registry.py` 不建立按鈕：

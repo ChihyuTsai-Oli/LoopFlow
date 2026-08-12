@@ -6,15 +6,15 @@
 
 AI 必須依序完整讀取：
 
-1. `docs/_LoopFlow_使用說明.md`
-2. `docs/_LoopFlow_系統設定.md`
-3. `docs/_LoopFlow_命名與資料契約.md`
-4. `docs/architecture/NEXUS_DICTIONARY_DECISION_MENU.md`
-5. `docs/_LoopFlow_重構計畫.md`
-6. `docs/architecture/DEVELOPMENT_ROADMAP.md`
-7. `docs/architecture/PROGRESS.md`
+1. `wip/docs/_LoopFlow_使用說明.md`
+2. `wip/docs/_LoopFlow_系統設定.md`
+3. `wip/docs/_LoopFlow_命名與資料契約.md`
+4. `wip/docs/architecture/NEXUS_DICTIONARY_DECISION_MENU.md`
+5. `wip/docs/_LoopFlow_重構計畫.md`
+6. `wip/docs/architecture/DEVELOPMENT_ROADMAP.md`
+7. `wip/docs/architecture/PROGRESS.md`
 
-公開的 `README.md`、`README_zh-TW.md`、`docs/USER_GUIDE*.md` 與 `docs/Dictionary_GUIDE*.md` 是使用者文件，不是重構指令的權威來源；改變使用行為時仍須同步更新。
+公開的 `README.md`、`README_zh-TW.md`、`docs/USER_GUIDE*.md` 與 `docs/Dictionary_GUIDE*.md` 是使用者文件，不是重構指令的權威來源；改變使用行為時仍須同步更新。重構中的文件、原始碼、fixtures 與測試統一放在 `wip/`；Dropbox 工作檔路徑依上一層 `工作檔路徑.md` 解析，不得寫死單一電腦的絕對路徑。
 
 ## 分支與版本
 
@@ -27,7 +27,7 @@ AI 必須依序完整讀取：
 ## 重構模式
 
 - 2.0 採「新版乾淨重建、正式發布時一次切換」，不要求開發中的新舊指令互相相容。
-- `main` 與既有 release payload 作為唯讀舊版參考；新程式在隔離的 `src/`、安裝位置與測試資料建立。
+- `main` 與既有 release payload 作為唯讀舊版參考；新程式在隔離的 `wip/src/`、安裝位置與測試資料建立。
 - 先完成整體工作流、Dictionary、命名與資料契約，再建立程式架構與接入功能。
 - 新核心不長期保留 legacy alias、雙寫或 compatibility wrapper；舊專案轉換集中於獨立 migration 工具。
 - 建造過程仍分批提交並做自動測試；Rhino 端到端實機測試在主要工作流串接完成後集中進行。

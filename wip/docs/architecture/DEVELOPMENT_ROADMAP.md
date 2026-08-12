@@ -8,7 +8,7 @@
 - 每項任務從 `v2-development` 建立 `codex/v2-<scope>` 短期分支，不直接在整合分支施工。
 - 任務開始前確認 upstream、乾淨工作樹與 `pull --ff-only`；結束前完成檢查、commit、push 與交接。
 - 任務須小到能留下可驗證的完整狀態。若超過一個工作時段，先拆成子任務，不以未提交檔案換機。
-- `%APPDATA%` 只用於正式安裝／RC 隔離驗證；開發期 Rhino 按鈕直接指向 repo 的 `src/entrypoints/`。
+- `%APPDATA%` 只用於正式安裝／RC 隔離驗證；開發期 Rhino 按鈕直接指向 repo 的 `wip/src/entrypoints/`。
 - 下表是開發路徑，可隨功能增減、實測結果與架構調整；改動時同步更新本文件、系統設定與 `PROGRESS.md`。
 
 ## 階段與任務
@@ -21,7 +21,7 @@
 | LF-A04 | Registry／Tag 資料契約／`registry-tag-contract` | A01–A03 | schema version、Registry object、Tag Block、Producer／Consumer 與 migration 邊界 | 合法、缺值、未知版本及舊版案例可描述 |
 | LF-A05 | Nexus 專用拆分計畫／`nexus-plan` | A01–A04 | 一份獨立 Nexus 工作包、依賴、fixtures 與分段驗收文件 | 本任務只規劃，不一次重寫 Nexus；詳細拆分另文維護 |
 | LF-A06 | Fixtures 與 golden baseline／`contract-fixtures` | A02–A05 | Dictionary／UserText／UUID／Space／Registry 的合法、錯誤、缺值、重複與舊版 fixtures | fixtures 不含私人正式專案；預期結果可機器比對 |
-| LF-B01 | 最小 source 與測試骨架／`source-skeleton` | A03–A06 | `src/loopflow/`、`src/entrypoints/`、`tests/`、bootstrap 與 import smoke test | `LF_Nexus.py` 測試入口可載入但不假裝功能完成 |
+| LF-B01 | 最小 source 與測試骨架／`source-skeleton` | A03–A06 | `wip/src/loopflow/`、`wip/src/entrypoints/`、`wip/tests/`、bootstrap 與 import smoke test | `LF_Nexus.py` 測試入口可載入但不假裝功能完成 |
 | LF-B02 | Result／Logging／Version／Config／Path／`foundation-core` | B01 | 共用結果、錯誤階段、log、版本、設定與無 UI path resolver | 純 Python 測試通過；沒有個人硬編碼路徑 |
 | LF-B03 | Rhino platform 與狀態復原／`rhino-platform` | B01–B02 | selection、lock、visibility、color、modified state 的 adapter 與 snapshot／restore | 成功、取消、失敗路徑有測試；未實機部分明示 |
 | LF-C01 | Dictionary reader／validator／`dictionary-core` | A06、B02 | 2.0 schema loader、validator 與明確錯誤 | fixtures 與版本拒絕行為通過 |
