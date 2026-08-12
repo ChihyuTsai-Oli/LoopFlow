@@ -43,7 +43,7 @@
 | LF-F02 | Cabinet Suite 重建／`cabinet-suite` | F01、核心資料鏈穩定 | Cabinet feature 與入口 | UI、幾何、取消、失敗與來源狀態實機驗證 |
 | LF-F03 | 2D Cabinet／Shelf Gap／DW／各自獨立 scope | F02 | 三項功能各自的 feature、入口與測試 | 每項獨立 commit／push，不合成一大包 |
 | LF-G01 | Migration 工具／`migration` | canonical contract 與核心功能完成 | scanner、預覽、備份、converter、validator、rollback | 只對測試副本執行，失敗可回復 |
-| LF-G02 | Build／Installer 技術選型與建置／`build-release` | 核心功能、資產結構與 migration 完成 | 比較可行封裝技術後，產生完整可安裝套件、manifest、checksum 與回復方案 | 正式版不依賴 repo Python 路徑；全新／升級／重複安裝／移除／rollback 通過 |
+| LF-G02 | Build／Installer 技術選型與建置／`build-release` | 核心功能、資產結構與 migration 完成 | 比較可行封裝技術後，產生完整可安裝套件、LoopFlow 工具列、manifest、checksum 與回復方案 | 正式版不依賴 repo Python 路徑；Rhino Section Macro 可用且不覆蓋 workspace；全新／升級／重複安裝／移除／rollback 通過 |
 | LF-G03 | 端到端 RC／`rc-validation` | G01–G02 | 隔離 Rhino 8 的完整 workflow 驗收記錄 | 正常、取消、失敗、中斷、來源零變更與 last good 全部驗證 |
 
 ## 建議開發波次

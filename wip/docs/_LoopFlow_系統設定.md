@@ -99,6 +99,20 @@ LF_Sync_Worksession.py
 
 這是開發期暫定清單，不是凍結的公開契約。功能增減、入口檔名或 repo 內路徑改變時，應同步更新本節與測試工具列。2.0 正式版會封裝為完整安裝檔／可安裝套件，不要求使用者逐一建立按鈕或管理 Python 路徑；RC 才在隔離位置驗證該安裝成果。封裝技術到發佈階段再決定，不預先鎖定 RHI、Package Manager 或獨立安裝器。
 
+### Rhino 內建 Section 按鈕
+
+目前工具列中複製排列的 Section 按鈕只包含簡單 Rhino Macro，例如 `! _ClippingSections`。2.0 保留這種快捷入口，但它們不列入 Python entrypoint 清單：
+
+```text
+! _ClippingSections
+! _ClippingDrawings
+! _ClearClippingSections
+! _EditClippingDrawings
+! _UpdateClippingDrawings
+```
+
+正式安裝包部署 LoopFlow 自有工具列資源；Macro 仍由 Rhino 8 內建指令執行。不得複製 Rhino Section 程式本體，也不以 Rhino 預設 Macro／bitmap GUID 作長期必要相依。安裝與升級只管理 LoopFlow 工具列，不覆蓋使用者完整 workspace。圖示是否自製或引用可驗證的原生資源，與 RUI／RHC／其他安裝技術一起延後決定。
+
 ## 模組責任
 
 | 模組／功能群 | 責任 |

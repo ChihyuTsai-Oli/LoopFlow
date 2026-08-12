@@ -67,6 +67,7 @@ fixture 與預期結果應在對應功能建造前完成；實機結果則在主
 | 2026-08-12 | 資料生態與工作鏈藍圖 | 重新核對 23 支 Python 的功能、輸入輸出、UserText／Registry／Section／Tag／Layout 依賴；建立 Type→Object→Registry→View→Drawing→Sheet→Tag→Health 的總體說明 | 已建立 | 上位 ECO 原則與 Section 人工編修生命週期尚待使用者反覆討論、確立；未修改產品程式碼 |
 | 2026-08-12 | 資料生態獨立複核與整合 | 合併 Codex 藍圖與 Claude Code 複核；校正 Anchor／Registry／Dict-to-Layer 現況，加入 18 欄所有權、W6 View Registration、Health 前置、P0／P1 風險、領域規則保存與 ECO-09～11；原文移入 `architecture/ref/` | 已建立 | 所有 Rhino 行為仍屬靜態推論，需實機驗證；產品程式碼與工作檔未修改 |
 | 2026-08-12 | 2.0 正式交付形式 | 確認開發期可用逐支 entrypoint 測試按鈕；RC 與 2.0 正式版改以完整安裝檔／可安裝套件交付，不讓使用者管理 Python 路徑 | 已記錄 | 封裝技術延後至發佈階段，待核心功能、資產與 migration 需求穩定後評估 |
+| 2026-08-12 | 工具列的 Rhino Section 入口 | 保留目前工具列中的 Section 快捷按鈕；Macro 直接呼叫 Rhino 8 內建 `Clipping*` 指令，不建立 Python entrypoint、不封裝 Rhino 功能本體 | 已記錄 | 正式版管理 LoopFlow 自有工具列且不覆蓋 workspace；圖示來源與 UI／安裝格式待發佈 spike 決定 |
 
 ## 下一步
 

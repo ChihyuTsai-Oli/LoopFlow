@@ -497,6 +497,29 @@ Health 不只回報結果，也要記錄原因、建議修復、預覽、使用�
 
 技術選型屬發佈階段決策；現在先固定「2.0 對使用者是完整安裝產品，而不是一顆按鈕對應一支 `.py`」這項交付原則。
 
+### 工具列中的 Rhino Section 快捷入口
+
+保留目前 LoopFlow 工具列把數個 Rhino Section 按鈕集中在同一工作區的操作方式。這些按鈕不是 LoopFlow 功能實作，而是直接呼叫 Rhino 8 內建指令，例如：
+
+```text
+! _ClippingSections
+! _ClippingDrawings
+! _ClearClippingSections
+! _EditClippingDrawings
+! _UpdateClippingDrawings
+```
+
+正式版的處理原則：
+
+- 安裝包只部署 LoopFlow 自有工具列定義與必要圖示，不複製或封裝 Rhino Section 程式本體。
+- 這些純 Rhino Macro 不建立 Python entrypoint；只有 LoopFlow 自有 command 才進入 command catalog。
+- 工具列可把 Rhino 內建 Section 入口與 LoopFlow 的 View Registration、Drawing Materializer、Tag 等後續功能排在一起，維持現有操作順序。
+- 優先由 LoopFlow 管理自己的按鈕與圖示，避免正式版依賴 Rhino 預設工具列內部 Macro／bitmap GUID；是否安全引用原生 UI 資源留待封裝 spike 驗證。
+- 安裝／升級不得覆蓋使用者整套 Rhino workspace；只新增或更新 LoopFlow 自有工具列資源。
+- 2.0 以 Rhino 8 為最低目標；RC 必須驗證所有內建指令存在、不同語系可由前置 `_` 呼叫，且 Rhino 更新後仍可用。
+
+因此「一顆按鈕一支 `.py`」只適用於開發期 LoopFlow entrypoint 測試，不適用於這些 Rhino 內建指令快捷鍵。
+
 ## 文件應讓新使用者如何上手
 
 最終使用文件不依程式檔名組織，而依工作流程分層：
