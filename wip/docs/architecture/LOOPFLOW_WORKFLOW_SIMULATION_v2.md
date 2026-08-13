@@ -21,7 +21,7 @@
 - **1.0 實際操作**：已存在的 `LF_Nexus` 子功能、`LF_Anchor_Frame`、`LF_Extract_CP`、Tagger、Infuser 與顏色回饋。
 - **2.0 建議責任**：尚未實作的 Scan／Apply、穩定 View ID、revision、唯讀 Health 與可復原 Repair。它們改善安全性，但不能刪掉使用者原本的選取、確認與分段操作。
 
-Tag 部分另以使用者提供的 9 份 Block 參數文字，對照 1.0 的 `_LoopFlow_Config.py`、`LF_Tagger_*`、`LF_Infuser_*` 與 `LF_TAG-O.py`。因此下文會把「畫面可見參數」與 Python 動態加入的隱藏綁定資料分開。`Tag_DW.txt` 已確認三個可見 key：`attr_dw_id`、`attr_DW-W_輸入門窗寬`、`attr_DW-H_輸入門窗高`；使用者也確認 `TAG_DW` 後來改為全部純手動輸入。Python 內仍存在的 `Source_UUID`、`.Auto_DW_ID` 與自動覆寫 `attr_dw_id` 路徑因此是現行衝突，而非應延續的資料契約。這次仍未在 Rhino 內直接開啟 `Tag_Blocks.3dm` 核對 Block 幾何與顯示配置。
+Tag 部分另以使用者提供的 9 份 Block 參數文字，對照 1.0 的 `_LoopFlow_Config.py`、`LF_Tagger_*`、`LF_Infuser_*` 與 `LF_TAG-O.py`。這些文字不是人工抄錄，而是用 `wip/tools/擷取tag_block文字.py` 在 Rhino 內選取實際 Block instance、連同巢狀 Block 展開後，直接讀取 `TextEntity`／`TextDot` 的原始文字與 `%<UserText(...)>%` 公式；因此文字內容與 UserText key 已有 `.3dm` 來源證據。下文會把這些畫面文字與 Python 動態加入的隱藏綁定資料分開。`Tag_DW.txt` 已確認三個可見 key：`attr_dw_id`、`attr_DW-W_輸入門窗寬`、`attr_DW-H_輸入門窗高`；使用者也確認 `TAG_DW` 後來改為全部純手動輸入。Python 內仍存在的 `Source_UUID`、`.Auto_DW_ID` 與自動覆寫 `attr_dw_id` 路徑因此是現行衝突，而非應延續的資料契約。目前未被文字輸出保存、仍待視覺核對的只剩 Block 非文字幾何、座標、字型／字高／對齊、顏色與圖層等配置。
 
 ## 檢核結論｜原流程需要補回的操作事實
 
@@ -203,7 +203,7 @@ Tag Block 不是被動圖形。Block 內的 `%<UserText("block", ...)>%` 會直�
 
 ### 各 Block family 的可見參數與責任
 
-> `tag_elev.txt` 對應 `TAG_ELEV_1`～`TAG_ELEV_4`，是依參數檔名與 `_LoopFlow_Config.py` 的 family 清單推定；這次尚未直接開啟 `Tag_Blocks.3dm` 核對 Block Definition。
+> 9 份文字已由實際 Block instance 擷取；不過輸出內容本身不保存逐項 Definition metadata，而檔案也可能在儲存後改名。因此 `tag_elev.txt` 共用於 `TAG_ELEV_1`～`TAG_ELEV_4` 的對應，仍是依檔名、欄位一致性與 `_LoopFlow_Config.py` family 清單判定；若日後需要驗證 Definition 名稱與一對多關係，應讓擷取工具另輸出 manifest，而不是再次人工抄錄。
 
 | Block family／提供的參數檔 | 畫面可見的自動欄位 | 使用者保留欄位 | Python 動態加入的隱藏資料 | 1.0 行為 |
 | --- | --- | --- | --- | --- |
