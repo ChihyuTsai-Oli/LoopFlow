@@ -5,11 +5,11 @@
 - 整合分支：`v2-development`
 - 建立基準：`main` / `b09d650d5ba1a618c0ce8de154af2b961292e066`
 - 穩定回復點：`v1.0.0` / `1479ba5f57d79f4048dd858f8afb0ff439c9fe66`
-- 狀態：Codex 初版與 Claude Code 獨立複核已整理成單一資料生態藍圖；兩份來源移入 `architecture/ref/`；等待使用者反覆討論與確立，尚未修改產品程式碼
+- 狀態：現行 workflow v2 已依 1.0 操作說明、全部 23 支 Python、9 份 Tag 與 1 份圖框重新檢核；結果已同步回寫非 `ref/` 維護文件與公開 1.x 指南，尚未修改產品程式碼
 
 ## AI 接手入口
 
-本 repo 已建立自足的繁中維護文件。AI 開始前依序讀取根目錄 `AGENTS.md` 與該檔列出的 `wip/docs/` 文件；其中 `architecture/LOOPFLOW_DATA_ECOSYSTEM.md` 是完整工作鏈與資料真相邊界的總體起點，最後讀本文件確認即時進度。外部分析檔不再是必要輸入。
+本 repo 已建立自足的繁中維護文件。AI 開始前依序讀取根目錄 `AGENTS.md` 與該檔列出的 `wip/docs/` 文件；其中 `architecture/LOOPFLOW_DATA_ECOSYSTEM.md` 是完整工作鏈與資料真相邊界的總體起點，`architecture/LOOPFLOW_WORKFLOW_SIMULATION_v2.md` 是依 1.0 操作與 Block 證據複核後的現行流程，最後讀本文件確認即時進度。外部分析檔不再是必要輸入。
 
 ## Release 回復資產
 
@@ -65,12 +65,16 @@ fixture 與預期結果應在對應功能建造前完成；實機結果則在主
 | 2026-08-12 | 任務切分與開發路徑 | 建立 A–G 階段、任務依賴、分支 scope、完成檢查與雙機安全停點 | 已記錄 | Nexus 僅列核心工作軌；詳細拆分另建專用文件 |
 | 2026-08-12 | Nexus／Dictionary 靜態盤點 | 逐檔閱讀 23 支 Python；檢查實際 XLSX 的 18 欄、92 列、值域與格式；對照公開指南；建立設定、衝突與 ND-01～ND-25 決策菜單 | 通過 | 尚未執行 Rhino 實機與舊專案資料抽樣；所有 ND 項目仍待使用者裁決，產品程式碼未修改 |
 | 2026-08-12 | 資料生態與工作鏈藍圖 | 重新核對 23 支 Python 的功能、輸入輸出、UserText／Registry／Section／Tag／Layout 依賴；建立 Type→Object→Registry→View→Drawing→Sheet→Tag→Health 的總體說明 | 已建立 | 上位 ECO 原則與 Section 人工編修生命週期尚待使用者反覆討論、確立；未修改產品程式碼 |
-| 2026-08-12 | 資料生態獨立複核與整合 | 合併 Codex 藍圖與 Claude Code 複核；校正 Anchor／Registry／Dict-to-Layer 現況，加入 18 欄所有權、W6 View Registration、Health 前置、P0／P1 風險、領域規則保存與 ECO-09～11；原文移入 `architecture/ref/` | 已建立 | 所有 Rhino 行為仍屬靜態推論，需實機驗證；產品程式碼與工作檔未修改 |
+| 2026-08-12 | 資料生態獨立複核與整合 | 合併 Codex 藍圖與 Claude Code 複核；校正 Anchor／Registry／Dict-to-Layer 現況，加入 18 欄所有權、W6 View Registration、Health 前置、P0／P1 風險、領域規則保存與 ECO-09～11；原文移入 `architecture/ref/` | 已建立 | 指令功能仍主要來自靜態讀碼，需實機驗證；產品程式碼與工作檔未修改 |
 | 2026-08-12 | 2.0 正式交付形式 | 確認開發期可用逐支 entrypoint 測試按鈕；RC 與 2.0 正式版改以完整安裝檔／可安裝套件交付，不讓使用者管理 Python 路徑 | 已記錄 | 封裝技術延後至發佈階段，待核心功能、資產與 migration 需求穩定後評估 |
 | 2026-08-12 | 工具列的 Rhino Section 入口 | 保留目前工具列中的 Section 快捷按鈕；Macro 直接呼叫 Rhino 8 內建 `Clipping*` 指令，不建立 Python entrypoint、不封裝 Rhino 功能本體 | 已記錄 | 正式版管理 LoopFlow 自有工具列且不覆蓋 workspace；圖示來源與 UI／安裝格式待發佈 spike 決定 |
 | 2026-08-12 | 藍圖與決策表拆分 | 將 ECO-01～11、已有證據但待確認的建議及實務問題移至 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`，供使用者直接編輯後由 AI 回寫 | 已建立 | 藍圖只保留架構說明與安全前置；待決答案不再雙重維護 |
 | 2026-08-12 | 決策強度與端到端情境 | 決策表增加強烈／一般／輕鬆三種 AI 建議強度，並以概念指令描述首次建模至 Health／Repair，以及模型修改後沿 revision 更新圖面與 Tag 的完整流程 | 已建立 | 概念指令尚非最終命名或已實作入口；流程會隨使用者決策回寫調整 |
+| 2026-08-13 | 1.0 實際操作流程複核 | 以錄影逐步說明核對使用者介入與停留點，補回 SpaceBoundary、TagTrigger→TagChecker、Layer-to-Dict、Anchor、Extract、人工建 Layout、Part／All 與三色回饋 | 通過文件對照 | 尚未執行完整 Rhino 指令端到端；`LOOPFLOW_WORKFLOW_SIMULATION_v2.md` 為現行流程草案 |
+| 2026-08-13 | Tag／圖框 Block 契約證據 | 由 Rhino instance 擷取 9 份 Tag、1 份圖框文字，共 24 個唯一 UserText key；對照 Config、Grab／Laser／Index、Layout ID、Infuser、TAG-O 與 `Tag_Blocks.3dm` 畫面 | 24/24 欄位已追蹤 | 精確座標、字型、圖層與顏色值尚未結構化；不影響目前資料契約規畫 |
+| 2026-08-13 | Tag 現況衝突與新決策輸入 | 確認 `TAG_DW` 為純手動但 1.x Infuser 會覆寫編號；lock 只認單一 `x/X` 且同時凍結重新綁定；家具 `FF-01` 與 Dictionary 為兩套編碼；圖框 `03-A3 Scale` 無 writer | 已回寫上位文件 | ED-14～16 尚待使用者裁決；產品程式碼與 Block 資產未修改 |
+| 2026-08-13 | 非 `ref/` 文件一致性同步 | 將 workflow v2 設為現行流程來源；同步資料藍圖、決策表、契約、設定、roadmap、Nexus 菜單、WIP 導覽與繁中／英文 1.x 指南 | 文件與衍生 HTML 已同步 | 舊 workflow 保留並明確標示為歷史提案；尚未執行 Rhino 端到端測試 |
 
 ## 下一步
 
-由使用者直接編輯 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` 的「你的決定／說明」欄。AI 讀取修改後，先整理歧義與相依影響，再回寫 `LOOPFLOW_DATA_ECOSYSTEM.md`、`_LoopFlow_命名與資料契約.md`，並重排 `NEXUS_DICTIONARY_DECISION_MENU.md` 細項；接著建立現行領域規則清單、schema fixtures 與 validator 規格。使用者確認契約前，不開始正式功能程式碼。
+由使用者直接編輯 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` 的「你的決定／說明」欄；新加入的 ED-14～16 分別處理家具 `FF-01`、圖框比例與 title-frame 辨識。AI 讀取修改後，先整理歧義與相依影響，再回寫 `LOOPFLOW_DATA_ECOSYSTEM.md`、`_LoopFlow_命名與資料契約.md`，並重排 `NEXUS_DICTIONARY_DECISION_MENU.md` 細項；接著建立現行領域規則清單、10 份 Block manifest fixtures、schema fixtures 與 validator 規格。使用者確認契約前，不開始正式功能程式碼。

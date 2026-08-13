@@ -25,14 +25,20 @@ LoopFlow 是 Rhino 8 的半自動化設計與出圖工具。使用者決定何�
 
 ## 主工作流程
 
-1. 以 Dictionary 和 `LF_Nexus` 將資料寫入模型物件。
-2. 視需要建立櫃體，並用 `LF_Data_Viewer` 檢查資料。
-3. 以 `LF_Push_3D_to_JSON` 發布 Registry 資料。
-4. 使用 Rhino Section Tools 產生剖面／立面。
-5. 以 `LF_Anchor_Frame`、`LF_Tagger_Layout_ID`、Tagger 指令建立圖面基準與標籤。
-6. 使用 `LF_Infuser_Part`／`LF_Infuser_All` 將最新資料寫入 Tag Blocks。
+1. `LF_Nexus > Dict. to Layer` 依 Dictionary 建立／更新建模 layers；使用者建立與修改 3D 模型。
+2. `LF_Nexus > SpaceBoundary` 由使用者選取 closed curves 建立空間邊界。
+3. `LF_Nexus > TagTrigger` 對 M3D 範圍寫入 Dictionary、尺寸、高程、空間與 UUID；接著以 `TagChecker` 檢查，必要時修正後重跑。
+4. 視需要使用 `Layer to Dict.` 匯出 layer 現況供人工對照；它不是每次發布的必要步驟，也不應自動覆寫正式 Dictionary。
+5. 以 `LF_Push_3D_to_JSON` 發布 Registry 資料。
+6. 使用 Rhino 8 內建 Clipping／Section 指令建立剖面、立面或平面。
+7. 以 `LF_Anchor_Frame` 建立 Tagger 定位基準；若抽出可編輯線稿則執行 `LF_Extract_CP`，移動線稿時 Anchor 必須一起移動。
+8. 使用者先準備 Layout、Detail、圖框與 Tag Blocks，再執行 `LF_Tagger_Layout_ID` 批次編號與寫圖框。
+9. 依 Tag 類型使用 Grab、Laser 或 Index 綁定；可逐張、逐批完成，不要求一次處理全部頁面。
+10. 使用 `LF_Infuser_Part`／`LF_Infuser_All` 更新 Tag，再依紫／橘／紅回饋及 `LF_TAG-O` 檢查與修復。
 
 各步驟可以反覆執行，不要求固定成單一路徑；重構不得把半自動流程改成未經確認的全自動流程。
+
+Cabinet 與三個 2D Generator 是選用／獨立工具，不是每次主工作鏈的必要節點。
 
 ## 指令分組
 
@@ -45,6 +51,14 @@ LoopFlow 是 Rhino 8 的半自動化設計與出圖工具。使用者決定何�
 | Layout / Section | `LF_Anchor_Frame`、`LF_Extract_CP`、`LF_Duplicate_Layout` | 建立基準、擷取剖線與複製 Layout |
 | 櫃體與 2D | `LF_Cabinet_Suite`、`LF_2D_Cabinet_Gen`、`LF_2D_Shelf_Gap`、`LF_2D_DW_Gen` | 櫃體及門窗圖面處理 |
 | 協作 | `LF_Sync_Worksession` | 監看與更新 Worksession |
+
+## Tag Block 的 1.x 操作事實
+
+- 9 份 Tag 與 1 份圖框的實際文字已由 Rhino Block instance 擷取；欄位細節見 `architecture/LOOPFLOW_WORKFLOW_SIMULATION_v2.md`。
+- 正式可鎖 Tag 使用 `attr_Lock_不更新>寫入x或X`。只有單一 `x`／`X`（前後空白可有）會生效；其他符號或文字看似已填，實際仍未鎖且沒有警告。
+- 鎖定不只阻擋 Infuser 寫入，也會阻擋 Grab／Laser／Index 重新綁定。Infuser 跳過 locked Tag 時也不重新檢查來源與顏色，所以 locked 不代表來源健康。
+- `TAG_DW` 後來改成門窗編號、寬、高全部手動輸入，而且沒有 lock 欄位；但 1.x Infuser 仍把它當資料 Tag。執行 Part／All 時，未綁定的 `TAG_DW` 會被塗橘並把人工 `attr_dw_id` 改成 `?`。這是已知 1.x 衝突；2.0 將它定義為純手動且完全不由 Sync 處理。
+- `Sample_Frame` 的 `DWG_NAME`／`DWG_NO` 由 Layout ID 寫入；`03-A3 Scale` 現況由使用者維護。
 
 ## 核心資料規則
 

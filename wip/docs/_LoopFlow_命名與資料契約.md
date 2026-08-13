@@ -4,7 +4,7 @@
 
 ## 狀態
 
-- 階段：1.0 靜態盤點完成，等待使用者依 `architecture/NEXUS_DICTIONARY_DECISION_MENU.md` 裁決
+- 階段：1.0 靜態盤點、實際操作流程與 Tag／圖框欄位盤點完成，等待使用者依決策表與 `architecture/NEXUS_DICTIONARY_DECISION_MENU.md` 裁決
 - 套用版本：LoopFlow `v2.0.0`
 - 舊版參考：`v1.0.0`
 - 原則：新版乾淨定義；舊版資料不在開發中零散改寫
@@ -48,6 +48,24 @@
 1.0 的實際欄位、producer／consumer、指南衝突與使用者選項已整理於 `architecture/NEXUS_DICTIONARY_DECISION_MENU.md`。該文件是討論輸入；使用者的裁決應回寫本文件，成為 2.0 正式契約。
 
 使用者已指定採用中文 Dictionary 作為內容與 layer taxonomy 的重構來源；是否直接使用完整中文欄名作為 machine key，仍須與多語顯示方式一起裁決，不能只由檔案版本反推。
+
+## Tag／圖框現況契約（1.x 觀察基準）
+
+以下是 migration 與 2.0 schema 必須能辨識的 1.x 事實，不代表沿用同一批 canonical key。證據來自 `wip/docs/tag_block_text/` 的 10 份 Rhino Block instance 擷取文字（9 Tag、1 圖框，共 24 個唯一 UserText key）、`Tag_Blocks.3dm` 畫面與現行 Tagger／Infuser／Layout ID 程式。
+
+| Family | 現行 binding | 自動顯示欄位 | 人工欄位／特殊規則 |
+|---|---|---|---|
+| Height Grab／Laser | `Source_UUID` | `attr_ch_key`、`attr_ch_val`、`attr_mat_key`、`attr_mat_val`、`attr_note` | `attr_manual_補充說明`、lock |
+| Finish Grab／Laser | `Source_UUID` | `attr_mat_key`、`attr_mat_val`、`attr_note` | `attr_manual_補充說明`、lock |
+| Item | `Source_UUID`；Block 名稱解析時另用 `.Auto_Item_*` | `attr_item_key`、`attr_item_val`、`attr_note` | `attr_manual_補充說明`、lock；`FF-01__Chair-1` 與 Dictionary `_03_ID編號` 是兩套來源 |
+| Section Detail／Elev 1～4 | `.Target_DV_ID` | `Category`、`REF_ID` | `Detail_NO`、lock |
+| Elev 0 | 無 binding | Layout ID 寫目前頁 `Category` | 六個方向／編號欄人工維護；不參加 Infuser／TAG-O |
+| `TAG_DW` | **無；使用者已確認為純手動** | 無 2.0 自動欄位 | `attr_dw_id`、門窗寬、門窗高全部人工；沒有 lock。1.x Infuser 仍會把編號覆寫為 `?`，屬既成衝突 |
+| `Sample_Frame` | 無 binding | Layout ID 寫 `DWG_NAME`、`DWG_NO` | `03-A3 Scale` 人工；固定文字不是 UserText |
+
+正式 8 種可鎖 Tag 都使用 `attr_Lock_不更新>寫入x或X`。現行 Grab／Laser／Index／Infuser 都能找到這個 key，但只有值在 `strip().upper()` 後恰為單一 `X` 才鎖定；鎖定同時阻擋資料寫入與重新綁定。2.0 的 canonical `lock_state` 必須是 typed boolean／enum，由 UI 切換；其他既有值交給 migration 列為待確認，不推測含義。
+
+2.0 Block manifest 至少需要：穩定 template ID、family、role、允許的 binding mode、欄位 owner、缺值顯示、template version 與 migration mapping。`TAG_DW` 使用 `binding_mode: manual`；是否以 `role: title_frame` 限定 Layout ID 寫入見 ED-16。`03-A3 Scale` 不能直接沿用為 canonical ID，因它把面板排序、圖幅與欄位語意混在名稱中；是否繼續人工或改為自動值見 ED-15。家具 `FF-01` 的資料身分見 ED-14。
 
 ## Dictionary 定義工作
 

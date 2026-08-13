@@ -170,10 +170,11 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 </div>
 </details></nav>
 <main><h1 class="doctitle" id="LoopFlow-2-0-模擬執行流程">LoopFlow 2.0 — 模擬執行流程</h1>
+<blockquote><p><strong>已由 <code>LOOPFLOW_WORKFLOW_SIMULATION_v2.md</code> 取代。</strong> 本檔保留 2026-08-12 初版提案供差異追溯，不再作為現行工作流程、決策或開發依據；請勿把其中的 <code>LF_Sheet_Create</code>、舊 lock 判斷或未經 1.0 操作檢核的假設回寫其他文件。</p></blockquote>
 <p>本文件把 <code>LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md</code> 的建議轉成可實際理解的操作鏈，協助判斷這些原則是否符合工作習慣。兩份流程由不同 AI 獨立推導，走同一條資料鏈但在細節與優先序上有差異，並列以便對照。</p>
 <ul><li>決策項目與建議強度：<code>LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md</code>（<code>ECO-*</code>／<code>ED-*</code> 編號皆指向該表）</li><li>資料實體、真相邊界與現況盤點：<code>LOOPFLOW_DATA_ECOSYSTEM.md</code></li><li>本文件不維護決策答案；使用者的裁決一律寫在決策表，不在此重複。</li></ul>
 <p><code>LF_*</code> 名稱是 <strong>2.0 概念指令名稱，不是已完成的按鈕或最終命名</strong>；<code>! _Clipping*</code> 則是 Rhino 8 內建指令。兩份流程都尚未經 Rhino 實機驗證。</p>
-<blockquote><p>本文件有一份深色好讀版 <code>LOOPFLOW_WORKFLOW_SIMULATION.html</code>，是<strong>由本檔產生的衍生檔，不要手動編輯</strong>。修改本檔後執行 <code>python wip/tools/build_workflow_html.py</code> 重新產生；<code>--check</code> 可驗證兩者是否一致。</p></blockquote>
+<blockquote><p>本文件有一份深色好讀版 <code>LOOPFLOW_WORKFLOW_SIMULATION.html</code>，是<strong>由本檔產生的歷史衍生檔，不要手動編輯</strong>。如因追溯需求修改本檔，需明確執行 <code>python wip/tools/build_workflow_html.py --src wip/docs/architecture/LOOPFLOW_WORKFLOW_SIMULATION.md --out wip/docs/architecture/LOOPFLOW_WORKFLOW_SIMULATION.html</code>；一般不帶參數的指令會更新現行 v2 文件。</p></blockquote>
 <hr>
 <section class="chapter codex" id="CodeX-模擬執行流程">
 <h1><span class="tagpill">CodeX</span>模擬執行流程</h1>

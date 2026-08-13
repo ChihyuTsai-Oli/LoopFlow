@@ -5,9 +5,9 @@
 ## 盤點狀態
 
 - 日期：2026-08-12
-- 範圍：`releases/LoopFlow/Python/` 全部 23 支 Python、Dropbox 中文版 `LoopFlow_Dictionary.xlsx`、repo 英文舊版、繁中使用指南與 Dictionary 指南
-- 方法：逐檔閱讀、Python 靜態依賴搜尋、XLSX 結構與畫面檢查
-- 尚未執行：Rhino 8 實機操作、舊專案資料抽樣、多人／雙機同時寫入測試
+- 範圍：`releases/LoopFlow/Python/` 全部 23 支 Python、Dropbox 中文版 `LoopFlow_Dictionary.xlsx`、repo 英文舊版、繁中使用指南與 Dictionary 指南；另納入 9 份 Tag、1 份圖框的 Rhino Block 文字擷取與整體畫面
+- 方法：逐檔閱讀、Python 靜態依賴搜尋、XLSX 結構與畫面檢查、Block UserText producer／consumer 對照
+- 尚未執行：Rhino 指令端到端操作、舊專案資料抽樣、多人／雙機同時寫入測試；Block 文字與畫面已核對，不等同功能流程實機通過
 - 結論：已足夠開始規格裁決；使用者確認關鍵語意前，不修改產品程式碼
 
 ## 現行資料流
@@ -109,7 +109,7 @@ flowchart LR
 | 2D layer／顏色 | `LAYER_2D_DW_*`、`COLOR_2D_DW_*`、`LAYER_2D_FURN_*`、`COLOR_2D_FURN_*`、`LAYER_2D_DEFPOINTS`、`COLOR_2D_DEFPOINTS` | layer contract 與可調顯示偏好需分開 |
 | 欄位覆寫 | `WHITE_LIST` | schema 欄位所有權，不是使用者自由設定 |
 | 系統檔名 | `REGISTRY_FILENAME`、`REGISTRY_LOCK_FILENAME`、`DEBUG_LOG_FILENAME` | path／storage contract；log 名可為進階設定 |
-| Tag Block 名稱 | `INDEX_BLOCKS`、`HEIGHT_BLOCKS`、`FINISH_BLOCKS`、`DW_BLOCKS`、`ITEM_BLOCKS` | Tag schema／資產 manifest |
+| Tag／圖框 Block | `INDEX_BLOCKS`、`HEIGHT_BLOCKS`、`FINISH_BLOCKS`、`DW_BLOCKS`、`ITEM_BLOCKS`；另有 `Sample_Frame` | Tag／title-frame schema 與資產 manifest；`TAG_DW` 已確認純手動，1.x 清單屬歷史衝突 |
 | 系統顏色 | `COLOR_LAYER_MAP`、`COLOR_DATA_LAYER`、`COLOR_EXTRACT_VISIBLE`、`COLOR_EXTRACT_HATCH`、`COLOR_WARNING`、`COLOR_BROKEN` | layer 顯示與狀態顯示分開；warning 不可只靠顏色辨識 |
 | Layout 規則 | `LAYOUT_NAME_SEPARATOR`、`LAYOUT_COPY_SUFFIX`、`LAYOUT_BASELINE_MARK`、`CEILING_KEYWORDS`、`MIRROR_KEYWORDS`、`INVERT_Y` | naming／layout contract；顯示偏好另分 |
 | 並行／事件 | `SYNC_INTERVAL`、`LOCK_TIMEOUT`、`STALE_LOCK_SECONDS` | 系統內部預設與進階設定；安全機制不能只靠 timeout |
@@ -123,7 +123,7 @@ flowchart LR
 - Registry fallback timeout 為 `8 / 120` 秒，與 config 的 `20 / 30` 秒衝突。
 - Cabinet 自行 fallback `04_CB`、多組舊 `_CB` aliases、幾何尺寸與 Windows Python site-packages bridge。
 - Tag 的 `Source_UUID`、`NAME_PARSED`、`.Auto_*`、`.Target_DV_ID`、`attr_*`、`Category`、`REF_ID`、`DWG_*` 等 Block 欄位。
-- Tag 鎖定同時辨識 `LOCK`、`不更新`、`NoUpdate`；各檔不完全一致。
+- 正式 8 種可鎖 Block 共用 `attr_Lock_不更新>寫入x或X`，所以現行四支程式都找得到；但偵測條件散落，且只有單一 `x`／`X` 生效。鎖定同時擋 Infuser 與 Grab／Laser／Index 重新綁定。
 - `LF_Cabinet_Suite.py` 的最終錯誤訊息仍寫死 `C:\_RH_Tools\cursor_LF_debug_log.txt`。
 
 以上都不能在搬檔時原樣散落到新版；需歸入 schema、feature 規則或真正可調的 setting。
@@ -135,8 +135,8 @@ flowchart LR
 | CF-01 | repo release 是英文 Dictionary，Dropbox 另有同檔名中文版本；重構已指定 Dropbox 中文版 | resolver 若仍從 repo 或 Rhino 文件資料夾找檔，會讀到錯誤版本 |
 | CF-02 | 程式常用 `_01_` 等 prefix 找第一欄，不依賴完整欄名 | 同 prefix 多欄時會靜默選錯；改字尾看似成功卻無 schema 保證 |
 | CF-03 | 指南稱 layer 重複列會略過；程式 dict mapping 實際是後列覆蓋前列 | 資料錯誤不會被清楚阻擋 |
-| CF-04 | 指南稱 `_09_Quantity` 由 Nexus 計算；程式沒有 producer | 報表數量來源不可信 |
-| CF-05 | 指南稱 `_11` 是 cm 數字；程式寫入顯示字串 | 排序、計算、交換資料容易失敗 |
+| CF-04 | 過往指南曾稱 `_09_Quantity` 由 Nexus 計算，但程式沒有 producer；繁中／英文指南已於 2026-08-13 修正 | 2.0 若要新增估算功能，仍需另定單位與幾何規則 |
+| CF-05 | 過往指南曾把 `_11` 說成 cm 數字，但程式寫入顯示字串；繁中／英文指南已於 2026-08-13 修正 | 2.0 schema 仍須分開可計算數值與顯示格式 |
 | CF-06 | 指南沒列 `BC`，實際 XLSX 與程式使用；`CH` 又沒有獨立算法 | 高程結果可能語意錯誤 |
 | CF-07 | 中文 Dictionary 與 repo 英文 Dictionary 的單位、layer path、備註與欄名不同 | 兩者不可混用或依同檔名推定 schema |
 | CF-08 | `_01_*` 與 boundary 的 `Space_Name` 是兩套 key | 空間名稱來源與更新責任不清楚 |
@@ -154,8 +154,11 @@ flowchart LR
 | CF-20 | 中文版 `_13` 有 91 列為 `我是備註，UCCU` | 可能把測試字串寫入大量正式物件與 Registry |
 | CF-21 | Cabinet 產物可在 current layer，BOM 更新卻只處理 `04_CB`；Nexus 也靠 layer 判定 `_CB` | Cabinet 資料可能被略過或清成 `-` |
 | CF-22 | Infuser 把 `_03` 第一個 `-` 拆成兩個 Tag 值 | 一般 ID 若包含連字號會被誤解 |
-| CF-23 | Tag lock、warning color 與缺值規則分散且不一致 | 重構單一 Tagger 時可能破壞其他 Tag 流程 |
+| CF-23 | Tag lock、warning color 與缺值規則分散；正式 key 目前可共用，但非 `x/X` 值會靜默未鎖，locked Tag 又停止 health／顏色更新 | 重構單一 Tagger 時可能破壞其他 Tag 流程或讓使用者誤以為已保護 |
 | CF-24 | Dictionary 沒有可執行的 `schema_version`、型別、允許值與 strict validator | 目前只能到執行中才發現格式問題 |
+| CF-25 | `TAG_DW` 已改純手動且沒有 lock，仍在 `DW_BLOCKS`；Infuser 會把人工編號覆寫為 `?` | 1.x 全量同步可能破壞門窗編號；2.0 必須以 manual binding mode 排除 |
+| CF-26 | `TAG_ITEM` 的 `FF-01__Chair-1` 來自 Block 名稱，不在 Dictionary 12 個類別碼內 | 同一 Tag 顯示欄有兩套未協調的編碼來源 |
+| CF-27 | Layout ID 把所有未分類 Block 當圖框；`03-A3 Scale` 又把排序、圖幅與欄位語意混在 key | 未知 Block 可能被誤寫；圖幅變更可能迫使資料 key 改名 |
 
 ## 使用者決策菜單
 
@@ -194,8 +197,8 @@ flowchart LR
 | ID | 要決定什麼 | 選項 | 建議 |
 |---|---|---|---|
 | ND-18 | Registry payload | A. 版本化 typed schema + 明確 extension 區；B. 將全部 UserText 原樣快照 | **A**；避免任意欄位變成永久 API |
-| ND-19 | `_03` 的 Tag 語意 | A. 將類別碼與序號做成獨立 typed 欄位；B. 固定 `_03` 的連字號格式；C. 不再拆分 | 92 筆資料與 Infuser 已確認兩段是類別碼／序號，建議 **A** |
-| ND-20 | Tag 鎖定欄位 | A. 單一 canonical boolean／enum；B. 繼續辨識多種文字 key | **A**；舊 key 只由 migration 處理 |
+| ND-19 | `_03` 與家具 `FF-01` 的 Tag 語意 | A. Dictionary 類別碼／序號拆成 typed 欄位，家具另依 ED-14 定義 namespace；B. 全部固定同一連字號字串；C. 不再拆分 | 92 筆 Dictionary 資料與 Infuser 已確認兩段語意；家具 Block 又是第二套來源。建議 **A**，並先回答 ED-14 |
+| ND-20 | Tag 鎖定欄位 | A. 單一 canonical boolean／enum，由 UI 切換；B. 繼續讓使用者輸入文字 | **A**；現行正式 key 可被四支程式辨認，但只有單一 `x/X` 生效。舊 key／其他值只由 migration 列為待確認 |
 | ND-21 | `Layer to Dict` | A. 明確只匯出 layer defaults，另做 object data export；B. 改為彙總 object UserText；C. 取消反向匯出 | 建議 **A**；避免 layer 與 object 資料混為一談 |
 | ND-22 | `20_DW` 特例 | A. 保留單一 DW 類型及 child-layer 排除規則；B. 每個 DW child 都進 Dictionary；C. 重新分類 | 需依目前門窗工作方式決定 |
 | ND-23 | Cabinet `_CB.*` | A. 現在凍結四欄語意，程式延後；B. 等 Cabinet 重構時再決定 | 建議 **A**；避免 Nexus／Registry 先做錯介面 |

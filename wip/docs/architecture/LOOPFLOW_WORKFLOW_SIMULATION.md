@@ -1,5 +1,7 @@
 # LoopFlow 2.0 — 模擬執行流程
 
+> **已由 `LOOPFLOW_WORKFLOW_SIMULATION_v2.md` 取代。** 本檔保留 2026-08-12 初版提案供差異追溯，不再作為現行工作流程、決策或開發依據；請勿把其中的 `LF_Sheet_Create`、舊 lock 判斷或未經 1.0 操作檢核的假設回寫其他文件。
+
 本文件把 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` 的建議轉成可實際理解的操作鏈，協助判斷這些原則是否符合工作習慣。兩份流程由不同 AI 獨立推導，走同一條資料鏈但在細節與優先序上有差異，並列以便對照。
 
 - 決策項目與建議強度：`LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`（`ECO-*`／`ED-*` 編號皆指向該表）
@@ -8,7 +10,7 @@
 
 `LF_*` 名稱是 **2.0 概念指令名稱，不是已完成的按鈕或最終命名**；`! _Clipping*` 則是 Rhino 8 內建指令。兩份流程都尚未經 Rhino 實機驗證。
 
-> 本文件有一份深色好讀版 `LOOPFLOW_WORKFLOW_SIMULATION.html`，是**由本檔產生的衍生檔，不要手動編輯**。修改本檔後執行 `python wip/tools/build_workflow_html.py` 重新產生；`--check` 可驗證兩者是否一致。
+> 本文件有一份深色好讀版 `LOOPFLOW_WORKFLOW_SIMULATION.html`，是**由本檔產生的歷史衍生檔，不要手動編輯**。如因追溯需求修改本檔，需明確執行 `python wip/tools/build_workflow_html.py --src wip/docs/architecture/LOOPFLOW_WORKFLOW_SIMULATION.md --out wip/docs/architecture/LOOPFLOW_WORKFLOW_SIMULATION.html`；一般不帶參數的指令會更新現行 v2 文件。
 
 ---
 

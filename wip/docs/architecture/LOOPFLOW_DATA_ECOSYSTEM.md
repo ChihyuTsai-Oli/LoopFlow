@@ -8,7 +8,7 @@
 - 盤點基準：`releases/LoopFlow/Python/` 全部 23 支 Python；Dropbox 中文版 Dictionary 共 18 欄、92 筆 Type
 - 程式基準最後異動：`087ed73`；本次只讀取與建檔，未修改產品程式碼
 - 工作檔基準：Dropbox 中文版 `LoopFlow_Dictionary.xlsx`
-- 驗證層級：兩次獨立靜態讀碼、producer／consumer 搜尋與 Dictionary 統計；尚未完成 Rhino 8 實機、舊專案資料與 Tag Block definition 驗證
+- 驗證層級：兩次獨立靜態讀碼、producer／consumer 搜尋與 Dictionary 統計；另以 Rhino 內實際 Block instance 擷取 9 份 Tag、1 份圖框共 24 個唯一 UserText key，並用 `Tag_Blocks.3dm` 畫面核對整體配置。尚未完成指令端到端實機、舊專案資料抽樣與精確 Block 樣式 manifest 驗證
 - 定位：工作邏輯必須維持，程式邊界、指令名稱、資料結構與建構方式都可以重新設計
 
 兩份未合併的來源原文保存在：
@@ -21,8 +21,9 @@
 | 文件 | 負責 |
 |---|---|
 | `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` | 待使用者裁決的 `ECO-*`／`ED-*` 項目與 AI 建議強度；裁決結果的唯一來源 |
-| `LOOPFLOW_WORKFLOW_SIMULATION.md` | 依上述建議推導的兩份完整操作鏈（CodeX 版與 Claude Code 版），供對照與檢驗工作習慣 |
-| `LOOPFLOW_WORKFLOW_SIMULATION.html` | 同內容的深色好讀版，可直接以瀏覽器開啟 |
+| `LOOPFLOW_WORKFLOW_SIMULATION_v2.md` | 依 1.0 操作說明、現行 Python 與 10 份 Block 參數重新檢核的現行流程草案 |
+| `LOOPFLOW_WORKFLOW_SIMULATION_v2.html` | 同內容的深色好讀版；由 v2 Markdown 產生，不手動編輯 |
+| `LOOPFLOW_WORKFLOW_SIMULATION.md`／`.html` | 2026-08-12 初版提案，已標示由 v2 取代，只供差異追溯 |
 
 本文的「現況事實」可由現行程式或 Dictionary 交叉確認，但不等於 2.0 必須沿用；由靜態讀碼推論的 Rhino 行為仍須實機測試。所有尚待使用者確認的原則與實務問題集中在 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`，不在本文件維護第二份答案。
 
@@ -197,7 +198,7 @@ Dictionary 提供類型預設；模型物件保存實例真相。有效值採一
 | `DWG_NO`／`DWG_NAME` | Layout ID | 圖框顯示 | Sheet metadata render output |
 | `attr_*` | Infuser | Tag Block 文字 | Tag Template output |
 | `Role`／`Target_CP` | Anchor Frame | **無讀取者** | 不承接；建立真正 View Registration |
-| `LOCK`／`不更新`／`NoUpdate` 類 key | 人工 | 各 Tagger／Infuser 規則不一致 | 單一正式 `lock_state` |
+| `attr_Lock_不更新>寫入x或X` | 人工 | Grab／Laser／Index／Infuser；只有去除前後空白後恰為單一 `x`／`X` 才鎖定 | 單一 typed `lock_state`；UI 切換，不讓使用者手打任意字串 |
 
 ### 已確認沒有 repo 內 consumer 的現行項目
 
@@ -242,17 +243,20 @@ Drawing lifecycle 的第一個可測條件是**冪等重跑**：系統必須辨�
 
 ## Tag 的來源與模板
 
-Tag 同時需要兩種上下文：
+需要模型資料的 Tag 同時具有兩種上下文：
 
-- **資料來源**：`source_object_id`，決定材料、名稱、高程等顯示資料。
+- **資料來源**：`source_object_id`，決定材料、名稱、高程等顯示資料；純手動 Tag 不建立此欄。
 - **圖面來源**：`view_id`／`drawing_id`／`sheet_id`，決定 Tag 位於哪張圖以及如何定位。
+
+Index Tag 改用 `target_view_id`／`target_sheet_id`；使用者已確認 `TAG_DW` 是純手動 Tag，三個顯示欄位 `attr_dw_id`、`attr_DW-W_輸入門窗寬`、`attr_DW-H_輸入門窗高` 都不建立 binding，也不由 Sync 覆寫。1.x 仍把它列在 `DW_BLOCKS`，所以 Infuser 會把人工 `attr_dw_id` 改成 `?` 並塗橘，這是現行衝突，不是 2.0 應承接的行為。
 
 建議 Tag metadata：
 
 ```text
 tag_id
 tag_type
-source_object_id
+binding_mode
+source_object_id / target_view_id / target_sheet_id（依類型擇一或無）
 view_id
 drawing_id
 sheet_id
@@ -263,13 +267,15 @@ manual_overrides
 health_state
 ```
 
-現行 Grab、Laser 與 Index 代表三個不同且都應保留的使用意圖：
+現行 Grab、Laser 與 Index 代表三個不同且都應保留的綁定意圖；純手動 Tag 則不進入這三種流程：
 
 - Grab：使用者直接選擇明確來源。
 - Laser：使用者在 Section 圖面點位置，系統由已註冊的 View transform 轉回 3D 搜尋候選來源；多候選時由使用者選定。
 - Index：把 Tag 綁到另一個 View／Sheet，由 Sheet metadata 產生引用圖號。
 
 綁定完成後，顯示資料從 Registry 依 Object ID 取得。圖面幾何協助定位，但不應成為資料真相。
+
+目前 Block 欄位已依「binding metadata、render output、manual content、control／state」四種所有權盤點完成。`Detail_NO`、`attr_manual_補充說明`、`TAG_ELEV_0` 六個方向／編號欄、`TAG_DW` 全部欄位與圖框 `03-A3 Scale` 都沒有 Python writer，不能被同步或錯誤處理覆寫。完整 10 份清單與 24 個 key 見現行 workflow simulation。
 
 Tag Template 應宣告「需要哪些欄位、如何顯示、缺值如何處理」，而不是每新增一種 Tag 就再複製一套 Infuser 判斷。例如：
 
@@ -279,16 +285,20 @@ TAG_HEIGHT
   fields:
     attr_ch_key  <- elevation.basis
     attr_ch_val  <- elevation.display
-    attr_mat_key <- type.code
-    attr_mat_val <- type.display_name
-    attr_note    <- object.note
+    attr_mat_key <- type.category
+    attr_mat_val <- type.sequence
+    attr_note    <- type.display_name
 ```
 
-鎖定改為單一 `lock_state`；目前 `LOCK`、`不更新`、`NoUpdate` 在不同指令的辨識規則並不一致。Tag 檢查必須唯讀，顏色只能放在可還原的提示層，不得清除使用者原有物件色。
+家具 `TAG_ITEM` 另有一條 1.x 名稱解析路徑：`FF-01__Chair-1` 的 `FF`、`01`、`Chair-1` 來自 Block 名稱，不在 Dictionary 的 12 個類別碼內；綁一般模型物件時，同一顯示欄又改讀 Dictionary `_03_ID編號`。ED-01 在拆 `type_category`／`type_sequence` 時，必須一併裁決家具編碼要進 Type Catalog，或成為有獨立 schema 的 instance-level 編號。
+
+鎖定改為單一 `lock_state`。正式 8 種可鎖 Block 都使用 `attr_Lock_不更新>寫入x或X`，因此目前四支程式都辨認得到，不是既成的「Laser 不認中文」問題；風險是偵測條件散落、只接受單一 `x`／`X`，其他看似已填的值會靜默保持未鎖。鎖定會同時阻擋 Infuser 寫入與 Grab／Laser／Index 重新綁定，Health 仍須唯讀檢查 stale／orphaned。顏色只能放在可還原的提示層，不得清除使用者原有物件色。
 
 ## Sheet、圖框與索引
 
 圖框與自動命名使用 Sheet metadata 作為真相；Layout 名稱只是輸出結果。
+
+實際 `Sample_Frame` 已確認：`DWG_NAME`、`DWG_NO` 由 Layout ID 寫入；`03-A3 Scale` 沒有 Python writer，現況為人工欄；`The Tarnished` 與 `02-25-2022` 是固定文字。`03-A3 Scale` 把面板排序、A3 圖幅與比例語意混在同一 key，2.0 schema 應拆成穩定欄位 ID 與獨立顯示／排序 metadata。
 
 建議欄位：
 
@@ -312,6 +322,8 @@ IN 101.01__一樓平面配置圖
 ```
 
 而不是從這個字串反向猜出 discipline、series 與 sequence。如此未來改命名格式、插頁、調整順序或建立多套交付格式時，不必破壞圖框與 Section Index Tag。
+
+1.x `LF_Tagger_Layout_ID` 沒有真正辨認圖框：所有不在 Data／Index／Elev 0 清單內的 Block 都落入圖框分支，被寫入 `DWG_NO`／`DWG_NAME`。2.0 Template manifest 必須以 `role: title_frame` 明列可接收圖框輸出的 Block；未知 Block 不寫入。
 
 複製 Sheet 時必須建立新的 `sheet_id`、`drawing_id` 與 `tag_id`。一般 Tag 是否保留相同 `source_object_id` 見決策表 ED-13；Index Tag 不得無聲沿用來源頁的 `.Target_DV_ID`，而要重新指向或標為待確認。複製結果需列出所有失效、保留與待確認綁定，也不應依賴會覆蓋使用者系統剪貼簿的流程。
 
@@ -363,7 +375,7 @@ Model revision
 
 | 狀態 | 意義 | 前置資料需求 | 建置時機 |
 |---|---|---|---|
-| `unbound` | 尚未指定來源 | `source_object_id` | 核心 Tag 契約 |
+| `unbound` | 需要綁定的 Tag 尚未指定來源；不適用於 `binding_mode: manual` | 該 template 的 binding requirement | 核心 Tag 契約 |
 | `orphaned` | 原來源不存在 | Object ID + Registry | 核心 Tag 契約 |
 | `manual_locked` | 使用者禁止自動更新 | 單一 `lock_state` | 核心 Tag 契約 |
 | `stale_data` | Registry 已更新，顯示未同步 | Registry revision + Tag sync revision | Registry 核心 |
@@ -374,7 +386,7 @@ Model revision
 | `template_outdated` | Tag Template／Block 版本落後 | `template_version` | Template system |
 | `healthy` | 所有適用前置皆有效且為最新 | 依該 Tag／Drawing 適用狀態 | 各契約到位後 |
 
-Health 不只回報結果，也要記錄原因、建議修復、預覽、使用者選擇與 repair result。任何修復不得偷偷重綁、重建 ID、覆寫人工成果或刪除圖面。
+Health 不只回報結果，也要記錄原因、建議修復、預覽、使用者選擇與 repair result。純手動 `TAG_DW` 沒有來源是正常狀態，不得判成 unbound；鎖定 Tag 仍需在不改內容的前提下檢查來源健康。任何修復不得偷偷重綁、重建 ID、覆寫人工成果或刪除圖面。
 
 ## 現況高風險與 2.0 約束
 
@@ -382,11 +394,14 @@ Health 不只回報結果，也要記錄原因、建議修復、預覽、使用�
 |---|---|---|
 | P0 | 重複 UUID 時，原件與複本都可能換新 UUID，既有 Tag 斷線且沒有舊新對照 | ID 變更先掃描、預覽、保留一方、列出受影響 Tag、建立可回復 mapping |
 | P0 | Registry reader 可在錯誤專案路徑自建空檔，Infuser 再覆寫全部 Tag 顯示 | project resolver 唯一；read 無寫入副作用；來源無效時停止修改 |
+| P0 | `TAG_DW` 已改純手動且無 lock，仍在 `DW_BLOCKS`；Infuser 會把人工門窗編號覆寫為 `?` | manifest 標記 `source: manual`；Sync 與 unbound Health 都略過其人工欄位 |
 | P1 | Laser 對位取決於當下 2D／3D bbox，正常編輯可能造成漂移 | View transform 固化並可驗證 |
 | P1 | Extract 重跑會重複幾何，並改變 layer lock | 每個產生命令定義冪等政策與狀態復原 |
 | P1 | Duplicate Layout 會覆蓋剪貼簿，Index Tag 可能仍指向來源頁且看似正常 | 新身分、綁定重審與明確報告 |
 | P1 | TAG-O 只讀顏色；Infuser 清提示時可能破壞使用者顏色 | Health 使用 metadata；presentation 可還原 |
 | P1 | `BC` 在非 Block 上靜默退回 BH，但 Tag 仍顯示 BC | rule、label、前置條件分離；條件不成立即明確錯誤 |
+| P1 | lock 只接受單一 `x`／`X`；其他標記看似存在卻不生效，且不會提示 | typed `lock_state` 與 UI toggle；migration 將其他值列為待確認 |
+| P1 | Layout ID 把所有未分類 Block 當圖框寫入 | Template manifest 明列 `title_frame` role；未知 Block 零寫入 |
 | P2 | Dict-to-Layer 同時建 material、layer UserString、`DNA_REF_` 線並 ZoomExtents；重跑累積參考線 | 四種責任分離，每項有明確用途與重跑政策 |
 | P2 | Cabinet 可在錯誤 layer 生成後被 Nexus 清空 `_CB.*`；方向資料又被排序抹平 | 生成前驗證 Type／layer；沿 panel local frame 保留方向 |
 | P2 | naming config 與 Registry fallback 值形成多個設定來源 | schema／user setting／fallback 單一且可檢查 |
@@ -425,10 +440,10 @@ Health 不只回報結果，也要記錄原因、建議修復、預覽、使用�
 
 | 現行檔案 | 現行功能 | 必須保留的意圖 | 2.0 建議責任 |
 |---|---|---|---|
-| `LF_Tagger_Grab.py` | 在 Layout Detail 內直接選目標；一般物件綁 UUID，DW／Item 從 Block 名稱解析 shadow fields | 使用者可以直接指定確定來源 | Direct Binding command；所有來源都轉成明確 ID，名稱解析只作 migration／輔助，不用 `NAME_PARSED` 假來源 |
+| `LF_Tagger_Grab.py` | 在 Layout Detail 內直接選目標；一般物件綁 UUID，Item 可從 Block 名稱解析 shadow fields；舊 DW 解析仍留在程式，但現行 Block 已改純手動 | 使用者可以直接指定確定來源；`TAG_DW` 不屬此意圖 | Direct Binding command；模型與 Item 來源用明確 ID／source type；名稱解析只作 migration／輔助，不用 `NAME_PARSED` 假來源；DW 不綁定 |
 | `LF_Tagger_Laser.py` | 由 Detail 點位、名稱與可變 bbox 轉回 3D 射線；依正面與距離選物件 | 從 Section 圖面位置快速找到 3D 資料來源 | Spatial Binding；正式 View transform、candidate set 與 ambiguous 狀態 |
 | `LF_Tagger_Index.py` | 將 Section／Elevation Index Tag 綁到某個 Detail View GUID | 剖面索引能跟隨目標圖面改名或換頁 | Sheet／View Reference Binding；保存目標 `view_id`／`sheet_id`，顯示值由 Sheet metadata 產生 |
-| `LF_Tagger_Layout_ID.py` | 依 Layout 順序與 `.01` baseline 命名、寫圖框，另發布無 consumer 的 Layout_Map | 全案圖號、圖名、圖框與索引一致 | Sheet Catalog／Naming；metadata-first，排序與命名只是可重算輸出 |
+| `LF_Tagger_Layout_ID.py` | 依 Layout 順序與 `.01` baseline 命名、寫圖框；所有未分類 Block 都被當成圖框；另發布無 consumer 的 Layout_Map | 全案圖號、圖名、圖框與索引一致 | Sheet Catalog／Naming；metadata-first，以 manifest 的 `title_frame` role 限定寫入；排序與命名只是可重算輸出 |
 | `LF_Infuser_Part.py` | 更新目前 Layout Tag；依 Source_UUID／Detail 找資料，處理 lock、未綁定、斷線與顏色 | 局部、安全、可反覆把最新資料注入 Tag | Tag Renderer／Synchronizer；依 template mapping 更新，保存 revision，回傳正式 health，不以顏色作真相 |
 | `LF_Infuser_All.py` | 對全部 Layout 呼叫 Part，統計成功／未綁定／斷線／鎖定 | 一次檢查與同步整份圖說 | Batch Tag Synchronizer；和 Part 使用同一 service，只改 scope |
 | `LF_TAG-O.py` | 以顏色判定 unbound／broken，以空間名稱字串檢查覆蓋 | 在交付前確認 Tag 存活與空間覆蓋 | 唯讀 Health Dashboard／Repair Center；以 ID／revision 判斷並追蹤修復 |

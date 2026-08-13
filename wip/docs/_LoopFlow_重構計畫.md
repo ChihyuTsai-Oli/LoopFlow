@@ -104,6 +104,14 @@ wip/
 - 新核心不散落 legacy aliases；舊名稱只由 migration scanner／converter 辨識。
 - 未決定前只能偵測／預覽，不批次改正式專案。
 
+### Tag／圖框 Block 契約
+
+- 以已擷取的 9 份 Tag、1 份圖框、24 個 UserText key 建立 template fixtures，不再只從 Python hard-coded 清單反推 Block。
+- Manifest 明列 template ID、family、role、binding mode、欄位 owner、template version、缺值行為與 migration mapping。
+- `TAG_DW` 在 2.0 是純手動 Tag，Sync 與 unbound Health 不處理其欄位；1.x 的 DW 名稱解析只供 migration 參考。
+- 正式 `lock_state` 使用 typed value；保留「凍結內容與重新綁定」的意圖，但 Health 仍唯讀檢查來源。
+- 家具 `FF-01`、圖框 `03-A3 Scale` 與 `title_frame` role 依 ED-14～16 裁決後才固定 canonical schema。
+
 ### Project path／環境
 
 - 合併重複的環境與 project path helper。
@@ -137,7 +145,7 @@ wip/
 
 ### S2：Dictionary、命名與資料契約
 
-- 完成 `_LoopFlow_命名與資料契約.md` 的欄位、layer、UserText、Registry、Tag、檔案與設定盤點。
+- 完成 `_LoopFlow_命名與資料契約.md` 的欄位、layer、UserText、Registry、Tag／圖框 manifest、檔案與設定盤點。
 - 由使用者確認工作語彙與顯示名稱；AI 定義 canonical ID、型別、schema version 與 validator。
 - 建立合法／錯誤／缺值／舊版 fixtures 與 migration 範圍。
 - 契約未定案前不建立正式 feature。
