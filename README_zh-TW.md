@@ -63,7 +63,7 @@ LoopFlow 是由建築及室內設計師從實際工作中發展的單人專案�
 
 ## 相關專案
 
-外部渲染同步功能由獨立專案提供，不包含在 LoopFlow 本體中：
+外部 Render 同步功能由獨立專案提供，不包含在 LoopFlow 本體中：
 
 - [LoopFlow｜Rhino to Blender Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Blender-Sync/blob/main/README_zh-TW.md)
 - [LoopFlow｜Rhino to Octane Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Octane-Sync/blob/main/README_zh-TW.md)
