@@ -414,6 +414,9 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 | Infuser 後以紫／橘／紅回饋狀態 | 只批評顏色不可靠，沒描述使用者實際依賴的判讀 | 階段 12 補回三色判讀與其真正的可信範圍 |
 | Tag Block 有使用者手填欄位，Infuser 不得覆寫 | 只用通用 Template 描述 | 階段 10、11 補上欄位所有權與各 family 差異 |
 | `TAG_DW` 已改純手動，但仍在 `DW_BLOCKS` 內 | 只寫「不由 Python 寫入」 | 階段 10 補上完整失效路徑：每次 Infuser 會覆寫編號欄且無 lock 可擋 |
+| `x / X` 除了擋 Infuser，也擋 Grab／Laser／Index 重新綁定 | 只寫「Infuser 會跳過」 | 階段 10 補上「完全凍結」的真正語意 |
+| 鎖定判定是 `strip().upper() == "X"`，只認單一字元 | 未提及 | 階段 10 補上靜默失效：填 `v`、`1` 等值不會鎖，也無提示 |
+| 家具編號 `FF-01` 來自 Block 名稱，不在 Dictionary 內 | 未辨識這是獨立詞彙表 | 階段 10 補上兩套並行編碼與對 ED-01 的影響 |
 | Detail View 刪除、Layout 重整是常見變更 | 只示範幾何變更一種循環 | 補上循環 B、C |
 
 兩處事實修正說明：
@@ -662,6 +665,42 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 
 舊 Python 中的 `.Auto_DW_ID` 與門窗名稱解析只作歷史資料辨識或一次性 migration 參考，不進入 2.0 日常流程。
 
+### 鎖定的兩個未記載行為
+
+`Tag_Blocks.3dm` 畫面說明寫的是「`x / X` 存在 → Manual mode（blocks Infuser data writes）」。這句話正確但不完整，程式實際還多做兩件事：
+
+**一、鎖定同時擋住重新綁定，不只擋寫入。** Grab、Laser、Index 三支在進入選取流程**之前**就檢查 lock，發現鎖定就直接跳出並要求先清除該值：
+
+```text
+LF_Tagger_Grab.py:54    "This tag is locked (NoUpdate=X)! To re-bind, please clear that attribute value first."
+LF_Tagger_Laser.py:205  "This tag is locked (NoUpdate=X)! To re-bind the probe, please clear that attribute value first."
+LF_Tagger_Index.py:162  "This tag has write-protect lock enabled. To re-bind, please remove the lock first."
+```
+
+所以 `x / X` 的真正語意是「**這個 Tag 完全凍結**」——連換來源都不行，不是只有 Infuser 不寫。這對使用者是合理的保護，但文件只寫「blocks Infuser data writes」會讓人以為還能重新指定來源。
+
+**二、只有恰好一個 `x` 或 `X` 才生效。** 四支程式的判定都是 `val.strip().upper() == "X"`（`LF_Infuser_Part.py:114`、`LF_Tagger_Grab.py:51`、`LF_Tagger_Index.py:158`、`LF_Tagger_Laser.py:204`）。因此：
+
+| 填入的值 | 是否鎖定 |
+| --- | --- |
+| `x`、`X`、` X `（前後空白會被去除） | 鎖定 |
+| `XX`、`v`、`1`、`yes`、`鎖定`、`O` | **不鎖定，且沒有任何提示** |
+
+使用者若憑直覺填了勾選符號或其他標記，會以為已經保護，下一次 Infuser 卻照樣覆寫。這是**靜默失效**：畫面上有標記、行為上沒鎖定。2.0 的 `lock_state` 應為明確的布林或列舉，由 UI 切換而不是靠使用者手打字串；migration 時把非 `x/X` 的既有值列成待確認清單，不自行推測使用者原意。
+
+### 家具編號來自 Block 名稱，不是 Dictionary
+
+`Tag_Blocks.3dm` 的命名慣例 `FF-01__Chair-1 = [FF]-[01]__[Chair-1]` 揭露一件對命名契約重要的事：**`TAG_ITEM` 的編號有兩個互不相干的來源**。
+
+| 綁定方式 | 編號來源 | 詞彙表 |
+| --- | --- | --- |
+| Grab 選到帶 `__` 的家具 Block | Block **名稱**解析（`FF`、`01`） | 由 Block 命名慣例定義，**不在 Dictionary 內** |
+| Grab 選到一般 3D 物件 | Registry 的 `_03_ID編號`（`EQ-06` 等） | Dictionary 的 12 個類別碼 |
+
+也就是說 `FF` 這個類別碼活在 Dictionary 之外，沒有任何驗證、沒有唯一性檢查，卻會寫進同一個 `attr_item_key` 顯示欄。Block 預設值 `MT`、`PT` 也不屬於 Dictionary 的 12 碼（`EX`／`CL`／`WL`／`FL`／`CB`／`LS`／`EL`／`MP`／`SA`／`EQ`／`FP`／`DW`），雖然它們只是會被覆寫的樣板文字，仍反映出**同一個顯示欄位背後有兩套並行的編碼詞彙**。
+
+ED-01 要把 `_03` 拆成 `type_category` + `type_sequence` 時，必須一併裁決：家具的 `FF-01` 要納入 Type Catalog 成為正式 Type，還是保留為獨立的 instance-level 編號並在 schema 中明確標示來源不同。目前兩者混用而沒有任何一方知道對方存在。
+
 > **使用者介入**：選 Tag、選來源、點 Laser 位置、選 Index 目標、解決多候選。
 >
 > **安全停點**：每完成一批即可存檔，不要求一次綁完全部 Layout；取消時 Tag 維持原綁定。
@@ -694,6 +733,8 @@ TAG_HEIGHT
 | Control／state | `attr_Lock_不更新>寫入x或X`、物件顏色 | 使用者設 lock；Infuser 設顏色 |
 
 `03-A3 Scale`、`Detail_NO` 與 `TAG_ELEV_0` 的六個欄位在全 repo 都沒有 Python writer——它們是純手填欄位。2.0 的 Template manifest 必須明確標記 owner，避免未來新增自動化時誤覆寫。
+
+順帶一提 `03-A3 Scale` 這個 key 名稱本身混了三件事：`03-` 是 Attribute UserText 面板的排序前綴、`A3` 是圖幅、`Scale` 才是欄位語意（值放的是 `1：100` 這類比例）。同樣的模式也出現在 `TAG_ELEV_0` 的 `1-Elev_num`、`2-Elev` 等欄位。這在 1.0 只是為了讓面板欄位排得好看，但若 2.0 想自動填圖幅或比例，就會發現**換一種圖幅得改 key 名稱**——而 key 名稱一改，所有既有 Block 的資料都對不上。這正是 ECO-02「名稱不是身分」在 Tag 欄位層級的同一個問題，建議 schema 把排序、圖幅與欄位語意分成三個獨立屬性。
 
 **鎖定行為**：1.0 對啟用 `x / X` 的 Tag 在處理最前面就跳過，所有欄位維持原狀。但它**也不會替該 Tag 重新判斷狀態或更新顏色**——所以「locked」不等於「來源仍健康」，畫面上可能還留著上一次的顏色。2.0 保留「鎖定不改內容」，但 Health 仍須唯讀判定它是 `manual_locked + stale` 或 `manual_locked + orphaned`。
 
@@ -855,6 +896,8 @@ TAG_HEIGHT
 | 文件分工 | 以責任角色描述，不預設檔案拆法 | 明確標出 3D／2D／exchange／Worksession 四個角色 |
 | Nexus | 保留 Dict-to-Layer、SpaceBoundary、TagTrigger、TagChecker、Layer-to-Dict 五個節點 | 同樣保留，但把 TagChecker 定義為「Apply 後再跑一次 Scan」而非另建指令 |
 | Tag／圖框 Block 契約 | 逐一列出 9 份 Tag 與 1 份圖框參數、隱藏 binding 與各 Block family 的 Python writer | 聚焦四類欄位所有權，特別標出手填欄位不得被覆寫 |
+| 鎖定機制 | 記錄 `x / X` 的使用時機與同步時的效果 | 另指出它同時凍結重新綁定，且只認單一 `x`／`X`，其他值靜默失效 |
+| 編碼詞彙 | 記錄 Block naming convention 是名稱解析的使用者端契約 | 指出 `FF-01` 與 Dictionary 的 12 碼是兩套並行詞彙，影響 ED-01 裁決 |
 | Laser | 用固定 View transform 定位 | 相同，另提議在 Materialize 建立來源索引讓 Laser 退化成查表（需 spike 驗證） |
 | Cabinet | 描述兩種 BOM 模式與 1 mm 間隙 | 補上「Suite 任意 layer／BOM Update 限 04_CB／TagTrigger 會清空」三者衝突 |
 | 失敗行為 | 各階段以安全停點描述 | 另有整表列出取消與失敗兩種結果 |
