@@ -108,12 +108,12 @@ BOM Update 只會針對櫃體圖層（`M3D::04_CB`）的物件寫入資料，不
 
 ### LF_Tagger_Laser / LF_Tagger_Grab
 
-將材料、傢俱、門窗的 Tag Block 與 2D 圖面的資料綁定，後續由 Infuser 寫入。
+將材料與傢俱 Tag Block 綁定到資料來源，後續由 Infuser 寫入。`TAG_DW` 後來已改為純手動輸入，不使用 Grab／Laser 綁定。
 
 - **Laser** — 雷射定位模式（適用剖面 DV）
 - **Grab** — 點選拾取模式
 
-> **Tag Block 防覆寫機制**：手動鎖定的 Tag Block，後續執行 Infuser 時不會覆寫其資料（由自動改為手動）。
+> **Tag Block 防覆寫機制**：在 Attribute UserText 的 lock 欄輸入單一 `x` 或 `X` 才會生效（前後空白可有）。鎖定後 Infuser 不覆寫，也不能用 Grab／Laser／Index 重新綁定；必須先清除 lock。其他符號、`1`、`yes` 等值不會鎖定，且 1.x 不會警告。
 
 ---
 
@@ -122,6 +122,8 @@ BOM Update 只會針對櫃體圖層（`M3D::04_CB`）的物件寫入資料，不
 將立面、剖面的 Tag Block（索引標籤）與 Layout Detail View 的資料綁定，後續由 Infuser 寫入。
 
 > 同樣具備防覆寫機制。
+
+> **`TAG_DW` 已知限制**：門窗編號、寬、高目前都由使用者手動輸入，而且沒有 lock 欄位；但 1.x Infuser 仍會把未綁定 `TAG_DW` 塗橘並將門窗編號改成 `?`。執行 Part／All 前請先留意現有門窗 Tag；此衝突預計在 2.0 移除。
 
 ---
 

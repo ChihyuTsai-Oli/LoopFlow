@@ -64,9 +64,9 @@ Each row defines one Rhino sub-layer and the UserText attribute values its objec
 | `_06_Depth D` | `_06_Depth D` | Depth preset (optional). | Numeric |
 | `_07_Height H` | `_07_Height H` | Height preset (optional). | Numeric |
 | `_08_Unit` | `_08_Unit` | Quantity unit used in BOM reports. | `m2` / `cm` / `mm` / `m3` / `set` / ... |
-| `_09_Quantity` | `_09_Quantity` | Actual quantity — usually calculated and filled by LF_Nexus. | Numeric |
+| `_09_Quantity` | `_09_Quantity` | Actual quantity. LoopFlow 1.x has no automatic producer; a missing value is only replaced with `-`, so it must not be treated as a Nexus calculation. | Manual/external value, or blank |
 | `_10_Elevation Basis` | `_10_Elevation Basis` | Elevation reference plane abbreviation; controls how LF_Nexus measures height. | See table below |
-| `_11_Elevation Value` | `_11_Elevation Value` | Computed elevation (written by script; leave blank in dictionary). | Numeric (cm) |
+| `_11_Elevation Value` | `_11_Elevation Value` | Script-generated display text; leave blank in the dictionary. It may contain `+`, `±0`, or `TH / BH`, so it is not a machine-numeric field. | Display string (model rules assume cm) |
 | `_12_UUID` | `_12_UUID` | Object unique identifier (auto-generated; leave blank in dictionary). | Auto |
 | `_13_Remarks` | `_13_Remarks` | Free-text notes for special conditions or material specs. | Free text |
 

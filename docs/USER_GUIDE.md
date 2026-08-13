@@ -108,12 +108,12 @@ Command-line options:
 
 ### LF_Tagger_Laser / LF_Tagger_Grab
 
-Links material, furniture, and door/window Tag Blocks to 2D drawing data, for Infuser to write later.
+Links material and furniture Tag Blocks to their data sources for Infuser to render later. `TAG_DW` was later changed to manual entry and does not use Grab/Laser binding.
 
 - **Laser** — laser-positioning mode (suited for section Detail Views)
 - **Grab** — click-to-pick mode
 
-> **Write-protection**: A manually locked Tag Block will not be overwritten by Infuser (switches from automatic to manual mode).
+> **Write-protection**: Enter exactly one `x` or `X` in the lock Attribute UserText field (surrounding whitespace is ignored). A locked Tag is not overwritten by Infuser and cannot be rebound with Grab, Laser, or Index until the lock is cleared. Other marks such as `1` or `yes` do not lock the Tag, and 1.x gives no warning.
 
 ---
 
@@ -122,6 +122,8 @@ Links material, furniture, and door/window Tag Blocks to 2D drawing data, for In
 Links elevation and section Tag Blocks (index tags) to Layout Detail View data, for Infuser to write later.
 
 > Write-protection applies here as well.
+
+> **Known `TAG_DW` limitation**: Door/window ID, width, and height are now entered manually and the Block has no lock field. However, the 1.x Infuser still colors an unbound `TAG_DW` orange and replaces its manual ID with `?`. Review existing door/window Tags before running Part/All; this conflict is planned to be removed in 2.0.
 
 ---
 
