@@ -57,7 +57,9 @@ Each step can be repeated as the project evolves; the workflow does not need to 
 - [Issues](https://github.com/ChihyuTsai-Oli/LoopFlow/issues): report bugs or suggest improvements
 - [Changelog](./CHANGELOG.md): review released changes
 
-LoopFlow is a solo project developed by a designer through real-world practice. Maintenance and response times vary with project workload.
+LoopFlow is a solo project designed and developed by an architect and interior designer through real-world practice. AI assists with coding and documentation, while workflow requirements, design decisions, and production validation remain grounded in the author's own professional experience.
+
+Maintenance and response times vary with project workload.
 
 ## Related Projects
 

@@ -57,7 +57,9 @@ LoopFlow 是一套以 Rhino 8 為核心、貫穿 SD（Schematic Design）、DD�
 - [Issues](https://github.com/ChihyuTsai-Oli/LoopFlow/issues)：回報錯誤或提出建議
 - [Changelog](./CHANGELOG.md)：查看已發布版本內容
 
-LoopFlow 是由設計師在實際工作中發展的單人專案，維護與回覆速度會依工作狀況調整。
+LoopFlow 是由建築及室內設計師從實際工作中發展的單人專案。程式開發與文件整理使用 AI 協助；工作流程需求、設計決策與實務驗證仍以作者本人的專業經驗為基礎。
+
+維護與回覆速度會依工作狀況調整。
 
 ## 相關專案
 
