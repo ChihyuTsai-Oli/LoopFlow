@@ -175,8 +175,8 @@ Dictionary 提供類型預設；模型物件保存實例真相。有效值採一
 | `_11_高程計算` | Nexus 計算顯示字串 | Infuser | 內部 typed 數值與顯示格式分離 |
 | `_12_UUID` | Nexus 自動建立／修復 | Push、Grab、Laser、Infuser、TAG-O | 重建會切斷 Tag；改為可追溯 ID migration |
 | `_13_備註` | Dictionary 預設，Instance 可保留 | 無行為 consumer | 測試預設與正式 instruction 分離 |
-| `_CB.01_板材類型` | Cabinet 產生／BOM Update | 無行為 consumer | 保留製作資料意圖，先定 BOM consumer |
-| `_CB.02_長度L` | Cabinet 產生／BOM Update | 無行為 consumer | 改用 panel local frame |
+| `_CB.01_板材類型` | Cabinet 產生／BOM Update | 無行為 consumer | **不進 2.0 主鏈**；隨 Cabinet 工作軌另定 |
+| `_CB.02_長度L` | Cabinet 產生／BOM Update | 無行為 consumer | 同上 |
 | `_CB.03_寬度W` | Cabinet 產生／BOM Update | 無行為 consumer | 同上 |
 | `_CB.04_厚度T` | Cabinet 產生／BOM Update | 無行為 consumer | 同上 |
 
@@ -404,9 +404,10 @@ Health 不只回報結果，也要記錄原因、建議修復、預覽、使用�
 | P1 | lock 只接受單一 `x`／`X`；其他標記看似存在卻不生效，且不會提示 | typed `lock_state` 與 UI toggle；migration 將其他值列為待確認 |
 | P1 | Layout ID 把所有未分類 Block 當圖框寫入 | Template manifest 明列 `title_frame` role；未知 Block 零寫入 |
 | P2 | Dict-to-Layer 同時建 material、layer UserString、`DNA_REF_` 線並 ZoomExtents；重跑累積參考線 | 四種責任分離，每項有明確用途與重跑政策 |
-| P2 | Cabinet 可在錯誤 layer 生成後被 Nexus 清空 `_CB.*`；方向資料又被排序抹平 | 生成前驗證 Type／layer；沿 panel local frame 保留方向 |
 | P2 | naming config 與 Registry fallback 值形成多個設定來源 | schema／user setting／fallback 單一且可檢查 |
 | P2 | `Role`／`Target_CP`、`Layout_Map`、`Tag_Links` 等只寫不讀 | 無 consumer 的舊結構不承接為 2.0 契約 |
+
+原本列在此表的 Cabinet 風險（產物 layer 不受限、被 Nexus 清空 `_CB.*`、方向被排序抹平）**已因使用者裁決離開主鏈**：Cabinet 與 BOM 排除在主工作流程之外並列入後續開發，2.0 主鏈的 Nexus、Registry、Tag 與 Health 都不處理 `_CB.*`，因此不再需要在核心資料鏈解決這組衝突。1.x 事實與程式行號保存在 `LOOPFLOW_WORKFLOW_SIMULATION_v2.md` 的「延後工作軌｜Cabinet 與 BOM」，供該工作軌重建時使用。
 
 ## 23 支現行 Python：功能、意圖與 2.0 去向
 
@@ -451,9 +452,11 @@ Health 不只回報結果，也要記錄原因、建議修復、預覽、使用�
 
 ### Cabinet 與 2D 輔助生產
 
+Cabinet 與 BOM 依使用者裁決**不屬於主工作流程**，列入後續開發（1.0 的 BOM 功能過於零碎，混入主鏈會汙染核心資料契約）。主鏈不得因 Cabinet 增加欄位、layer 分支或發布內容；下表的 2.0 責任只在該工作軌啟動時適用。
+
 | 現行檔案 | 現行功能 | 必須保留的意圖 | 2.0 建議責任 |
 |---|---|---|---|
-| `LF_Cabinet_Suite.py` | 產生板件／門片、Shelf／Divider 與 BOM；layer 契約不一致，local direction 被排序丟失，幾何猜測可能覆寫人工更正 | 快速建立可攜帶製作資料的櫃體模型 | Cabinet feature；共用 Object／Type schema，保留 local frame，人工 override 有明確所有權 |
+| `LF_Cabinet_Suite.py` | 產生板件／門片、Shelf／Divider 與 BOM；layer 契約不一致，local direction 被排序丟失，幾何猜測可能覆寫人工更正 | 快速建立可攜帶製作資料的櫃體模型 | **延後工作軌**；重建前不進主鏈，屆時再定製作資料的所在層與所有權 |
 | `LF_2D_Cabinet_Gen.py` | 由選取矩形與櫃體類型產生群組化 2D 櫃體符號 | 快速補充可人工編輯的標準 2D 圖例 | Drawing Tool；輸出有 tool/version metadata，但不必成為核心資料真相 |
 | `LF_2D_Shelf_Gap.py` | 依矩形、方向、板厚與目標間距計算分隔並畫層板線 | 快速建立規則化 2D 細節 | Drawing Tool；保留獨立小工具，使用共用單位／結果／復原規則 |
 | `LF_2D_DW_Gen.py` | 以開口兩點、方向與門窗類型產生框、扇、軌道、開啟弧與輔助線 | 快速建立標準門窗 2D 符號 | Drawing Tool／Template Generator；幾何規則獨立，不承擔門窗資料身分 |

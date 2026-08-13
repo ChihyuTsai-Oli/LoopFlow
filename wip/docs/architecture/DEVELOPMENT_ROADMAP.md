@@ -25,7 +25,7 @@
 | LF-B02 | Result／Logging／Version／Config／Path／`foundation-core` | B01 | 共用結果、錯誤階段、log、版本、設定與無 UI path resolver | 純 Python 測試通過；沒有個人硬編碼路徑 |
 | LF-B03 | Rhino platform 與狀態復原／`rhino-platform` | B01–B02 | selection、lock、visibility、color、modified state 的 adapter 與 snapshot／restore | 成功、取消、失敗路徑有測試；未實機部分明示 |
 | LF-C01 | Dictionary reader／validator／`dictionary-core` | A06、B02 | 2.0 schema loader、validator 與明確錯誤 | fixtures 與版本拒絕行為通過 |
-| LF-C02 | Nexus 重建工作軌／依 Nexus 專用文件逐項開分支 | A05–A06、B02–B03、C01 | Nexus 的 UI、資料處理、UUID／Space、payload 與發布整合 | 不作單一大型提交；子任務與驗收由 Nexus 專用文件定義 |
+| LF-C02 | Nexus 重建工作軌／依 Nexus 專用文件逐項開分支 | A05–A06、B02–B03、C01 | Nexus 的 UI、資料處理、UUID／Space、payload 與發布整合 | 不作單一大型提交；子任務與驗收由 Nexus 專用文件定義；**不得處理 `_CB.*` 或為 Cabinet 增加 layer 分支** |
 | LF-C03 | Registry 安全發布 P0／`registry-publisher` | A04、B02、C02 所需 payload | exclusive lock、pending、validate、atomic replace、last good | 雙程序、中斷、壞 JSON、replace 失敗測試通過 |
 | LF-C04 | Data Viewer／`data-viewer` | A03–A04、B03、C01 | 只讀檢視 canonical 資料的 feature 與入口 | 不修改來源；缺值與未知版本可理解 |
 | LF-D01 | Tagger Grab／`tagger-grab` | A04、B03、C01–C03 | Grab feature、入口與 fixtures | Rhino 狀態復原、重複執行與取消通過；Item 的模型／Block 來源分流正確，manual `TAG_DW` 不接受綁定 |
@@ -39,8 +39,8 @@
 | LF-E02 | Extract CP／`extract-cp` | E01 | Extract feature 與入口 | Section 測試案例通過 |
 | LF-E03 | Duplicate Layout／`duplicate-layout` | E01、D04 | Layout copy feature 與入口 | 命名、取消與重複執行通過 |
 | LF-E04 | Worksession／`worksession` | B02–B03 | event lifecycle、同步 feature 與入口 | register／unregister、重載與錯誤路徑通過 |
-| LF-F01 | Cabinet Suite 規格與 fixtures／`cabinet-baseline` | A02–A03 | 延後功能的現況契約與代表案例 | 不先重寫大型 UI／幾何流程 |
-| LF-F02 | Cabinet Suite 重建／`cabinet-suite` | F01、核心資料鏈穩定 | Cabinet feature 與入口 | UI、幾何、取消、失敗與來源狀態實機驗證 |
+| LF-F01 | Cabinet Suite 規格與 fixtures／`cabinet-baseline` | A02–A03 | 延後功能的現況契約與代表案例 | 不先重寫大型 UI／幾何流程；只記錄 1.x 現況，不把 `_CB.*` 帶進主鏈契約 |
+| LF-F02 | Cabinet Suite 重建／`cabinet-suite` | F01、核心資料鏈穩定 | Cabinet feature 與入口 | UI、幾何、取消、失敗與來源狀態實機驗證；製作資料的所在層與所有權在此任務才裁決 |
 | LF-F03 | 2D Cabinet／Shelf Gap／DW／各自獨立 scope | F02 | 三項功能各自的 feature、入口與測試 | 每項獨立 commit／push，不合成一大包 |
 | LF-G01 | Migration 工具／`migration` | canonical contract 與核心功能完成 | scanner、預覽、備份、converter、validator、rollback | 只對測試副本執行，失敗可回復 |
 | LF-G02 | Build／Installer 技術選型與建置／`build-release` | 核心功能、資產結構與 migration 完成 | 比較可行封裝技術後，產生完整可安裝套件、LoopFlow 工具列、manifest、checksum 與回復方案 | 正式版不依賴 repo Python 路徑；Rhino Section Macro 可用且不覆蓋 workspace；全新／升級／重複安裝／移除／rollback 通過 |
@@ -52,7 +52,7 @@
 2. **架構波次**：B01–B03。只建立第一條功能真正需要的最小骨架。
 3. **核心資料鏈**：C01–C04。Nexus 優先，但必須先依專用文件再拆分。
 4. **可重複功能接入**：D01–E04。每支入口獨立任務，逐項實機驗證。
-5. **延後大型功能**：F01–F03。Cabinet／2D 不阻塞前期核心契約。
+5. **延後大型功能**：F01–F03。Cabinet／BOM 依使用者裁決排除在主工作流程外，與 2D 一併延後；核心契約與資料鏈不得為它們預留欄位或分支。
 6. **切換與發布**：G01–G03。完成 migration、build 與 RC 後才合入 `main`。
 
 ## 雙機換機檢查點

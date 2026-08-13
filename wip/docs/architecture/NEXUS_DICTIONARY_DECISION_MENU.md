@@ -152,7 +152,7 @@ flowchart LR
 | CF-18 | 反向匯出使用 `[NEW]`、`[DELETED]`、`[MODIFIED]`、`[EXCLUDED]` 混入主鍵 | 主鍵同時承擔狀態顯示，不利機器驗證 |
 | CF-19 | `_02`、`_09`、`_13` 以 prefix 保護，只驗存在或沿用物件值 | Dictionary 更新後無明確的繼承、覆寫、重設方式 |
 | CF-20 | 中文版 `_13` 有 91 列為 `我是備註，UCCU` | 可能把測試字串寫入大量正式物件與 Registry |
-| CF-21 | Cabinet 產物可在 current layer，BOM 更新卻只處理 `04_CB`；Nexus 也靠 layer 判定 `_CB` | Cabinet 資料可能被略過或清成 `-` |
+| CF-21 | Cabinet 產物可在 current layer，BOM 更新卻只處理 `04_CB`；Nexus 也靠 layer 判定 `_CB` | 已延後：Cabinet／BOM 移出主鏈，2.0 Nexus 不再處理 `_CB.*`，本衝突隨之離開核心資料鏈 |
 | CF-22 | Infuser 把 `_03` 第一個 `-` 拆成兩個 Tag 值 | 一般 ID 若包含連字號會被誤解 |
 | CF-23 | Tag lock、warning color 與缺值規則分散；正式 key 目前可共用，但非 `x/X` 值會靜默未鎖，locked Tag 又停止 health／顏色更新 | 重構單一 Tagger 時可能破壞其他 Tag 流程或讓使用者誤以為已保護 |
 | CF-24 | Dictionary 沒有可執行的 `schema_version`、型別、允許值與 strict validator | 目前只能到執行中才發現格式問題 |
@@ -201,8 +201,8 @@ flowchart LR
 | ND-20 | Tag 鎖定欄位 | A. 單一 canonical boolean／enum，由 UI 切換；B. 繼續讓使用者輸入文字 | **A**；現行正式 key 可被四支程式辨認，但只有單一 `x/X` 生效。舊 key／其他值只由 migration 列為待確認 |
 | ND-21 | `Layer to Dict` | A. 明確只匯出 layer defaults，另做 object data export；B. 改為彙總 object UserText；C. 取消反向匯出 | 建議 **A**；避免 layer 與 object 資料混為一談 |
 | ND-22 | `20_DW` 特例 | A. 保留單一 DW 類型及 child-layer 排除規則；B. 每個 DW child 都進 Dictionary；C. 重新分類 | 需依目前門窗工作方式決定 |
-| ND-23 | Cabinet `_CB.*` | A. 現在凍結四欄語意，程式延後；B. 等 Cabinet 重構時再決定 | 建議 **A**；避免 Nexus／Registry 先做錯介面 |
-| ND-24 | Cabinet 方向 | A. L／W／T 依 panel local frame；B. 依三邊大小排序；C. 依 current layer／類型各自規則 | 現行 `make_part()` 已持有 true W／H／D，只在寫入前被排序抹除；建議 **A** |
+| ND-23 | Cabinet `_CB.*` | A. 現在凍結四欄語意，程式延後；B. 等 Cabinet 重構時再決定 | **已裁決為 B**：Cabinet／BOM 移出主鏈，2.0 Nexus／Registry 完全不處理 `_CB.*`，四欄語意留給 Cabinet 工作軌 |
+| ND-24 | Cabinet 方向 | A. L／W／T 依 panel local frame；B. 依三邊大小排序；C. 依 current layer／類型各自規則 | 技術上仍建議 **A**（`make_part()` 已持有 true W／H／D，只在寫入前被排序抹除），但**已延後**到 Cabinet 工作軌，不阻擋核心契約 |
 | ND-25 | Dictionary 驗證強度 | A. 重複、未知欄、錯型別、錯單位直接阻擋並列清單；B. 警告後盡量執行 | 核心欄位建議 **A**；未知 extension 可另設允許區 |
 
 ## 不需要使用者逐項選擇的技術修正

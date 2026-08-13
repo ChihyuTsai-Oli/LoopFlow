@@ -48,7 +48,7 @@ Tag／圖框部分另以使用者提供的 10 份 Block 參數文字（9 份 Tag
 | Tag Block 可用 `x / X` 將單一 Tag 切為人工模式 | 只提抽象 `lock_state` | 補回使用者何時設定人工保護及同步時的效果 |
 | Infuser 後以紫／橘／紅顯示 linked、unlinked、broken | 沒有描述使用者看到的 1.0 回饋 | 補回顏色判讀與對應的人工作業；2.0 再由正式狀態取代顏色真相 |
 | 各 Tag Block 的可見欄位與 Python 寫入清單高度耦合 | 只用通用 Tag Template 描述，沒有辨認 `TAG_ELEV_0`、Index 與資料 Tag 的差異 | 補上欄位所有權、隱藏 binding、Block family 與 Infuser 寫入結果 |
-| Cabinet 與三個 2D Generator 不屬於強制主鏈 | 混在建模步驟，界線不清 | Cabinet 列為建模選用工具；2D Generator 列為可隨時使用的獨立工具 |
+| Cabinet 與三個 2D Generator 不屬於強制主鏈 | 混在建模步驟，界線不清 | 依使用者裁決，Cabinet／BOM 完全移出主鏈並列入後續開發；2D Generator 列為可隨時使用的獨立工具 |
 
 ## 前提｜資料可跨越 3D 與 2D 工作內容
 
@@ -87,7 +87,7 @@ Tag／圖框部分另以使用者提供的 10 份 Block 參數文字（9 份 Tag
 
 **Rhino 一般建模** → 使用者在 Dictionary 建出的 M3D layers 上建立牆、地坪、家具、門窗與設備。
 
-**選用 `LF_Cabinet_Suite`** → 從 30 種櫃身、門片與層板組合建立櫃體並寫入 BOM 尺寸。1.0 的 Suite 產物可在任何 layer；手工建立的櫃體若要用 BOM Update，必須位於 `M3D::04_CB`，全選模型也可以，非櫃體 layer 會被忽略。1 mm 板件間隙是刻意保留的 render gap，BOM 計算會補償。
+**Cabinet 不在此階段**：1.0 的 `LF_Cabinet_Suite` 與 BOM 依使用者裁決已移出主工作鏈，改列後續開發。櫃體幾何仍可用 Rhino 一般工具建立；1.x Cabinet 的行為與衝突記錄集中在後面的「延後工作軌｜Cabinet 與 BOM」。
 
 > **使用者介入**：建模本身完全由使用者控制；LoopFlow 不在背景自動注入或發布資料。
 >
@@ -379,14 +379,32 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 - `LF_2D_Cabinet_Gen`：高櫃、下櫃、衣櫃等 2D 符號。
 - `LF_2D_Shelf_Gap`：依指定間距產生等距層板分隔線。
 
-`LF_Cabinet_Suite` 屬於 3D 建模選用工具；若使用，其 BOM 資料仍要經模型資料檢查與 Registry 發布，才會進入主資料鏈。
+## 延後工作軌｜Cabinet 與 BOM（不進主鏈）
+
+使用者已裁決：**`LF_Cabinet_Suite` 與 BOM 排除在主工作流程之外，列入後續開發。** 理由是 1.0 的 BOM 功能過於零碎，混入主鏈只會汙染核心資料契約。因此：
+
+- 2.0 主鏈的 Nexus、Registry、Tag 與 Health **都不處理 `_CB.*`**，也不得因為 Cabinet 而增加 layer 判定分支。
+- 櫃體在主鏈裡就是一般 3D 幾何，走與其他模型物件相同的 Type、Space、高程與 ID 規則。
+- Cabinet 重建時另立工作軌，屆時再決定製作資料要放在哪一層、由誰擁有，以及是否需要獨立的 BOM 消費端。
+
+以下 1.x 事實**只作為該工作軌未來的輸入**，不影響現在的主鏈設計：
+
+| 1.x 事實 | 來源 | 說明 |
+| --- | --- | --- |
+| Suite 產物可在任何 layer，都會寫入 `_CB.*` | `run_cabinet_gen` 不檢查 layer | 錄影說明的「任何 layer 都可以」是對的 |
+| 手工櫃體要用 BOM Update 必須在 `M3D::04_CB`；可安心全選，非櫃體 layer 會被忽略 | `run_bom_updater` 只處理 `04_CB` | 全選是安全操作 |
+| `TagTrigger` 會把非 `04_CB` layer 上物件的 `_CB.*` 清成 `-` | `LF_Nexus.py:412-416` | 所以「任何 layer 都可以」只在跑 TagTrigger 之前成立 |
+| 板件之間 1 mm 間隙（`gap_render = 0.1` cm）是刻意保留的 render gap | `LF_Cabinet_Suite.py:318` | 不是容差 |
+| BOM 以 `+0.2` cm 還原 render gap，但實際是拿 `±0.2` 去比對既有 UserText 值猜哪一邊有間隙 | `LF_Cabinet_Suite.py:652-665` | 舊值缺失或被人工改過時可能補在錯的邊 |
+
+前三項在 1.x 構成三方衝突（產生不限 layer、BOM 限 `04_CB`、Nexus 依 layer 清空）。既然 Cabinet 已移出主鏈，2.0 的處理方式是**讓 Nexus 不再碰 `_CB.*`**，衝突隨之消失；如何保存製作資料留給 Cabinet 工作軌決定。
 
 ## 從開案到交付的一條線
 
 ```text
 2.0 開案檢查
 → Nexus Dict. to Layer（2.0：Validate → Type Sync）
-→ Rhino／Cabinet 建立 3D 模型
+→ Rhino 建立 3D 模型（Cabinet／BOM 已移出主鏈）
 → Nexus SpaceBoundary：使用者選 closed curves
 → Nexus TagTrigger（2.0：Scan → 人工確認 → Apply）
 → Nexus TagChecker：模型資料通過後才前進
@@ -419,7 +437,7 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 | `LF_Nexus > SpaceBoundary` 由使用者選 closed curves 定義空間 | 只在 Scan 報告裡提到 Space，沒有建立空間的步驟 | 獨立為階段 4，排在資料化之前 |
 | `TagTrigger` 之後緊接 `TagChecker` 驗證 | 只有寫入前的 Scan，沒有寫入後的驗證關卡 | 階段 5 補上「Apply 後再跑一次 Scan」作為發布前的關卡 |
 | `Layer to Dict.` 可把 layer 現況反向匯出對照 Dictionary | 完全沒有提到 | 階段 2 補為選用支線 |
-| Cabinet Suite 產物**可在任何 layer**；只有 BOM Update 需要 `04_CB` | 寫成「產生前先確認目標 layer」，把限制講得比實際嚴格 | 階段 3 改為三方衝突的精確描述 |
+| Cabinet Suite 產物**可在任何 layer**；只有 BOM Update 需要 `04_CB` | 寫成「產生前先確認目標 layer」，把限制講得比實際嚴格 | 已由使用者裁決取代：Cabinet／BOM 移出主鏈，事實改記於「延後工作軌」 |
 | Layout 由使用者先建立／複製，再用 `LF_Tagger_Layout_ID` 批次編號 | 假設 `LF_Sheet_Create` 自動建頁 | 階段 9 改回人工建頁＋批次編號 |
 | Anchor Frame 不可刪除，圖面移動時必須一起移 | 只講對位漂移，沒講使用者要遵守的規則 | 階段 7 補回 1.0 的兩條硬規則 |
 | `LF_Extract_CP` 依**顏色**把線稿拆到新 layer | 只寫抽象的 Materialize | 階段 8 補回依顏色拆圖與後續整理 |
@@ -433,7 +451,7 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 
 兩處事實修正說明：
 
-- **Cabinet layer**：1.0 錄影說 Suite 產物可在任何 layer，這是對的——`run_cabinet_gen` 產生時不檢查 layer。但 `LF_Nexus > TagTrigger` 會把非 `04_CB` layer 上物件的 `_CB.*` 全部清成 `-`。所以「任何 layer 都可以」只在**跑 TagTrigger 之前**成立。這是錄影說明、BOM Update 限制與 Nexus 行為三者之間的真實衝突，不是錄影講錯。
+- **Cabinet layer**：1.0 錄影說 Suite 產物可在任何 layer，這是對的——`run_cabinet_gen` 產生時不檢查 layer。但 `LF_Nexus > TagTrigger` 會把非 `04_CB` layer 上物件的 `_CB.*` 全部清成 `-`。所以「任何 layer 都可以」只在**跑 TagTrigger 之前**成立。這是錄影說明、BOM Update 限制與 Nexus 行為三者之間的真實衝突，不是錄影講錯。**使用者其後裁決把 Cabinet／BOM 移出主鏈**，所以這項衝突不再需要在主鏈解決；完整記錄見「延後工作軌｜Cabinet 與 BOM」。
 - **Tag 鎖定**：先前依程式碼推論「Laser 認 `NoUpdate`、其他認『不更新』，因此判斷會分歧」。核對 9 份實際 Tag Block 後，除 `TAG_DW` 沒有 lock 欄位外，另外 8 份的正式 lock key 都是 `attr_Lock_不更新>寫入x或X`，同時含 `Lock` 與「不更新」，四支程式**全部都認得**。分歧只是舊 Block 或改名時的相容風險，不是現行已發生的失效。
 
 ## 前提：這條流程同時跑在兩個文件上
@@ -488,17 +506,7 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 
 使用者用 Rhino 一般工具在對應 layer 建立幾何。這階段 LoopFlow 不介入，也不在背景注入資料。
 
-**選用 `LF_Cabinet_Suite`**：30 種櫃身／門片／層板組合，產生時自動寫入 `_CB.*` BOM 尺寸。三個必須同時記住的事實：
-
-| 事實 | 來源 | 影響 |
-| --- | --- | --- |
-| Suite 產物**可在任何 layer**，都會寫入 `_CB.*` | `run_cabinet_gen` 不檢查 layer | 產生當下沒有限制 |
-| 手工建立的櫃體要用 BOM Update，**必須在 `M3D::04_CB`**；可以安心全選，非櫃體 layer 會被忽略 | `run_bom_updater` 只處理 `04_CB` | 全選是安全操作 |
-| `TagTrigger` 會把**非 `04_CB` layer** 上物件的 `_CB.*` 清成 `-` | `LF_Nexus.py:417` | 「任何 layer 都可以」只在跑 TagTrigger 前成立 |
-
-所以 2.0 要修的不是限制產生位置，而是**讓這三者一致**：要嘛 Suite 產生時就落在櫃體 Type 上，要嘛 Nexus 不再依 layer 決定是否清空製作資料。
-
-板件之間的 1 mm 間隙（程式中 `gap_render = 0.1` cm）是刻意保留給算圖的，BOM 以兩側合計 `+0.2` cm 自動補償。這解開了先前盤點時無法解釋的常數——它不是容差，是 render gap 的還原。
+**Cabinet 已移出主鏈**：依使用者裁決，`LF_Cabinet_Suite` 與 BOM 不屬於主工作流程，列入後續開發。這階段的櫃體就是一般 3D 幾何，適用與其他物件相同的 Type、Space、高程與 ID 規則；2.0 的 Nexus 不再處理 `_CB.*`，也不因 Cabinet 增加 layer 判定分支。1.x 的 Cabinet 行為與三方衝突記錄在「延後工作軌｜Cabinet 與 BOM」，只作為未來重建該工作軌時的輸入。
 
 > **使用者介入**：建模完全由使用者控制。
 >
@@ -890,9 +898,9 @@ TAG_HEIGHT
 - `LF_Sheet_Duplicate`（可以先手動複製頁面）
 - 完整 Drawing 狀態機（先有冪等就夠）
 - `Layer to Dict.` 反向匯出（選用支線）
-- Cabinet 與三個 2D Generator 重建
+- Cabinet／BOM 與三個 2D Generator 重建（Cabinet 已明確移出主鏈，另立工作軌）
 
-**不阻擋主鏈的獨立工具**：`LF_2D_DW_Gen`（8 種門、3 種窗）、`LF_2D_Cabinet_Gen`（高櫃／下櫃／衣櫃）、`LF_2D_Shelf_Gap`（等距層板）。依錄影說明它們沒有流程相依，可隨時使用，1.x 版本可以一直用到最後。`LF_Cabinet_Suite` 屬 3D 建模選用工具，但它產生的 BOM 資料仍要經資料化與發布才會進入主鏈。
+**不阻擋主鏈的獨立工具**：`LF_2D_DW_Gen`（8 種門、3 種窗）、`LF_2D_Cabinet_Gen`（高櫃／下櫃／衣櫃）、`LF_2D_Shelf_Gap`（等距層板）。依錄影說明它們沒有流程相依，可隨時使用，1.x 版本可以一直用到最後。`LF_Cabinet_Suite` 與 BOM 則依使用者裁決完全移出主鏈，列入後續開發；主鏈的 Nexus、Registry、Tag 與 Health 都不處理 `_CB.*`。
 
 **建議最先動工的一項**：階段 5 的 Scan／Apply／再驗證。它同時解掉 UUID 不可逆損失（ECO-11）、BC 靜默錯誤（ED-06）與空間未命中歧義（ED-07），而且不依賴其他任何新契約。
 
@@ -911,7 +919,7 @@ TAG_HEIGHT
 | 鎖定機制 | 記錄 `x / X` 的使用時機與同步時的效果 | 另指出它同時凍結重新綁定，且只認單一 `x`／`X`，其他值靜默失效 |
 | 編碼詞彙 | 記錄 Block naming convention 是名稱解析的使用者端契約 | 指出 `FF-01` 與 Dictionary 的 12 碼是兩套並行詞彙，影響 ED-01 裁決 |
 | Laser | 用固定 View transform 定位 | 相同，另提議在 Materialize 建立來源索引讓 Laser 退化成查表（需 spike 驗證） |
-| Cabinet | 描述兩種 BOM 模式與 1 mm 間隙 | 補上「Suite 任意 layer／BOM Update 限 04_CB／TagTrigger 會清空」三者衝突 |
+| Cabinet | 描述兩種 BOM 模式與 1 mm 間隙 | 補上「Suite 任意 layer／BOM Update 限 04_CB／TagTrigger 會清空」三者衝突。兩版現已依裁決一致移出主鏈 |
 | 失敗行為 | 各階段以安全停點描述 | 另有整表列出取消與失敗兩種結果 |
 | 施工順序 | 先確認 1.0 節奏未被架構重寫，再依交接點拆 feature | 給出十項最小可用範圍與建議最先動工項目 |
 

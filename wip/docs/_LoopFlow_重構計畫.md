@@ -165,7 +165,7 @@ wip/
 5. Section、Layout、Anchor、Extract、Duplicate。
 6. Tag、Data Viewer、TAG-O。
 7. Infuser All／Part。
-8. Cabinet、2D、Worksession。
+8. Cabinet、2D、Worksession。Cabinet／BOM 依使用者裁決不屬於主工作流程，第 2～7 段不得為它保留 `_CB.*` 欄位或 layer 分支。
 
 每一段完成即跑純邏輯、fixture、資料契約與失敗路徑測試；不必等待可供正式使用才測試。
 
