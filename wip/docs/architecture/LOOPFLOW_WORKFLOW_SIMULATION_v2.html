@@ -125,6 +125,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <div class="wrap">
 <nav><div class="brand">LoopFlow 2.0</div>
 <div class="bt">模擬執行流程</div>
+<a class="l2 intro" href="#1-0-操作證據的地位-使用者裁決">1.0 操作證據的地位（使用者裁決）</a>
 <details class="nav-group codex" open>
 <summary>CodeX 模擬執行流程</summary>
 <div class="nav-items">
@@ -185,6 +186,11 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <p>本文件把 <code>LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md</code> 的建議轉成可實際理解的操作鏈，協助判斷這些原則是否符合工作習慣。兩份流程都已用使用者提供的 <code>loopflow_1.0_YT.txt</code> 逐步操作說明、9 份 Tag Block 與 1 份圖框參數重新檢核；CodeX 版以 1.0 操作節奏為骨架，Claude 版保留「在哪個文件執行、失敗停在哪裡、先做哪一段」的視角，兩者並列以便對照。</p>
 <ul><li>決策項目與建議強度：<code>LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md</code>（<code>ECO-*</code>／<code>ED-*</code> 編號皆指向該表）</li><li>資料實體、真相邊界與現況盤點：<code>LOOPFLOW_DATA_ECOSYSTEM.md</code></li><li>本文件不維護決策答案；使用者的裁決一律寫在決策表，不在此重複。</li></ul>
 <p>文中明列為「1.0」的 <code>LF_*</code> 是既有指令；明列為「2.0」或「概念」的 <code>LF_*</code> 則不是已完成按鈕或最終命名。<code>! _Clipping*</code> 是 Rhino 8 內建指令。1.0 操作順序已有錄影說明作為使用者流程證據；2.0 建議行為仍尚未經 Rhino 實機驗證。</p>
+<h2 id="1-0-操作證據的地位-使用者裁決">1.0 操作證據的地位（使用者裁決）</h2>
+<p><code>wip/docs/loopflow_1.0_workflow_YT.txt</code> 是<strong>操作邏輯的參考</strong>，用來確認 1.0 實際怎麼被使用、使用者在哪些點介入。使用者已確認：這套流程在 1.0 使用上有一些限制，但沒有造成大問題，而且<strong>流程本身不是不可更動的</strong>——2.0 應該配合新的程式架構重新思考步驟怎麼排。</p>
+<p>因此本文出現的「補回」「必須保留」「不能刪掉」一律指<strong>意圖層級</strong>，不是要求 2.0 照抄 1.0 的按鈕順序：</p>
+<ul><li><strong>要保留的是控制權</strong>：何時寫入模型資料、何時發布、切哪張圖、抽哪些線、Tag 綁誰、只同步當前頁或全部頁，這些決定仍屬使用者。</li><li><strong>可以重新設計的是形式</strong>：階段怎麼合併或拆分、指令怎麼命名、哪些檢查自動串接、哪些介面取代 1.0 的脆弱做法（例如 Anchor Frame → View Registration）。</li><li><strong>不可無意遺失的是事實</strong>：本文記錄的 1.0 行為、欄位所有權與已知衝突，是重新設計時的輸入；要改掉某項行為可以，但要是有意識的裁決，不是搬程式時順手改掉。</li></ul>
+<p>換句話說，本文是「現況 + 已知風險 + 建議方向」，不是 2.0 的流程契約。與新架構衝突時，以新架構的論證為準，並把差異回寫決策表。</p>
 <blockquote><p>本檔是依 1.0 實際操作重新檢核的現行流程草案；<code>LOOPFLOW_WORKFLOW_SIMULATION_v2.html</code> 是由本檔產生的深色閱讀版。未加 <code>_v2</code> 的舊 MD／HTML 已標示為初版提案，只供差異追溯。</p></blockquote>
 <hr>
 <section class="chapter codex" id="CodeX-模擬執行流程">

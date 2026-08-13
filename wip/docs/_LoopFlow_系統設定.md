@@ -56,6 +56,7 @@ wip/
     architecture/DEVELOPMENT_ROADMAP.md
     architecture/PROGRESS.md
     architecture/ref/    # 已合併的原始評閱與歷史參考，不是現行 SSOT
+    loopflow_1.0_workflow_YT.txt  # 1.0 逐步操作說明；操作邏輯參考，不是 2.0 流程契約
     tag_block_text/       # 從實際 Rhino Block instance 擷取的 9 Tag＋1 圖框文字證據
   tools/
     build_workflow_html.py  # 預設由 v2 流程 md 產生 v2 html；`--check` 可驗證是否過期
