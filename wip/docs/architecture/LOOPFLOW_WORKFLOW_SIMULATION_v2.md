@@ -21,6 +21,8 @@
 - **1.0 實際操作**：已存在的 `LF_Nexus` 子功能、`LF_Anchor_Frame`、`LF_Extract_CP`、Tagger、Infuser 與顏色回饋。
 - **2.0 建議責任**：尚未實作的 Scan／Apply、穩定 View ID、revision、唯讀 Health 與可復原 Repair。它們改善安全性，但不能刪掉使用者原本的選取、確認與分段操作。
 
+Tag 部分另以使用者提供的 8 份 Block 參數文字，對照 1.0 的 `_LoopFlow_Config.py`、`LF_Tagger_*`、`LF_Infuser_*` 與 `LF_TAG-O.py`。因此下文會把「畫面可見參數」與 Python 動態加入的隱藏綁定資料分開。這次沒有 `TAG_DW` 的參數文字，也沒有在 Rhino 內開啟 `Tag_Blocks.3dm`，所以門窗 Tag 只記錄程式已證明的 `attr_dw_id`，其餘 Block 幾何、預設色與欄位顯示位置仍待實機核對。
+
 ## 檢核結論｜原流程需要補回的操作事實
 
 | 1.0 錄影中的操作事實 | 原 CodeX 版的落差 | 本版調整 |
@@ -33,6 +35,7 @@
 | Layout 先由使用者準備，再用 `LF_Tagger_Layout_ID` 批次編號 | 假設由 `LF_Sheet_Create` 自動建立 | 改回人工建立／複製 Layout，再執行編號；2.0 metadata 只作安全升級方案 |
 | Tag Block 可用 `x / X` 將單一 Tag 切為人工模式 | 只提抽象 `lock_state` | 補回使用者何時設定人工保護及同步時的效果 |
 | Infuser 後以紫／橘／紅顯示 linked、unlinked、broken | 沒有描述使用者看到的 1.0 回饋 | 補回顏色判讀與對應的人工作業；2.0 再由正式狀態取代顏色真相 |
+| 各 Tag Block 的可見欄位與 Python 寫入清單高度耦合 | 只用通用 Tag Template 描述，沒有辨認 `TAG_ELEV_0`、Index 與資料 Tag 的差異 | 補上欄位所有權、隱藏 binding、Block family 與 Infuser 寫入結果 |
 | Cabinet 與三個 2D Generator 不屬於強制主鏈 | 混在建模步驟，界線不清 | Cabinet 列為建模選用工具；2D Generator 列為可隨時使用的獨立工具 |
 
 ## 前提｜資料可跨越 3D 與 2D 工作內容
@@ -192,19 +195,60 @@
 
 > **使用者介入**：建立頁面與 Detail、放置正確 Tag Blocks、確認命名設定、決定哪些 Tag 要人工保護。
 >
-> **安全停點**：Layout 編號完成但尚未綁 Tag 也可正常存檔；未綁定 Tag 應明確保持 pending／orange 狀態。
+> **安全停點**：Layout 編號完成但尚未綁 Tag 也可正常存檔；2.0 應明確保存 pending，1.0 則在下一次 Infuser 執行後把未綁定 Tag 標為橘色。
+
+## Tag Block 實際參數｜1.0 Block 與 Python 的交界
+
+Tag Block 不是被動圖形。Block 內的 `%<UserText("block", ...)>%` 會直接顯示該 instance 的 UserText，而 Python 依**固定 Block 名稱與固定 key**決定怎麼綁定、寫值、鎖定及標色。只改 Block key 或 Python 任一邊，都可能造成畫面空白但程式沒有報錯。
+
+### 各 Block family 的可見參數與責任
+
+> `tag_elev.txt` 對應 `TAG_ELEV_1`～`TAG_ELEV_4`，是依參數檔名與 `_LoopFlow_Config.py` 的 family 清單推定；這次尚未直接開啟 `Tag_Blocks.3dm` 核對 Block Definition。
+
+| Block family／提供的參數檔 | 畫面可見的自動欄位 | 使用者保留欄位 | Python 動態加入的隱藏資料 | 1.0 行為 |
+| --- | --- | --- | --- | --- |
+| `TAG_SECTION_DETAIL`／`tag_section_detail.txt` | `Category`、`REF_ID` | `Detail_NO`、lock | `.Target_DV_ID` | Index 綁定 Detail；Infuser 依目標所在 Layout 重算 `Category`／`REF_ID`；`Detail_NO` 沒有 Python writer |
+| `TAG_ELEV_1`～`TAG_ELEV_4`／`tag_elev.txt` | `Category`、`REF_ID` | `Detail_NO`、lock | `.Target_DV_ID` | 與 Section Detail 使用相同參數契約，差異主要在 Block 圖形／名稱 |
+| `TAG_ELEV_0`／`tag_elev_0.txt` | `Category`（由 Layout ID 寫入） | `1-Elev_num`、`2-Elev`、`3-Top`、`4-Left`、`5-Bottom`、`6-Right`、lock | 目前無 binding key | 它不是一般 Index Tag；不在 Infuser 與 TAG-O 清單內，六個方向／編號欄目前沒有 Python writer |
+| `TAG_HEIGHT_GRAB`／`TAG_HEIGHT_LASER` | `attr_ch_key`、`attr_ch_val`、`attr_mat_key`、`attr_mat_val`、`attr_note` | `attr_manual_補充說明`、lock | `Source_UUID` | Infuser 由 Registry 寫高程基準、計算值、Type 編號兩段與名稱；Grab／Laser 只決定來源 |
+| `TAG_FINISH_GRAB`／`TAG_FINISH_LASER` | `attr_mat_key`、`attr_mat_val`、`attr_note` | `attr_manual_補充說明`、lock | `Source_UUID` | Infuser 由 Registry 寫 Type 編號兩段與名稱；Grab／Laser 只決定來源 |
+| `TAG_ITEM`／`Tag_Item.txt` | `attr_item_key`、`attr_item_val`、`attr_note` | `attr_manual_補充說明`、lock | `Source_UUID`、`.Auto_Item_Key`、`.Auto_Item_Val`、`.Auto_Item_Note` | Grab 可讀一般 UUID，也可從命名為 `KEY-VALUE__NOTE` 的 Block 解析 shadow fields，再由 Infuser 回填 |
+| `TAG_DW` | 已由程式確認 `attr_dw_id` | 參數檔未提供，待確認 | `Source_UUID`、`.Auto_DW_ID` | Grab 可從 `2D_*`／`3D_*` Block 名稱解析；本次不能確認完整可見欄位 |
+
+`Tag_Finish_*` 與 `Tag_Height_*` 參數檔中的 `Grab`／`Laser` 是固定畫面標示，不是 UserText key。兩者顯示欄位相同，主要差別是允許的綁定方式與 Block 名稱。
+
+### 四種欄位所有權不能再混在一起
+
+| 所有權 | 1.0 例子 | 允許的寫入者 | 2.0 要求 |
+| --- | --- | --- | --- |
+| Binding metadata | `Source_UUID`、`.Target_DV_ID`、`.Auto_*` | Grab／Laser／Index／migration | 不一定顯示在 Block 上；要有 typed schema、來源類型與有效性檢查 |
+| Render output | `Category`、`REF_ID`、`attr_ch_*`、`attr_mat_*`、`attr_item_*`、`attr_note` | Layout ID／Infuser／Sync | 可重算；來源失效時顯示錯誤，但不能碰人工欄位 |
+| Manual content | `Detail_NO`、`attr_manual_補充說明`、`TAG_ELEV_0` 六個方向／編號欄 | 使用者 | Sync、錯誤處理與 Block 升級都不得覆寫；如未來要自動化，需另行裁決 |
+| Control／state | `attr_Lock_不更新>寫入x或X`、物件顏色 | 使用者設定 lock；Infuser 設顏色 | lock 與 health 必須分開；鎖定不應讓 stale／broken 狀態消失 |
+
+提供的 8 份 Block 都使用同一個 lock key：`attr_Lock_不更新>寫入x或X`。它同時含有 `Lock` 與「不更新」，所以 Grab、Laser、Index、Infuser 的現行偵測都能辨認 `x / X`。各支 Python 的備援判斷仍不一致，但對這批正式 Block 而言是**潛在改名／舊 Block 相容風險**，不是目前已證實的鎖定失效。
+
+### `LF_Tagger_Layout_ID` 對不同 Block 的寫入也不相同
+
+- 一般資料 Tag（Height／Finish／DW／Item）：清除不屬於它的 `DWG_NAME`、`DWG_NO`、`REF_ID`、`Category`。
+- Index Tag（Section Detail／Elev 1～4）：清除 `DWG_NAME`、`DWG_NO`；`Category`、`REF_ID` 留給 Index／Infuser 表示**目標頁**。
+- `TAG_ELEV_0`：清除 `DWG_NAME`、`DWG_NO`、`REF_ID`，只把**目前頁**的 `Category` 寫入 Block。
+- 圖框或其他 Block：寫入目前頁的 `DWG_NO`／`DWG_NAME`，並清除 `Category`／`REF_ID`。
+
+因此 `Category` 在不同 Block 具有不同上下文：`TAG_ELEV_0` 是目前頁類別，Index Tag 是被引用目標頁類別。2.0 schema 不能只因 key 同名就假設語意相同。
 
 ## 階段 11｜以 Grab、Laser、Index 綁定 Tag（2D／Layout）
 
 三種 1.0 操作都必須保留，因為使用者介入方式不同：
 
-| 1.0 指令 | 使用者實際動作 | 1.0 定位依據 | 2.0 安全升級 |
-| --- | --- | --- | --- |
-| `LF_Tagger_Grab` | 直接選取要標註的模型／Block 來源 | 直接來源與 UUID／名稱解析 | 保存正式 `source_object_id`；無法確認時不建立綁定 |
-| `LF_Tagger_Laser` | 在 2D Section 圖面點選位置 | Anchor Frame 與幾何推算 | 經已註冊 View transform 找候選；多候選時由使用者選擇 |
-| `LF_Tagger_Index` | 選取要引用的 Detail View | Detail View GUID | 保存 `target_view_id`／`target_sheet_id`，圖號由 Sheet metadata 產生 |
+| 1.0 指令 | 預期 Block | 使用者實際動作 | 1.0 定位依據 | 2.0 安全升級 |
+| --- | --- | --- | --- | --- |
+| `LF_Tagger_Grab` | Height／Finish 的 `_GRAB`、`TAG_ITEM`、`TAG_DW` | 先選 Tag，再點進 Detail 選模型／Block 來源 | 一般物件用 UUID；Item／DW 可解析 Block 名稱 | 保存正式 `source_object_id` 或正式 `source_type`；無法確認時不建立綁定 |
+| `LF_Tagger_Laser` | Height／Finish 的 `_LASER` | 先選 Tag，再在 2D Section 點位置 | Anchor Frame、Clipping Plane 與幾何射線 | 經已註冊 View transform 找候選；多候選時由使用者選擇 |
+| `LF_Tagger_Index` | `TAG_SECTION_DETAIL`、`TAG_ELEV_1`～`4` | 先選 Index Tag，再從可搜尋清單選 Detail View | `.Target_DV_ID` 保存 Detail GUID | 保存 `target_view_id`／`target_sheet_id`，圖號由 Sheet metadata 產生 |
+| 不需綁定 | `TAG_ELEV_0` | 使用者維護方向／編號欄；Layout ID 寫目前頁 Category | 目前頁 Layout | 另定 Elevation group schema 前，不把它誤送進 Grab／Laser／Index |
 
-使用者可以逐張圖、逐批 Tag 執行，不要求一次綁完全部 Layout。取消選取時 Tag 保持原狀；重新綁定既有 Tag 前應先顯示目前來源。
+使用者可以逐張圖、逐批 Tag 執行，不要求一次綁完全部 Layout。取消選取時 Tag 保持原狀；重新綁定既有 Tag 前應先顯示目前來源。1.0 主要以 Block 名稱中的 `GRAB`／`LASER` 和數個 hard-coded 清單防止用錯指令，但 guard 並不完整；2.0 應由 Tag Template manifest 明列每種 Block 允許的 binding mode，而不是靠名稱字串猜測。
 
 > **使用者介入**：選 Tag、選來源、點 Laser 位置、選 Index 目標，並解決多候選。
 >
@@ -214,17 +258,19 @@
 
 **1.0：`LF_Infuser_Part`** → 只更新目前 Layout；**`LF_Infuser_All`** → 更新全部 Layout。使用者依工作範圍自行選擇，不要求每次都全案同步。
 
-Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，寫進 Tag Block。啟用 `x / X` write protection 的個別 Tag 維持人工內容。
+Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 Block family 的固定欄位清單寫進 Tag Block。啟用 `x / X` write protection 的個別 Tag 在處理最前面就被跳過：所有自動欄位與人工內容都維持原狀，但 1.0 也不會替它重新判斷或更新顏色，因此「locked」不等於「來源仍健康」。
 
 執行後，1.0 以顏色提供立即回饋：
 
 | 顏色 | 1.0 意義 | 使用者下一步 |
 | --- | --- | --- |
-| 紫色（Purple） | 已綁定且資料已寫入 | 檢查顯示內容；沒有問題即可繼續 |
-| 橘色（Orange） | 尚未綁定 | 回階段 11，用 Grab／Laser／Index 建立來源 |
-| 紅色（Red） | 綁定來源已刪除或 Detail／來源斷線 | 修復來源或重新綁定，再跑 Part／All |
+| 紫色（Purple） | 已綁定且資料已寫入；程式實際是清除警示色、恢復 `ByLayer`，紫色來自目前 Block／layer 顯示設定 | 檢查顯示內容；沒有問題即可繼續 |
+| 橘色（Orange） | 沒有 `Source_UUID` 或 `.Target_DV_ID` | 自動顯示欄被寫成 `?`；回階段 11 建立來源 |
+| 紅色（Red） | UUID 不在 Registry，或 Index 的目標 Detail 已不存在 | 自動顯示欄被寫成 `?`；修復來源或重新綁定，再跑 Part／All |
 
-**2.0：`LF_Sync_Current_Sheet`／`LF_Sync_All`** → 延續 Part／All 兩種範圍 → 保存 `last_synced_revision`。顏色只作可還原提示；正式狀態由 metadata 判定，不修改使用者原色。
+錯誤時被改成 `?` 的只有各 family 的自動欄位：Height 的 `attr_ch_*`／`attr_mat_*`／`attr_note`、Finish 的 `attr_mat_*`／`attr_note`、Item 的 `attr_item_*`／`attr_note`、Index 的 `Category`／`REF_ID`。`attr_manual_補充說明`、`Detail_NO` 與 `TAG_ELEV_0` 的方向／編號欄不在 Infuser 寫入清單中，必須保持使用者內容。`TAG_ELEV_0` 本身也不參加 Infuser／TAG-O 狀態掃描。
+
+**2.0：`LF_Sync_Current_Sheet`／`LF_Sync_All`** → 延續 Part／All 兩種範圍 → 先依 Template manifest 驗證 Block 名稱、欄位、所有權與 binding type → 只更新 render output → 保存 `last_synced_revision`。顏色只作可還原提示；正式狀態由 metadata 判定，不修改使用者原色。鎖定的 Tag 仍可由唯讀 Health 判定為 `manual_locked + stale` 或 `manual_locked + orphaned`，只是不自動改內容。
 
 > **使用者介入**：選擇只同步當前頁或全部頁，並依結果決定要不要回頭補綁／修復。
 >
@@ -232,7 +278,7 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，寫�
 
 ## 階段 13｜交付前確認與修復（2D／Layout）
 
-**1.0 實際方式** → Infuser 後查看紫／橘／紅狀態；需要時使用 `LF_TAG-O` 檢查 Tag 存活與空間覆蓋 → 對橘色 Tag 補綁、對紅色 Tag 重新連結、對人工模式 Tag 保留原值 → 再跑 Infuser 確認。
+**1.0 實際方式** → Infuser 後查看紫／橘／紅狀態；需要時使用 `LF_TAG-O` 檢查 Tag 存活與空間覆蓋 → 對橘色 Tag 補綁、對紅色 Tag 重新連結、對人工模式 Tag 保留原值 → 再跑 Infuser 確認。`LF_TAG-O` 只掃 Config 中的 Index／Data Tag 清單，不包含 `TAG_ELEV_0`，而 locked Tag 也可能保留上次顏色，因此不能只用「面板沒有問題」推定所有 Block 都健康。
 
 **2.0：`LF_Health_Check`** → 不先改 Tag 或塗色，直接以 Object／View／Sheet ID、revision、template 與 lock state 產生 Issue Report。**`LF_Repair_Preview` → `LF_Repair_Apply`** → 使用者逐項決定重新綁定、同步、保留、脫離或略過。
 
@@ -482,9 +528,9 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，寫�
 | `LF_Tag_Laser` | 在剖面圖上點位置 | 經固定 transform（或來源索引）找到候選；多候選時列出讓使用者選定，並記錄這是 `ambiguous` 解法 |
 | `LF_Tag_Index` | 選另一張圖 / 另一個 View | Tag 存下 `target_view_id`／`target_sheet_id`，顯示的圖號由 Sheet metadata 產生 |
 
-每個 Tag 一律保存：`tag_id`、`source_object_id`、`view_id`、`drawing_id`、`sheet_id`、`template_version`、`lock_state`。
+每個 Tag 都保存共同 identity（`tag_id`、`sheet_id`、`template_version`、`lock_state`），再依類型保存不同 binding：模型資料 Tag 使用 `source_object_id` 與所在的 `view_id`／`drawing_id`；Index Tag 使用 `target_view_id`／`target_sheet_id`；`TAG_ELEV_0` 目前只有所在 Sheet context，不應被強迫建立模型來源。
 
-依 ED-02，鎖定改成單一 `lock_state`。現況三支程式規則不一致——Laser 只認 `NoUpdate`、Infuser／Grab／Index 只認「不更新」——所以一個用「不更新」鎖住的 Tag，Infuser 會尊重，Laser 卻允許你重新綁定。
+依 ED-02，鎖定仍應改成單一 `lock_state`。程式的備援條件確實不一致，但本次提供的正式 Block key 是 `attr_Lock_不更新>寫入x或X`，同時含有 `Lock` 與「不更新」，所以 Grab、Laser、Index、Infuser 都能辨認。真正問題是契約散落：若 Block 改名、匯入舊版或使用另一種 key，結果可能不同；另外 Infuser 對 locked Tag 完全跳過，也不重新判斷 stale／broken。
 
 門窗與家具 Tag 不再使用 `NAME_PARSED` 這個哨兵值假裝有來源，改為正式的 source type。
 
@@ -501,11 +547,12 @@ TAG_HEIGHT
   attr_mat_key <- type.category             → "WL"
   attr_mat_val <- type.sequence             → "14"
   attr_note    <- type.display_name         → "磁磚牆面"
+  attr_manual_補充說明 <- user manual content（Sync 不寫入）
 ```
 
 `type.category` / `type.sequence` 直接來自階段 2 拆好的欄位，不需要在這裡對 `_03` 字串做 `split("-", 1)`——這也順帶解掉「ID 本身含連字號會被誤拆」的問題。
 
-`lock_state` 為鎖定的 Tag 完全跳過，人工填的值原樣保留。
+`lock_state` 為鎖定的 Tag 不更新 render output，人工填的值原樣保留；Health 仍需唯讀檢查來源是否 stale／orphaned。Template manifest 也要保存 Block family、允許的 Grab／Laser／Index mode、每個欄位的 owner、缺值顯示與 migration mapping，避免 Block 定義、Config 清單與 Infuser hard-coded 寫入表各自漂移。
 
 ## 階段 11｜健康檢查與修復（2D 文件）
 
@@ -610,7 +657,8 @@ TAG_HEIGHT
 | Section／圖面 | 明列 Anchor 不可刪、圖框與線稿一起移動、Extract 依顏色拆圖等現行規則 | 聚焦正式 View Registration、Materialize 與來源索引提案 |
 | Laser | 用固定 View transform 定位 | 相同，另提議在 Materialize 時建立來源索引，讓 Laser 退化成查表（需 spike 驗證） |
 | Layout／Sheet | 使用者先準備 Layout／Tag Blocks，再由 Layout ID 批次編號；metadata 是 2.0 升級，不預設自動建頁 | 以 `LF_Sheet_Create`／Duplicate 描述 metadata-first 目標 |
-| Tag 人工控制 | 補回 `x / X` write protection、Part／All 範圍與紫／橘／紅回饋 | 聚焦 canonical `lock_state`、revision 與正式 Health 狀態 |
+| Tag Block 契約 | 逐一對照 8 份實際參數、隱藏 binding、Python writer 與手填欄位；辨認 `TAG_ELEV_0` 特例 | 以 Template manifest 與 canonical binding／render schema 描述目標 |
+| Tag 人工控制 | 補回 `x / X` write protection、Part／All 範圍與紫／橘／紅回饋，並說明 locked Tag 不會更新狀態 | 聚焦 canonical `lock_state`、revision 與正式 Health 狀態 |
 | 變更循環 | 分開資料變更、幾何／Section 變更、Detail 刪除與 Layout 重整 | 以磁磚牆高度變更走一條完整新架構流程 |
 | 施工順序 | 先確認 1.0 操作節奏沒有被架構重寫，再依交接點拆 feature | 給出最小可用範圍與建議最先動工項目 |
 
