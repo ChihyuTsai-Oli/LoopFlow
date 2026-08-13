@@ -233,6 +233,10 @@ Section 中段應拆成三個概念，而不是複製後就失去來源：
 2. **Generated Result**：Rhino Section／Clipping Drawing 生成的原始成果，可重建。
 3. **Editable Drawing**：供使用者編修的圖面成果，保存 `view_id`、生成 revision 與人工狀態。
 
+**Drawing 的來源索引（列入計畫）**：圖面化這一刻同時握有「3D 物件」與「剛生成的 2D 線」，是全流程唯一能低成本建立兩者關聯的時機。因此 Materialize 除了 `drawing_id`、來源 `view_id` 與來源 revision，另產出**每條線對應的來源 `object_id`**。它讓 Laser 從「每次對全模型求交後射線判斷」變成「點選最近的已標記線，讀出來源」：計算量沒有增加，只是把每次綁定都做一遍的事改成生成時做一次，而且關聯在生成當下就固定，不會因為之後編輯線稿而漂移；多候選時可以直接列出該點附近有幾條不同來源的線，不必依賴目前 200 cm 的距離聚類。
+
+這一項是**補強而非替代**：定位基準仍是 View Registration 的固定 transform，索引缺失或失效時 Laser 仍須可運作。可行性（Clipping Drawing 輸出能否穩定對應回來源物件）在 Materialize 與 Laser 實作出來後隨功能驗證，不另立前置 spike——在索引真的被產出之前，這件事本來就無從測起。退路依序為：LoopFlow 自行以剖面交線做鄰近比對，或只用固定 transform。
+
 Drawing lifecycle 的第一個可測條件是**冪等重跑**：系統必須辨識前次產出，讓使用者選擇取代、新增或略過，並復原原有 layer lock、visibility 與 selection。現行 Extract 每次直接複製，沒有來源、去重與 revision，且會解鎖目標 layer 而不還原。
 
 完成冪等基礎後，再導入以下 Drawing 狀態：

@@ -29,14 +29,14 @@
 | LF-C03 | Registry 安全發布 P0／`registry-publisher` | A04、B02、C02 所需 payload | exclusive lock、pending、validate、atomic replace、last good | 雙程序、中斷、壞 JSON、replace 失敗測試通過 |
 | LF-C04 | Data Viewer／`data-viewer` | A03–A04、B03、C01 | 只讀檢視 canonical 資料的 feature 與入口 | 不修改來源；缺值與未知版本可理解 |
 | LF-D01 | Tagger Grab／`tagger-grab` | A04、B03、C01–C03 | Grab feature、入口與 fixtures | Rhino 狀態復原、重複執行與取消通過；Item 的模型／Block 來源分流正確，manual `TAG_DW` 不接受綁定 |
-| LF-D02 | Tagger Laser／`tagger-laser` | D01 共用契約 | Laser feature、入口與 fixtures | 同上，且不複製共用規則 |
+| LF-D02 | Tagger Laser／`tagger-laser` | D01 共用契約、E02 來源索引（若已完成） | Laser feature、入口與 fixtures | 同上，且不複製共用規則；以固定 View transform 為定位基準，有來源索引時改走查表，索引缺失或失效仍可運作 |
 | LF-D03 | Tagger Index／`tagger-index` | D01 共用契約 | Index feature、入口與 fixtures | 同上 |
 | LF-D04 | Tagger Layout ID／`tagger-layout-id` | D01、Layout 契約 | Layout ID feature、入口與 fixtures | Layout／Tag identity 一致；只對宣告的 title frame 寫 `DWG_*`，人工比例欄不動，未知 Block 零寫入 |
 | LF-D05 | TAG-O／`tag-o` | D01–D04 | TAG-O feature、入口與 fixtures | Tag consumer 行為及錯誤路徑通過；manual Tag 不判 unbound，locked Tag 仍可唯讀判斷 stale／orphaned |
 | LF-D06 | Infuser Part／`infuser-part` | D01–D05、C03 | Part feature、入口與 fixtures | 部分更新、last good 與警告狀態通過；所有 manual 欄位、manual `TAG_DW` 與 locked 內容均不覆寫 |
 | LF-D07 | Infuser All／`infuser-all` | D06 | All feature、入口與 fixtures | 全量／重複更新及復原通過 |
 | LF-E01 | Anchor Frame／`anchor-frame` | B03、A03 | Anchor feature 與入口 | 幾何及 layer 狀態可復原 |
-| LF-E02 | Extract CP／`extract-cp` | E01 | Extract feature 與入口 | Section 測試案例通過 |
+| LF-E02 | Extract CP／Drawing Materialize／`extract-cp` | E01 | Extract feature、入口，以及 `drawing_id`、來源 `view_id`、來源 revision 與**每條線的來源 `object_id` 索引** | Section 測試案例通過；重跑冪等且 layer 狀態還原；索引可對應回來源物件，或明確回報無法對應並不阻斷產出 |
 | LF-E03 | Duplicate Layout／`duplicate-layout` | E01、D04 | Layout copy feature 與入口 | 命名、取消與重複執行通過 |
 | LF-E04 | Worksession／`worksession` | B02–B03 | event lifecycle、同步 feature 與入口 | register／unregister、重載與錯誤路徑通過 |
 | LF-F01 | Cabinet Suite 規格與 fixtures／`cabinet-baseline` | A02–A03 | 延後功能的現況契約與代表案例 | 不先重寫大型 UI／幾何流程；只記錄 1.x 現況，不把 `_CB.*` 帶進主鏈契約 |

@@ -74,7 +74,8 @@ fixture 與預期結果應在對應功能建造前完成；實機結果則在主
 | 2026-08-13 | Tag／圖框 Block 契約證據 | 由 Rhino instance 擷取 9 份 Tag、1 份圖框文字，共 24 個唯一 UserText key；對照 Config、Grab／Laser／Index、Layout ID、Infuser、TAG-O 與 `Tag_Blocks.3dm` 畫面 | 24/24 欄位已追蹤 | 精確座標、字型、圖層與顏色值尚未結構化；不影響目前資料契約規畫 |
 | 2026-08-13 | Tag 現況衝突與新決策輸入 | 確認 `TAG_DW` 為純手動但 1.x Infuser 會覆寫編號；lock 只認單一 `x/X` 且同時凍結重新綁定；家具 `FF-01` 與 Dictionary 為兩套編碼；圖框 `03-A3 Scale` 無 writer | 已回寫上位文件 | ED-14～16 尚待使用者裁決；產品程式碼與 Block 資產未修改 |
 | 2026-08-13 | 非 `ref/` 文件一致性同步 | 將 workflow v2 設為現行流程來源；同步資料藍圖、決策表、契約、設定、roadmap、Nexus 菜單、WIP 導覽與繁中／英文 1.x 指南 | 文件與衍生 HTML 已同步 | 舊 workflow 保留並明確標示為歷史提案；尚未執行 Rhino 端到端測試 |
-| 2026-08-13 | 工作鏈骨架與 Health 覆蓋補強 | 工作鏈補入 W3 建立空間並改為 W1～W12；資料化定為掃描→套用→再驗證且驗證通過才可發布；補上 TagTrigger 作用範圍契約、`TAG_ELEV_0` 未被任何清單涵蓋的 Health 盲區，以及 Block instance 命名慣例三種分段 | 已回寫藍圖、契約、使用說明與 roadmap | Laser 來源索引 spike 尚未排入 roadmap，待使用者決定 |
+| 2026-08-13 | 工作鏈骨架與 Health 覆蓋補強 | 工作鏈補入 W3 建立空間並改為 W1～W12；資料化定為掃描→套用→再驗證且驗證通過才可發布；補上 TagTrigger 作用範圍契約、`TAG_ELEV_0` 未被任何清單涵蓋的 Health 盲區，以及 Block instance 命名慣例三種分段 | 已回寫藍圖、契約、使用說明與 roadmap | — |
+| 2026-08-13 | Laser 來源索引列入計畫 | 使用者裁決列入藍圖，不另立前置 spike——索引產出前無從測試。Materialize 增列每條線的來源 `object_id`，Laser 有索引時改走查表；定位基準仍是固定 View transform | 已回寫藍圖 Drawing lifecycle、v2 與 roadmap LF-E02／LF-D02 | 可行性在 E02／D02 實機時驗證；退路為剖面交線鄰近比對，或只用固定 transform |
 | 2026-08-13 | Cabinet／BOM 排除主鏈 | 使用者裁決 Cabinet 與 BOM 不進主工作流程、列入後續開發（BOM 功能過於零碎，會汙染核心契約）；2.0 Nexus／Registry／Tag／Health 都不處理 `_CB.*` | 已回寫 v2、藍圖、決策表、Nexus 菜單、roadmap、重構計畫、契約與使用說明 | ED-03、ND-23、ND-24、CF-21 一併延後；1.x 事實移入 v2 的「延後工作軌」保存 |
 | 2026-08-13 | 1.0 操作證據的地位裁決 | 使用者確認錄影說明是操作邏輯參考、不是流程契約；1.0 用法有限制但無大問題，步驟順序應配合新架構重新思考。維持的是控制意圖，不是按鈕順序 | 已回寫 v2、藍圖、決策表、使用說明、系統設定與 WIP 導覽 | 證據檔已正式登錄於結構樹；後續若改動 1.0 行為須是明示裁決，不得順手更改 |
 

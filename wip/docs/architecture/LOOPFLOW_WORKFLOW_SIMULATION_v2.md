@@ -618,7 +618,13 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 | 多候選如何處理 | 依距離聚類，容差 200 cm（=2 公尺，過寬） | 該點附近有幾條不同來源的線，直接列出 |
 | 是否需要 Worksession 附掛 3D | 必須 | 不必（但仍建議附掛以便對照） |
 
-計算量沒有增加，只是把每次綁定都做一遍的事改成生成時做一次。**這一項需要 Rhino 實機 spike 驗證**：要確認 Clipping Drawing 輸出能否穩定對應回來源物件，或退而由 LoopFlow 以剖面交線做鄰近比對。spike 通過前先用階段 7 的固定 transform，兩者不衝突。
+計算量沒有增加，只是把每次綁定都做一遍的事改成生成時做一次。
+
+**使用者已裁決：列入藍圖計畫，實作出來才能驗證。** 不另外先做一次獨立 spike，因為要確認的事情（Clipping Drawing 輸出能否穩定對應回來源物件）在 Materialize 真的產出來源索引之前，本來就測不了。因此：
+
+- 來源索引是 **Drawing Materialize 的產出項目之一**，與 `drawing_id`、來源 `view_id`、來源 revision 一起建置。
+- 定位基準仍以階段 7 的**固定 View transform 為準**；來源索引是加速與去歧義的補強，不是替代品。
+- 驗證在 Materialize 與 Laser 兩項功能實機時一併進行。若實機發現輸出無法穩定對應回來源，退路是由 LoopFlow 以剖面交線做鄰近比對；再不行就只用固定 transform，Laser 仍可運作。
 
 **使用者接著人工整理** → 補線、刪除、調整圖層 → Drawing 轉為 `modified`，LoopFlow 從此不會靜默取代它。
 
@@ -918,7 +924,7 @@ TAG_HEIGHT
 | Tag／圖框 Block 契約 | 逐一列出 9 份 Tag 與 1 份圖框參數、隱藏 binding 與各 Block family 的 Python writer | 聚焦四類欄位所有權，特別標出手填欄位不得被覆寫 |
 | 鎖定機制 | 記錄 `x / X` 的使用時機與同步時的效果 | 另指出它同時凍結重新綁定，且只認單一 `x`／`X`，其他值靜默失效 |
 | 編碼詞彙 | 記錄 Block naming convention 是名稱解析的使用者端契約 | 指出 `FF-01` 與 Dictionary 的 12 碼是兩套並行詞彙，影響 ED-01 裁決 |
-| Laser | 用固定 View transform 定位 | 相同，另提議在 Materialize 建立來源索引讓 Laser 退化成查表（需 spike 驗證） |
+| Laser | 用固定 View transform 定位 | 相同，另在 Materialize 建立來源索引讓 Laser 退化成查表；已列入藍圖計畫，實作後隨功能一併驗證 |
 | Cabinet | 描述兩種 BOM 模式與 1 mm 間隙 | 補上「Suite 任意 layer／BOM Update 限 04_CB／TagTrigger 會清空」三者衝突。兩版現已依裁決一致移出主鏈 |
 | 失敗行為 | 各階段以安全停點描述 | 另有整表列出取消與失敗兩種結果 |
 | 施工順序 | 先確認 1.0 節奏未被架構重寫，再依交接點拆 feature | 給出十項最小可用範圍與建議最先動工項目 |
