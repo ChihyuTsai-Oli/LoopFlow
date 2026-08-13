@@ -4,9 +4,9 @@
 
 > **Embrace the loop. Let it flow.**
 
-LoopFlow is a semi-automated design and documentation toolkit for Rhino 8. It is not another BIM system, and it does not require fixed templates or a parametric workflow. You remain in control of every step while LoopFlow handles data updates, drawing synchronization, and other repetitive work.
+LoopFlow is a Rhino 8-based, semi-automated design and documentation workflow built to carry a project from schematic design (SD), through design development (DD), to construction documentation (CD). It is not another BIM system, and it does not require fixed templates or a parametric workflow. You remain in control of every step while LoopFlow handles data updates, drawing synchronization, and other repetitive work.
 
-The main workflow—from model data to Layout documentation—stays inside Rhino. LoopFlow has been used on multiple real-world design projects. Its goal is to preserve Rhino's design freedom while reducing repetitive cleanup after design changes.
+The main workflow stays inside Rhino, allowing model data, drawings, and Layout documentation to evolve continuously with the design. LoopFlow has been used on multiple real-world design projects. Its goal is to preserve Rhino's design freedom while reducing repetitive cleanup after design changes.
 
 ## Core Features
 
