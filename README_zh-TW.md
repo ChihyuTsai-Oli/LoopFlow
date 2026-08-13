@@ -2,7 +2,7 @@
 
 [English](./README.md)
 
-> **擁抱循環，讓它流暢。**
+> **Embrace the loop. Let it flow.**
 
 > **開發狀態：** LoopFlow v2 正在開發中。目前公開發布版本仍為 v1；除非另有標示，以下文件皆以穩定版本為準。
 
