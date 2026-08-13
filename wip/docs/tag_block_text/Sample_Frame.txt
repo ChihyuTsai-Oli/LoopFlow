@@ -1,0 +1,5 @@
+﻿The Tarnished
+%<UserText("block","03-A3 Scale","","")>%
+02-25-2022
+%<UserText("block","DWG_NAME","","")>%
+%<UserText("block","DWG_NO","","")>%

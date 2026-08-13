@@ -1,6 +1,6 @@
 # LoopFlow 2.0 — 模擬執行流程
 
-本文件把 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` 的建議轉成可實際理解的操作鏈，協助判斷這些原則是否符合工作習慣。兩份流程都已用使用者提供的 `loopflow_1.0_YT.txt` 逐步操作說明與 9 份 Tag Block 參數重新檢核；CodeX 版以 1.0 操作節奏為骨架，Claude 版保留「在哪個文件執行、失敗停在哪裡、先做哪一段」的視角，兩者並列以便對照。
+本文件把 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` 的建議轉成可實際理解的操作鏈，協助判斷這些原則是否符合工作習慣。兩份流程都已用使用者提供的 `loopflow_1.0_YT.txt` 逐步操作說明、9 份 Tag Block 與 1 份圖框參數重新檢核；CodeX 版以 1.0 操作節奏為骨架，Claude 版保留「在哪個文件執行、失敗停在哪裡、先做哪一段」的視角，兩者並列以便對照。
 
 - 決策項目與建議強度：`LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`（`ECO-*`／`ED-*` 編號皆指向該表）
 - 資料實體、真相邊界與現況盤點：`LOOPFLOW_DATA_ECOSYSTEM.md`
@@ -21,7 +21,7 @@
 - **1.0 實際操作**：已存在的 `LF_Nexus` 子功能、`LF_Anchor_Frame`、`LF_Extract_CP`、Tagger、Infuser 與顏色回饋。
 - **2.0 建議責任**：尚未實作的 Scan／Apply、穩定 View ID、revision、唯讀 Health 與可復原 Repair。它們改善安全性，但不能刪掉使用者原本的選取、確認與分段操作。
 
-Tag 部分另以使用者提供的 9 份 Block 參數文字，對照 1.0 的 `_LoopFlow_Config.py`、`LF_Tagger_*`、`LF_Infuser_*` 與 `LF_TAG-O.py`。這些文字不是人工抄錄，而是用 `wip/tools/擷取tag_block文字.py` 在 Rhino 內選取實際 Block instance、連同巢狀 Block 展開後，直接讀取 `TextEntity`／`TextDot` 的原始文字與 `%<UserText(...)>%` 公式；因此文字內容與 UserText key 已有 `.3dm` 來源證據。下文會把這些畫面文字與 Python 動態加入的隱藏綁定資料分開。`Tag_DW.txt` 已確認三個可見 key：`attr_dw_id`、`attr_DW-W_輸入門窗寬`、`attr_DW-H_輸入門窗高`；使用者也確認 `TAG_DW` 後來改為全部純手動輸入。Python 內仍存在的 `Source_UUID`、`.Auto_DW_ID` 與自動覆寫 `attr_dw_id` 路徑因此是現行衝突，而非應延續的資料契約。2026-08-13 提供的 `Tag_Blocks.3dm` Rhino 畫面另確認了整體外觀與排列；目前只剩精確座標、字型／字高／對齊、物件圖層與顏色數值未以結構化資料保存，這些不阻擋資料契約規畫。
+Tag／圖框部分另以使用者提供的 10 份 Block 參數文字（9 份 Tag、1 份圖框），對照 1.0 的 `_LoopFlow_Config.py`、`LF_Tagger_*`、`LF_Infuser_*` 與 `LF_TAG-O.py`。這些文字不是人工抄錄，而是用 `wip/tools/擷取tag_block文字.py` 在 Rhino 內選取實際 Block instance、連同巢狀 Block 展開後，直接讀取 `TextEntity`／`TextDot` 的原始文字與 `%<UserText(...)>%` 公式；因此文字內容與 UserText key 已有 `.3dm` 來源證據。下文會把這些畫面文字與 Python 動態加入的隱藏綁定資料分開。`Tag_DW.txt` 已確認三個可見 key：`attr_dw_id`、`attr_DW-W_輸入門窗寬`、`attr_DW-H_輸入門窗高`；使用者也確認 `TAG_DW` 後來改為全部純手動輸入。Python 內仍存在的 `Source_UUID`、`.Auto_DW_ID` 與自動覆寫 `attr_dw_id` 路徑因此是現行衝突，而非應延續的資料契約。`Sample_Frame.txt` 則確認圖框的 `DWG_NAME`、`DWG_NO` 與 `03-A3 Scale`。2026-08-13 提供的 `Tag_Blocks.3dm` Rhino 畫面另確認了整體外觀與排列；目前只剩精確座標、字型／字高／對齊、物件圖層與顏色數值未以結構化資料保存，這些不阻擋資料契約規畫。
 
 ## 檢核結論｜原流程需要補回的操作事實
 
@@ -197,13 +197,13 @@ Tag 部分另以使用者提供的 9 份 Block 參數文字，對照 1.0 的 `_L
 >
 > **安全停點**：Layout 編號完成但尚未綁 Tag 也可正常存檔；2.0 應明確保存 pending，1.0 則在下一次 Infuser 執行後把未綁定 Tag 標為橘色。
 
-## Tag Block 實際參數｜1.0 Block 與 Python 的交界
+## Tag／圖框 Block 實際參數｜1.0 Block 與 Python 的交界
 
 Tag Block 不是被動圖形。Block 內的 `%<UserText("block", ...)>%` 會直接顯示該 instance 的 UserText，而 Python 依**固定 Block 名稱與固定 key**決定怎麼綁定、寫值、鎖定及標色。只改 Block key 或 Python 任一邊，都可能造成畫面空白但程式沒有報錯。
 
 ### 各 Block family 的可見參數與責任
 
-> 9 份文字已由實際 Block instance 擷取；不過輸出內容本身不保存逐項 Definition metadata，而檔案也可能在儲存後改名。因此 `tag_elev.txt` 共用於 `TAG_ELEV_1`～`TAG_ELEV_4` 的對應，仍是依檔名、欄位一致性與 `_LoopFlow_Config.py` family 清單判定；若日後需要驗證 Definition 名稱與一對多關係，應讓擷取工具另輸出 manifest，而不是再次人工抄錄。
+> 10 份文字已由實際 Block instance 擷取；不過輸出內容本身不保存逐項 Definition metadata，而檔案也可能在儲存後改名。因此 `tag_elev.txt` 共用於 `TAG_ELEV_1`～`TAG_ELEV_4` 的對應，仍是依檔名、欄位一致性與 `_LoopFlow_Config.py` family 清單判定；若日後需要驗證 Definition 名稱與一對多關係，應讓擷取工具另輸出 manifest，而不是再次人工抄錄。
 
 | Block family／提供的參數檔 | 畫面可見的自動欄位 | 使用者保留欄位 | Python 動態加入的隱藏資料 | 1.0 行為 |
 | --- | --- | --- | --- | --- |
@@ -214,6 +214,7 @@ Tag Block 不是被動圖形。Block 內的 `%<UserText("block", ...)>%` 會直�
 | `TAG_FINISH_GRAB`／`TAG_FINISH_LASER` | `attr_mat_key`、`attr_mat_val`、`attr_note` | `attr_manual_補充說明`、lock | `Source_UUID` | Infuser 由 Registry 寫 Type 編號兩段與名稱；Grab／Laser 只決定來源 |
 | `TAG_ITEM`／`Tag_Item.txt` | `attr_item_key`、`attr_item_val`、`attr_note` | `attr_manual_補充說明`、lock | `Source_UUID`、`.Auto_Item_Key`、`.Auto_Item_Val`、`.Auto_Item_Note` | Grab 可讀一般 UUID，也可從命名為 `KEY-VALUE__NOTE` 的 Block 解析 shadow fields，再由 Infuser 回填 |
 | `TAG_DW`／`Tag_DW.txt` | `attr_dw_id`（**Infuser 仍會寫**） | `attr_DW-W_輸入門窗寬`、`attr_DW-H_輸入門窗高`；**無 lock 欄位** | 現行流程無 binding；`Source_UUID`、`.Auto_DW_ID` 僅為歷史程式欄位 | 已改純手動，但 Block 仍列在 `DW_BLOCKS`；因未綁定，每次 Infuser 會塗橘並把 `attr_dw_id` 覆寫成 `?`，且無 lock key 可擋 |
+| `Sample_Frame`／`Sample_Frame.txt` | `DWG_NAME`、`DWG_NO` | `03-A3 Scale` | 無 binding | Layout ID 寫入目前頁圖名／圖號；比例欄沒有 Python writer；`The Tarnished` 與 `02-25-2022` 是固定文字，不是 UserText key |
 
 `Tag_Finish_*` 與 `Tag_Height_*` 參數檔中的 `Grab`／`Laser` 是固定畫面標示，不是 UserText key。兩者顯示欄位相同，主要差別是允許的綁定方式與 Block 名稱。
 
@@ -227,7 +228,7 @@ Tag Block 不是被動圖形。Block 內的 `%<UserText("block", ...)>%` 會直�
 - 下排保留一顆含上／左／下／右與立面編號的 `TAG_ELEV_0` 圖形、四種方向的 Elevation Index 圖形，以及帶 leader 的 Section Detail 圖形；這些 family 並非同一種通用外觀。
 - 檔內說明明定：Block 上 `x / X` 存在代表 Manual mode、缺席代表 Automatic mode，操作位置是 Rhino Properties 的 Attribute UserText 面板。
 - 檔內同時保存 2D 門、3D 窗與家具 Block naming convention 範例：`2D_D1 = [2D]_[D1]`、`3D_W1 = [3D]_[W1]`、`FF-01__Chair-1 = [FF]-[01]__[Chair-1]`。這是 1.0 Item／歷史 DW 名稱解析的使用者端契約。
-- 畫面下方還有使用 `DWG_NAME`、`DWG_NO` 與比例文字的圖框樣板，呼應 `LF_Tagger_Layout_ID` 對圖框與 Tag Block 採不同欄位寫入規則。
+- 畫面下方還有圖框樣板；`Sample_Frame.txt` 進一步確認其 UserText 為 `DWG_NAME`、`DWG_NO`、`03-A3 Scale`，呼應 `LF_Tagger_Layout_ID` 對圖框與 Tag Block 採不同欄位寫入規則。
 
 截圖足以確認整體圖形意圖與欄位配置，但沒有顯示 Rhino Block Manager，因此不把畫面中的每顆圖形與內部 Definition 名稱視為額外的獨立證明；現階段 family 對應仍以擷取出的檔名、欄位內容與 Config 清單交叉判定。精確樣式若日後要納入安裝檔驗收，再由擷取工具輸出 manifest 或另做 Rhino 視覺回歸檢查。
 
@@ -236,8 +237,8 @@ Tag Block 不是被動圖形。Block 內的 `%<UserText("block", ...)>%` 會直�
 | 所有權 | 1.0 例子 | 允許的寫入者 | 2.0 要求 |
 | --- | --- | --- | --- |
 | Binding metadata | `Source_UUID`、`.Target_DV_ID`、`.Auto_*` | Grab／Laser／Index／migration | 不一定顯示在 Block 上；要有 typed schema、來源類型與有效性檢查 |
-| Render output | `Category`、`REF_ID`、`attr_ch_*`、`attr_mat_*`、`attr_item_*`、`attr_note` | Layout ID／Infuser／Sync | 可重算；來源失效時顯示錯誤，但不能碰人工欄位 |
-| Manual content | `Detail_NO`、`attr_manual_補充說明`、`TAG_ELEV_0` 六個方向／編號欄 | 使用者 | Sync、錯誤處理與 Block 升級都不得覆寫；如未來要自動化，需另行裁決 |
+| Render output | `DWG_NAME`、`DWG_NO`、`Category`、`REF_ID`、`attr_ch_*`、`attr_mat_*`、`attr_item_*`、`attr_note` | Layout ID／Infuser／Sync | 可重算；來源失效時顯示錯誤，但不能碰人工欄位 |
+| Manual content | `03-A3 Scale`、`Detail_NO`、`attr_manual_補充說明`、`TAG_ELEV_0` 六個方向／編號欄 | 使用者 | Sync、錯誤處理與 Block 升級都不得覆寫；如未來要自動化，需另行裁決 |
 | Control／state | `attr_Lock_不更新>寫入x或X`、物件顏色 | 使用者設定 lock；Infuser 設顏色 | lock 與 health 必須分開；鎖定不應讓 stale／broken 狀態消失 |
 
 除沒有 lock 欄位的 `TAG_DW` 外，其餘 8 份 Block 都使用同一個 lock key：`attr_Lock_不更新>寫入x或X`。它同時含有 `Lock` 與「不更新」，所以 Grab、Laser、Index、Infuser 的現行偵測都能辨認 `x / X`。各支 Python 的備援判斷仍不一致，但對這批正式 Block 而言是**潛在改名／舊 Block 相容風險**，不是目前已證實的鎖定失效。
@@ -247,9 +248,9 @@ Tag Block 不是被動圖形。Block 內的 `%<UserText("block", ...)>%` 會直�
 - 一般資料 Tag（Height／Finish／DW／Item）：清除不屬於它的 `DWG_NAME`、`DWG_NO`、`REF_ID`、`Category`。
 - Index Tag（Section Detail／Elev 1～4）：清除 `DWG_NAME`、`DWG_NO`；`Category`、`REF_ID` 留給 Index／Infuser 表示**目標頁**。
 - `TAG_ELEV_0`：清除 `DWG_NAME`、`DWG_NO`、`REF_ID`，只把**目前頁**的 `Category` 寫入 Block。
-- 圖框或其他 Block：寫入目前頁的 `DWG_NO`／`DWG_NAME`，並清除 `Category`／`REF_ID`。
+- `Sample_Frame` 以及所有未分類 Block：寫入目前頁的 `DWG_NO`／`DWG_NAME`，並清除 `Category`／`REF_ID`。
 
-因此 `Category` 在不同 Block 具有不同上下文：`TAG_ELEV_0` 是目前頁類別，Index Tag 是被引用目標頁類別。2.0 schema 不能只因 key 同名就假設語意相同。
+因此 `Category` 在不同 Block 具有不同上下文：`TAG_ELEV_0` 是目前頁類別，Index Tag 是被引用目標頁類別。另一項風險是 1.0 沒有明確辨認圖框：只要 Block 不在 Data／Index／Elev 0 清單，就會落入圖框寫入分支。2.0 manifest 應以 `role: title_frame` 明列可接收 `DWG_NAME`／`DWG_NO` 的 Block，未知 Block 不寫入。2.0 schema 也不能只因 key 同名就假設語意相同。
 
 ## 階段 11｜以 Grab、Laser、Index 綁定 Tag（2D／Layout）
 
@@ -395,7 +396,7 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 
 # Claude Code 模擬執行流程
 
-這一版走同一條資料鏈，維持三個獨有視角：**每一步在哪個 Rhino 文件執行**、**失敗或取消時會停在哪裡**、以及**哪些是第一階段就必須有、哪些可以晚點補**。這次依 `loopflow_1.0_YT.txt` 的實際操作說明與 9 份 Tag Block 參數重新檢核，補回原本遺漏的操作節點並修正兩處事實錯誤。
+這一版走同一條資料鏈，維持三個獨有視角：**每一步在哪個 Rhino 文件執行**、**失敗或取消時會停在哪裡**、以及**哪些是第一階段就必須有、哪些可以晚點補**。這次依 `loopflow_1.0_YT.txt` 的實際操作說明、9 份 Tag Block 與 1 份圖框參數重新檢核，補回原本遺漏的操作節點並修正兩處事實錯誤。
 
 全文用同一個案子當例子：一間住宅，主臥室有一面磁磚牆（Type `WL-14`，`02_Wall_牆面::Tiles.磁磚`，高 240 cm）和一個開關面板（Type `EL-05`，`06_EL_電控系統::Switch.開關面板`，Block instance，高程基準 `BC`）。
 
@@ -418,7 +419,7 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 兩處事實修正說明：
 
 - **Cabinet layer**：1.0 錄影說 Suite 產物可在任何 layer，這是對的——`run_cabinet_gen` 產生時不檢查 layer。但 `LF_Nexus > TagTrigger` 會把非 `04_CB` layer 上物件的 `_CB.*` 全部清成 `-`。所以「任何 layer 都可以」只在**跑 TagTrigger 之前**成立。這是錄影說明、BOM Update 限制與 Nexus 行為三者之間的真實衝突，不是錄影講錯。
-- **Tag 鎖定**：先前依程式碼推論「Laser 認 `NoUpdate`、其他認『不更新』，因此判斷會分歧」。核對 9 份實際 Block 後，除 `TAG_DW` 沒有 lock 欄位外，另外 8 份的正式 lock key 都是 `attr_Lock_不更新>寫入x或X`，同時含 `Lock` 與「不更新」，四支程式**全部都認得**。分歧只是舊 Block 或改名時的相容風險，不是現行已發生的失效。
+- **Tag 鎖定**：先前依程式碼推論「Laser 認 `NoUpdate`、其他認『不更新』，因此判斷會分歧」。核對 9 份實際 Tag Block 後，除 `TAG_DW` 沒有 lock 欄位外，另外 8 份的正式 lock key 都是 `attr_Lock_不更新>寫入x或X`，同時含 `Lock` 與「不更新」，四支程式**全部都認得**。分歧只是舊 Block 或改名時的相容風險，不是現行已發生的失效。
 
 ## 前提：這條流程同時跑在兩個文件上
 
@@ -617,7 +618,8 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 
 | Block | 寫入 | 清除 |
 | --- | --- | --- |
-| 圖框等一般 Block | 目前頁的 `DWG_NO`、`DWG_NAME` | `Category`、`REF_ID` |
+| `Sample_Frame` 圖框 | 目前頁的 `DWG_NO`、`DWG_NAME` | `Category`、`REF_ID`；`03-A3 Scale` 不動 |
+| 其他未分類 Block | 1.0 同樣寫入 `DWG_NO`、`DWG_NAME` | 這是 fallback 誤寫風險；2.0 未宣告為 `title_frame` 就完全不寫 |
 | 資料 Tag（Height／Finish／Item／DW） | 無 | `DWG_NAME`、`DWG_NO`、`REF_ID`、`Category` |
 | Index Tag（Section Detail、Elev 1–4） | 無 | `DWG_NAME`、`DWG_NO`（`Category`／`REF_ID` 留給 Index／Infuser 表示**目標頁**） |
 | `TAG_ELEV_0` | 目前頁的 `Category` | `DWG_NAME`、`DWG_NO`、`REF_ID` |
@@ -682,16 +684,16 @@ TAG_HEIGHT
 
 `type.category`／`type.sequence` 直接來自階段 2 拆好的欄位，不需要在這裡對 `_03` 做 `split("-", 1)`——順帶解掉「ID 含連字號會被誤拆」的問題。
 
-**欄位所有權必須分清楚**，這是核對 9 份 Block 參數後最重要的收穫：
+**欄位所有權必須分清楚**，這是核對 9 份 Tag Block 與 1 份圖框參數後最重要的收穫：
 
 | 所有權 | 實際欄位 | 允許的寫入者 |
 | --- | --- | --- |
 | Binding metadata | `Source_UUID`、`.Target_DV_ID`、`.Auto_*` | Grab／Laser／Index／migration |
-| Render output | `Category`、`REF_ID`、`attr_ch_*`、`attr_mat_*`、`attr_item_*`、`attr_note` | Layout ID／Infuser／Sync；可重算 |
-| **Manual content** | `attr_manual_補充說明`、`Detail_NO`、`TAG_ELEV_0` 的六個方向／編號欄、`TAG_DW` 的全部欄位 | **只有使用者**；Sync、錯誤處理與 Block 升級都不得覆寫 |
+| Render output | `DWG_NAME`、`DWG_NO`、`Category`、`REF_ID`、`attr_ch_*`、`attr_mat_*`、`attr_item_*`、`attr_note` | Layout ID／Infuser／Sync；可重算 |
+| **Manual content** | `03-A3 Scale`、`attr_manual_補充說明`、`Detail_NO`、`TAG_ELEV_0` 的六個方向／編號欄、`TAG_DW` 的全部欄位 | **只有使用者**；Sync、錯誤處理與 Block 升級都不得覆寫 |
 | Control／state | `attr_Lock_不更新>寫入x或X`、物件顏色 | 使用者設 lock；Infuser 設顏色 |
 
-`Detail_NO` 全 repo 沒有任何 Python writer，`TAG_ELEV_0` 的六個欄位也沒有——它們是純手填欄位。2.0 的 Template manifest 必須明確標記 owner，避免未來新增自動化時誤覆寫。
+`03-A3 Scale`、`Detail_NO` 與 `TAG_ELEV_0` 的六個欄位在全 repo 都沒有 Python writer——它們是純手填欄位。2.0 的 Template manifest 必須明確標記 owner，避免未來新增自動化時誤覆寫。
 
 **鎖定行為**：1.0 對啟用 `x / X` 的 Tag 在處理最前面就跳過，所有欄位維持原狀。但它**也不會替該 Tag 重新判斷狀態或更新顏色**——所以「locked」不等於「來源仍健康」，畫面上可能還留著上一次的顏色。2.0 保留「鎖定不改內容」，但 Health 仍須唯讀判定它是 `manual_locked + stale` 或 `manual_locked + orphaned`。
 
@@ -852,7 +854,7 @@ TAG_HEIGHT
 | 組織方式 | 以 1.0 操作節奏為骨架，逐階段並列現有指令與 2.0 責任 | 以「哪個文件、失敗停在哪、先做哪段」為骨架 |
 | 文件分工 | 以責任角色描述，不預設檔案拆法 | 明確標出 3D／2D／exchange／Worksession 四個角色 |
 | Nexus | 保留 Dict-to-Layer、SpaceBoundary、TagTrigger、TagChecker、Layer-to-Dict 五個節點 | 同樣保留，但把 TagChecker 定義為「Apply 後再跑一次 Scan」而非另建指令 |
-| Tag Block 契約 | 逐一列出 9 份參數、隱藏 binding 與各 Block family 的 Python writer | 聚焦四類欄位所有權，特別標出三組純手填欄位不得被覆寫 |
+| Tag／圖框 Block 契約 | 逐一列出 9 份 Tag 與 1 份圖框參數、隱藏 binding 與各 Block family 的 Python writer | 聚焦四類欄位所有權，特別標出手填欄位不得被覆寫 |
 | Laser | 用固定 View transform 定位 | 相同，另提議在 Materialize 建立來源索引讓 Laser 退化成查表（需 spike 驗證） |
 | Cabinet | 描述兩種 BOM 模式與 1 mm 間隙 | 補上「Suite 任意 layer／BOM Update 限 04_CB／TagTrigger 會清空」三者衝突 |
 | 失敗行為 | 各階段以安全停點描述 | 另有整表列出取消與失敗兩種結果 |
