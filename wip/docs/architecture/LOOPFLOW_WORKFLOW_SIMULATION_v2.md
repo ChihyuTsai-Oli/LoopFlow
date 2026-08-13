@@ -1,6 +1,6 @@
 # LoopFlow 2.0 — 模擬執行流程
 
-本文件把 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` 的建議轉成可實際理解的操作鏈，協助判斷這些原則是否符合工作習慣。兩份流程都已用使用者提供的 `loopflow_1.0_YT.txt` 逐步操作說明與 8 份 Tag Block 參數重新檢核；CodeX 版以 1.0 操作節奏為骨架，Claude 版保留「在哪個文件執行、失敗停在哪裡、先做哪一段」的視角，兩者並列以便對照。
+本文件把 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` 的建議轉成可實際理解的操作鏈，協助判斷這些原則是否符合工作習慣。兩份流程都已用使用者提供的 `loopflow_1.0_YT.txt` 逐步操作說明與 9 份 Tag Block 參數重新檢核；CodeX 版以 1.0 操作節奏為骨架，Claude 版保留「在哪個文件執行、失敗停在哪裡、先做哪一段」的視角，兩者並列以便對照。
 
 - 決策項目與建議強度：`LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`（`ECO-*`／`ED-*` 編號皆指向該表）
 - 資料實體、真相邊界與現況盤點：`LOOPFLOW_DATA_ECOSYSTEM.md`
@@ -21,7 +21,7 @@
 - **1.0 實際操作**：已存在的 `LF_Nexus` 子功能、`LF_Anchor_Frame`、`LF_Extract_CP`、Tagger、Infuser 與顏色回饋。
 - **2.0 建議責任**：尚未實作的 Scan／Apply、穩定 View ID、revision、唯讀 Health 與可復原 Repair。它們改善安全性，但不能刪掉使用者原本的選取、確認與分段操作。
 
-Tag 部分另以使用者提供的 8 份 Block 參數文字，對照 1.0 的 `_LoopFlow_Config.py`、`LF_Tagger_*`、`LF_Infuser_*` 與 `LF_TAG-O.py`。因此下文會把「畫面可見參數」與 Python 動態加入的隱藏綁定資料分開。這次沒有 `TAG_DW` 的參數文字，也沒有在 Rhino 內開啟 `Tag_Blocks.3dm`；使用者已確認 `TAG_DW` 後來改為純手動輸入，所以 Python 內仍存在的 `attr_dw_id`、`Source_UUID` 與 `.Auto_DW_ID` 路徑只視為歷史程式，不再當成現行資料契約。
+Tag 部分另以使用者提供的 9 份 Block 參數文字，對照 1.0 的 `_LoopFlow_Config.py`、`LF_Tagger_*`、`LF_Infuser_*` 與 `LF_TAG-O.py`。因此下文會把「畫面可見參數」與 Python 動態加入的隱藏綁定資料分開。`Tag_DW.txt` 已確認三個可見 key：`attr_dw_id`、`attr_DW-W_輸入門窗寬`、`attr_DW-H_輸入門窗高`；使用者也確認 `TAG_DW` 後來改為全部純手動輸入。Python 內仍存在的 `Source_UUID`、`.Auto_DW_ID` 與自動覆寫 `attr_dw_id` 路徑因此是現行衝突，而非應延續的資料契約。這次仍未在 Rhino 內直接開啟 `Tag_Blocks.3dm` 核對 Block 幾何與顯示配置。
 
 ## 檢核結論｜原流程需要補回的操作事實
 
@@ -226,7 +226,7 @@ Tag Block 不是被動圖形。Block 內的 `%<UserText("block", ...)>%` 會直�
 | Manual content | `Detail_NO`、`attr_manual_補充說明`、`TAG_ELEV_0` 六個方向／編號欄 | 使用者 | Sync、錯誤處理與 Block 升級都不得覆寫；如未來要自動化，需另行裁決 |
 | Control／state | `attr_Lock_不更新>寫入x或X`、物件顏色 | 使用者設定 lock；Infuser 設顏色 | lock 與 health 必須分開；鎖定不應讓 stale／broken 狀態消失 |
 
-提供的 8 份 Block 都使用同一個 lock key：`attr_Lock_不更新>寫入x或X`。它同時含有 `Lock` 與「不更新」，所以 Grab、Laser、Index、Infuser 的現行偵測都能辨認 `x / X`。各支 Python 的備援判斷仍不一致，但對這批正式 Block 而言是**潛在改名／舊 Block 相容風險**，不是目前已證實的鎖定失效。
+除沒有 lock 欄位的 `TAG_DW` 外，其餘 8 份 Block 都使用同一個 lock key：`attr_Lock_不更新>寫入x或X`。它同時含有 `Lock` 與「不更新」，所以 Grab、Laser、Index、Infuser 的現行偵測都能辨認 `x / X`。各支 Python 的備援判斷仍不一致，但對這批正式 Block 而言是**潛在改名／舊 Block 相容風險**，不是目前已證實的鎖定失效。
 
 ### `LF_Tagger_Layout_ID` 對不同 Block 的寫入也不相同
 
@@ -381,7 +381,7 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 
 # Claude Code 模擬執行流程
 
-這一版走同一條資料鏈，維持三個獨有視角：**每一步在哪個 Rhino 文件執行**、**失敗或取消時會停在哪裡**、以及**哪些是第一階段就必須有、哪些可以晚點補**。這次依 `loopflow_1.0_YT.txt` 的實際操作說明與 8 份 Tag Block 參數重新檢核，補回原本遺漏的操作節點並修正兩處事實錯誤。
+這一版走同一條資料鏈，維持三個獨有視角：**每一步在哪個 Rhino 文件執行**、**失敗或取消時會停在哪裡**、以及**哪些是第一階段就必須有、哪些可以晚點補**。這次依 `loopflow_1.0_YT.txt` 的實際操作說明與 9 份 Tag Block 參數重新檢核，補回原本遺漏的操作節點並修正兩處事實錯誤。
 
 全文用同一個案子當例子：一間住宅，主臥室有一面磁磚牆（Type `WL-14`，`02_Wall_牆面::Tiles.磁磚`，高 240 cm）和一個開關面板（Type `EL-05`，`06_EL_電控系統::Switch.開關面板`，Block instance，高程基準 `BC`）。
 
@@ -404,7 +404,7 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 兩處事實修正說明：
 
 - **Cabinet layer**：1.0 錄影說 Suite 產物可在任何 layer，這是對的——`run_cabinet_gen` 產生時不檢查 layer。但 `LF_Nexus > TagTrigger` 會把非 `04_CB` layer 上物件的 `_CB.*` 全部清成 `-`。所以「任何 layer 都可以」只在**跑 TagTrigger 之前**成立。這是錄影說明、BOM Update 限制與 Nexus 行為三者之間的真實衝突，不是錄影講錯。
-- **Tag 鎖定**：先前依程式碼推論「Laser 認 `NoUpdate`、其他認『不更新』，因此判斷會分歧」。核對 8 份實際 Block 後，正式 lock key 是 `attr_Lock_不更新>寫入x或X`，同時含 `Lock` 與「不更新」，四支程式**全部都認得**。分歧只是舊 Block 或改名時的相容風險，不是現行已發生的失效。
+- **Tag 鎖定**：先前依程式碼推論「Laser 認 `NoUpdate`、其他認『不更新』，因此判斷會分歧」。核對 9 份實際 Block 後，除 `TAG_DW` 沒有 lock 欄位外，另外 8 份的正式 lock key 都是 `attr_Lock_不更新>寫入x或X`，同時含 `Lock` 與「不更新」，四支程式**全部都認得**。分歧只是舊 Block 或改名時的相容風險，不是現行已發生的失效。
 
 ## 前提：這條流程同時跑在兩個文件上
 
@@ -668,7 +668,7 @@ TAG_HEIGHT
 
 `type.category`／`type.sequence` 直接來自階段 2 拆好的欄位，不需要在這裡對 `_03` 做 `split("-", 1)`——順帶解掉「ID 含連字號會被誤拆」的問題。
 
-**欄位所有權必須分清楚**，這是核對 8 份 Block 參數後最重要的收穫：
+**欄位所有權必須分清楚**，這是核對 9 份 Block 參數後最重要的收穫：
 
 | 所有權 | 實際欄位 | 允許的寫入者 |
 | --- | --- | --- |
@@ -838,7 +838,7 @@ TAG_HEIGHT
 | 組織方式 | 以 1.0 操作節奏為骨架，逐階段並列現有指令與 2.0 責任 | 以「哪個文件、失敗停在哪、先做哪段」為骨架 |
 | 文件分工 | 以責任角色描述，不預設檔案拆法 | 明確標出 3D／2D／exchange／Worksession 四個角色 |
 | Nexus | 保留 Dict-to-Layer、SpaceBoundary、TagTrigger、TagChecker、Layer-to-Dict 五個節點 | 同樣保留，但把 TagChecker 定義為「Apply 後再跑一次 Scan」而非另建指令 |
-| Tag Block 契約 | 逐一列出 8 份參數、隱藏 binding 與各 Block family 的 Python writer | 聚焦四類欄位所有權，特別標出三組純手填欄位不得被覆寫 |
+| Tag Block 契約 | 逐一列出 9 份參數、隱藏 binding 與各 Block family 的 Python writer | 聚焦四類欄位所有權，特別標出三組純手填欄位不得被覆寫 |
 | Laser | 用固定 View transform 定位 | 相同，另提議在 Materialize 建立來源索引讓 Laser 退化成查表（需 spike 驗證） |
 | Cabinet | 描述兩種 BOM 模式與 1 mm 間隙 | 補上「Suite 任意 layer／BOM Update 限 04_CB／TagTrigger 會清空」三者衝突 |
 | 失敗行為 | 各階段以安全停點描述 | 另有整表列出取消與失敗兩種結果 |
