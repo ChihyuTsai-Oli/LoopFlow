@@ -21,7 +21,7 @@
 - **1.0 實際操作**：已存在的 `LF_Nexus` 子功能、`LF_Anchor_Frame`、`LF_Extract_CP`、Tagger、Infuser 與顏色回饋。
 - **2.0 建議責任**：尚未實作的 Scan／Apply、穩定 View ID、revision、唯讀 Health 與可復原 Repair。它們改善安全性，但不能刪掉使用者原本的選取、確認與分段操作。
 
-Tag 部分另以使用者提供的 9 份 Block 參數文字，對照 1.0 的 `_LoopFlow_Config.py`、`LF_Tagger_*`、`LF_Infuser_*` 與 `LF_TAG-O.py`。這些文字不是人工抄錄，而是用 `wip/tools/擷取tag_block文字.py` 在 Rhino 內選取實際 Block instance、連同巢狀 Block 展開後，直接讀取 `TextEntity`／`TextDot` 的原始文字與 `%<UserText(...)>%` 公式；因此文字內容與 UserText key 已有 `.3dm` 來源證據。下文會把這些畫面文字與 Python 動態加入的隱藏綁定資料分開。`Tag_DW.txt` 已確認三個可見 key：`attr_dw_id`、`attr_DW-W_輸入門窗寬`、`attr_DW-H_輸入門窗高`；使用者也確認 `TAG_DW` 後來改為全部純手動輸入。Python 內仍存在的 `Source_UUID`、`.Auto_DW_ID` 與自動覆寫 `attr_dw_id` 路徑因此是現行衝突，而非應延續的資料契約。目前未被文字輸出保存、仍待視覺核對的只剩 Block 非文字幾何、座標、字型／字高／對齊、顏色與圖層等配置。
+Tag 部分另以使用者提供的 9 份 Block 參數文字，對照 1.0 的 `_LoopFlow_Config.py`、`LF_Tagger_*`、`LF_Infuser_*` 與 `LF_TAG-O.py`。這些文字不是人工抄錄，而是用 `wip/tools/擷取tag_block文字.py` 在 Rhino 內選取實際 Block instance、連同巢狀 Block 展開後，直接讀取 `TextEntity`／`TextDot` 的原始文字與 `%<UserText(...)>%` 公式；因此文字內容與 UserText key 已有 `.3dm` 來源證據。下文會把這些畫面文字與 Python 動態加入的隱藏綁定資料分開。`Tag_DW.txt` 已確認三個可見 key：`attr_dw_id`、`attr_DW-W_輸入門窗寬`、`attr_DW-H_輸入門窗高`；使用者也確認 `TAG_DW` 後來改為全部純手動輸入。Python 內仍存在的 `Source_UUID`、`.Auto_DW_ID` 與自動覆寫 `attr_dw_id` 路徑因此是現行衝突，而非應延續的資料契約。2026-08-13 提供的 `Tag_Blocks.3dm` Rhino 畫面另確認了整體外觀與排列；目前只剩精確座標、字型／字高／對齊、物件圖層與顏色數值未以結構化資料保存，這些不阻擋資料契約規畫。
 
 ## 檢核結論｜原流程需要補回的操作事實
 
@@ -216,6 +216,20 @@ Tag Block 不是被動圖形。Block 內的 `%<UserText("block", ...)>%` 會直�
 | `TAG_DW`／`Tag_DW.txt` | `attr_dw_id`（**Infuser 仍會寫**） | `attr_DW-W_輸入門窗寬`、`attr_DW-H_輸入門窗高`；**無 lock 欄位** | 現行流程無 binding；`Source_UUID`、`.Auto_DW_ID` 僅為歷史程式欄位 | 已改純手動，但 Block 仍列在 `DW_BLOCKS`；因未綁定，每次 Infuser 會塗橘並把 `attr_dw_id` 覆寫成 `?`，且無 lock key 可擋 |
 
 `Tag_Finish_*` 與 `Tag_Height_*` 參數檔中的 `Grab`／`Laser` 是固定畫面標示，不是 UserText key。兩者顯示欄位相同，主要差別是允許的綁定方式與 Block 名稱。
+
+### `Tag_Blocks.3dm` 畫面檢核
+
+2026-08-13 的 Rhino 畫面可直接確認：
+
+- 上排依序放置 Height Grab／Laser、Finish Grab／Laser、Furniture Grab 與純手動 DW；`Grab`／`Laser` 是可見的固定模式標示。
+- Height 顯示 `CH`、高程值、材質代碼／編號、材質名稱與 Notes；Finish 顯示材質代碼／編號、材質名稱與 Notes；Furniture 顯示分類、編號、名稱與 Notes。
+- DW 的畫面只有 `DW` 編號與 `W.`／`H.` 人工輸入提示，沒有 `x / X` overwrite protection 欄位，與 `Tag_DW.txt` 完全一致。
+- 下排保留一顆含上／左／下／右與立面編號的 `TAG_ELEV_0` 圖形、四種方向的 Elevation Index 圖形，以及帶 leader 的 Section Detail 圖形；這些 family 並非同一種通用外觀。
+- 檔內說明明定：Block 上 `x / X` 存在代表 Manual mode、缺席代表 Automatic mode，操作位置是 Rhino Properties 的 Attribute UserText 面板。
+- 檔內同時保存 2D 門、3D 窗與家具 Block naming convention 範例：`2D_D1 = [2D]_[D1]`、`3D_W1 = [3D]_[W1]`、`FF-01__Chair-1 = [FF]-[01]__[Chair-1]`。這是 1.0 Item／歷史 DW 名稱解析的使用者端契約。
+- 畫面下方還有使用 `DWG_NAME`、`DWG_NO` 與比例文字的圖框樣板，呼應 `LF_Tagger_Layout_ID` 對圖框與 Tag Block 採不同欄位寫入規則。
+
+截圖足以確認整體圖形意圖與欄位配置，但沒有顯示 Rhino Block Manager，因此不把畫面中的每顆圖形與內部 Definition 名稱視為額外的獨立證明；現階段 family 對應仍以擷取出的檔名、欄位內容與 Config 清單交叉判定。精確樣式若日後要納入安裝檔驗收，再由擷取工具輸出 manifest 或另做 Rhino 視覺回歸檢查。
 
 ### 四種欄位所有權不能再混在一起
 
