@@ -11,7 +11,7 @@ AI 必須依序完整讀取：
 3. `wip/docs/_LoopFlow_命名與資料契約.md`
 4. `wip/docs/architecture/LOOPFLOW_DATA_ECOSYSTEM.md`
 5. `wip/docs/architecture/LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`
-6. `wip/docs/architecture/LOOPFLOW_WORKFLOW_SIMULATION_v2.md`
+6. `wip/docs/architecture/LOOPFLOW_WORKFLOW_SIMULATION.md`
 7. `wip/docs/architecture/NEXUS_DICTIONARY_DECISION_MENU.md`
 8. `wip/docs/_LoopFlow_重構計畫.md`
 9. `wip/docs/architecture/DEVELOPMENT_ROADMAP.md`

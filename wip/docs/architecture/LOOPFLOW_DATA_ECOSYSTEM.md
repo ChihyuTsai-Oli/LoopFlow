@@ -22,9 +22,8 @@
 | 文件 | 負責 |
 |---|---|
 | `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` | 待使用者裁決的 `ECO-*`／`ED-*` 項目與 AI 建議強度；裁決結果的唯一來源 |
-| `LOOPFLOW_WORKFLOW_SIMULATION_v2.md` | 依 1.0 操作說明、現行 Python 與 10 份 Block 參數重新檢核的現行流程草案 |
-| `LOOPFLOW_WORKFLOW_SIMULATION_v2.html` | 同內容的深色好讀版；由 v2 Markdown 產生，不手動編輯 |
-| `LOOPFLOW_WORKFLOW_SIMULATION.md`／`.html` | 2026-08-12 初版提案，已標示由 v2 取代，只供差異追溯 |
+| `LOOPFLOW_WORKFLOW_SIMULATION.md` | 依 1.0 操作說明、現行 Python 與 10 份 Block 參數重新檢核的現行流程草案 |
+| `LOOPFLOW_WORKFLOW_SIMULATION.html` | 同內容的深色好讀版；由 Markdown 產生，不手動編輯 |
 
 本文的「現況事實」可由現行程式或 Dictionary 交叉確認，但不等於 2.0 必須沿用；由靜態讀碼推論的 Rhino 行為仍須實機測試。所有尚待使用者確認的原則與實務問題集中在 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`，不在本文件維護第二份答案。
 
@@ -422,7 +421,7 @@ Health 不只回報結果，也要記錄原因、建議修復、預覽、使用�
 | P2 | naming config 與 Registry fallback 值形成多個設定來源 | schema／user setting／fallback 單一且可檢查 |
 | P2 | `Role`／`Target_CP`、`Layout_Map`、`Tag_Links` 等只寫不讀 | 無 consumer 的舊結構不承接為 2.0 契約 |
 
-原本列在此表的 Cabinet 風險（產物 layer 不受限、被 Nexus 清空 `_CB.*`、方向被排序抹平）**已因使用者裁決離開主鏈**：Cabinet 與 BOM 排除在主工作流程之外並列入後續開發，2.0 主鏈的 Nexus、Registry、Tag 與 Health 都不處理 `_CB.*`，因此不再需要在核心資料鏈解決這組衝突。1.x 事實與程式行號保存在 `LOOPFLOW_WORKFLOW_SIMULATION_v2.md` 的「延後工作軌｜Cabinet 與 BOM」，供該工作軌重建時使用。
+原本列在此表的 Cabinet 風險（產物 layer 不受限、被 Nexus 清空 `_CB.*`、方向被排序抹平）**已因使用者裁決離開主鏈**：Cabinet 與 BOM 排除在主工作流程之外並列入後續開發，2.0 主鏈的 Nexus、Registry、Tag 與 Health 都不處理 `_CB.*`，因此不再需要在核心資料鏈解決這組衝突。1.x 事實與程式行號保存在 `LOOPFLOW_WORKFLOW_SIMULATION.md` 的「延後工作軌｜Cabinet 與 BOM」，供該工作軌重建時使用。
 
 ## 23 支現行 Python：功能、意圖與 2.0 去向
 

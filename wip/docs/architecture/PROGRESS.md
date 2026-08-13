@@ -9,7 +9,7 @@
 
 ## AI 接手入口
 
-本 repo 已建立自足的繁中維護文件。AI 開始前依序讀取根目錄 `AGENTS.md` 與該檔列出的 `wip/docs/` 文件；其中 `architecture/LOOPFLOW_DATA_ECOSYSTEM.md` 是完整工作鏈與資料真相邊界的總體起點，`architecture/LOOPFLOW_WORKFLOW_SIMULATION_v2.md` 是依 1.0 操作與 Block 證據複核後的現行流程，最後讀本文件確認即時進度。外部分析檔不再是必要輸入。
+本 repo 已建立自足的繁中維護文件。AI 開始前依序讀取根目錄 `AGENTS.md` 與該檔列出的 `wip/docs/` 文件；其中 `architecture/LOOPFLOW_DATA_ECOSYSTEM.md` 是完整工作鏈與資料真相邊界的總體起點，`architecture/LOOPFLOW_WORKFLOW_SIMULATION.md` 是依 1.0 操作與 Block 證據複核後的現行流程，最後讀本文件確認即時進度。外部分析檔不再是必要輸入。
 
 ## Release 回復資產
 
@@ -71,7 +71,7 @@ fixture 與預期結果應在對應功能建造前完成；實機結果則在主
 | 2026-08-12 | 工具列的 Rhino Section 入口 | 保留目前工具列中的 Section 快捷按鈕；Macro 直接呼叫 Rhino 8 內建 `Clipping*` 指令，不建立 Python entrypoint、不封裝 Rhino 功能本體 | 已記錄 | 正式版管理 LoopFlow 自有工具列且不覆蓋 workspace；圖示來源與 UI／安裝格式待發佈 spike 決定 |
 | 2026-08-12 | 藍圖與決策表拆分 | 將 ECO-01～11、已有證據但待確認的建議及實務問題移至 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`，供使用者直接編輯後由 AI 回寫 | 已建立 | 藍圖只保留架構說明與安全前置；待決答案不再雙重維護 |
 | 2026-08-12 | 決策強度與端到端情境 | 決策表增加強烈／一般／輕鬆三種 AI 建議強度，並以概念指令描述首次建模至 Health／Repair，以及模型修改後沿 revision 更新圖面與 Tag 的完整流程 | 已建立 | 概念指令尚非最終命名或已實作入口；流程會隨使用者決策回寫調整 |
-| 2026-08-13 | 1.0 實際操作流程複核 | 以錄影逐步說明核對使用者介入與停留點，補回 SpaceBoundary、TagTrigger→TagChecker、Layer-to-Dict、Anchor、Extract、人工建 Layout、Part／All 與三色回饋 | 通過文件對照 | 尚未執行完整 Rhino 指令端到端；`LOOPFLOW_WORKFLOW_SIMULATION_v2.md` 為現行流程草案 |
+| 2026-08-13 | 1.0 實際操作流程複核 | 以錄影逐步說明核對使用者介入與停留點，補回 SpaceBoundary、TagTrigger→TagChecker、Layer-to-Dict、Anchor、Extract、人工建 Layout、Part／All 與三色回饋 | 通過文件對照 | 尚未執行完整 Rhino 指令端到端；現行流程草案後續定名為 `LOOPFLOW_WORKFLOW_SIMULATION.md` |
 | 2026-08-13 | Tag／圖框 Block 契約證據 | 由 Rhino instance 擷取 9 份 Tag、1 份圖框文字，共 24 個唯一 UserText key；對照 Config、Grab／Laser／Index、Layout ID、Infuser、TAG-O 與 `Tag_Blocks.3dm` 畫面 | 24/24 欄位已追蹤 | 精確座標、字型、圖層與顏色值尚未結構化；不影響目前資料契約規畫 |
 | 2026-08-13 | Tag 現況衝突與新決策輸入 | 確認 `TAG_DW` 為純手動但 1.x Infuser 會覆寫編號；lock 只認單一 `x/X` 且同時凍結重新綁定；家具 `FF-01` 與 Dictionary 為兩套編碼；圖框 `03-A3 Scale` 無 writer | 已回寫上位文件 | ED-14～16 尚待使用者裁決；產品程式碼與 Block 資產未修改 |
 | 2026-08-13 | 非 `ref/` 文件一致性同步 | 將 workflow v2 設為現行流程來源；同步資料藍圖、決策表、契約、設定、roadmap、Nexus 菜單、WIP 導覽與繁中／英文 1.x 指南 | 文件與衍生 HTML 已同步 | 舊 workflow 保留並明確標示為歷史提案；尚未執行 Rhino 端到端測試 |
@@ -79,7 +79,8 @@ fixture 與預期結果應在對應功能建造前完成；實機結果則在主
 | 2026-08-13 | Laser 來源索引列入計畫 | 使用者裁決列入藍圖，不另立前置 spike——索引產出前無從測試。Materialize 增列 drawing element → `source_object_ids[]` provenance，Laser 在唯一有效來源時走索引；定位基準仍是固定 View transform | 已回寫藍圖 Drawing lifecycle、資料契約、v2 與 roadmap LF-E02／LF-D02 | 可行性與 indexed／unindexed／ambiguous 覆蓋率在 E02／D02 實機時驗證；退路為剖面交線鄰近比對，或只用固定 transform |
 | 2026-08-13 | Cabinet／BOM 排除主鏈 | 使用者裁決 Cabinet 與 BOM 不進主工作流程、列入後續開發（BOM 功能過於零碎，會汙染核心契約）；2.0 Nexus／Registry／Tag／Health 都不處理 `_CB.*` | 已回寫 v2、藍圖、決策表、Nexus 菜單、roadmap、重構計畫、契約與使用說明 | ED-03、ND-23、ND-24、CF-21 一併延後；1.x 事實移入 v2 的「延後工作軌」保存 |
 | 2026-08-13 | 1.0 操作證據的地位裁決 | 使用者確認錄影說明是操作邏輯參考、不是流程契約；1.0 用法有限制但無大問題，步驟順序應配合新架構重新思考。維持的是控制意圖，不是按鈕順序 | 已回寫 v2、藍圖、決策表、使用說明、系統設定與 WIP 導覽 | 證據檔已正式登錄於結構樹；後續若改動 1.0 行為須是明示裁決，不得順手更改 |
-| 2026-08-13 | Claude 調整後一致性補查 | 修正 1.0 證據檔名；解除 2D 工具對 Cabinet 的錯誤依賴；補上 View Registration → Materialize → Laser 前置；來源索引改為零／一／多來源與覆蓋率契約；發布關卡區分阻擋項與警告 | 已回寫契約、v2、Nexus 菜單、roadmap、重構計畫與設定／使用說明 | 新增 ED-17 掃描 scope、ED-18 Cabinet 首發邊界，仍待使用者裁決；產品程式碼未修改 |
+| 2026-08-13 | Claude 調整後一致性補查 | 修正 1.0 證據檔名；解除 2D 工具對 Cabinet 的錯誤依賴；補上 View Registration → Materialize → Laser 前置；來源索引改為零／一／多來源與覆蓋率契約；發布關卡區分阻擋項與警告 | 已回寫契約、現行流程、Nexus 菜單、roadmap、重構計畫與設定／使用說明 | 新增 ED-17 掃描 scope、ED-18 Cabinet 首發邊界，仍待使用者裁決；產品程式碼未修改 |
+| 2026-08-13 | Workflow simulation 正式定名 | 刪除已過時的 2026-08-12 初版 MD／HTML，將重新檢核後的現行版本改名為 `LOOPFLOW_WORKFLOW_SIMULATION.md`／`.html`，同步產生器與所有引用 | repo 僅保留一組正式 workflow simulation，HTML 已重建 | Git 歷史仍可追溯已刪除初版；產品程式碼未修改 |
 
 ## 下一步
 

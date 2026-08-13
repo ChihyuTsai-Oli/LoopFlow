@@ -48,10 +48,8 @@ wip/
     _LoopFlow_*.md        # 重構維護 SSOT
     architecture/LOOPFLOW_DATA_ECOSYSTEM.md
     architecture/LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md
-    architecture/LOOPFLOW_WORKFLOW_SIMULATION_v2.md    # 現行流程草案
-    architecture/LOOPFLOW_WORKFLOW_SIMULATION_v2.html  # v2 衍生檔，由 tools 產生，勿手改
-    architecture/LOOPFLOW_WORKFLOW_SIMULATION.md       # 已取代的初版提案
-    architecture/LOOPFLOW_WORKFLOW_SIMULATION.html     # 初版衍生檔，只供追溯
+    architecture/LOOPFLOW_WORKFLOW_SIMULATION.md       # 現行流程草案
+    architecture/LOOPFLOW_WORKFLOW_SIMULATION.html     # 衍生檔，由 tools 產生，勿手改
     architecture/NEXUS_DICTIONARY_DECISION_MENU.md
     architecture/DEVELOPMENT_ROADMAP.md
     architecture/PROGRESS.md
@@ -225,7 +223,7 @@ Registry P0 完成前，以上 timeout 不代表 lock／replace 已達安全規�
 - 任務切分、依賴順序與雙機安全停點：`architecture/DEVELOPMENT_ROADMAP.md`。
 - Dictionary、命名與 schema SSOT：`_LoopFlow_命名與資料契約.md`。
 - 完整工作鏈、資料實體、真相邊界與 23 支現行程式意圖：`architecture/LOOPFLOW_DATA_ECOSYSTEM.md`。
-- 依 1.0 實際操作、Tag／圖框參數與現行程式複核的目前流程：`architecture/LOOPFLOW_WORKFLOW_SIMULATION_v2.md`；同名 `_v2.html` 是衍生閱讀版，未加 `_v2` 的舊檔只供歷史追溯。
+- 依 1.0 實際操作、Tag／圖框參數與現行程式複核的目前流程：`architecture/LOOPFLOW_WORKFLOW_SIMULATION.md`；同名 `.html` 是衍生閱讀版。已過時的初版內容已刪除，不再作為追溯來源。
 - 使用者可直接編輯的上位原則與實務待決事項：`architecture/LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`。
 - 已合併的原始藍圖與獨立複核：`architecture/ref/`；只供追溯，不取代整合後藍圖。
 - Nexus／Dictionary 的 1.0 靜態盤點、衝突與待決定選項：`architecture/NEXUS_DICTIONARY_DECISION_MENU.md`。

@@ -96,9 +96,9 @@
 
 兩份模擬執行流程（CodeX 版與 Claude Code 版）已移至獨立文件，避免本決策表過長而不利填寫：
 
-- Markdown：`LOOPFLOW_WORKFLOW_SIMULATION_v2.md`
-- 深色好讀版：`LOOPFLOW_WORKFLOW_SIMULATION_v2.html`（同目錄，由 Markdown 產生）
+- Markdown：`LOOPFLOW_WORKFLOW_SIMULATION.md`
+- 深色好讀版：`LOOPFLOW_WORKFLOW_SIMULATION.html`（同目錄，由 Markdown 產生）
 
-未加 `_v2` 的舊 MD／HTML 是 2026-08-12 初版提案，已標示由 v2 取代，只供差異追溯。
+2026-08-12 的初版提案已刪除；上述 MD／HTML 是唯一現行版本。
 
 該文件把本表的建議轉成可實際理解的操作鏈，供你判斷這些原則是否符合工作習慣。它不維護任何決策答案；`ECO-*`／`ED-*` 的裁決一律填在本表。

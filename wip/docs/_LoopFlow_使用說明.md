@@ -59,7 +59,7 @@ LoopFlow 是 Rhino 8 的半自動化設計與出圖工具。使用者決定何�
 
 ## Tag Block 的 1.x 操作事實
 
-- 9 份 Tag 與 1 份圖框的實際文字已由 Rhino Block instance 擷取；欄位細節見 `architecture/LOOPFLOW_WORKFLOW_SIMULATION_v2.md`。
+- 9 份 Tag 與 1 份圖框的實際文字已由 Rhino Block instance 擷取；欄位細節見 `architecture/LOOPFLOW_WORKFLOW_SIMULATION.md`。
 - 正式可鎖 Tag 使用 `attr_Lock_不更新>寫入x或X`。只有單一 `x`／`X`（前後空白可有）會生效；其他符號或文字看似已填，實際仍未鎖且沒有警告。
 - 鎖定不只阻擋 Infuser 寫入，也會阻擋 Grab／Laser／Index 重新綁定。Infuser 跳過 locked Tag 時也不重新檢查來源與顏色，所以 locked 不代表來源健康。
 - `TAG_DW` 後來改成門窗編號、寬、高全部手動輸入，而且沒有 lock 欄位；但 1.x Infuser 仍把它當資料 Tag。執行 Part／All 時，未綁定的 `TAG_DW` 會被塗橘並把人工 `attr_dw_id` 改成 `?`。這是已知 1.x 衝突；2.0 將它定義為純手動且完全不由 Sync 處理。
