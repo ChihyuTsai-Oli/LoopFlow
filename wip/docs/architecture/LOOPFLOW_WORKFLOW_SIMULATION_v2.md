@@ -21,7 +21,7 @@
 - **1.0 實際操作**：已存在的 `LF_Nexus` 子功能、`LF_Anchor_Frame`、`LF_Extract_CP`、Tagger、Infuser 與顏色回饋。
 - **2.0 建議責任**：尚未實作的 Scan／Apply、穩定 View ID、revision、唯讀 Health 與可復原 Repair。它們改善安全性，但不能刪掉使用者原本的選取、確認與分段操作。
 
-Tag 部分另以使用者提供的 8 份 Block 參數文字，對照 1.0 的 `_LoopFlow_Config.py`、`LF_Tagger_*`、`LF_Infuser_*` 與 `LF_TAG-O.py`。因此下文會把「畫面可見參數」與 Python 動態加入的隱藏綁定資料分開。這次沒有 `TAG_DW` 的參數文字，也沒有在 Rhino 內開啟 `Tag_Blocks.3dm`，所以門窗 Tag 只記錄程式已證明的 `attr_dw_id`，其餘 Block 幾何、預設色與欄位顯示位置仍待實機核對。
+Tag 部分另以使用者提供的 8 份 Block 參數文字，對照 1.0 的 `_LoopFlow_Config.py`、`LF_Tagger_*`、`LF_Infuser_*` 與 `LF_TAG-O.py`。因此下文會把「畫面可見參數」與 Python 動態加入的隱藏綁定資料分開。這次沒有 `TAG_DW` 的參數文字，也沒有在 Rhino 內開啟 `Tag_Blocks.3dm`；使用者已確認 `TAG_DW` 後來改為純手動輸入，所以 Python 內仍存在的 `attr_dw_id`、`Source_UUID` 與 `.Auto_DW_ID` 路徑只視為歷史程式，不再當成現行資料契約。
 
 ## 檢核結論｜原流程需要補回的操作事實
 
@@ -213,7 +213,7 @@ Tag Block 不是被動圖形。Block 內的 `%<UserText("block", ...)>%` 會直�
 | `TAG_HEIGHT_GRAB`／`TAG_HEIGHT_LASER` | `attr_ch_key`、`attr_ch_val`、`attr_mat_key`、`attr_mat_val`、`attr_note` | `attr_manual_補充說明`、lock | `Source_UUID` | Infuser 由 Registry 寫高程基準、計算值、Type 編號兩段與名稱；Grab／Laser 只決定來源 |
 | `TAG_FINISH_GRAB`／`TAG_FINISH_LASER` | `attr_mat_key`、`attr_mat_val`、`attr_note` | `attr_manual_補充說明`、lock | `Source_UUID` | Infuser 由 Registry 寫 Type 編號兩段與名稱；Grab／Laser 只決定來源 |
 | `TAG_ITEM`／`Tag_Item.txt` | `attr_item_key`、`attr_item_val`、`attr_note` | `attr_manual_補充說明`、lock | `Source_UUID`、`.Auto_Item_Key`、`.Auto_Item_Val`、`.Auto_Item_Note` | Grab 可讀一般 UUID，也可從命名為 `KEY-VALUE__NOTE` 的 Block 解析 shadow fields，再由 Infuser 回填 |
-| `TAG_DW` | 已由程式確認 `attr_dw_id` | 參數檔未提供，待確認 | `Source_UUID`、`.Auto_DW_ID` | Grab 可從 `2D_*`／`3D_*` Block 名稱解析；本次不能確認完整可見欄位 |
+| `TAG_DW` | 無；不由 Python 自動寫入 | 所有顯示欄位（目前純手動） | 現行流程無 binding；`Source_UUID`、`.Auto_DW_ID` 僅為歷史程式欄位 | 不執行 Grab／Infuser 綁定；Block 的完整欄位仍待實機核對 |
 
 `Tag_Finish_*` 與 `Tag_Height_*` 參數檔中的 `Grab`／`Laser` 是固定畫面標示，不是 UserText key。兩者顯示欄位相同，主要差別是允許的綁定方式與 Block 名稱。
 
@@ -243,10 +243,11 @@ Tag Block 不是被動圖形。Block 內的 `%<UserText("block", ...)>%` 會直�
 
 | 1.0 指令 | 預期 Block | 使用者實際動作 | 1.0 定位依據 | 2.0 安全升級 |
 | --- | --- | --- | --- | --- |
-| `LF_Tagger_Grab` | Height／Finish 的 `_GRAB`、`TAG_ITEM`、`TAG_DW` | 先選 Tag，再點進 Detail 選模型／Block 來源 | 一般物件用 UUID；Item／DW 可解析 Block 名稱 | 保存正式 `source_object_id` 或正式 `source_type`；無法確認時不建立綁定 |
+| `LF_Tagger_Grab` | Height／Finish 的 `_GRAB`、`TAG_ITEM` | 先選 Tag，再點進 Detail 選模型／Block 來源 | 一般物件用 UUID；Item 可解析 Block 名稱 | 保存正式 `source_object_id` 或正式 `source_type`；無法確認時不建立綁定 |
 | `LF_Tagger_Laser` | Height／Finish 的 `_LASER` | 先選 Tag，再在 2D Section 點位置 | Anchor Frame、Clipping Plane 與幾何射線 | 經已註冊 View transform 找候選；多候選時由使用者選擇 |
 | `LF_Tagger_Index` | `TAG_SECTION_DETAIL`、`TAG_ELEV_1`～`4` | 先選 Index Tag，再從可搜尋清單選 Detail View | `.Target_DV_ID` 保存 Detail GUID | 保存 `target_view_id`／`target_sheet_id`，圖號由 Sheet metadata 產生 |
 | 不需綁定 | `TAG_ELEV_0` | 使用者維護方向／編號欄；Layout ID 寫目前頁 Category | 目前頁 Layout | 另定 Elevation group schema 前，不把它誤送進 Grab／Laser／Index |
+| 不需綁定 | `TAG_DW` | 使用者直接填寫 Block 顯示內容 | 無 | 保持純手動 Tag；不建立來源、不由 Sync 覆寫 |
 
 使用者可以逐張圖、逐批 Tag 執行，不要求一次綁完全部 Layout。取消選取時 Tag 保持原狀；重新綁定既有 Tag 前應先顯示目前來源。1.0 主要以 Block 名稱中的 `GRAB`／`LASER` 和數個 hard-coded 清單防止用錯指令，但 guard 並不完整；2.0 應由 Tag Template manifest 明列每種 Block 允許的 binding mode，而不是靠名稱字串猜測。
 
@@ -532,7 +533,7 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 
 依 ED-02，鎖定仍應改成單一 `lock_state`。程式的備援條件確實不一致，但本次提供的正式 Block key 是 `attr_Lock_不更新>寫入x或X`，同時含有 `Lock` 與「不更新」，所以 Grab、Laser、Index、Infuser 都能辨認。真正問題是契約散落：若 Block 改名、匯入舊版或使用另一種 key，結果可能不同；另外 Infuser 對 locked Tag 完全跳過，也不重新判斷 stale／broken。
 
-門窗與家具 Tag 不再使用 `NAME_PARSED` 這個哨兵值假裝有來源，改為正式的 source type。
+家具 Tag 不再使用 `NAME_PARSED` 這個哨兵值假裝有來源，改為正式的 source type。`TAG_DW` 則不建立來源或 source type，所有顯示內容維持手動；舊 Python 中的門窗名稱解析只供歷史資料辨識或一次性 migration 參考，不進入 2.0 日常同步流程。
 
 ## 階段 10｜同步顯示值（2D 文件）
 
