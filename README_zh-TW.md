@@ -4,6 +4,8 @@
 
 > **擁抱循環，讓它流暢。**
 
+> **開發狀態：** LoopFlow v2 正在開發中。目前公開發布版本仍為 v1；除非另有標示，以下文件皆以穩定版本為準。
+
 LoopFlow 是一套以 Rhino 8 為核心、貫穿 SD（Schematic Design）、DD（Design Development）至 CD（Construction Documentation）的半自動化設計與文件工作流。它不是另一個 BIM 系統，也不要求使用固定範本或參數化流程；你仍然掌控每個步驟，LoopFlow 負責資料更新、圖紙同步與其他重複工作。
 
 主要流程都在 Rhino 中完成，讓模型資料、圖面與 Layout 文件能隨著設計發展持續演進。LoopFlow 已在多個實際設計專案中使用，目標是保留 Rhino 的設計自由，同時減少設計變更後的重複整理。
