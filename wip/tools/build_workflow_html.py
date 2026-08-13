@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""把現行 LOOPFLOW_WORKFLOW_SIMULATION.md 轉成深色好讀版 HTML。
+"""把現行工作流程模擬.md 轉成深色好讀版 HTML。
 
 用途
-    `LOOPFLOW_WORKFLOW_SIMULATION.html` 是衍生檔，不應手動編輯。
+    `工作流程模擬.html` 是衍生檔，不應手動編輯。
     修改對應的 `.md` 之後執行本腳本重新產生，兩者才會一致。
 
 執行
@@ -34,10 +34,10 @@ for _s in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-# 專案內的預設位置：<repo>/wip/tools/ → <repo>/wip/docs/architecture/
-_ARCH_DIR = Path(__file__).resolve().parents[1] / "docs" / "architecture"
-DEFAULT_SRC = _ARCH_DIR / "LOOPFLOW_WORKFLOW_SIMULATION.md"
-DEFAULT_OUT = _ARCH_DIR / "LOOPFLOW_WORKFLOW_SIMULATION.html"
+# 專案內的預設位置：<repo>/wip/tools/ → <repo>/wip/docs/
+_DOCS_DIR = Path(__file__).resolve().parents[1] / "docs"
+DEFAULT_SRC = _DOCS_DIR / "工作流程模擬.md"
+DEFAULT_OUT = _DOCS_DIR / "工作流程模擬.html"
 
 
 # ==================================================================

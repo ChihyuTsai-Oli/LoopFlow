@@ -1,6 +1,6 @@
 # LoopFlow — 系統設定
 
-本文件是 LoopFlow 維護設定與現況結構的權威來源。重構目標與遷移順序另見 `_LoopFlow_重構計畫.md`。
+本文件是 LoopFlow 維護設定與現況結構的權威來源。重構策略與完成條件另見 `_LoopFlow_重構計畫.md`；任務依賴與工作波次另見 `開發任務與路徑.md`。
 
 ## Repo 與版本
 
@@ -46,14 +46,13 @@ wip/
   README.md
   docs/
     _LoopFlow_*.md        # 重構維護 SSOT
-    architecture/LOOPFLOW_DATA_ECOSYSTEM.md
-    architecture/LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md
-    architecture/LOOPFLOW_WORKFLOW_SIMULATION.md       # 現行流程草案
-    architecture/LOOPFLOW_WORKFLOW_SIMULATION.html     # 衍生檔，由 tools 產生，勿手改
-    architecture/NEXUS_DICTIONARY_DECISION_MENU.md
-    architecture/DEVELOPMENT_ROADMAP.md
-    architecture/PROGRESS.md
-    architecture/ref/    # 已合併的原始評閱與歷史參考，不是現行 SSOT
+    資料生態藍圖.md
+    資料生態決策表.md
+    工作流程模擬.md       # 衝突時的暫定操作基準
+    工作流程模擬.html     # 衍生檔，由 tools 產生，勿手改
+    Nexus與字典盤點.md
+    開發任務與路徑.md
+    重構進度.md
     loopflow_1.0_workflow_YT.txt  # 1.0 逐步操作說明；操作邏輯參考，不是 2.0 流程契約
     tag_block_text/       # 從實際 Rhino Block instance 擷取的 9 Tag＋1 圖框文字證據
   tools/
@@ -219,14 +218,7 @@ Registry P0 完成前，以上 timeout 不代表 lock／replace 已達安全規�
 
 ## 文件與程式註解規則
 
-- 維護 SSOT：本文件、`_LoopFlow_使用說明.md`、`_LoopFlow_重構計畫.md`、`architecture/PROGRESS.md`。
-- 任務切分、依賴順序與雙機安全停點：`architecture/DEVELOPMENT_ROADMAP.md`。
-- Dictionary、命名與 schema SSOT：`_LoopFlow_命名與資料契約.md`。
-- 完整工作鏈、資料實體、真相邊界與 23 支現行程式意圖：`architecture/LOOPFLOW_DATA_ECOSYSTEM.md`。
-- 依 1.0 實際操作、Tag／圖框參數與現行程式複核的目前流程：`architecture/LOOPFLOW_WORKFLOW_SIMULATION.md`；同名 `.html` 是衍生閱讀版。已過時的初版內容已刪除，不再作為追溯來源。
-- 使用者可直接編輯的上位原則與實務待決事項：`architecture/LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`。
-- 已合併的原始藍圖與獨立複核：`architecture/ref/`；只供追溯，不取代整合後藍圖。
-- Nexus／Dictionary 的 1.0 靜態盤點、衝突與待決定選項：`architecture/NEXUS_DICTIONARY_DECISION_MENU.md`。
+- 全部維護文件的唯一責任表位於 `wip/README.md`；本文件不複製第二份清單。
 - 內部維護文件與新增／修改註解使用繁體中文。
 - 模組整體目的、流程、設定、契約、副作用與回復方式寫入 docs。
 - 程式只保留必要 docstring、難以由程式本身看出的原因、API 限制與安全 invariant。

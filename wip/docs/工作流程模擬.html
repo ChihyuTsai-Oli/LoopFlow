@@ -184,15 +184,15 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 </div>
 </details></nav>
 <main><h1 class="doctitle" id="LoopFlow-2-0-模擬執行流程">LoopFlow 2.0 — 模擬執行流程</h1>
-<p>本文件把 <code>LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md</code> 的建議轉成可實際理解的操作鏈，協助判斷這些原則是否符合工作習慣。兩份流程都已用使用者提供並保存於 repo 的 <code>loopflow_1.0_workflow_YT.txt</code> 逐步操作說明、9 份 Tag Block 與 1 份圖框參數重新檢核；CodeX 版以 1.0 操作節奏為骨架，Claude 版保留「在哪個文件執行、失敗停在哪裡、先做哪一段」的視角，兩者並列以便對照。</p>
-<ul><li>決策項目與建議強度：<code>LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md</code>（<code>ECO-*</code>／<code>ED-*</code> 編號皆指向該表）</li><li>資料實體、真相邊界與現況盤點：<code>LOOPFLOW_DATA_ECOSYSTEM.md</code></li><li>本文件不維護決策答案；使用者的裁決一律寫在決策表，不在此重複。</li></ul>
+<p>本文件把 <code>資料生態決策表.md</code> 的建議轉成可實際理解的操作鏈，協助判斷這些原則是否符合工作習慣。兩份流程都已用使用者提供並保存於 repo 的 <code>loopflow_1.0_workflow_YT.txt</code> 逐步操作說明、9 份 Tag Block 與 1 份圖框參數重新檢核；CodeX 版以 1.0 操作節奏為骨架，Claude 版保留「在哪個文件執行、失敗停在哪裡、先做哪一段」的視角，兩者與末段比較都保留。</p>
+<ul><li>決策項目與建議強度：<code>資料生態決策表.md</code>（<code>ECO-*</code>／<code>ED-*</code>／<code>ND-*</code> 編號皆指向該表）</li><li>資料實體、真相邊界與現況盤點：<code>資料生態藍圖.md</code></li><li>本文件不維護決策答案；使用者的裁決一律寫在決策表，不在此重複。</li><li><strong>衝突處理</strong>：若藍圖、重構計畫、開發任務表或其他規畫文件對「使用者怎麼操作、在哪裡停留、何時發布／綁定／同步」有不同描述，暫以本文件為操作基準；不要直接覆蓋差異，先把疑義記入決策表再裁決。任務 ID 與工程前置仍由 <code>開發任務與路徑.md</code> 負責。</li></ul>
 <p>文中明列為「1.0」的 <code>LF_*</code> 是既有指令；明列為「2.0」或「概念」的 <code>LF_*</code> 則不是已完成按鈕或最終命名。<code>! _Clipping*</code> 是 Rhino 8 內建指令。1.0 操作順序已有錄影說明作為使用者流程證據；2.0 建議行為仍尚未經 Rhino 實機驗證。</p>
 <h2 id="1-0-操作證據的地位-使用者裁決">1.0 操作證據的地位（使用者裁決）</h2>
 <p><code>wip/docs/loopflow_1.0_workflow_YT.txt</code> 是<strong>操作邏輯的參考</strong>，用來確認 1.0 實際怎麼被使用、使用者在哪些點介入。使用者已確認：這套流程在 1.0 使用上有一些限制，但沒有造成大問題，而且<strong>流程本身不是不可更動的</strong>——2.0 應該配合新的程式架構重新思考步驟怎麼排。</p>
 <p>因此本文出現的「補回」「必須保留」「不能刪掉」一律指<strong>意圖層級</strong>，不是要求 2.0 照抄 1.0 的按鈕順序：</p>
 <ul><li><strong>要保留的是控制權</strong>：何時寫入模型資料、何時發布、切哪張圖、抽哪些線、Tag 綁誰、只同步當前頁或全部頁，這些決定仍屬使用者。</li><li><strong>可以重新設計的是形式</strong>：階段怎麼合併或拆分、指令怎麼命名、哪些檢查自動串接、哪些介面取代 1.0 的脆弱做法（例如 Anchor Frame → View Registration）。</li><li><strong>不可無意遺失的是事實</strong>：本文記錄的 1.0 行為、欄位所有權與已知衝突，是重新設計時的輸入；要改掉某項行為可以，但要是有意識的裁決，不是搬程式時順手改掉。</li></ul>
 <p>換句話說，本文是「現況 + 已知風險 + 建議方向」，不是 2.0 的流程契約。與新架構衝突時，以新架構的論證為準，並把差異回寫決策表。</p>
-<blockquote><p>本檔是依 1.0 實際操作重新檢核的唯一現行流程草案；<code>LOOPFLOW_WORKFLOW_SIMULATION.html</code> 是由本檔產生的深色閱讀版。先前的初版提案已刪除。</p></blockquote>
+<blockquote><p>本檔是依 1.0 實際操作重新檢核的唯一現行流程草案；<code>工作流程模擬.html</code> 是由本檔產生的深色閱讀版。先前的初版提案已刪除。</p></blockquote>
 <hr>
 <section class="chapter codex" id="CodeX-模擬執行流程">
 <h1><span class="tagpill">CodeX</span>模擬執行流程</h1>
@@ -517,7 +517,7 @@ LF_Tagger_Index.py:162  &quot;This tag has write-protect lock enabled. To re-bin
 <p><strong>可以晚一輪</strong></p>
 <ul><li><code>LF_Tag_Laser</code>（有 Grab 就能出圖，Laser 是效率工具）</li><li><code>LF_Sheet_Duplicate</code>（可以先手動複製頁面）</li><li>完整 Drawing 狀態機（先有冪等就夠）</li><li><code>Layer to Dict.</code> 反向匯出（選用支線）</li><li>Cabinet／BOM 與三個 2D Generator 重建（Cabinet 已明確移出主鏈，另立工作軌）</li></ul>
 <p><strong>不阻擋主鏈的獨立工具</strong>：<code>LF_2D_DW_Gen</code>（8 種門、3 種窗）、<code>LF_2D_Cabinet_Gen</code>（高櫃／下櫃／衣櫃）、<code>LF_2D_Shelf_Gap</code>（等距層板）。依錄影說明它們沒有流程相依，可隨時使用，1.x 版本可以一直用到最後。<code>LF_Cabinet_Suite</code> 與 BOM 則依使用者裁決完全移出主鏈，列入後續開發；主鏈的 Nexus、Registry、Tag 與 Health 都不處理 <code>_CB.*</code>。</p>
-<p><strong>建議最先動工的一項</strong>：階段 5 的 Scan／Apply／再驗證。它同時解掉 UUID 不可逆損失（ECO-11）、BC 靜默錯誤（ED-06）與空間未命中歧義（ED-07），而且不依賴其他任何新契約。</p>
+<p><strong>建議最先完成的核心使用者功能工作軌</strong>：階段 5 的 Scan／Apply／再驗證。它同時解掉 UUID 不可逆損失（ECO-11）、BC 靜默錯誤（ED-06）與空間未命中歧義（ED-07）。這不代表跳過資料契約與最小 foundation；工程前置仍依 <code>開發任務與路徑.md</code>，但契約與骨架完成後，不應先被其他業務功能插隊。</p>
 <hr>
 <h2 id="與-CodeX-流程的主要差異">與 CodeX 流程的主要差異</h2>
 <p>兩版都已依 1.0 錄影與 Tag Block 參數檢核，資料鏈結論一致，差異在切入角度：</p>

@@ -9,13 +9,13 @@ AI 必須依序完整讀取：
 1. `wip/docs/_LoopFlow_使用說明.md`
 2. `wip/docs/_LoopFlow_系統設定.md`
 3. `wip/docs/_LoopFlow_命名與資料契約.md`
-4. `wip/docs/architecture/LOOPFLOW_DATA_ECOSYSTEM.md`
-5. `wip/docs/architecture/LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`
-6. `wip/docs/architecture/LOOPFLOW_WORKFLOW_SIMULATION.md`
-7. `wip/docs/architecture/NEXUS_DICTIONARY_DECISION_MENU.md`
+4. `wip/docs/資料生態藍圖.md`
+5. `wip/docs/資料生態決策表.md`
+6. `wip/docs/工作流程模擬.md`
+7. `wip/docs/Nexus與字典盤點.md`
 8. `wip/docs/_LoopFlow_重構計畫.md`
-9. `wip/docs/architecture/DEVELOPMENT_ROADMAP.md`
-10. `wip/docs/architecture/PROGRESS.md`
+9. `wip/docs/開發任務與路徑.md`
+10. `wip/docs/重構進度.md`
 
 公開的 `README.md`、`README_zh-TW.md`、`docs/USER_GUIDE*.md` 與 `docs/Dictionary_GUIDE*.md` 是使用者文件，不是重構指令的權威來源；改變使用行為時仍須同步更新。重構中的文件、原始碼、fixtures 與測試統一放在 `wip/`；Dropbox 工作檔路徑依上一層 `工作檔路徑.md` 解析，不得寫死單一電腦的絕對路徑。
 
@@ -46,11 +46,11 @@ AI 必須依序完整讀取：
 ## AI 作業流程
 
 1. 確認 repo、branch、origin、upstream 與乾淨工作樹；只用 fast-forward pull。
-2. 讀取上述文件，從 `PROGRESS.md` 找到目前階段、限制與下一步。
+2. 讀取上述文件，從 `重構進度.md` 找到目前階段、限制與下一步。
 3. 建立短期工作分支，只處理一個 P0 或一條 feature。
 4. 命名契約尚未定案前，不建立正式 feature；先完成依賴盤點、schema 與 fixtures。
 5. 每段完成後執行自動測試與契約檢查；主要工作流串接後再以測試專案做 Rhino 端到端實機驗證。
-6. 同步更新使用說明、系統設定與 `PROGRESS.md`；記錄 commit、檢查、限制和下一步。
+6. 同步更新使用說明、系統設定與 `重構進度.md`；記錄 commit、檢查、限制和下一步。
 7. 檢查 diff 後提交、推送短期分支，再依使用者授權合入整合分支。
 
 使用者不負責操作 Git 或自行推導技術步驟；AI 應直接完成安全、可逆的操作，並以簡短繁體中文回報結果。

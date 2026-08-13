@@ -1,6 +1,6 @@
-# LoopFlow 2.0 — Nexus／Dictionary 現況盤點與決策菜單
+# LoopFlow 2.0 — Nexus／Dictionary 現況盤點
 
-本文件記錄 1.0 程式與實際 Dictionary 的靜態盤點結果，作為欄位與 Nexus 細節的討論菜單。整條工作鏈與資料實體以 `LOOPFLOW_DATA_ECOSYSTEM.md` 為準；尚待確認的上位原則與實務語意以 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` 為唯一編輯區。本文件後續會依已確認答案重排。它不是要沿用舊架構，也不代表所有現況都是正確規格。
+本文件只記錄 1.x 程式與實際 Dictionary 的靜態證據：欄位、producer／consumer、設定、衝突與風險。資料實體與真相邊界以 `資料生態藍圖.md` 為準；全部 `ECO-*`、`ED-*`、`ND-*` 待決與已裁決事項只在 `資料生態決策表.md` 編輯。它不是要沿用舊架構，也不代表所有現況都是正確規格。
 
 ## 盤點狀態
 
@@ -94,7 +94,7 @@ flowchart LR
 | `_CB.03_寬度W` | Cabinet；Nexus 條件保留或清為 `-` | 無已知行為 consumer | 同上 |
 | `_CB.04_厚度T` | Cabinet；Nexus 條件保留或清為 `-` | 無已知行為 consumer | 同上 |
 
-完整 producer／consumer、非 Dictionary key 與無 consumer 項目，以整合後的 `LOOPFLOW_DATA_ECOSYSTEM.md` 為準。
+完整 producer／consumer、非 Dictionary key 與無 consumer 項目，以整合後的 `資料生態藍圖.md` 為準。
 
 ## 設定盤點
 
@@ -160,85 +160,13 @@ flowchart LR
 | CF-26 | `TAG_ITEM` 的 `FF-01__Chair-1` 來自 Block 名稱，不在 Dictionary 12 個類別碼內 | 同一 Tag 顯示欄有兩套未協調的編碼來源 |
 | CF-27 | Layout ID 把所有未分類 Block 當圖框；`03-A3 Scale` 又把排序、圖幅與欄位語意混在 key | 未知 Block 可能被誤寫；圖幅變更可能迫使資料 key 改名 |
 
-## 使用者決策菜單
+## 待決事項交接
 
-以下是會改變使用方式或資料語意的決定，需由使用者裁決。建議分三輪討論，不必一次回答全部。
+原本位於本檔的 ND-01～ND-27 已完整移到 `資料生態決策表.md` 的「Nexus／Dictionary 細項決策」，包含選項、建議、已延後項目與回寫規則。之後：
 
-### 第一輪：先固定資料骨架
+1. 本檔只在發現新的 1.x 證據、欄位、設定、衝突或風險時更新。
+2. 所有使用者答案與 AI 建議只更新 `資料生態決策表.md`。
+3. 已確認的 canonical 結果再回寫 `_LoopFlow_命名與資料契約.md`。
+4. 實作任務與前置順序只更新 `開發任務與路徑.md`。
 
-| ID | 要決定什麼 | 選項 | 建議 |
-|---|---|---|---|
-| ND-01 | 程式欄位 ID 與中英文顯示 | A. 固定英文 machine key，中文／英文只做顯示標籤；B. 完整中文 key；C. 保留任意字尾、只認 prefix | **A**；最適合穩定 schema 與多語文件 |
-| ND-02 | Dictionary 的責任 | A. layer／類型的預設資料；B. 同時保存每個物件的即時資料；C. 只做 layer 清單 | **A**；物件即時資料留在 UserText／Registry |
-| ND-03 | 欄位所有權 | A. 每欄固定 `dictionary_default / computed / object_override / external`；B. 繼續按程式分支猜測 | **A**；這是 Nexus 可拆分的前提 |
-| ND-04a | Rhino 模型文件單位 | A. 固定 cm，非 cm 直接阻擋；B. 支援任意模型單位並明確換算 | 現行工具全部按 cm 設計但從未驗證；建議 **A**，仍待使用者確認 |
-| ND-04b | `_08_單位` 與 `_09_實作數量` | A. 建立估算單位 enum 與單位→幾何量規則；B. `_09` 先定義為人工／外部值；C. 移除估算功能 | 這是工程估算單位，與 Rhino 單位無關；若算法未定，先 **B** |
-| ND-05 | 缺值 | A. 內部使用 typed null，只有畫面／Tag 顯示 `-`；B. 所有層都保存 `-` 字串 | **A**；避免把缺值誤當真實文字或數字 |
-| ND-06 | Dictionary 中的計算欄 | A. 保留欄位定義，但 row value 不作預設；B. 從 Dictionary 移除；C. 允許 row 預設覆寫計算 | **A**；schema 可見、所有權仍清楚 |
-| ND-07 | Layer taxonomy | A. 採用目前 Dropbox 中文版的中英雙語 layer path；B. 改為英文 path、中文只顯示；C. 另訂新分類 | 已選定中文版作重構來源；仍須依 ECO-02 將 layer path 與穩定 Type ID 分離 |
-| ND-08 | 專案檔案位置 | **已定案**：Dictionary 與即時交換 JSON 位於各專案的 Dropbox 工作檔根目錄，以環境變數解析；JSON 預設整理於 `exchange/` | 家中電腦使用相同變數名稱、不同實體路徑 |
-
-### 第二輪：固定 Nexus 的核心語意
-
-| ID | 要決定什麼 | 選項 | 建議 |
-|---|---|---|---|
-| ND-09 | Space identity | A. 穩定 Space ID + 顯示名稱；B. 只用名稱 | **A**；改名不會破壞關聯 |
-| ND-10 | Space 命中 | A. boundary 有 priority／樓層，跨界時回報衝突；B. 取第一個；C. 取最大重疊 | 建議 **A**；需使用者說明實際 boundary 是否會重疊、是否多樓層 |
-| ND-11 | 高程五種 basis | A. 分別正式定義 BH／TH／BC／CH／TH-BH；B. 刪除不用的 basis；C. 延續現況 | **A 或 B**；尤其要確認 `CH` 與非 Block 的 `BC` 應代表什麼 |
-| ND-12 | 高程 datum | A. boundary 用結構化 UserText 儲存 datum／type／level ID；B. 從 ObjectName 解析數字 | **A**；ObjectName 只作顯示，不承擔數值資料 |
-| ND-13 | W／D／H 方向 | A. 依物件 local frame／類型規則；B. 固定 World XYZ；C. 單純由三邊排序 | 建議 **A**；需確認不同物件類型的「寬、深、高」實務定義 |
-| ND-14 | UUID 範圍與複製 | A. 專案全域唯一，複製產生新 UUID；B. 只在每個 `.3dm` 唯一；C. 複製保留 UUID | 建議 **A**；Tag／Registry 的跨檔關聯需另用 mapping |
-| ND-15 | Construction Status | A. Dictionary 給預設、物件可 override，並提供 Reset to default；B. Dictionary 每次強制覆寫；C. 只由物件維護 | 建議 **A** |
-| ND-16 | Quantity | A. 現在定義計算規則；B. schema 先保留但明確標為人工／外部值；C. 2.0 移除 | 若尚無可靠算法，建議 **B**，不再宣稱 Nexus 會計算 |
-| ND-17 | Remarks 預設 | A. 預設空白；B. 保留 `我是備註，UCCU`；C. 每個 Type 另訂正式備註 | 建議 **A**；`20_DW` 的正式操作說明可另設 instruction 欄位 |
-
-### 第三輪：固定下游交換與延後功能的邊界
-
-| ID | 要決定什麼 | 選項 | 建議 |
-|---|---|---|---|
-| ND-18 | Registry payload | A. 版本化 typed schema + 明確 extension 區；B. 將全部 UserText 原樣快照 | **A**；避免任意欄位變成永久 API |
-| ND-19 | `_03` 與家具 `FF-01` 的 Tag 語意 | A. Dictionary 類別碼／序號拆成 typed 欄位，家具另依 ED-14 定義 namespace；B. 全部固定同一連字號字串；C. 不再拆分 | 92 筆 Dictionary 資料與 Infuser 已確認兩段語意；家具 Block 又是第二套來源。建議 **A**，並先回答 ED-14 |
-| ND-20 | Tag 鎖定欄位 | A. 單一 canonical boolean／enum，由 UI 切換；B. 繼續讓使用者輸入文字 | **A**；現行正式 key 可被四支程式辨認，但只有單一 `x/X` 生效。舊 key／其他值只由 migration 列為待確認 |
-| ND-21 | `Layer to Dict` | A. 明確只匯出 layer defaults，另做 object data export；B. 改為彙總 object UserText；C. 取消反向匯出 | 建議 **A**；避免 layer 與 object 資料混為一談 |
-| ND-22 | `20_DW` 特例 | A. 保留單一 DW 類型及 child-layer 排除規則；B. 每個 DW child 都進 Dictionary；C. 重新分類 | 需依目前門窗工作方式決定 |
-| ND-23 | Cabinet `_CB.*` | A. 現在凍結四欄語意，程式延後；B. 等 Cabinet 重構時再決定 | **已裁決為 B**：Cabinet／BOM 移出主鏈，2.0 Nexus／Registry 完全不處理 `_CB.*`，四欄語意留給 Cabinet 工作軌 |
-| ND-24 | Cabinet 方向 | A. L／W／T 依 panel local frame；B. 依三邊大小排序；C. 依 current layer／類型各自規則 | 技術上仍建議 **A**（`make_part()` 已持有 true W／H／D，只在寫入前被排序抹除），但**已延後**到 Cabinet 工作軌，不阻擋核心契約 |
-| ND-25 | Dictionary 驗證強度 | A. 重複、未知欄、錯型別、錯單位直接阻擋並列清單；B. 警告後盡量執行 | 核心欄位建議 **A**；未知 extension 可另設允許區 |
-| ND-26 | 正式資料化／發布 scope | A. M3D 正式範圍內全部 3D 物件（含 hidden／locked 與 schema 不合格者），另提供局部預覽；B. 只處理選取；C. 只處理可見／未鎖定 | 建議 **A**；schema 不合格者要在報告中阻擋發布，不可先過濾。局部 Apply 可以存在，但完整 Registry 發布前仍需全量驗證。由 ED-17 記錄使用者裁決 |
-| ND-27 | Cabinet 與 2.0 首發邊界 | A. 核心 2.0 可先發布，Cabinet 後續加入；B. Cabinet 雖延後仍是首發門檻 | 建議 **A**，避免零碎 BOM 阻擋主鏈；由 ED-18 記錄使用者裁決 |
-
-## 不需要使用者逐項選擇的技術修正
-
-下列不改變業務語意，已由重構原則決定，後續可直接列入實作與測試：
-
-- Dictionary、Registry 都加入 `schema_version`，未知版本停止處理。
-- Dictionary loader 檢查重複欄、重複 layer、必要欄、型別、允許值與尾端空白。
-- Registry 改用真正排他 lock、pending 檔、validate、atomic replace 與 last-good 保護。
-- 所有讀取操作避免在 constructor 產生寫入副作用。
-- config fallback 只保留一個來源；所有入口有一致的 reload／啟動規則。
-- 重複 UUID、未知 layer、略過物件都要列入可見報告，不再靜默覆蓋。
-- ID 變更先預覽、保留一方、列出受影響 Tag，並保存舊新 mapping 供復原。
-- warning 狀態使用資料欄位，不以 Rhino 物件顏色作唯一真相；清除 warning 不破壞使用者原色。
-- 每個會產生幾何或改寫資料的指令定義冪等重跑政策，並復原 layer／selection／visibility 等 Rhino 狀態。
-- 硬編碼 debug 路徑、散落 magic numbers 與寬鬆 `except` 逐 feature 收斂。
-- 舊欄位 alias、舊 Tag key 與舊 layer 名只由 migration scanner 辨識，不進入 2.0 日常核心。
-
-## 建議討論順序與開始寫程式的門檻
-
-1. 先裁決 ND-01～ND-08，固定 schema、單位、缺值、layer 與檔案責任。
-2. 再裁決 ND-09～ND-17，完成 Space、Elevation、Dimension、UUID 與欄位所有權。
-3. 最後裁決 ND-18～ND-27，固定 Registry、Tag、DW、正式掃描 scope 與 Cabinet 發布邊界；ND-23／24 已延後，不阻擋核心契約。
-4. 將答案正式寫入 `_LoopFlow_命名與資料契約.md`，再建立 schema fixtures 與 validator 測試資料。
-5. 上述契約確認後，另建 Nexus 詳細拆分文件；此時才開始 2.0 程式骨架與功能實作。
-
-回覆時可以只處理一輪，格式例如：
-
-```text
-ND-01=A
-ND-02=A
-ND-04a=A（所有專案固定 cm）
-ND-04b=B（數量先作人工／外部值）
-ND-07=A
-```
-
-未回答的項目維持「待決定」，不由 AI 自行猜測。
+不改變業務語意的安全要求（schema version、strict validator、Registry 原子發布、ID mapping／rollback、Rhino 狀態復原等）已由 `資料生態藍圖.md` 與 `_LoopFlow_重構計畫.md` 管理，不在此重複建立另一份實作清單。

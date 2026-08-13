@@ -1,12 +1,12 @@
 # LoopFlow — 重構計畫
 
-本文件定義 2.0 的完整重構邊界、順序與完成條件。它已整合原先散落於外部分析與舊 memo 的有效內容；後續決策直接更新本文件與 `architecture/PROGRESS.md`。
+本文件只定義 2.0 的重構策略、範圍、目標結構、品質門檻與完成條件。任務 ID、工程前置與工作波次由 `開發任務與路徑.md` 負責；即時完成狀態只記錄於 `重構進度.md`；待決與已裁決答案只記錄於 `資料生態決策表.md`。
 
 ## 目標
 
 LoopFlow 不再以「每個按鈕一支完整 Python」作為架構邊界。2.0 會先重新定義工作流、Dictionary、命名與資料契約，再讓指令入口只呼叫 command catalog；Tag、Registry、Nexus、Layout、Cabinet 等邏輯依一起變動的功能群管理。
 
-總體資料生態、工作鏈、資料實體、23 支現行程式的保留意圖與可翻案做法，以 `architecture/LOOPFLOW_DATA_ECOSYSTEM.md` 為起點。程式架構服務工作鏈，不反過來限制工作方式。
+總體資料實體、真相邊界、23 支現行程式的保留意圖與可翻案做法，以 `資料生態藍圖.md` 為起點；操作順序、停留點與使用者介入時機以 `工作流程模擬.md` 為暫定基準。若本計畫與該流程衝突，先保留疑義並寫入決策表，不在本文件另立流程答案。
 
 重構要解決：
 
@@ -95,7 +95,9 @@ wip/
 - 明確宣告 `pandas`、`openpyxl`；缺少時提供可理解處理方式。
 - RHC 中 R2B、R2O 或舊路徑另批清理並做 Rhino 實機驗證。
 
-## SSOT 與未決策項目
+## 必須落實的架構邊界
+
+本節只列重構不可漏掉的責任邊界，不保存待決答案。實務語意與選項一律在 `資料生態決策表.md` 裁決，確認後由 `_LoopFlow_命名與資料契約.md` 固化。
 
 ### UserText／Dictionary
 
@@ -126,8 +128,8 @@ wip/
 ### Space 判定
 
 - 現況以 bounding-box 中心與第一命中範圍決定單一空間。
-- 切割、多值與手動例外尚未裁決；先寫 decision record 與相容規則。
-- 不得在搬移 Nexus 時順便改變結果。
+- 切割、多值、樓層、priority 與手動例外由 ED-07／ND-09～10 統一裁決。
+- 裁決前不得在搬移 Nexus 時順便改變結果。
 
 ### Warning／Rhino 狀態
 
@@ -135,55 +137,17 @@ wip/
 - selection、lock、visibility、object color 必須 snapshot／restore。
 - 成功、取消與失敗路徑都需驗證。
 
-## 新版建造順序
+## 策略階段與關卡
 
-### S1：完整工作流與依賴盤點
+本計畫只固定不可顛倒的策略關卡，不保存第二份任務排序：
 
-- 依實際操作意圖列出核心鏈 Dictionary → Space／Nexus／UserText／UUID → Registry → Section／View／Drawing → Layout／Tag → Infuser／Health → Worksession；另列彼此獨立的 2D 工具與 Cabinet／BOM 延後工作軌，不把它們接成核心前置。
-- 對每一步記錄輸入、輸出、producer、consumer、副作用、失敗條件與現有衝突。
-- 既有 1.x 只作觀察與 fixture 來源，不在此階段修改。
+1. **證據與契約關卡**：現況工作意圖、Dictionary、命名、資料 ownership、Tag／圖框與 migration 邊界已盤點並由使用者裁決。
+2. **最小架構關卡**：全新的 `wip/src/`、bootstrap、command catalog、共用 foundation、Rhino adapter 與測試骨架可載入；不先搬入整批舊功能。
+3. **核心工作鏈關卡**：依 `工作流程模擬.md` 接通資料化、發布、View／Drawing、Layout／Tag、同步與 Health；每段都能單獨驗證、重跑與復原。
+4. **實機驗收關卡**：隔離 Rhino 8 與測試 `.3dm` 通過正常、取消、失敗、中斷、重跑、人工修改保護與 last-good 驗證。
+5. **Migration／發布關卡**：舊專案 scanner／converter／rollback、完整安裝套件、RC 與一次切換都通過後，才合入 `main` 發布 2.0。
 
-### S2：Dictionary、命名與資料契約
-
-- 完成 `_LoopFlow_命名與資料契約.md` 的欄位、layer、UserText、Registry、Tag／圖框 manifest、檔案與設定盤點。
-- 由使用者確認工作語彙與顯示名稱；AI 定義 canonical ID、型別、schema version 與 validator。
-- 建立合法／錯誤／缺值／舊版 fixtures 與 migration 範圍。
-- 契約未定案前不建立正式 feature。
-
-### S3：最小新架構與載入驗證
-
-- 建立全新的 `wip/src/`、bootstrap、command catalog、result／error、logging、version、validator 與測試骨架。
-- 驗證 Rhino 8 package import、reload、不同工作目錄與隔離安裝位置。
-- 若 module loading 不可靠，使用模組化 source + build-time flatten／bundle。
-
-### S4：依工作流接入核心功能
-
-1. Config、Naming、Result、Logging、Rhino platform。
-2. Dictionary 讀取與驗證。
-3. Nexus、UserText、UUID、Space、Boundary。
-4. Registry 與 Excel；直接實作原子 lock／pending／validate／replace。
-5. Section、View Registration、Drawing Materialize、Layout、Duplicate；來源索引容許零／一／多來源並回報覆蓋率。
-6. Tag、Data Viewer、TAG-O。
-7. Infuser All／Part。
-8. Worksession 與跨文件更新生命週期。
-9. 三個 2D Generator 各自作獨立工具，不依賴 Cabinet Suite。
-10. Cabinet／BOM 延後工作軌；主鏈不得為它保留 `_CB.*` 欄位或 layer 分支，是否阻擋 2.0 首發依 ED-18。
-
-每一段完成即跑純邏輯、fixture、資料契約與失敗路徑測試；不必等待可供正式使用才測試。
-
-### S5：端到端實機測試
-
-- 主要工作流接通後，以隔離 Rhino 8 與測試 `.3dm` 按真實操作順序執行。
-- 驗證正常、取消、失敗、中斷、重複執行、來源文件狀態與 last good output。
-- 跨功能錯誤回到契約或所屬 feature 修正，不在測試層加入臨時特例。
-
-### S6：Migration、Build 與一次切換
-
-- 建立獨立舊專案 scanner、預覽、備份、converter、2.0 validator 與 rollback。
-- command catalog 產生或驗證 RHC／docs。
-- build 產 release payload、ZIP、檔案清單與 hash。
-- 重新驗證 RHP，不套用舊攤平腳本假設。
-- RC 與實機驗收通過後一次合入 `main`，發布 2.0；不保留施工用相容層。
+各關卡內的任務 ID、相依、分支 scope、具體完成檢查與目前波次全部以 `開發任務與路徑.md` 為準。Cabinet／BOM 維持延後工作軌，三個 2D Generator 維持獨立工具；兩者都不得反向污染核心契約。
 
 ## Git 與環境隔離
 

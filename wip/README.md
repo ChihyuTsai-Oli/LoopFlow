@@ -14,7 +14,22 @@ wip/
 
 重構採用 `%LOOPFLOW_WORKFILES_ROOT%\LoopFlow_Dictionary.xlsx` 的中文版本；Rhino 與其他程式產生／讀取的即時 JSON 放在同一工作檔根目錄的 `exchange/`，不提交 Git。
 
-總體工作鏈、資料實體與 23 支現行程式的保留意圖，先讀 `docs/architecture/LOOPFLOW_DATA_ECOSYSTEM.md`；依 1.0 實際操作與 Block 參數複核後的現行流程讀 `docs/architecture/LOOPFLOW_WORKFLOW_SIMULATION.md`（HTML 為同名 `.html`）；使用者可直接填寫的待決定事項讀 `docs/architecture/LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`；欄位與 Nexus 細項再讀 `docs/architecture/NEXUS_DICTIONARY_DECISION_MENU.md`。
+## 文件導覽與責任
+
+| 文件 | 唯一責任 |
+|---|---|
+| `docs/_LoopFlow_使用說明.md` | 1.x 可觀察操作事實、使用者安全與公開文件入口 |
+| `docs/_LoopFlow_系統設定.md` | repo、runtime、路徑、entrypoint、build／installer 等技術設定 |
+| `docs/_LoopFlow_命名與資料契約.md` | 已確認的 2.0 canonical schema、命名與 migration 契約 |
+| `docs/資料生態藍圖.md` | 資料實體、真相邊界、producer／consumer 與架構原則 |
+| `docs/資料生態決策表.md` | 所有待決與已裁決事項的唯一使用者編輯區；保留雙 AI 建議與比較 |
+| `docs/工作流程模擬.md` | 2.0 暫定操作流程；若其他規畫文件描述衝突，先以本檔為操作基準並把疑義寫回決策表 |
+| `docs/Nexus與字典盤點.md` | 1.x Nexus／Dictionary 靜態證據、欄位、設定、衝突與風險；不保存第二份答案 |
+| `docs/_LoopFlow_重構計畫.md` | 重構策略、範圍、目標結構、品質門檻與完成條件 |
+| `docs/開發任務與路徑.md` | 任務 ID、相依順序、工作波次與雙機安全停點 |
+| `docs/重構進度.md` | 已完成工作、驗證結果、限制與唯一下一步 |
+
+`docs/工作流程模擬.html` 是 Markdown 的衍生閱讀版，不是另一份規格。已整合且過時的原始評閱副本已刪除；採納內容與雙 AI 比較保留在現行文件及 Git 歷史中。
 
 `docs/tag_block_text/` 保存從 Rhino 實際 Block instance 擷取的 9 份 Tag 與 1 份圖框文字，是 migration／template fixture 的來源證據。已過時的 workflow simulation 初版提案已刪除，不再作為追溯來源。
 

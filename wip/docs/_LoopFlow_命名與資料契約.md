@@ -4,7 +4,7 @@
 
 ## 狀態
 
-- 階段：1.0 靜態盤點、實際操作流程與 Tag／圖框欄位盤點完成，等待使用者依決策表與 `architecture/NEXUS_DICTIONARY_DECISION_MENU.md` 裁決
+- 階段：1.0 靜態盤點、實際操作流程與 Tag／圖框欄位盤點完成，等待使用者依 `資料生態決策表.md` 裁決
 - 套用版本：LoopFlow `v2.0.0`
 - 舊版參考：`v1.0.0`
 - 原則：新版乾淨定義；舊版資料不在開發中零散改寫
@@ -17,8 +17,8 @@
 - 舊專案若需要升級，由獨立 migration scanner／converter 處理，不把相容程式混入日常 command。
 - `main`、`v1.0.0` 與 Release ZIP 保留舊規則；2.0 在隔離安裝與測試資料上使用新規則。
 - 名稱的語意由使用者確認；AI 負責盤點依賴、提出衝突與可理解選項。
-- 整條工作鏈、資料實體與真相邊界以 `architecture/LOOPFLOW_DATA_ECOSYSTEM.md` 為上位藍圖；本文件負責把已確認原則落成可驗證 schema。
-- 尚待使用者確認的上位原則與實務問題只維護於 `architecture/LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`；確認後才回寫本契約。
+- 資料實體與真相邊界以 `資料生態藍圖.md` 為上位藍圖；本文件負責把已確認原則落成可驗證 schema。
+- 2.0 暫定操作順序以 `工作流程模擬.md` 為基準；尚待使用者確認的原則與實務問題只維護於 `資料生態決策表.md`，確認後才回寫本契約。
 
 ## 必須盤點的命名層級
 
@@ -46,7 +46,7 @@
 
 只有完成 Producer／Consumer 追蹤後才能改名，不能只因名稱看起來不清楚就直接替換。
 
-1.0 的實際欄位、producer／consumer、指南衝突與使用者選項已整理於 `architecture/NEXUS_DICTIONARY_DECISION_MENU.md`。該文件是討論輸入；使用者的裁決應回寫本文件，成為 2.0 正式契約。
+1.0 的實際欄位、producer／consumer 與指南衝突整理於 `Nexus與字典盤點.md`；待決選項集中在 `資料生態決策表.md`。使用者裁決確認後才回寫本文件，成為 2.0 正式契約。
 
 使用者已指定採用中文 Dictionary 作為內容與 layer taxonomy 的重構來源；是否直接使用完整中文欄名作為 machine key，仍須與多語顯示方式一起裁決，不能只由檔案版本反推。
 

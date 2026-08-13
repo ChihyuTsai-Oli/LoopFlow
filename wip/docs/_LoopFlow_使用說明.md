@@ -1,6 +1,6 @@
 # LoopFlow — 使用說明
 
-本文件記錄目前 1.x 對使用者可見的行為，也是重構期間不得無意改變的操作契約。完整逐步教學仍以 `USER_GUIDE_TW.md` 與 `Dictionary_GUIDE_TW.md` 為準。
+本文件只記錄目前 1.x 對使用者可見的行為、安全注意事項與回歸案例來源，也是重構期間不得無意改變的操作證據。2.0 的暫定操作順序由 `工作流程模擬.md` 負責；完整 1.x 逐步教學仍以 `USER_GUIDE_TW.md` 與 `Dictionary_GUIDE_TW.md` 為準。
 
 2.0 採乾淨重建；本文件是理解舊工作流與建立測試案例的參考，不要求開發中的半成品持續可供正式使用。命名與操作若經使用者裁決可在 2.0 改變，但必須記錄於 `_LoopFlow_命名與資料契約.md`，並在發布前完成新版使用說明。
 
@@ -59,7 +59,7 @@ LoopFlow 是 Rhino 8 的半自動化設計與出圖工具。使用者決定何�
 
 ## Tag Block 的 1.x 操作事實
 
-- 9 份 Tag 與 1 份圖框的實際文字已由 Rhino Block instance 擷取；欄位細節見 `architecture/LOOPFLOW_WORKFLOW_SIMULATION.md`。
+- 9 份 Tag 與 1 份圖框的實際文字已由 Rhino Block instance 擷取；欄位細節見 `工作流程模擬.md`。
 - 正式可鎖 Tag 使用 `attr_Lock_不更新>寫入x或X`。只有單一 `x`／`X`（前後空白可有）會生效；其他符號或文字看似已填，實際仍未鎖且沒有警告。
 - 鎖定不只阻擋 Infuser 寫入，也會阻擋 Grab／Laser／Index 重新綁定。Infuser 跳過 locked Tag 時也不重新檢查來源與顏色，所以 locked 不代表來源健康。
 - `TAG_DW` 後來改成門窗編號、寬、高全部手動輸入，而且沒有 lock 欄位；但 1.x Infuser 仍把它當資料 Tag。執行 Part／All 時，未綁定的 `TAG_DW` 會被塗橘並把人工 `attr_dw_id` 改成 `?`。這是已知 1.x 衝突；2.0 將它定義為純手動且完全不由 Sync 處理。
@@ -83,14 +83,14 @@ LoopFlow 是 Rhino 8 的半自動化設計與出圖工具。使用者決定何�
 - 不因 Dropbox／OneDrive 延遲或 stale lock 覆蓋其他程序剛寫入的 Registry。
 - 錯誤訊息必須能指出失敗階段，不得只顯示成功或靜默忽略。
 
-## Golden workflow
+## 1.x 回歸案例範圍
 
-修改功能前，AI 必須用測試資料記錄對應的正常、取消、失敗、重複執行與復原結果。最少涵蓋：
+以下是從現行使用方式抽出的回歸案例範圍；測試門檻由 `_LoopFlow_重構計畫.md` 負責，實際任務與結果分別記錄於 `開發任務與路徑.md`、`重構進度.md`：
 
 - 核心主鏈：Tag／Dictionary、Registry／Nexus、Layout／Infuser／Worksession。
 - 延後或獨立工作軌：Cabinet 與三個 2D 工具各自建立代表案例；不納入核心主鏈端到端通過條件。
 
-目前實機驗證狀態以 `architecture/PROGRESS.md` 為準。
+目前實機驗證狀態以 `重構進度.md` 為準。
 
 ## 設定與問題定位
 
@@ -99,14 +99,6 @@ LoopFlow 是 Rhino 8 的半自動化設計與出圖工具。使用者決定何�
 - 先保存錯誤畫面、Rhino command line、log、輸入檔與是否有未存修改，再交由 AI 判斷。
 - 不要直接刪除 lock、Registry、設定檔或正式專案資料；先讓 AI 檢查狀態與回復方式。
 
-## 文件責任
+## 文件導覽
 
-- `USER_GUIDE_TW.md`：公開逐步操作指南。
-- `Dictionary_GUIDE_TW.md`：公開 Dictionary 規格。
-- `_LoopFlow_使用說明.md`：重構期間的行為契約。
-- `_LoopFlow_系統設定.md`：目前技術設定與檔案責任。
-- `_LoopFlow_命名與資料契約.md`：2.0 Dictionary、命名、schema 與 migration 的權威來源。
-- `architecture/LOOPFLOW_DATA_ECOSYSTEM.md`：完整工作鏈、資料真相邊界與現行功能的保留意圖。
-- `architecture/LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`：使用者可直接填寫的上位原則與實務待決事項。
-- `_LoopFlow_重構計畫.md`：目標架構、順序與不做事項。
-- `architecture/PROGRESS.md`：當前進度、檢查、限制與下一步。
+全部維護文件的唯一責任表位於 `wip/README.md`；本檔不複製第二份清單。
