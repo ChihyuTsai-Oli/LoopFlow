@@ -1,0 +1,8 @@
+﻿%<UserText("block","3-Top","","")>%
+%<UserText("block","2-Elev","","")>%
+%<UserText("block","4-Left","","")>%
+%<UserText("block","6-Right","","")>%
+%<UserText("block", "attr_Lock_不更新>寫入x或X", "", "x為不更新")>%
+%<UserText("block","1-Elev_num","","")>%
+%<UserText("block","Category","","")>%
+%<UserText("block","5-Bottom","","")>%

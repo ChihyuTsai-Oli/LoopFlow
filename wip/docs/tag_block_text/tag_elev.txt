@@ -1,0 +1,4 @@
+﻿%<UserText("block","Detail_NO","","")>%
+%<UserText("block", "attr_Lock_不更新>寫入x或X", "", "x為不更新")>%
+%<UserText("block","REF_ID","","")>%
+%<UserText("block","Category","","")>%

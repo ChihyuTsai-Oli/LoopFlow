@@ -1,0 +1,5 @@
+﻿%<UserText("block", "attr_dw_id", "", "DW")>%
+W.
+%<UserText("block", "attr_DW-W_輸入門窗寬", "", "請輸入")>%
+H.
+%<UserText("block", "attr_DW-H_輸入門窗高", "", "請輸入")>%

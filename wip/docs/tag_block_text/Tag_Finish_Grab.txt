@@ -1,0 +1,6 @@
+﻿%<UserText("block", "attr_Lock_不更新>寫入x或X", "", "x為不更新")>%
+Grab
+%<UserText("block", "attr_mat_key", "", "MT")>%
+%<UserText("block", "attr_mat_val", "", "00")>%
+%<UserText("block", "attr_note", "", "材質名稱")>%
+%<UserText("block", "attr_manual_補充說明", "", "請輸入")>%

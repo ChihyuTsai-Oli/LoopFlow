@@ -200,13 +200,26 @@ def convert(md: str) -> tuple[str, list[tuple[int, str, str, str]]]:
             out.append("<ul>%s</ul>" % "".join(items))
             continue
 
-        # 引言區塊（連續的 > 行併為一段）
+        # 引言區塊：連續的 > 行為一塊，塊內再以空的 > 行分段
+        # （`> **使用者介入**：…` 與 `> **安全停點**：…` 要各自成段，不能併成一行）
         if stripped.startswith(">"):
             buf = []
             while i < n and lines[i].strip().startswith(">"):
                 buf.append(re.sub(r"^>\s?", "", lines[i].strip()))
                 i += 1
-            out.append("<blockquote>%s</blockquote>" % inline(" ".join(buf).strip()))
+            paras, cur = [], []
+            for ln in buf:
+                if ln.strip():
+                    cur.append(ln.strip())
+                elif cur:
+                    paras.append(" ".join(cur))
+                    cur = []
+            if cur:
+                paras.append(" ".join(cur))
+            out.append(
+                "<blockquote>%s</blockquote>"
+                % "".join("<p>%s</p>" % inline(t) for t in paras)
+            )
             continue
 
         # 空行
@@ -324,6 +337,8 @@ h2.stage .num{display:inline-flex;align-items:center;justify-content:center;
 blockquote{margin:0 0 20px;padding:13px 18px;background:#151a24;
   border-left:3px solid var(--line2);border-radius:0 7px 7px 0;color:var(--tx2);font-size:14.6px}
 blockquote strong{color:var(--tx)}
+blockquote p{margin:0 0 9px}
+blockquote p:last-child{margin-bottom:0}
 
 /* ---- 表格 ---- */
 .tw{overflow-x:auto;margin:0 0 22px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
@@ -386,7 +401,7 @@ PAGE = """<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LoopFlow 2.0 — 模擬執行流程</title>
+<title>%s</title>
 <style>%s</style>
 </head>
 <body>
@@ -427,7 +442,11 @@ def render(md: str) -> str:
     if group_open:
         nav.extend(["</div>", "</details>"])
 
-    return PAGE % (CSS, "\n".join(nav), body, JS)
+    # 頁面標題取自文件第一個 H1，讓同一支工具能產生主檔與 v2 草案兩份輸出
+    m = re.search(r'<h1 class="doctitle"[^>]*>(.*?)</h1>', body, re.S)
+    title = re.sub(r"<[^>]+>", "", m.group(1)) if m else "LoopFlow 2.0 — 模擬執行流程"
+
+    return PAGE % (html.escape(title), CSS, "\n".join(nav), body, JS)
 
 
 # ==================================================================

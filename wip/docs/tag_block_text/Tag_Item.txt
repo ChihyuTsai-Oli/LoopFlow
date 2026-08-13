@@ -1,0 +1,5 @@
+﻿%<UserText("block", "attr_Lock_不更新>寫入x或X", "", "x為不更新")>%
+%<UserText("block", "attr_item_key", "", "FF")>%
+%<UserText("block", "attr_item_val", "", "編號")>%
+%<UserText("block", "attr_note", "", "家具")>%
+%<UserText("block", "attr_manual_補充說明", "", "請輸入")>%
