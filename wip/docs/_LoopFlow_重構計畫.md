@@ -139,7 +139,7 @@ wip/
 
 ### S1：完整工作流與依賴盤點
 
-- 依實際操作順序列出 Dictionary → Nexus／UserText → UUID／Space → Registry → Section／Layout → Tag → Infuser → Cabinet／2D／Worksession。
+- 依實際操作意圖列出核心鏈 Dictionary → Space／Nexus／UserText／UUID → Registry → Section／View／Drawing → Layout／Tag → Infuser／Health → Worksession；另列彼此獨立的 2D 工具與 Cabinet／BOM 延後工作軌，不把它們接成核心前置。
 - 對每一步記錄輸入、輸出、producer、consumer、副作用、失敗條件與現有衝突。
 - 既有 1.x 只作觀察與 fixture 來源，不在此階段修改。
 
@@ -162,10 +162,12 @@ wip/
 2. Dictionary 讀取與驗證。
 3. Nexus、UserText、UUID、Space、Boundary。
 4. Registry 與 Excel；直接實作原子 lock／pending／validate／replace。
-5. Section、Layout、Anchor、Extract、Duplicate。
+5. Section、View Registration、Drawing Materialize、Layout、Duplicate；來源索引容許零／一／多來源並回報覆蓋率。
 6. Tag、Data Viewer、TAG-O。
 7. Infuser All／Part。
-8. Cabinet、2D、Worksession。Cabinet／BOM 依使用者裁決不屬於主工作流程，第 2～7 段不得為它保留 `_CB.*` 欄位或 layer 分支。
+8. Worksession 與跨文件更新生命週期。
+9. 三個 2D Generator 各自作獨立工具，不依賴 Cabinet Suite。
+10. Cabinet／BOM 延後工作軌；主鏈不得為它保留 `_CB.*` 欄位或 layer 分支，是否阻擋 2.0 首發依 ED-18。
 
 每一段完成即跑純邏輯、fixture、資料契約與失敗路徑測試；不必等待可供正式使用才測試。
 
@@ -231,7 +233,7 @@ RHP 是 L8 包裝工作，不是當前功能。需重新驗證 Rhino Script Proj
 - Registry／installer P0 安全要求已完整實作於 2.0；若另有 1.x hotfix，須獨立記錄。
 - Tag、Dictionary、space、Registry、path、version 各有唯一來源。
 - 所有指令經 command catalog；舊 `.py` 只剩入口。
-- `LF_Nexus.py`、`LF_Cabinet_Suite.py` 不再混合 UI、規則、I/O 與流程。
+- `LF_Nexus.py` 不再混合 UI、規則、I/O 與流程；`LF_Cabinet_Suite.py` 的相同拆分要求只在 Cabinet 工作軌啟動時適用，是否屬 2.0 首發完成條件依 ED-18。
 - Rhino 8 package import 或 build 備案通過實機驗證。
 - `main` 與開發環境隔離，`v1.0.0` 可完整回復。
 - 延後構想保留於文件，但未混入 2.0 核心範圍。

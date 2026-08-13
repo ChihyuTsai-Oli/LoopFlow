@@ -39,7 +39,8 @@
 - Registry：正常 push、取消、壞 JSON、lock、replace 失敗與最後有效資料。
 - Nexus：UUID、boundary、dimensions、elevation、space、XLSX 與 JSON。
 - Layout / Infuser / Worksession：完整與部分同步、warning、重複執行與復原。
-- Cabinet / 2D：Suite、Cabinet、Shelf Gap、DW 的代表性輸入與輸出。
+- 核心端到端：Tag／Dictionary、Registry／Nexus、View／Drawing、Layout／Infuser／Worksession。
+- 延後／獨立驗證：Cabinet Suite、2D Cabinet、Shelf Gap、DW 各有自己的代表性輸入與輸出；不納入核心主鏈通過判定，Cabinet 是否阻擋 2.0 首發依 ED-18。
 
 fixture 與預期結果應在對應功能建造前完成；實機結果則在主要工作流串接後集中補入本文件。未驗證項目不得標記為通過。
 
@@ -75,10 +76,11 @@ fixture 與預期結果應在對應功能建造前完成；實機結果則在主
 | 2026-08-13 | Tag 現況衝突與新決策輸入 | 確認 `TAG_DW` 為純手動但 1.x Infuser 會覆寫編號；lock 只認單一 `x/X` 且同時凍結重新綁定；家具 `FF-01` 與 Dictionary 為兩套編碼；圖框 `03-A3 Scale` 無 writer | 已回寫上位文件 | ED-14～16 尚待使用者裁決；產品程式碼與 Block 資產未修改 |
 | 2026-08-13 | 非 `ref/` 文件一致性同步 | 將 workflow v2 設為現行流程來源；同步資料藍圖、決策表、契約、設定、roadmap、Nexus 菜單、WIP 導覽與繁中／英文 1.x 指南 | 文件與衍生 HTML 已同步 | 舊 workflow 保留並明確標示為歷史提案；尚未執行 Rhino 端到端測試 |
 | 2026-08-13 | 工作鏈骨架與 Health 覆蓋補強 | 工作鏈補入 W3 建立空間並改為 W1～W12；資料化定為掃描→套用→再驗證且驗證通過才可發布；補上 TagTrigger 作用範圍契約、`TAG_ELEV_0` 未被任何清單涵蓋的 Health 盲區，以及 Block instance 命名慣例三種分段 | 已回寫藍圖、契約、使用說明與 roadmap | — |
-| 2026-08-13 | Laser 來源索引列入計畫 | 使用者裁決列入藍圖，不另立前置 spike——索引產出前無從測試。Materialize 增列每條線的來源 `object_id`，Laser 有索引時改走查表；定位基準仍是固定 View transform | 已回寫藍圖 Drawing lifecycle、v2 與 roadmap LF-E02／LF-D02 | 可行性在 E02／D02 實機時驗證；退路為剖面交線鄰近比對，或只用固定 transform |
+| 2026-08-13 | Laser 來源索引列入計畫 | 使用者裁決列入藍圖，不另立前置 spike——索引產出前無從測試。Materialize 增列 drawing element → `source_object_ids[]` provenance，Laser 在唯一有效來源時走索引；定位基準仍是固定 View transform | 已回寫藍圖 Drawing lifecycle、資料契約、v2 與 roadmap LF-E02／LF-D02 | 可行性與 indexed／unindexed／ambiguous 覆蓋率在 E02／D02 實機時驗證；退路為剖面交線鄰近比對，或只用固定 transform |
 | 2026-08-13 | Cabinet／BOM 排除主鏈 | 使用者裁決 Cabinet 與 BOM 不進主工作流程、列入後續開發（BOM 功能過於零碎，會汙染核心契約）；2.0 Nexus／Registry／Tag／Health 都不處理 `_CB.*` | 已回寫 v2、藍圖、決策表、Nexus 菜單、roadmap、重構計畫、契約與使用說明 | ED-03、ND-23、ND-24、CF-21 一併延後；1.x 事實移入 v2 的「延後工作軌」保存 |
 | 2026-08-13 | 1.0 操作證據的地位裁決 | 使用者確認錄影說明是操作邏輯參考、不是流程契約；1.0 用法有限制但無大問題，步驟順序應配合新架構重新思考。維持的是控制意圖，不是按鈕順序 | 已回寫 v2、藍圖、決策表、使用說明、系統設定與 WIP 導覽 | 證據檔已正式登錄於結構樹；後續若改動 1.0 行為須是明示裁決，不得順手更改 |
+| 2026-08-13 | Claude 調整後一致性補查 | 修正 1.0 證據檔名；解除 2D 工具對 Cabinet 的錯誤依賴；補上 View Registration → Materialize → Laser 前置；來源索引改為零／一／多來源與覆蓋率契約；發布關卡區分阻擋項與警告 | 已回寫契約、v2、Nexus 菜單、roadmap、重構計畫與設定／使用說明 | 新增 ED-17 掃描 scope、ED-18 Cabinet 首發邊界，仍待使用者裁決；產品程式碼未修改 |
 
 ## 下一步
 
-由使用者直接編輯 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` 的「你的決定／說明」欄；新加入的 ED-14～16 分別處理家具 `FF-01`、圖框比例與 title-frame 辨識。AI 讀取修改後，先整理歧義與相依影響，再回寫 `LOOPFLOW_DATA_ECOSYSTEM.md`、`_LoopFlow_命名與資料契約.md`，並重排 `NEXUS_DICTIONARY_DECISION_MENU.md` 細項；接著建立現行領域規則清單、10 份 Block manifest fixtures、schema fixtures 與 validator 規格。使用者確認契約前，不開始正式功能程式碼。
+由使用者直接編輯 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` 的「你的決定／說明」欄；ED-14～16 分別處理家具 `FF-01`、圖框比例與 title-frame 辨識，ED-17／18 處理正式資料化 scope 與 Cabinet 是否阻擋 2.0 首發。AI 讀取修改後，先整理歧義與相依影響，再回寫 `LOOPFLOW_DATA_ECOSYSTEM.md`、`_LoopFlow_命名與資料契約.md`，並重排 `NEXUS_DICTIONARY_DECISION_MENU.md` 細項；接著建立現行領域規則清單、10 份 Block manifest fixtures、schema fixtures 與 validator 規格。使用者確認契約前，不開始正式功能程式碼。

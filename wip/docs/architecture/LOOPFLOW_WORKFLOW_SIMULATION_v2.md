@@ -1,6 +1,6 @@
 # LoopFlow 2.0 — 模擬執行流程
 
-本文件把 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` 的建議轉成可實際理解的操作鏈，協助判斷這些原則是否符合工作習慣。兩份流程都已用使用者提供的 `loopflow_1.0_YT.txt` 逐步操作說明、9 份 Tag Block 與 1 份圖框參數重新檢核；CodeX 版以 1.0 操作節奏為骨架，Claude 版保留「在哪個文件執行、失敗停在哪裡、先做哪一段」的視角，兩者並列以便對照。
+本文件把 `LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md` 的建議轉成可實際理解的操作鏈，協助判斷這些原則是否符合工作習慣。兩份流程都已用使用者提供並保存於 repo 的 `loopflow_1.0_workflow_YT.txt` 逐步操作說明、9 份 Tag Block 與 1 份圖框參數重新檢核；CodeX 版以 1.0 操作節奏為骨架，Claude 版保留「在哪個文件執行、失敗停在哪裡、先做哪一段」的視角，兩者並列以便對照。
 
 - 決策項目與建議強度：`LOOPFLOW_DATA_ECOSYSTEM_DECISIONS.md`（`ECO-*`／`ED-*` 編號皆指向該表）
 - 資料實體、真相邊界與現況盤點：`LOOPFLOW_DATA_ECOSYSTEM.md`
@@ -26,7 +26,7 @@
 
 # CodeX 模擬執行流程
 
-這一版以 `loopflow_1.0_YT.txt` 記錄的實際操作為基準，再把 2.0 的安全機制放回相同的操作節點。範例仍使用住宅主臥室的磁磚牆（Type `WL-14`，高 240 cm）與開關面板（Type `EL-05`，高程基準 `BC`）。
+這一版以 `loopflow_1.0_workflow_YT.txt` 記錄的實際操作為基準，再把 2.0 的安全機制放回相同的操作節點。範例仍使用住宅主臥室的磁磚牆（Type `WL-14`，高 240 cm）與開關面板（Type `EL-05`，高程基準 `BC`）。
 
 閱讀時要區分兩件事：
 
@@ -426,7 +426,7 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 
 # Claude Code 模擬執行流程
 
-這一版走同一條資料鏈，維持三個獨有視角：**每一步在哪個 Rhino 文件執行**、**失敗或取消時會停在哪裡**、以及**哪些是第一階段就必須有、哪些可以晚點補**。這次依 `loopflow_1.0_YT.txt` 的實際操作說明、9 份 Tag Block 與 1 份圖框參數重新檢核，補回原本遺漏的操作節點並修正兩處事實錯誤。
+這一版走同一條資料鏈，維持三個獨有視角：**每一步在哪個 Rhino 文件執行**、**失敗或取消時會停在哪裡**、以及**哪些是第一階段就必須有、哪些可以晚點補**。這次依 `loopflow_1.0_workflow_YT.txt` 的實際操作說明、9 份 Tag Block 與 1 份圖框參數重新檢核，補回原本遺漏的操作節點並修正兩處事實錯誤。
 
 全文用同一個案子當例子：一間住宅，主臥室有一面磁磚牆（Type `WL-14`，`02_Wall_牆面::Tiles.磁磚`，高 240 cm）和一個開關面板（Type `EL-05`，`06_EL_電控系統::Switch.開關面板`，Block instance，高程基準 `BC`）。
 
@@ -543,9 +543,9 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 
 **`LF_Nexus_Apply`** → 使用者逐項決定後才寫入 → 產生帶穩定 ID 的 Model Objects，保存 `old_id → new_id` mapping。
 
-**再跑一次 `LF_Nexus_Scan`** → 這就是 1.0 `TagChecker` 的角色。報告顯示「無待處理項目」才是可以發布的狀態。
+**再跑一次 `LF_Nexus_Scan`** → 這就是 1.0 `TagChecker` 的角色。報告顯示「無阻擋項目」且非阻擋警告已明確列出／確認，才是可以發布的狀態；不是要求所有資訊性提示都歸零。
 
-前一版少了第三拍。Scan 是**寫入前**的預告，TagChecker 是**寫入後**的驗證，兩者用途不同：Apply 可能部分失敗、使用者可能只勾選了一部分、或修正 Dictionary 後尚未重跑。2.0 不需要另建一支 Checker，但**必須把「Scan 乾淨」定為 Publish 的前置條件**，否則就失去了 1.0 已經存在的關卡。
+前一版少了第三拍。Scan 是**寫入前**的預告，TagChecker 是**寫入後**的驗證，兩者用途不同：Apply 可能部分失敗、使用者可能只勾選了一部分、或修正 Dictionary 後尚未重跑。2.0 不需要另建一支 Checker，但**必須把「全專案 Scan 無阻擋項」定為 Publish 的前置條件**，否則就失去了 1.0 已經存在的關卡。局部 Scan／Apply 可以保留使用者分批工作的彈性，但不能用局部結果宣稱完整 Registry 可發布；正式範圍見 ED-17。
 
 這三拍直接解掉三個現況問題：
 
@@ -609,21 +609,22 @@ Infuser 從 `Project_Registry.json` 與 Detail／Tag binding 取得資料，依 
 
 ### 一個順帶解決 Laser 的提案
 
-既然 Materialize 這一刻同時握有「3D 物件」與「剛生成的 2D 線」，建議在這裡**一次算出每條線的來源 `object_id`，存成 drawing 的來源索引**。Laser 就從「每次對全模型求交後射線判斷」變成「點選最近的已標記線，讀出它的 `object_id`」：
+既然 Materialize 這一刻同時握有「3D 物件」與「剛生成的 2D 線」，建議在這裡建立 drawing 來源索引。每個 drawing element 必須能保存**零個、一個或多個 `source_object_id`**；Laser 的常見路徑可從「每次對全模型求交後射線判斷」變成「讀取附近線稿的有效來源候選」：
 
 | 比較項目 | 現況 Laser | 改用來源索引 |
 | --- | --- | --- |
 | 每次綁定的計算量 | 全模型 brep × 剖面求交 | 查表 |
-| 對位是否會漂移 | 會（見階段 7） | 不會，關聯在生成當下就固定 |
+| 對位是否會漂移 | 會（見階段 7） | 初始關聯在生成當下固定；人工修改後需標記狀態，不能保證永遠有效 |
 | 多候選如何處理 | 依距離聚類，容差 200 cm（=2 公尺，過寬） | 該點附近有幾條不同來源的線，直接列出 |
 | 是否需要 Worksession 附掛 3D | 必須 | 不必（但仍建議附掛以便對照） |
 
-計算量沒有增加，只是把每次綁定都做一遍的事改成生成時做一次。
+若 Rhino 能直接提供來源關聯，索引成本很低；若不能，Materialize 仍可能需要逐物件幾何比對。它的優勢是把可重用的工作集中到生成階段，不應預先宣稱總計算量一定沒有增加。
 
 **使用者已裁決：列入藍圖計畫，實作出來才能驗證。** 不另外先做一次獨立 spike，因為要確認的事情（Clipping Drawing 輸出能否穩定對應回來源物件）在 Materialize 真的產出來源索引之前，本來就測不了。因此：
 
-- 來源索引是 **Drawing Materialize 的產出項目之一**，與 `drawing_id`、來源 `view_id`、來源 revision 一起建置。
+- 來源索引是 **Drawing Materialize 的產出項目之一**，與 `drawing_id`、來源 `view_id`、來源 revision 一起建置，並回報 indexed／unindexed／ambiguous 覆蓋率。
 - 定位基準仍以階段 7 的**固定 View transform 為準**；來源索引是加速與去歧義的補強，不是替代品。
+- Laser 只在來源唯一、revision 適用且 provenance 狀態有效時直接採用索引；零來源、多來源或人工修改後不明確時，仍列候選讓使用者選擇。
 - 驗證在 Materialize 與 Laser 兩項功能實機時一併進行。若實機發現輸出無法穩定對應回來源，退路是由 LoopFlow 以剖面交線做鄰近比對；再不行就只用固定 transform，Laser 仍可運作。
 
 **使用者接著人工整理** → 補線、刪除、調整圖層 → Drawing 轉為 `modified`，LoopFlow 從此不會靜默取代它。
@@ -889,7 +890,7 @@ TAG_HEIGHT
 
 1. `LF_Project_Open`：路徑解析 + 單位偵測
 2. `LF_Dictionary_Validate` + `LF_Type_Sync`：Type Catalog 與 layer
-3. **Space Boundary 維護**：`_01` 空間資料的唯一來源，沒有它資料化就不完整
+3. **Space Boundary 維護**：室內 `_01` 空間歸屬的來源；明確室外可作合法分類，未涵蓋／多重命中則必須可見且依 ED-07 處理
 4. `LF_Nexus_Scan` / `LF_Nexus_Apply`：Object ID 與資料（含 ID 變更預覽與發布前驗證）
 5. `LF_Publish_Registry`：安全發布 + revision
 6. `LF_View_Register`：固定 transform

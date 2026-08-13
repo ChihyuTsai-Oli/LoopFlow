@@ -83,7 +83,7 @@ E:\_GitHub\LoopFlow\wip\src\entrypoints\
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Nexus.py"
 ```
 
-目前預計的使用者入口如下；共用模組 `_LoopFlow_Config.py`、`_LF_Debug.py`、`_LF_NamingRules.py`、`_LF_Registry.py` 不建立按鈕：
+目前預計的**核心主鏈**使用者入口如下；共用模組 `_LoopFlow_Config.py`、`_LF_Debug.py`、`_LF_NamingRules.py`、`_LF_Registry.py` 不建立按鈕：
 
 ```text
 LF_Nexus.py
@@ -100,11 +100,21 @@ LF_Infuser_All.py
 LF_Anchor_Frame.py
 LF_Extract_CP.py
 LF_Duplicate_Layout.py
-LF_Cabinet_Suite.py
+LF_Sync_Worksession.py
+```
+
+三個 2D Generator 是彼此獨立、也不依賴 Cabinet Suite 的工具；其重構工作軌啟動時再建立下列測試入口，1.x 版本在此之前可繼續使用：
+
+```text
 LF_2D_Cabinet_Gen.py
 LF_2D_Shelf_Gap.py
 LF_2D_DW_Gen.py
-LF_Sync_Worksession.py
+```
+
+`LF_Cabinet_Suite.py` 與 BOM 是延後工作軌，不列入核心主鏈測試按鈕。它是否必須包含在 2.0 首次正式安裝包，仍待 ED-18 裁決：
+
+```text
+LF_Cabinet_Suite.py
 ```
 
 這是開發期暫定清單，不是凍結的公開契約。功能增減、入口檔名或 repo 內路徑改變時，應同步更新本節與測試工具列。2.0 正式版會封裝為完整安裝檔／可安裝套件，不要求使用者逐一建立按鈕或管理 Python 路徑；RC 才在隔離位置驗證該安裝成果。封裝技術到發佈階段再決定，不預先鎖定 RHI、Package Manager 或獨立安裝器。
@@ -134,7 +144,8 @@ LF_Sync_Worksession.py
 | Tagger 系列 | UserText／Tag Block 建立與更新 |
 | `LF_Nexus.py` | Dictionary、幾何、UUID、space、Registry 與 Excel 的整合流程 |
 | Infuser 系列 | 將資料寫入圖面 Tag Blocks |
-| Cabinet／2D 系列 | 櫃體與圖面幾何產生 |
+| Cabinet Suite | 延後的櫃體建模與 BOM 工作軌；不向主鏈注入 `_CB.*` |
+| 2D Generator 系列 | 彼此獨立的櫃體、層板與門窗圖面幾何工具 |
 | Layout／Section 系列 | Layout、anchor、section curve 與複製流程 |
 | `LF_Sync_Worksession.py` | Worksession 事件生命週期與同步 |
 

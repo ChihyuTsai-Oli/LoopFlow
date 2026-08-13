@@ -66,10 +66,12 @@
 | ED-14 | 家具 Block 名稱的 `FF-01__Chair-1` 要納入 Type Catalog，還是維持獨立的 instance-level 家具編號 | 現況 `TAG_ITEM` 選到家具 Block 時從名稱解析 `FF`／`01`／`Chair-1`；選到一般模型物件時則讀 Dictionary `_03_ID編號`，兩者最後寫進相同顯示欄 | **一般建議**：若 `FF-01` 表示單件家具／設備編號，保留獨立 namespace，但要有正式欄位、唯一性與命名 validator；若它其實是材料 Type，才納入 Type Catalog。需使用者說明 `FF-01` 的實務語意。 | **一般建議**：不要繼續只靠 Block 名稱。先確認它是 Type 還是 instance，再決定 Catalog 或獨立 identity；兩種方案都比目前無 schema 的字串解析安全。 | 待決定 |
 | ED-15 | 圖框 `03-A3 Scale` 在 2.0 要維持人工，還是由 Detail／Sheet metadata 自動產生 | 現況沒有 Python writer；key 同時混入面板排序 `03-`、圖幅 `A3` 與欄位語意 `Scale`，換圖幅就可能迫使 key 改名 | **一般建議**：第一階段保留人工值，但 canonical ID 改為與圖幅、排序無關的穩定欄位；日後若自動化，再另定多 Detail 或不同比例的顯示規則。 | **一般建議**：先拆 identity 與 label。是否自動算比例取決於一張 Sheet 是否可能有多個不同 Detail scale，需使用者補充工作方式。 | 待決定 |
 | ED-16 | Layout ID 是否只寫入 manifest 明列為圖框的 Block | 1.x 把所有未列入 Data／Index／Elev 0 清單的 Block 都當圖框，寫入 `DWG_NO`／`DWG_NAME`；未知 Block 也會被改 | **強烈建議**：只寫 `role: title_frame`，未知 Block 零寫入。否則新增任何普通 Block 都可能被靜默加上圖框資料。 | **強烈建議**：採明確 allow-list／manifest；若未宣告就報告並略過，不以「不認識」推論成圖框。 | 待決定 |
+| ED-17 | 2.0 資料化與發布的正式掃描範圍 | 1.x TagTrigger 會處理全部 M3D 3D 物件，不受可見／鎖定狀態影響；若 2.0 改成只處理選取或可見物件，Impact Report 與 Registry 可能看似完整、實際漏件 | **強烈建議**：正式「全專案驗證／發布」預設掃描 M3D 正式範圍內全部 3D 物件；不符合 schema 的物件也要進報告並列為阻擋，而不是先被過濾掉。hidden／locked 只是 Rhino 編輯狀態，不是排除條件；可另提供選取／篩選模式做局部預覽或套用，但不能用局部結果宣告全專案可發布。正式排除要用可追蹤的 typed 狀態。 | 尚未提供；本項由本輪 CodeX 一致性補查新增，待日後 Claude 複核時再填，不代替它推測立場。 | 待決定 |
+| ED-18 | Cabinet／BOM 是否必須隨 2.0 首次正式版一起發布 | 已確認它不屬主工作鏈、可延後開發，且 1.x 可繼續使用；但目前尚未明定「核心 2.0 可先發布，Cabinet 日後另補」或「Cabinet 雖延後，仍是 2.0 首發門檻」 | **一般建議**：核心工作鏈與安裝／migration 驗收通過後即可發布 2.0，不讓 Cabinet／BOM 阻擋；Cabinet 以獨立後續版本加入。在此之前保留 1.x Cabinet 的隔離使用方式。代價是過渡期需清楚區分 2.0 核心與 1.x Cabinet。 | 尚未提供；本項由本輪 CodeX 一致性補查新增，待日後 Claude 複核時再填，不代替它推測立場。 | 待決定 |
 
 ## D. 已確認、不需在本表重複決定
 
-- **Cabinet 與 BOM 排除在主工作流程之外**，列入後續開發。1.0 的 BOM 功能過於零碎，混入主鏈會汙染核心資料契約。因此 2.0 主鏈的 Nexus、Registry、Tag 與 Health 都不處理 `_CB.*`，也不得為 Cabinet 增加 layer 判定分支；櫃體在主鏈中就是一般 3D 幾何。ED-03、ND-23、ND-24 與 CF-21 一併延後到 Cabinet 工作軌。
+- **Cabinet 與 BOM 排除在主工作流程之外**，列入後續開發。1.0 的 BOM 功能過於零碎，混入主鏈會汙染核心資料契約。因此 2.0 主鏈的 Nexus、Registry、Tag 與 Health 都不處理 `_CB.*`，也不得為 Cabinet 增加 layer 判定分支；櫃體在主鏈中就是一般 3D 幾何。ED-03、ND-23、ND-24 與 CF-21 一併延後到 Cabinet 工作軌；是否阻擋 2.0 首發另由 ED-18 決定。
 - **1.0 操作說明的地位**：`loopflow_1.0_workflow_YT.txt` 是操作邏輯參考，不是流程契約。1.0 的用法有一些限制但沒有造成大問題；2.0 的步驟順序應配合新程式架構重新思考。必須維持的是使用者的控制意圖（何時寫入、何時發布、綁誰、同步範圍），不是按鈕順序。要改掉某項 1.0 行為是允許的，但必須是有意識的裁決並記錄，不能在搬程式時順手改掉。
 - `TAG_DW` 已改為純手動 Tag：`attr_dw_id`、門窗寬與門窗高都由使用者輸入，不建立來源、不由 Sync 覆寫，也不因沒有來源被 Health 判成 unbound。
 - 10 份實際 Block 文字（9 Tag、1 圖框）已由 Rhino instance 擷取，共 24 個唯一 UserText key；文字與欄位所有權盤點以現行 v2 workflow simulation 為準。

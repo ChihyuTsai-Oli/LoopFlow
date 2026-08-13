@@ -25,7 +25,7 @@ flowchart LR
     X --> D2["另一份 XLSX；目前須人工合併"]
 ```
 
-目前不是單純「Excel 寫入物件」：部分欄位由 Dictionary 提供預設、部分由 Nexus 計算、部分保留物件既有值，Cabinet 又會另寫 `_CB.*`。因此重構前必須先固定欄位所有權。
+上圖是 1.x 現況，不是 2.0 主鏈：部分欄位由 Dictionary 提供預設、部分由 Nexus 計算、部分保留物件既有值，Cabinet 另寫 `_CB.*`。核心欄位所有權須在重構前固定；`_CB.*` 已依使用者裁決移到 Cabinet 延後工作軌，不阻擋主鏈契約。
 
 ## 已閱讀的 23 支 Python
 
@@ -50,10 +50,10 @@ flowchart LR
 | `LF_Anchor_Frame.py` | 產生圖面 anchor | 依賴 layer 與後續 Layout 流程 |
 | `LF_Extract_CP.py` | 建立剖面／可見線輸出 | 依賴 layer、顏色與 Rhino 狀態 |
 | `LF_Duplicate_Layout.py` | 複製 Layout | 依賴命名、Tag 與 Registry mapping |
-| `LF_Cabinet_Suite.py` | 產生櫃體及 `_CB.*` | 雖可延後重構，但欄位契約現在就要固定 |
+| `LF_Cabinet_Suite.py` | 產生櫃體及 `_CB.*` | 1.x 現況保留供 Cabinet fixtures；`_CB.*` 語意與所有權延後到 Cabinet 工作軌，不在核心契約先固定 |
 | `LF_2D_DW_Gen.py` | 產生門窗 2D | 依賴 `20_DW` 特例與 2D layer |
-| `LF_2D_Cabinet_Gen.py` | 產生櫃體 2D | 依賴 Cabinet 尺寸與 layer |
-| `LF_2D_Shelf_Gap.py` | 產生層板間隙線 | 依賴 Cabinet 幾何與 2D layer |
+| `LF_2D_Cabinet_Gen.py` | 產生櫃體 2D | 獨立 2D 幾何工具；不依賴 Cabinet Suite 或 `_CB.*` |
+| `LF_2D_Shelf_Gap.py` | 產生層板間隙線 | 獨立 2D 幾何工具；只依使用者選取幾何、輸入與 2D layer |
 
 ## 實際 Dictionary 快照
 
@@ -204,6 +204,8 @@ flowchart LR
 | ND-23 | Cabinet `_CB.*` | A. 現在凍結四欄語意，程式延後；B. 等 Cabinet 重構時再決定 | **已裁決為 B**：Cabinet／BOM 移出主鏈，2.0 Nexus／Registry 完全不處理 `_CB.*`，四欄語意留給 Cabinet 工作軌 |
 | ND-24 | Cabinet 方向 | A. L／W／T 依 panel local frame；B. 依三邊大小排序；C. 依 current layer／類型各自規則 | 技術上仍建議 **A**（`make_part()` 已持有 true W／H／D，只在寫入前被排序抹除），但**已延後**到 Cabinet 工作軌，不阻擋核心契約 |
 | ND-25 | Dictionary 驗證強度 | A. 重複、未知欄、錯型別、錯單位直接阻擋並列清單；B. 警告後盡量執行 | 核心欄位建議 **A**；未知 extension 可另設允許區 |
+| ND-26 | 正式資料化／發布 scope | A. M3D 正式範圍內全部 3D 物件（含 hidden／locked 與 schema 不合格者），另提供局部預覽；B. 只處理選取；C. 只處理可見／未鎖定 | 建議 **A**；schema 不合格者要在報告中阻擋發布，不可先過濾。局部 Apply 可以存在，但完整 Registry 發布前仍需全量驗證。由 ED-17 記錄使用者裁決 |
+| ND-27 | Cabinet 與 2.0 首發邊界 | A. 核心 2.0 可先發布，Cabinet 後續加入；B. Cabinet 雖延後仍是首發門檻 | 建議 **A**，避免零碎 BOM 阻擋主鏈；由 ED-18 記錄使用者裁決 |
 
 ## 不需要使用者逐項選擇的技術修正
 
@@ -225,7 +227,7 @@ flowchart LR
 
 1. 先裁決 ND-01～ND-08，固定 schema、單位、缺值、layer 與檔案責任。
 2. 再裁決 ND-09～ND-17，完成 Space、Elevation、Dimension、UUID 與欄位所有權。
-3. 最後裁決 ND-18～ND-25，固定 Registry、Tag、DW 與 Cabinet 的介面。
+3. 最後裁決 ND-18～ND-27，固定 Registry、Tag、DW、正式掃描 scope 與 Cabinet 發布邊界；ND-23／24 已延後，不阻擋核心契約。
 4. 將答案正式寫入 `_LoopFlow_命名與資料契約.md`，再建立 schema fixtures 與 validator 測試資料。
 5. 上述契約確認後，另建 Nexus 詳細拆分文件；此時才開始 2.0 程式骨架與功能實作。
 

@@ -144,7 +144,7 @@ Dictionary 提供類型預設；模型物件保存實例真相。有效值採一
 | W1 定義 | 建立可用的分類與資料規則 | Dictionary、schema、layer taxonomy | Type Catalog、模型 layer | Dictionary 驗證通過 |
 | W2 建模 | 建立與調整設計 | Rhino layer、幾何、Block | 3D Model Objects | 物件可被分類 |
 | W3 建立空間 | 定義空間範圍與歸屬依據 | 封閉曲線、樓層、命名 | Space 實體（穩定 `space_id`、顯示名稱、level／priority） | 邊界的重疊、缺口與跨樓層已處理或明確標示 |
-| W4 資料化 | 注入與覆寫實例資料 | Type defaults、幾何、Space、Elevation | 帶穩定 ID 的 Model Objects | 套用後重新驗證無阻擋項（必填欄位、ID、Space 命中、高程前置條件） |
+| W4 資料化 | 注入與覆寫實例資料 | Type defaults、幾何、Space、Elevation | 帶穩定 ID 的 Model Objects | 套用後重新驗證無阻擋項（必填欄位、ID、適用物件的 Space 分類、高程前置條件）；明確標為室外可通過，未涵蓋／多重命中不可混成同一結果 |
 | W5 發布 | 提供跨文件可讀資料 | 已驗證 Model Objects | Registry Revision | W4 驗證無阻擋項；pending 完整驗證並發布成功 |
 | W6 建立 View | 定義剖面、立面、平面 | 模型、Section plane、顯示範圍 | View Recipe、Rhino Section 結果 | View 有穩定 `view_id` |
 | W7 註冊 View | 固化 2D↔3D 對位 | Clipping Plane、Detail transform | 可重用的 View transform | 不依可變 bbox／名稱重新猜測 |
@@ -158,7 +158,7 @@ Dictionary 提供類型預設；模型物件保存實例真相。有效值採一
 
 兩點說明：
 
-- **W3 是獨立階段，不是 W4 的隱藏前置。** 空間邊界是 `_01` 空間資料的唯一來源，由使用者判斷哪些封閉曲線是有效邊界；平面改動、房間邊界調整或新增樓層後會回到這一階段重整，再重跑資料化。把它藏在資料化裡，等於讓「空間判定錯誤」只能在寫入之後才被發現。
+- **W3 是獨立階段，不是 W4 的隱藏前置。** 空間邊界是室內 `_01` 空間歸屬的來源，由使用者判斷哪些封閉曲線是有效邊界；明確的室外分類可以沒有室內 boundary，但「尚未涵蓋」不能再冒充室外。平面改動、房間邊界調整或新增樓層後會回到這一階段重整，再重跑資料化。把它藏在資料化裡，等於讓「空間判定錯誤」只能在寫入之後才被發現。
 - **W4 是「掃描 → 套用 → 再驗證」，驗證未通過不得進入 W5。** 套用可能部分失敗、使用者可能只勾選一部分、或修正 Dictionary 後尚未重跑，所以寫入前的預覽不能取代寫入後的驗證。發布是資料離開模型文件的唯一出口，這道關卡不能改由下游 Health 承擔——那時錯誤資料已經散佈到圖面端。階段怎麼呈現（獨立指令或同一指令的第三拍）屬設計選擇，但「驗證通過才可發布」是硬條件。
 
 ## 現行資料所有權盤點
@@ -233,9 +233,11 @@ Section 中段應拆成三個概念，而不是複製後就失去來源：
 2. **Generated Result**：Rhino Section／Clipping Drawing 生成的原始成果，可重建。
 3. **Editable Drawing**：供使用者編修的圖面成果，保存 `view_id`、生成 revision 與人工狀態。
 
-**Drawing 的來源索引（列入計畫）**：圖面化這一刻同時握有「3D 物件」與「剛生成的 2D 線」，是全流程唯一能低成本建立兩者關聯的時機。因此 Materialize 除了 `drawing_id`、來源 `view_id` 與來源 revision，另產出**每條線對應的來源 `object_id`**。它讓 Laser 從「每次對全模型求交後射線判斷」變成「點選最近的已標記線，讀出來源」：計算量沒有增加，只是把每次綁定都做一遍的事改成生成時做一次，而且關聯在生成當下就固定，不會因為之後編輯線稿而漂移；多候選時可以直接列出該點附近有幾條不同來源的線，不必依賴目前 200 cm 的距離聚類。
+**Drawing 的來源索引（列入計畫）**：圖面化是同時握有「3D 物件」與「剛生成 2D 線」的最佳關聯時機。Materialize 除了 `drawing_id`、來源 `view_id` 與來源 revision，還要為每個 drawing element 保存**零個、一個或多個 `source_object_id`**、建立方法與有效狀態。零來源代表無法辨識或人工新增；多來源代表重疊／合併或尚待使用者選擇，不得為了方便硬挑第一個。
 
-這一項是**補強而非替代**：定位基準仍是 View Registration 的固定 transform，索引缺失或失效時 Laser 仍須可運作。可行性（Clipping Drawing 輸出能否穩定對應回來源物件）在 Materialize 與 Laser 實作出來後隨功能驗證，不另立前置 spike——在索引真的被產出之前，這件事本來就無從測起。退路依序為：LoopFlow 自行以剖面交線做鄰近比對，或只用固定 transform。
+這能把 Laser 的常見路徑從「每次對全模型求交後射線判斷」縮成「讀取附近線稿的有效來源候選」，但不保證總計算量一定較少：若 Rhino 不提供正式 provenance，Materialize 仍可能需要逐物件幾何比對，只是把成本集中到生成階段並可重用。索引本身在生成當下固定，後續線稿被修改、複製或新增時則必須轉為 `modified`／`unindexed`／`ambiguous` 等可見狀態，不能宣稱永不漂移。
+
+這一項是**補強而非替代**：定位基準仍是 View Registration 的固定 transform。只有來源唯一、revision 適用且狀態有效時，Laser 才能直接採用索引；索引缺失、失效或多值時，回到固定 transform、候選清單與使用者選擇。Materialize 必須回報 indexed／unindexed／ambiguous 覆蓋率。完整概念欄位見 `_LoopFlow_命名與資料契約.md`；可行性在 Materialize 與 Laser 實作後隨功能驗證，不另立前置 spike。退路依序為 LoopFlow 剖面交線鄰近比對，或只用固定 transform。
 
 Drawing lifecycle 的第一個可測條件是**冪等重跑**：系統必須辨識前次產出，讓使用者選擇取代、新增或略過，並復原原有 layer lock、visibility 與 selection。現行 Extract 每次直接複製，沒有來源、去重與 revision，且會解鎖目標 layer 而不還原。
 
@@ -439,7 +441,7 @@ Health 不只回報結果，也要記錄原因、建議修復、預覽、使用�
 |---|---|---|---|
 | `LF_Nexus.py` | Dict-to-Layer、TagTrigger、TagChecker、Layer-to-Dict、Boundary、尺寸／高程／空間／UUID、Push 與 UI；另有 material、DNA_REF、Zoom 副作用 | 提供一個可查看、執行、檢查核心資料工作的入口 | Nexus 作 Project Console；工作交給 Type、Model Data、Space、Elevation、Dimension、Validation、Publish services |
 
-**TagTrigger 的作用範圍是一條要明示的契約。** 依 1.0 操作說明，TagTrigger 一次處理全部 M3D layer 上的 3D 物件，**不受物件可見或鎖定狀態影響**，使用者不必逐件選取。這條直接決定三件 2.0 設計：資料化的掃描範圍（隱藏／鎖定物件要不要納入）、Rhino 狀態復原的責任（為了掃描而改動可見性或鎖定，就必須還原），以及 Impact Report 的完整性（報告若漏掉隱藏物件，使用者會以為沒問題）。2.0 沿用或縮小這個範圍都可以，但必須是明示裁決並寫進契約，不能在重建時因為「只處理選取物件比較好寫」而靜默改變。
+**TagTrigger 的作用範圍是一條要明示的契約。** 依 1.0 操作說明，TagTrigger 一次處理全部 M3D layer 上的 3D 物件，**不受物件可見或鎖定狀態影響**，使用者不必逐件選取。這條直接決定三件 2.0 設計：資料化的掃描範圍（隱藏／鎖定物件要不要納入）、Rhino 狀態復原的責任（為了掃描而改動可見性或鎖定，就必須還原），以及 Impact Report 的完整性（報告若漏掉隱藏物件，使用者會以為沒問題）。2.0 沿用或縮小這個範圍都可以，但必須由 ED-17 明示裁決並寫進契約，不能在重建時因為「只處理選取物件比較好寫」而靜默改變。
 | `LF_Dictionary_Editor.py` | 找到並開啟 XLSX | 使用者能直接維護 Dictionary | Dictionary command；改由 `LOOPFLOW_WORKFILES_ROOT` resolver 開啟指定中文版本 |
 | `LF_Data_Viewer.py` | 唯讀顯示選取物件的全部 UserText | 隨時檢查物件或 Tag 實際資料 | Inspector；顯示 canonical 值、來源、revision、override 與 health，不只列 raw UserText |
 | `LF_Push_3D_to_JSON.py` | 掃描 M3D solids，依 UUID 將全部 UserText、layer、時間推入 Registry | 明確發布 3D 資料供其他文件使用 | Model Publisher；只發布版本化 schema 欄位與 extension，不把所有 UserText 無條件變成永久 API |
@@ -467,7 +469,7 @@ Health 不只回報結果，也要記錄原因、建議修復、預覽、使用�
 
 ### Cabinet 與 2D 輔助生產
 
-Cabinet 與 BOM 依使用者裁決**不屬於主工作流程**，列入後續開發（1.0 的 BOM 功能過於零碎，混入主鏈會汙染核心資料契約）。主鏈不得因 Cabinet 增加欄位、layer 分支或發布內容；下表的 2.0 責任只在該工作軌啟動時適用。
+Cabinet 與 BOM 依使用者裁決**不屬於主工作流程**，列入後續開發（1.0 的 BOM 功能過於零碎，混入主鏈會汙染核心資料契約）。主鏈不得因 Cabinet 增加欄位、layer 分支或發布內容；下表的 2.0 責任只在該工作軌啟動時適用。該工作軌是否阻擋 2.0 首次正式發布，仍待 ED-18 決定。
 
 | 現行檔案 | 現行功能 | 必須保留的意圖 | 2.0 建議責任 |
 |---|---|---|---|

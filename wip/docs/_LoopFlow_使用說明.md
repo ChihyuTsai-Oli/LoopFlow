@@ -53,7 +53,8 @@ LoopFlow 是 Rhino 8 的半自動化設計與出圖工具。使用者決定何�
 | Tag | `LF_Tagger_Grab`、`LF_Tagger_Laser`、`LF_Tagger_Index`、`LF_Tagger_Layout_ID`、`LF_TAG-O` | 建立、更新與檢查圖面標籤 |
 | 圖面同步 | `LF_Infuser_Part`、`LF_Infuser_All` | 更新部分或全部 Tag Blocks |
 | Layout / Section | `LF_Anchor_Frame`、`LF_Extract_CP`、`LF_Duplicate_Layout` | 建立基準、擷取剖線與複製 Layout |
-| 櫃體與 2D | `LF_Cabinet_Suite`、`LF_2D_Cabinet_Gen`、`LF_2D_Shelf_Gap`、`LF_2D_DW_Gen` | 櫃體及門窗圖面處理 |
+| 獨立 2D 工具 | `LF_2D_Cabinet_Gen`、`LF_2D_Shelf_Gap`、`LF_2D_DW_Gen` | 可獨立使用的櫃體、層板與門窗圖面工具；不依賴 Cabinet 主程式 |
+| 延後工作軌 | `LF_Cabinet_Suite` | 櫃體建模與 BOM；不屬 2.0 主工作鏈 |
 | 協作 | `LF_Sync_Worksession` | 監看與更新 Worksession |
 
 ## Tag Block 的 1.x 操作事實
@@ -86,10 +87,8 @@ LoopFlow 是 Rhino 8 的半自動化設計與出圖工具。使用者決定何�
 
 修改功能前，AI 必須用測試資料記錄對應的正常、取消、失敗、重複執行與復原結果。最少涵蓋：
 
-- Tag／Dictionary
-- Registry／Nexus
-- Layout／Infuser／Worksession
-- Cabinet／2D
+- 核心主鏈：Tag／Dictionary、Registry／Nexus、Layout／Infuser／Worksession。
+- 延後或獨立工作軌：Cabinet 與三個 2D 工具各自建立代表案例；不納入核心主鏈端到端通過條件。
 
 目前實機驗證狀態以 `architecture/PROGRESS.md` 為準。
 

@@ -80,6 +80,28 @@
 
 2.0 Block manifest 至少需要：穩定 template ID、family、role、允許的 binding mode、欄位 owner、缺值顯示、template version 與 migration mapping。`TAG_DW` 使用 `binding_mode: manual`；是否以 `role: title_frame` 限定 Layout ID 寫入見 ED-16。`03-A3 Scale` 不能直接沿用為 canonical ID，因它把面板排序、圖幅與欄位語意混在名稱中；是否繼續人工或改為自動值見 ED-15。家具 `FF-01` 的資料身分見 ED-14。
 
+## Drawing 來源索引契約（已列入計畫，名稱未定案）
+
+Drawing Materialize 預計在生成線稿時保存來源關聯，供 Laser 加速與去歧義。這不是「每條線必定對應一個物件」的假設；一個 drawing element 必須能表達**零個、一個或多個**來源。概念資料至少包括：
+
+```text
+drawing_element_id
+drawing_id
+source_view_id
+source_revision
+source_object_ids[]
+provenance_method
+provenance_state
+```
+
+- `source_object_ids[]` 為空代表無法辨識或使用者新畫的線；多值代表重疊、合併或尚待選擇，不可擅自挑第一個。
+- `provenance_method` 記錄來源是 Rhino 可提供的正式關聯、LoopFlow 幾何比對，或 migration；不同方法不能假裝有相同可信度。
+- Materialize 必須報告 indexed／unindexed／ambiguous 的數量與範圍。無法建立完整索引時仍可產出 Drawing，但不得宣稱索引完整。
+- 人工修改、複製或新增線稿後，來源關聯要保留其歷史並轉成相應狀態；不能因線仍帶舊 ID 就宣稱幾何仍與來源一致。
+- Laser 只在來源唯一、revision 適用且狀態有效時直接採用索引；其他情況回到固定 View transform、候選清單與使用者選擇。
+
+欄位名稱與狀態 enum 由 A03／A06 fixtures 定案；可行性與索引覆蓋率在 E02 Materialize 與 D02 Laser 實作時一併驗證，不另立前置 spike。
+
 ## Dictionary 定義工作
 
 1. 盤點 `LoopFlow_Dictionary.xlsx` 的所有欄、版本列、型別與允許值。

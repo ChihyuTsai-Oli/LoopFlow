@@ -17,10 +17,10 @@
 |---|---|---|---|---|
 | LF-A01 | 現況工作流與依賴盤點／`workflow-inventory` | 無 | `LOOPFLOW_DATA_ECOSYSTEM.md`：完整工作鏈、資料實體，以及 23 支現行程式的 producer、consumer、副作用與保留意圖 | 盤點表可追溯至現行程式；只改文件，可安全換機 |
 | LF-A02 | Dictionary 欄位盤點／`dictionary-inventory` | A01 | 現行 XLSX 欄位、型別、版本列、允許值、使用者顯示名稱與 consumer 對照 | 範例檔與指南交叉核對；未裁決欄位明確標記 |
-| LF-A03 | 命名與識別契約／`naming-contract` | A01–A02 | canonical UserText key、UUID、完整 layer path、Space identity、指令與檔名規則 | 使用者裁決已記錄；禁止直接改正式資料 |
+| LF-A03 | 命名與識別契約／`naming-contract` | A01–A02 | canonical UserText key、UUID、完整 layer path、Space／View／Drawing／Sheet identity、指令與檔名規則 | 使用者裁決已記錄；禁止直接改正式資料 |
 | LF-A04 | Registry／Tag／圖框資料契約／`registry-tag-contract` | A01–A03 | schema version、Registry object、10 份 Block template manifest、欄位 owner、binding mode、Producer／Consumer 與 migration 邊界 | 24 個現行 key 可追溯；manual `TAG_DW`、lock、Item 雙編碼、title-frame role 與未知 Block 行為可描述 |
 | LF-A05 | Nexus 專用拆分計畫／`nexus-plan` | A01–A04 | 一份獨立 Nexus 工作包、依賴、fixtures 與分段驗收文件 | 本任務只規劃，不一次重寫 Nexus；詳細拆分另文維護 |
-| LF-A06 | Fixtures 與 golden baseline／`contract-fixtures` | A02–A05 | Dictionary／UserText／UUID／Space／Registry，以及 9 Tag＋1 圖框的合法、錯誤、缺值、重複與舊版 fixtures | fixtures 不含私人正式專案；24 個 Block key 與預期 writer／owner 可機器比對 |
+| LF-A06 | Fixtures 與 golden baseline／`contract-fixtures` | A02–A05 | Dictionary／UserText／UUID／Space／Registry、Drawing provenance，以及 9 Tag＋1 圖框的合法、錯誤、缺值、重複與舊版 fixtures | fixtures 不含私人正式專案；24 個 Block key 與預期 writer／owner 可機器比對；Drawing 關聯涵蓋零／一／多來源、過期與人工修改 |
 | LF-B01 | 最小 source 與測試骨架／`source-skeleton` | A03–A06 | `wip/src/loopflow/`、`wip/src/entrypoints/`、`wip/tests/`、bootstrap 與 import smoke test | `LF_Nexus.py` 測試入口可載入但不假裝功能完成 |
 | LF-B02 | Result／Logging／Version／Config／Path／`foundation-core` | B01 | 共用結果、錯誤階段、log、版本、設定與無 UI path resolver | 純 Python 測試通過；沒有個人硬編碼路徑 |
 | LF-B03 | Rhino platform 與狀態復原／`rhino-platform` | B01–B02 | selection、lock、visibility、color、modified state 的 adapter 與 snapshot／restore | 成功、取消、失敗路徑有測試；未實機部分明示 |
@@ -29,19 +29,19 @@
 | LF-C03 | Registry 安全發布 P0／`registry-publisher` | A04、B02、C02 所需 payload | exclusive lock、pending、validate、atomic replace、last good | 雙程序、中斷、壞 JSON、replace 失敗測試通過 |
 | LF-C04 | Data Viewer／`data-viewer` | A03–A04、B03、C01 | 只讀檢視 canonical 資料的 feature 與入口 | 不修改來源；缺值與未知版本可理解 |
 | LF-D01 | Tagger Grab／`tagger-grab` | A04、B03、C01–C03 | Grab feature、入口與 fixtures | Rhino 狀態復原、重複執行與取消通過；Item 的模型／Block 來源分流正確，manual `TAG_DW` 不接受綁定 |
-| LF-D02 | Tagger Laser／`tagger-laser` | D01 共用契約、E02 來源索引（若已完成） | Laser feature、入口與 fixtures | 同上，且不複製共用規則；以固定 View transform 為定位基準，有來源索引時改走查表，索引缺失或失效仍可運作 |
+| LF-D02 | Tagger Laser／`tagger-laser` | D01 共用契約、E01 固定 View transform；E02 來源索引可用時整合 | Laser feature、入口與 fixtures | 同上，且不複製共用規則；以固定 View transform 為必要定位基準；索引只在來源唯一、revision／狀態有效時直接採用，零／多來源、缺失或失效時回到候選流程 |
 | LF-D03 | Tagger Index／`tagger-index` | D01 共用契約 | Index feature、入口與 fixtures | 同上 |
 | LF-D04 | Tagger Layout ID／`tagger-layout-id` | D01、Layout 契約 | Layout ID feature、入口與 fixtures | Layout／Tag identity 一致；只對宣告的 title frame 寫 `DWG_*`，人工比例欄不動，未知 Block 零寫入 |
 | LF-D05 | TAG-O／`tag-o` | D01–D04 | TAG-O feature、入口與 fixtures | Tag consumer 行為及錯誤路徑通過；manual Tag 不判 unbound，locked Tag 仍可唯讀判斷 stale／orphaned |
 | LF-D06 | Infuser Part／`infuser-part` | D01–D05、C03 | Part feature、入口與 fixtures | 部分更新、last good 與警告狀態通過；所有 manual 欄位、manual `TAG_DW` 與 locked 內容均不覆寫 |
 | LF-D07 | Infuser All／`infuser-all` | D06 | All feature、入口與 fixtures | 全量／重複更新及復原通過 |
-| LF-E01 | Anchor Frame／`anchor-frame` | B03、A03 | Anchor feature 與入口 | 幾何及 layer 狀態可復原 |
-| LF-E02 | Extract CP／Drawing Materialize／`extract-cp` | E01 | Extract feature、入口，以及 `drawing_id`、來源 `view_id`、來源 revision 與**每條線的來源 `object_id` 索引** | Section 測試案例通過；重跑冪等且 layer 狀態還原；索引可對應回來源物件，或明確回報無法對應並不阻斷產出 |
+| LF-E01 | View Registration／Anchor migration／`view-registration` | B03、A03 | `view_id`、固定 2D↔3D transform、現行 Anchor 遷移／診斷與入口 | 配對唯一性、transform round-trip、取消／失敗與幾何／layer 狀態復原通過；不再依名稱／bbox 猜測 |
+| LF-E02 | Extract CP／Drawing Materialize／`extract-cp` | E01、C02–C03 的 Object ID／revision | Extract feature、入口，以及 `drawing_id`、來源 `view_id`、來源 revision 與 drawing element → `source_object_ids[]` provenance 索引 | Section 測試案例通過；重跑冪等且 layer 狀態還原；覆蓋率報告區分 indexed／unindexed／ambiguous；人工修改／複製後狀態可追蹤；無法對應不阻斷 Drawing 產出 |
 | LF-E03 | Duplicate Layout／`duplicate-layout` | E01、D04 | Layout copy feature 與入口 | 命名、取消與重複執行通過 |
 | LF-E04 | Worksession／`worksession` | B02–B03 | event lifecycle、同步 feature 與入口 | register／unregister、重載與錯誤路徑通過 |
 | LF-F01 | Cabinet Suite 規格與 fixtures／`cabinet-baseline` | A02–A03 | 延後功能的現況契約與代表案例 | 不先重寫大型 UI／幾何流程；只記錄 1.x 現況，不把 `_CB.*` 帶進主鏈契約 |
-| LF-F02 | Cabinet Suite 重建／`cabinet-suite` | F01、核心資料鏈穩定 | Cabinet feature 與入口 | UI、幾何、取消、失敗與來源狀態實機驗證；製作資料的所在層與所有權在此任務才裁決 |
-| LF-F03 | 2D Cabinet／Shelf Gap／DW／各自獨立 scope | F02 | 三項功能各自的 feature、入口與測試 | 每項獨立 commit／push，不合成一大包 |
+| LF-F02 | Cabinet Suite 重建／`cabinet-suite` | F01、核心資料鏈穩定；是否阻擋首發依 ED-18 | Cabinet feature 與入口 | UI、幾何、取消、失敗與來源狀態實機驗證；製作資料的所在層與所有權在此任務才裁決 |
+| LF-F03 | 2D Cabinet／Shelf Gap／DW／各自獨立 scope | B02–B03；**不依賴 F02** | 三項功能各自的 feature、入口與測試 | 每項可獨立排程、commit／push 與發布，不合成一大包，也不引入 `_CB.*` 主鏈契約 |
 | LF-G01 | Migration 工具／`migration` | canonical contract 與核心功能完成 | scanner、預覽、備份、converter、validator、rollback | 只對測試副本執行，失敗可回復 |
 | LF-G02 | Build／Installer 技術選型與建置／`build-release` | 核心功能、資產結構與 migration 完成 | 比較可行封裝技術後，產生完整可安裝套件、LoopFlow 工具列、manifest、checksum 與回復方案 | 正式版不依賴 repo Python 路徑；Rhino Section Macro 可用且不覆蓋 workspace；全新／升級／重複安裝／移除／rollback 通過 |
 | LF-G03 | 端到端 RC／`rc-validation` | G01–G02 | 隔離 Rhino 8 的完整 workflow 驗收記錄 | 正常、取消、失敗、中斷、來源零變更與 last good 全部驗證 |
@@ -51,8 +51,8 @@
 1. **契約波次**：A01–A06。只建立可裁決、可測的資料定義，不搬正式功能。
 2. **架構波次**：B01–B03。只建立第一條功能真正需要的最小骨架。
 3. **核心資料鏈**：C01–C04。Nexus 優先，但必須先依專用文件再拆分。
-4. **可重複功能接入**：D01–E04。每支入口獨立任務，逐項實機驗證。
-5. **延後大型功能**：F01–F03。Cabinet／BOM 依使用者裁決排除在主工作流程外，與 2D 一併延後；核心契約與資料鏈不得為它們預留欄位或分支。
+4. **可重複功能接入**：D01–E04，實際依表內前置排序；尤其 E01 必須先於 D02，E02 與 D02 一併驗證來源索引。每支入口獨立任務，逐項實機驗證。
+5. **延後／獨立工具**：F01–F03。Cabinet／BOM 排除在主工作流程外，是否阻擋 2.0 首發依 ED-18；三個 2D 工具彼此獨立且不依賴 Cabinet，可各自排程。核心契約與資料鏈不得為它們預留 `_CB.*` 欄位或分支。
 6. **切換與發布**：G01–G03。完成 migration、build 與 RC 後才合入 `main`。
 
 ## 雙機換機檢查點
