@@ -31,6 +31,7 @@
 | UserText key | `_12_UUID` 等 | 寫入者、讀取者、唯一性、可否由使用者修改 |
 | Registry schema | project／object／geometry／metadata | 欄位、型別、ID、版本與成功條件 |
 | Block／Tag | Block 名稱與欄位 | 定義檔、插入者、更新者、顯示文字與缺值行為 |
+| Block instance 名稱 | `2D_D1`、`3D_W1`、`FF-01__Chair-1` | 這是**會被程式解析的資料來源**，不只是圖形標籤：分段規則、分隔符、允許值、唯一性與解析失敗行為 |
 | 檔案／資料夾 | Dictionary、Registry、log、output | 所屬位置、生命週期、備份與是否使用者可見 |
 | Config | layer prefix、顏色、timeout | 真正可調設定與不可調內部契約的分界 |
 | 程式識別字 | module、class、function、constant | 英文命名規則、縮寫與所屬 feature |
@@ -62,6 +63,18 @@
 | Elev 0 | 無 binding | Layout ID 寫目前頁 `Category` | 六個方向／編號欄人工維護；不參加 Infuser／TAG-O |
 | `TAG_DW` | **無；使用者已確認為純手動** | 無 2.0 自動欄位 | `attr_dw_id`、門窗寬、門窗高全部人工；沒有 lock。1.x Infuser 仍會把編號覆寫為 `?`，屬既成衝突 |
 | `Sample_Frame` | 無 binding | Layout ID 寫 `DWG_NAME`、`DWG_NO` | `03-A3 Scale` 人工；固定文字不是 UserText |
+
+### Block instance 命名慣例（使用者端契約）
+
+`Tag_Blocks.3dm` 檔內保存三種慣例，它們是 1.0 名稱解析的實際依據：
+
+| 範例 | 分段 | 用途 |
+|---|---|---|
+| `2D_D1` | `[2D]_[D1]` | 2D 門符號；`LF_2D_DW_Gen` 輸出與門窗類型辨識 |
+| `3D_W1` | `[3D]_[W1]` | 3D 窗 Block；歷史 DW 名稱解析路徑 |
+| `FF-01__Chair-1` | `[FF]-[01]__[Chair-1]` | 家具；`LF_Tagger_Grab` 由名稱解析成 `.Auto_Item_*` shadow fields |
+
+這是**使用者維護的命名，卻被程式當成資料讀取**：改了名稱就改了資料，而且沒有任何驗證或唯一性檢查。2.0 必須決定這三種慣例要保留、改為正式欄位，還是只作 migration 輸入；在裁決前不得擴充解析規則。家具 `FF-01` 的資料身分另見 ED-14。
 
 正式 8 種可鎖 Tag 都使用 `attr_Lock_不更新>寫入x或X`。現行 Grab／Laser／Index／Infuser 都能找到這個 key，但只有值在 `strip().upper()` 後恰為單一 `X` 才鎖定；鎖定同時阻擋資料寫入與重新綁定。2.0 的 canonical `lock_state` 必須是 typed boolean／enum，由 UI 切換；其他既有值交給 migration 列為待確認，不推測含義。
 

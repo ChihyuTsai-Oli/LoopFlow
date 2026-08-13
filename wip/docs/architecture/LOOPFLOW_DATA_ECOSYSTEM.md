@@ -143,17 +143,23 @@ Dictionary 提供類型預設；模型物件保存實例真相。有效值採一
 |---|---|---|---|---|
 | W1 定義 | 建立可用的分類與資料規則 | Dictionary、schema、layer taxonomy | Type Catalog、模型 layer | Dictionary 驗證通過 |
 | W2 建模 | 建立與調整設計 | Rhino layer、幾何、Block | 3D Model Objects | 物件可被分類 |
-| W3 資料化 | 注入與覆寫實例資料 | Type defaults、幾何、Space、Elevation | 帶穩定 ID 的 Model Objects | 必填資料與 ID 通過驗證 |
-| W4 發布 | 提供跨文件可讀資料 | 已驗證 Model Objects | Registry Revision | pending 完整驗證並發布成功 |
-| W5 建立 View | 定義剖面、立面、平面 | 模型、Section plane、顯示範圍 | View Recipe、Rhino Section 結果 | View 有穩定 `view_id` |
-| W6 註冊 View | 固化 2D↔3D 對位 | Clipping Plane、Detail transform | 可重用的 View transform | 不依可變 bbox／名稱重新猜測 |
-| W7 圖面化 | 取得可獨立編輯的線稿 | Section 結果 | Editable Drawing | 前次產出與人工成果可辨識 |
-| W8 建立 Sheet | 安排 Layout 與圖框 | Drawing、Sheet metadata | Layout、Detail、圖框、圖號 | Sheet metadata 完整 |
-| W9 建立 Tag | 由直接選取或圖面位置綁定模型 | Drawing／View、Registry、Tag Template | 綁定完成的 Tag | 來源唯一或經使用者選定 |
-| W10 同步 | 把最新資料延續到圖框與 Tag | Registry Revision、Sheet metadata | 更新的 Tag／圖框顯示 | 不覆寫人工鎖定內容 |
-| W11 健康檢查 | 找出並修復資料鏈問題 | 全部 ID、revision 與狀態 | Issue Report、Repair Result | 修復可追蹤且可復原 |
+| W3 建立空間 | 定義空間範圍與歸屬依據 | 封閉曲線、樓層、命名 | Space 實體（穩定 `space_id`、顯示名稱、level／priority） | 邊界的重疊、缺口與跨樓層已處理或明確標示 |
+| W4 資料化 | 注入與覆寫實例資料 | Type defaults、幾何、Space、Elevation | 帶穩定 ID 的 Model Objects | 套用後重新驗證無阻擋項（必填欄位、ID、Space 命中、高程前置條件） |
+| W5 發布 | 提供跨文件可讀資料 | 已驗證 Model Objects | Registry Revision | W4 驗證無阻擋項；pending 完整驗證並發布成功 |
+| W6 建立 View | 定義剖面、立面、平面 | 模型、Section plane、顯示範圍 | View Recipe、Rhino Section 結果 | View 有穩定 `view_id` |
+| W7 註冊 View | 固化 2D↔3D 對位 | Clipping Plane、Detail transform | 可重用的 View transform | 不依可變 bbox／名稱重新猜測 |
+| W8 圖面化 | 取得可獨立編輯的線稿 | Section 結果 | Editable Drawing | 前次產出與人工成果可辨識 |
+| W9 建立 Sheet | 安排 Layout 與圖框 | Drawing、Sheet metadata | Layout、Detail、圖框、圖號 | Sheet metadata 完整 |
+| W10 建立 Tag | 由直接選取或圖面位置綁定模型 | Drawing／View、Registry、Tag Template | 綁定完成的 Tag | 來源唯一或經使用者選定 |
+| W11 同步 | 把最新資料延續到圖框與 Tag | Registry Revision、Sheet metadata | 更新的 Tag／圖框顯示 | 不覆寫人工鎖定內容 |
+| W12 健康檢查 | 找出並修復資料鏈問題 | 全部 ID、revision 與狀態 | Issue Report、Repair Result | 修復可追蹤且可復原 |
 
 每個階段都必須可以單獨預覽、執行、重跑與復原，並清楚回報成功、略過、警告、失敗與取消；不可把所有階段綁成一次不可中斷的大操作。
+
+兩點說明：
+
+- **W3 是獨立階段，不是 W4 的隱藏前置。** 空間邊界是 `_01` 空間資料的唯一來源，由使用者判斷哪些封閉曲線是有效邊界；平面改動、房間邊界調整或新增樓層後會回到這一階段重整，再重跑資料化。把它藏在資料化裡，等於讓「空間判定錯誤」只能在寫入之後才被發現。
+- **W4 是「掃描 → 套用 → 再驗證」，驗證未通過不得進入 W5。** 套用可能部分失敗、使用者可能只勾選一部分、或修正 Dictionary 後尚未重跑，所以寫入前的預覽不能取代寫入後的驗證。發布是資料離開模型文件的唯一出口，這道關卡不能改由下游 Health 承擔——那時錯誤資料已經散佈到圖面端。階段怎麼呈現（獨立指令或同一指令的第三拍）屬設計選擇，但「驗證通過才可發布」是硬條件。
 
 ## 現行資料所有權盤點
 
@@ -389,6 +395,8 @@ Model revision
 
 Health 不只回報結果，也要記錄原因、建議修復、預覽、使用者選擇與 repair result。純手動 `TAG_DW` 沒有來源是正常狀態，不得判成 unbound；鎖定 Tag 仍需在不改內容的前提下檢查來源健康。任何修復不得偷偷重綁、重建 ID、覆寫人工成果或刪除圖面。
 
+**Health 必須能說明自己的覆蓋範圍。** 1.x 的 TAG-O 只掃 Config 列出的 Index 與 Data Block，`TAG_ELEV_0` 不在任何清單內，因此既不參與 Infuser 也不參與狀態掃描；locked Tag 又會保留上一次的顏色。這兩件事合起來，使得「面板沒有問題」不能推定所有 Block 都健康。2.0 的 Issue Report 要能列舉本次檢查涵蓋與未涵蓋的 Block／Tag，未涵蓋者明確標示為「未檢查」，不併入通過數。
+
 ## 現況高風險與 2.0 約束
 
 | 優先 | 現況事實／待實機確認 | 2.0 約束 |
@@ -403,6 +411,7 @@ Health 不只回報結果，也要記錄原因、建議修復、預覽、使用�
 | P1 | `BC` 在非 Block 上靜默退回 BH，但 Tag 仍顯示 BC | rule、label、前置條件分離；條件不成立即明確錯誤 |
 | P1 | lock 只接受單一 `x`／`X`；其他標記看似存在卻不生效，且不會提示 | typed `lock_state` 與 UI toggle；migration 將其他值列為待確認 |
 | P1 | Layout ID 把所有未分類 Block 當圖框寫入 | Template manifest 明列 `title_frame` role；未知 Block 零寫入 |
+| P1 | `TAG_ELEV_0` 不在 Config 任何 Block 清單內，Infuser 與 TAG-O 都直接略過它 | Health 覆蓋範圍要能列舉；未被檢查的 Block 明確回報為「未涵蓋」，不算通過 |
 | P2 | Dict-to-Layer 同時建 material、layer UserString、`DNA_REF_` 線並 ZoomExtents；重跑累積參考線 | 四種責任分離，每項有明確用途與重跑政策 |
 | P2 | naming config 與 Registry fallback 值形成多個設定來源 | schema／user setting／fallback 單一且可檢查 |
 | P2 | `Role`／`Target_CP`、`Layout_Map`、`Tag_Links` 等只寫不讀 | 無 consumer 的舊結構不承接為 2.0 契約 |
@@ -425,6 +434,8 @@ Health 不只回報結果，也要記錄原因、建議修復、預覽、使用�
 | 現行檔案 | 現行功能 | 必須保留的意圖 | 2.0 建議責任 |
 |---|---|---|---|
 | `LF_Nexus.py` | Dict-to-Layer、TagTrigger、TagChecker、Layer-to-Dict、Boundary、尺寸／高程／空間／UUID、Push 與 UI；另有 material、DNA_REF、Zoom 副作用 | 提供一個可查看、執行、檢查核心資料工作的入口 | Nexus 作 Project Console；工作交給 Type、Model Data、Space、Elevation、Dimension、Validation、Publish services |
+
+**TagTrigger 的作用範圍是一條要明示的契約。** 依 1.0 操作說明，TagTrigger 一次處理全部 M3D layer 上的 3D 物件，**不受物件可見或鎖定狀態影響**，使用者不必逐件選取。這條直接決定三件 2.0 設計：資料化的掃描範圍（隱藏／鎖定物件要不要納入）、Rhino 狀態復原的責任（為了掃描而改動可見性或鎖定，就必須還原），以及 Impact Report 的完整性（報告若漏掉隱藏物件，使用者會以為沒問題）。2.0 沿用或縮小這個範圍都可以，但必須是明示裁決並寫進契約，不能在重建時因為「只處理選取物件比較好寫」而靜默改變。
 | `LF_Dictionary_Editor.py` | 找到並開啟 XLSX | 使用者能直接維護 Dictionary | Dictionary command；改由 `LOOPFLOW_WORKFILES_ROOT` resolver 開啟指定中文版本 |
 | `LF_Data_Viewer.py` | 唯讀顯示選取物件的全部 UserText | 隨時檢查物件或 Tag 實際資料 | Inspector；顯示 canonical 值、來源、revision、override 與 health，不只列 raw UserText |
 | `LF_Push_3D_to_JSON.py` | 掃描 M3D solids，依 UUID 將全部 UserText、layer、時間推入 Registry | 明確發布 3D 資料供其他文件使用 | Model Publisher；只發布版本化 schema 欄位與 extension，不把所有 UserText 無條件變成永久 API |
@@ -576,7 +587,7 @@ Cabinet 與 BOM 依使用者裁決**不屬於主工作流程**，列入後續開
 
 ## 本文件的確立門檻
 
-- 使用者確認 W1～W11 工作鏈沒有遺失實際作業目的。
+- 使用者確認 W1～W12 工作鏈沒有遺失實際作業目的。
 - 23 支現行程式的「保留意圖」與「可翻案做法」分類合理。
 - Type／Object／Space／View／Drawing／Sheet／Tag／Registry 的真相邊界清楚。
 - ECO-01～ECO-11 完成確認。

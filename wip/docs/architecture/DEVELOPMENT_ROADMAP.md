@@ -25,7 +25,7 @@
 | LF-B02 | Result／Logging／Version／Config／Path／`foundation-core` | B01 | 共用結果、錯誤階段、log、版本、設定與無 UI path resolver | 純 Python 測試通過；沒有個人硬編碼路徑 |
 | LF-B03 | Rhino platform 與狀態復原／`rhino-platform` | B01–B02 | selection、lock、visibility、color、modified state 的 adapter 與 snapshot／restore | 成功、取消、失敗路徑有測試；未實機部分明示 |
 | LF-C01 | Dictionary reader／validator／`dictionary-core` | A06、B02 | 2.0 schema loader、validator 與明確錯誤 | fixtures 與版本拒絕行為通過 |
-| LF-C02 | Nexus 重建工作軌／依 Nexus 專用文件逐項開分支 | A05–A06、B02–B03、C01 | Nexus 的 UI、資料處理、UUID／Space、payload 與發布整合 | 不作單一大型提交；子任務與驗收由 Nexus 專用文件定義；**不得處理 `_CB.*` 或為 Cabinet 增加 layer 分支** |
+| LF-C02 | Nexus 重建工作軌／依 Nexus 專用文件逐項開分支 | A05–A06、B02–B03、C01 | Nexus 的 UI、資料處理、UUID／Space、payload 與發布整合 | 不作單一大型提交；子任務與驗收由 Nexus 專用文件定義；掃描範圍（隱藏／鎖定物件是否納入）須明示裁決並測試，改動可見性或鎖定必須還原；**不得處理 `_CB.*` 或為 Cabinet 增加 layer 分支** |
 | LF-C03 | Registry 安全發布 P0／`registry-publisher` | A04、B02、C02 所需 payload | exclusive lock、pending、validate、atomic replace、last good | 雙程序、中斷、壞 JSON、replace 失敗測試通過 |
 | LF-C04 | Data Viewer／`data-viewer` | A03–A04、B03、C01 | 只讀檢視 canonical 資料的 feature 與入口 | 不修改來源；缺值與未知版本可理解 |
 | LF-D01 | Tagger Grab／`tagger-grab` | A04、B03、C01–C03 | Grab feature、入口與 fixtures | Rhino 狀態復原、重複執行與取消通過；Item 的模型／Block 來源分流正確，manual `TAG_DW` 不接受綁定 |

@@ -27,7 +27,7 @@ LoopFlow 是 Rhino 8 的半自動化設計與出圖工具。使用者決定何�
 
 1. `LF_Nexus > Dict. to Layer` 依 Dictionary 建立／更新建模 layers；使用者建立與修改 3D 模型。
 2. `LF_Nexus > SpaceBoundary` 由使用者選取 closed curves 建立空間邊界。
-3. `LF_Nexus > TagTrigger` 對 M3D 範圍寫入 Dictionary、尺寸、高程、空間與 UUID；接著以 `TagChecker` 檢查，必要時修正後重跑。
+3. `LF_Nexus > TagTrigger` 對 M3D 範圍寫入 Dictionary、尺寸、高程、空間與 UUID。作用範圍是全部 M3D layer 上的 3D 物件，**不受物件可見或鎖定狀態影響**，不需逐件選取；接著以 `TagChecker` 檢查，必要時修正後重跑。
 4. 視需要使用 `Layer to Dict.` 匯出 layer 現況供人工對照；它不是每次發布的必要步驟，也不應自動覆寫正式 Dictionary。
 5. 以 `LF_Push_3D_to_JSON` 發布 Registry 資料。
 6. 使用 Rhino 8 內建 Clipping／Section 指令建立剖面、立面或平面。
