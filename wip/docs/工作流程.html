@@ -169,7 +169,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <p><strong>Validate</strong>：檢查 15 欄、schema、Type ID、類別與 layer mapping、單位、measurement rule、量綱與必填值。</p>
 <p><strong>Sync</strong>：</p>
 <ul><li>第一次尚未記住專案名稱時彈出視窗，不預填 <code>M3D</code>；檔案已有名稱後改在指令列詢問，Enter 接受已記住的名稱，也可改名。名稱寫入文件 <code>lf_layer_prefix</code>，不是專案 UUID。未寫入前綴時圖層樹仍用 <code>M3D</code>。</li><li>Dictionary 有、Rhino 沒有的 layer：建立並帶入初始 layer defaults。</li><li>已存在的同名 Rhino layer：保留既有 UserText／construction；顯示色與材質依圖層代號前綴重套（1.x 顯示慣例），材質名稱不含專案前綴，不改物件 instance 顏色。</li><li>不覆寫 object instance 的 <code>_02</code> 狀態，也不把 object data 回寫 Dictionary。</li><li>不執行 ZoomExtents，不改變使用者視圖。</li><li><code>DNA_REF_</code> 參考點放在 <code>(0,0,0)</code>，依穩定 Type ID 更新或取代，避免空 Type layer 被 Purge 且不重複累積。</li><li><code>20_DW</code> 維持單一 Type，排除 child layers。</li></ul>
-<p><strong>選用反向匯出</strong>：選單「寫回字典」在 Dictionary 同一目錄新增 <code>LoopFlow_Dictionary_Export.xlsx</code>（完整 15 欄加上 <code>diff_status</code>）。不彙總 Object UserText、不自動覆寫正式 Dictionary。Rhino 多出來的 layer 以 <code>added_in_rhino</code> 列在底部。</p>
+<p><strong>選用反向匯出</strong>：選單「寫回字典」在 Dictionary 同一目錄新增 <code>LoopFlow_Dictionary_Export.xlsx</code>（完整 15 欄加上 <code>diff_status</code>）。字體與字高跟正式字典相同；有變動的狀態文字會換色（缺漏紅、新增藍、修改橙）。不彙總 Object UserText、不自動覆寫正式 Dictionary。Rhino 多出來的 layer 以 <code>added_in_rhino</code> 列在底部。</p>
 <p><strong>安全停點</strong>：Layer 建好即可存檔，不必繼續跑完整鏈。</p>
 <h2 id="3-建立與修改-3D-模型">3. 建立與修改 3D 模型</h2>
 <p>使用者以 Rhino 一般工具建模。LoopFlow 不在背景自動注入資料。</p>
@@ -186,7 +186,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <p>在記憶體算出再跑一次 Apply 會寫的 UserText，與物件現值比對，<strong>不寫入</strong>。相符彈出視窗說明符合；不符彈出視窗列出差異，並保持那些物件被選取。</p>
 <p><strong>中斷</strong>：保留已完成且可驗證的寫入與 mapping；重跑 Verify 顯示剩餘差異，不假裝全案完成。</p>
 <h3 id="寫回字典">寫回字典</h3>
-<p>在字典目錄新增 <code>LoopFlow_Dictionary_Export.xlsx</code>，供人工核對後合併進正式 Dictionary。不得覆寫 <code>LoopFlow_Dictionary.xlsx</code>。</p>
+<p>在字典目錄新增 <code>LoopFlow_Dictionary_Export.xlsx</code>，供人工核對後合併進正式 Dictionary。字體、字高與正式字典相同；<code>diff_status</code> 有變動時只改該格文字顏色。不得覆寫 <code>LoopFlow_Dictionary.xlsx</code>。</p>
 <h2 id="6-發布-Registry">6. 發布 Registry</h2>
 <p><strong>前置</strong>：全案 Verify 通過。</p>
 <p><strong>動作</strong>：取得 exclusive lock、重新讀取現況、寫 pending、驗證完整 payload，再 atomic replace 正式 Registry。</p>

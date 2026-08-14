@@ -15,7 +15,15 @@ if str(SRC) not in __import__("sys").path:
 
 from loopflow.features.dictionary import schema
 from loopflow.features.dictionary.loader import load_from_path, load_from_table, load_from_workfiles
-from loopflow.platform.excel import write_table
+from loopflow.platform.excel import (
+    DICTIONARY_FONT_NAME,
+    DICTIONARY_FONT_SIZE,
+    STATUS_FONT_COLORS,
+    read_font_table,
+    read_status_cell_colors,
+    read_table,
+    write_table,
+)
 
 
 def _load_json(name: str):
@@ -200,6 +208,34 @@ class PathAndExcelTests(unittest.TestCase):
             record = result.details["catalog"].by_type_id("EX-01")
             self.assertEqual(record.type_display_name, "鋼筋混凝土")
             self.assertEqual(record.measurement_rule, "COUNT")
+
+    def test_dictionary_profile_fonts_and_status_colors(self):
+        headers = list(schema.DISPLAY_COLUMNS) + ["diff_status"]
+        rows = [
+            _valid_row() + ["unchanged"],
+            _valid_row(type_id="EX-02") + ["missing_in_rhino"],
+            _valid_row(type_id="EX-03") + ["added_in_rhino"],
+            _valid_row(type_id="EX-04") + ["modified"],
+        ]
+        with tempfile.TemporaryDirectory(prefix="loopflow-xlsx-style-") as raw:
+            plain = Path(raw) / "plain.xlsx"
+            styled = Path(raw) / "styled.xlsx"
+            self.assertTrue(write_table(plain, schema.TITLE_ROW, headers, rows).ok)
+            self.assertTrue(
+                write_table(styled, schema.TITLE_ROW, headers, rows, profile="dictionary").ok
+            )
+            self.assertEqual(read_font_table(plain), [])
+            fonts = read_font_table(styled)
+            self.assertTrue(all(item["name"] == DICTIONARY_FONT_NAME for item in fonts))
+            self.assertTrue(all(item["size"] == DICTIONARY_FONT_SIZE for item in fonts))
+            colors = read_status_cell_colors(styled)
+            self.assertIsNone(colors["unchanged"])
+            self.assertEqual(colors["missing_in_rhino"], STATUS_FONT_COLORS["missing_in_rhino"])
+            self.assertEqual(colors["added_in_rhino"], STATUS_FONT_COLORS["added_in_rhino"])
+            self.assertEqual(colors["modified"], STATUS_FONT_COLORS["modified"])
+            table = read_table(styled)
+            self.assertTrue(table.ok, table.message)
+            self.assertEqual([row[-1] for row in table.details["rows"]], [row[-1] for row in rows])
 
 
 if __name__ == "__main__":

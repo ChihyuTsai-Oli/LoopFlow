@@ -388,7 +388,7 @@ def export_dictionary(
                 command_id=command_id,
             )
         rows = _dictionary_export_rows(current, catalog, prefix)
-        written = write_table(target, schema.TITLE_ROW, EXPORT_HEADERS, rows)
+        written = write_table(target, schema.TITLE_ROW, EXPORT_HEADERS, rows, profile="dictionary")
         if not written.ok:
             return written
         message = "已在字典目錄匯出 %s，未改正式 Dictionary。" % target.name

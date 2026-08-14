@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import zipfile
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence
 from xml.etree import ElementTree as ET
 
 from loopflow.foundation import results
@@ -15,6 +15,44 @@ PKG_REL_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
 OFFICE_REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 CONTENT_NS = "http://schemas.openxmlformats.org/package/2006/content-types"
 CELL_REF_RE = re.compile(r"^([A-Z]+)(\d+)$")
+DICTIONARY_FONT_NAME = "微軟正黑體"
+DICTIONARY_FONT_SIZE = "10"
+DICTIONARY_ROW_HEIGHT = "20.1"
+DICTIONARY_TITLE_HEIGHT = "30"
+DICTIONARY_HEADER_HEIGHT = "39.9"
+# 對齊正式 Dictionary 前 15 欄寬度；最後一欄給 diff_status。
+DICTIONARY_COLUMN_WIDTHS = (
+    44.4,
+    11.2,
+    11.4,
+    9.7,
+    13.2,
+    11.9,
+    11.8,
+    11.6,
+    13.9,
+    12.8,
+    12.8,
+    12.8,
+    12.8,
+    14.6,
+    12.8,
+    18.0,
+)
+STATUS_FONT_COLORS = {
+    "missing_in_rhino": "FFC00000",
+    "added_in_rhino": "FF0070C0",
+    "modified": "FFED7D31",
+}
+STYLE_BODY = "0"
+STYLE_TITLE = "1"
+STYLE_HEADER = "0"
+STATUS_STYLE_IDS = {
+    "missing_in_rhino": "2",
+    "added_in_rhino": "3",
+    "modified": "4",
+}
+TITLE_FONT_COLOR = "FF3333FF"
 
 
 def _qn(ns: str, tag: str) -> str:
@@ -170,11 +208,98 @@ def read_table(path: Path) -> results.Result:
     )
 
 
-def write_table(path: Path, title: str, headers: Sequence[str], rows: Sequence[Sequence[object]]) -> results.Result:
+def _dictionary_styles_xml() -> ET.Element:
+    sheet = ET.Element("styleSheet", xmlns=MAIN_NS)
+    fonts = ET.SubElement(sheet, "fonts", count="5")
+
+    def add_font(*, bold=False, color_rgb=None, color_theme=None):
+        font = ET.SubElement(fonts, "font")
+        if bold:
+            ET.SubElement(font, "b")
+        ET.SubElement(font, "sz", val=DICTIONARY_FONT_SIZE)
+        if color_rgb:
+            ET.SubElement(font, "color", rgb=color_rgb)
+        elif color_theme is not None:
+            ET.SubElement(font, "color", theme=str(color_theme))
+        ET.SubElement(font, "name", val=DICTIONARY_FONT_NAME)
+        ET.SubElement(font, "family", val="2")
+        ET.SubElement(font, "charset", val="136")
+
+    add_font(color_theme=1)
+    add_font(color_rgb=STATUS_FONT_COLORS["missing_in_rhino"])
+    add_font(color_rgb=STATUS_FONT_COLORS["added_in_rhino"])
+    add_font(color_rgb=STATUS_FONT_COLORS["modified"])
+    add_font(bold=True, color_rgb=TITLE_FONT_COLOR)
+
+    fills = ET.SubElement(sheet, "fills", count="2")
+    ET.SubElement(ET.SubElement(fills, "fill"), "patternFill", patternType="none")
+    ET.SubElement(ET.SubElement(fills, "fill"), "patternFill", patternType="gray125")
+    borders = ET.SubElement(sheet, "borders", count="2")
+    empty = ET.SubElement(borders, "border")
+    for edge in ("left", "right", "top", "bottom", "diagonal"):
+        ET.SubElement(empty, edge)
+    lined = ET.SubElement(borders, "border")
+    for edge in ("left", "right", "top", "bottom"):
+        ET.SubElement(ET.SubElement(lined, edge, style="thin"), "color", indexed="64")
+    ET.SubElement(lined, "diagonal")
+    cell_style_xfs = ET.SubElement(sheet, "cellStyleXfs", count="1")
+    ET.SubElement(
+        cell_style_xfs,
+        "xf",
+        numFmtId="0",
+        fontId="0",
+        fillId="0",
+        borderId="0",
+    )
+    xfs = ET.SubElement(sheet, "cellXfs", count="5")
+
+    def add_xf(font_id: str, *, border=True, align=True):
+        xf = ET.SubElement(
+            xfs,
+            "xf",
+            numFmtId="0",
+            fontId=font_id,
+            fillId="0",
+            borderId="1" if border else "0",
+            xfId="0",
+            applyFont="1",
+        )
+        if border:
+            xf.set("applyBorder", "1")
+        if align:
+            xf.set("applyAlignment", "1")
+            ET.SubElement(xf, "alignment", horizontal="left", vertical="center")
+        return xf
+
+    add_xf("0")
+    add_xf("4", border=False)
+    add_xf("1")
+    add_xf("2")
+    add_xf("3")
+    styles = ET.SubElement(sheet, "cellStyles", count="1")
+    ET.SubElement(styles, "cellStyle", name="一般", xfId="0", builtinId="0")
+    return sheet
+
+
+def _text_status(value) -> str:
+    if value in (None, ""):
+        return ""
+    return str(value).strip()
+
+
+def write_table(
+    path: Path,
+    title: str,
+    headers: Sequence[str],
+    rows: Sequence[Sequence[object]],
+    *,
+    profile: Optional[str] = None,
+) -> results.Result:
     """寫入僅供測試／反向匯出使用的簡單 xlsx。不覆寫不存在的父目錄以外的檔案。"""
     target = Path(path)
     if not target.parent.exists():
         return results.failed("read_excel", "輸出目錄不存在，不建立。")
+    styled = profile == "dictionary"
     strings = []
     index_of = {}
 
@@ -184,10 +309,14 @@ def write_table(path: Path, title: str, headers: Sequence[str], rows: Sequence[S
             strings.append(text)
         return index_of[text]
 
-    def append_cell(row_el: ET.Element, col: int, row: int, value) -> None:
-        if value in (None, ""):
+    def append_cell(row_el: ET.Element, col: int, row: int, value, style_id: Optional[str] = None) -> None:
+        if value in (None, "") and not (styled and style_id is not None):
             return
         cell = ET.SubElement(row_el, "c", r="%s%s" % (_col_letters(col), row))
+        if style_id is not None:
+            cell.set("s", style_id)
+        if value in (None, ""):
+            return
         if isinstance(value, bool):
             cell.set("t", "b")
             ET.SubElement(cell, "v").text = "1" if value else "0"
@@ -199,17 +328,63 @@ def write_table(path: Path, title: str, headers: Sequence[str], rows: Sequence[S
         ET.SubElement(cell, "v").text = str(intern(str(value)))
 
     sheet = ET.Element("worksheet", xmlns=MAIN_NS)
+    if styled:
+        ET.SubElement(
+            sheet,
+            "sheetFormatPr",
+            defaultColWidth="9",
+            defaultRowHeight=DICTIONARY_ROW_HEIGHT,
+            customHeight="1",
+        )
+        cols = ET.SubElement(sheet, "cols")
+        widths = list(DICTIONARY_COLUMN_WIDTHS)
+        while len(widths) < len(headers):
+            widths.append(18.0)
+        for index, width in enumerate(widths[: max(len(headers), 1)], start=1):
+            ET.SubElement(
+                cols,
+                "col",
+                min=str(index),
+                max=str(index),
+                width=str(width),
+                customWidth="1",
+            )
     sheet_data = ET.SubElement(sheet, "sheetData")
     title_row = ET.SubElement(sheet_data, "row", r="1")
-    append_cell(title_row, 1, 1, title)
+    if styled:
+        title_row.set("ht", DICTIONARY_TITLE_HEIGHT)
+        title_row.set("customHeight", "1")
+    append_cell(title_row, 1, 1, title, STYLE_TITLE if styled else None)
     header_row = ET.SubElement(sheet_data, "row", r="2")
+    if styled:
+        header_row.set("ht", DICTIONARY_HEADER_HEIGHT)
+        header_row.set("customHeight", "1")
     for col, header in enumerate(headers, start=1):
-        append_cell(header_row, col, 2, header)
+        append_cell(header_row, col, 2, header, STYLE_HEADER if styled else None)
+    status_col = None
+    if styled:
+        for index, header in enumerate(headers, start=1):
+            if header == "diff_status":
+                status_col = index
+                break
     for offset, values in enumerate(rows):
         row_number = offset + 3
         row_el = ET.SubElement(sheet_data, "row", r=str(row_number))
-        for col, value in enumerate(values, start=1):
-            append_cell(row_el, col, row_number, value)
+        if styled:
+            row_el.set("ht", DICTIONARY_ROW_HEIGHT)
+            row_el.set("customHeight", "1")
+        padded = list(values) + [None] * max(0, len(headers) - len(values))
+        status_value = padded[status_col - 1] if status_col else None
+        last_col = len(headers) if styled else max(len(values), 0)
+        for col in range(1, last_col + 1):
+            style_id = None
+            if styled:
+                if status_col and col == status_col:
+                    style_id = STATUS_STYLE_IDS.get(_text_status(status_value), STYLE_BODY)
+                else:
+                    style_id = STYLE_BODY
+            value = padded[col - 1] if col <= len(padded) else None
+            append_cell(row_el, col, row_number, value, style_id)
 
     sst = ET.Element(
         "sst",
@@ -254,6 +429,13 @@ def write_table(path: Path, title: str, headers: Sequence[str], rows: Sequence[S
         PartName="/xl/sharedStrings.xml",
         ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml",
     )
+    if styled:
+        ET.SubElement(
+            types,
+            "Override",
+            PartName="/xl/styles.xml",
+            ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml",
+        )
 
     root_rels = ET.Element("Relationships", xmlns=PKG_REL_NS)
     ET.SubElement(
@@ -278,6 +460,14 @@ def write_table(path: Path, title: str, headers: Sequence[str], rows: Sequence[S
         Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings",
         Target="sharedStrings.xml",
     )
+    if styled:
+        ET.SubElement(
+            wb_rels,
+            "Relationship",
+            Id="rId3",
+            Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
+            Target="styles.xml",
+        )
 
     def dump(element: ET.Element) -> bytes:
         return ET.tostring(element, encoding="utf-8", xml_declaration=True)
@@ -290,6 +480,88 @@ def write_table(path: Path, title: str, headers: Sequence[str], rows: Sequence[S
             zf.writestr("xl/_rels/workbook.xml.rels", dump(wb_rels))
             zf.writestr("xl/worksheets/sheet1.xml", dump(sheet))
             zf.writestr("xl/sharedStrings.xml", dump(sst))
+            if styled:
+                zf.writestr("xl/styles.xml", dump(_dictionary_styles_xml()))
     except OSError as exc:
         return results.failed("read_excel", "無法寫入 xlsx：%s" % exc)
     return results.ok("read_excel", "已寫入工作表", details={"filename": target.name})
+
+
+def read_font_table(path: Path) -> List[dict]:
+    """測試用：讀 styles.xml 的字型名稱、大小與顏色。"""
+    xlsx = Path(path)
+    with zipfile.ZipFile(xlsx) as zf:
+        if "xl/styles.xml" not in zf.namelist():
+            return []
+        root = _parse_xml(zf.read("xl/styles.xml"))
+    fonts = []
+    fonts_el = root.find(_qn(MAIN_NS, "fonts"))
+    if fonts_el is None:
+        return []
+    for font in fonts_el.findall(_qn(MAIN_NS, "font")):
+        name = font.find(_qn(MAIN_NS, "name"))
+        size = font.find(_qn(MAIN_NS, "sz"))
+        color = font.find(_qn(MAIN_NS, "color"))
+        fonts.append(
+            {
+                "name": None if name is None else name.get("val"),
+                "size": None if size is None else size.get("val"),
+                "color_rgb": None if color is None else color.get("rgb"),
+            }
+        )
+    return fonts
+
+
+def read_status_cell_colors(path: Path, header: str = "diff_status") -> Dict[str, Optional[str]]:
+    """測試用：每個 diff_status 值對應到的字型 RGB。"""
+    xlsx = Path(path)
+    with zipfile.ZipFile(xlsx) as zf:
+        shared = []
+        if "xl/sharedStrings.xml" in zf.namelist():
+            shared = _shared_strings(_parse_xml(zf.read("xl/sharedStrings.xml")))
+        sheet = _parse_xml(zf.read(_first_sheet_path(zf)))
+        fonts = []
+        xfs = []
+        if "xl/styles.xml" in zf.namelist():
+            styles = _parse_xml(zf.read("xl/styles.xml"))
+            fonts_el = styles.find(_qn(MAIN_NS, "fonts"))
+            if fonts_el is not None:
+                for font in fonts_el.findall(_qn(MAIN_NS, "font")):
+                    color = font.find(_qn(MAIN_NS, "color"))
+                    fonts.append(None if color is None else color.get("rgb"))
+            xfs_el = styles.find(_qn(MAIN_NS, "cellXfs"))
+            if xfs_el is not None:
+                for item in xfs_el.findall(_qn(MAIN_NS, "xf")):
+                    xfs.append(int(item.get("fontId") or "0"))
+    grid = {}
+    styles_by_cell = {}
+    max_col = 0
+    for cell in sheet.iter(_qn(MAIN_NS, "c")):
+        ref = cell.get("r") or ""
+        match = CELL_REF_RE.match(ref)
+        if not match:
+            continue
+        col = _col_index(match.group(1))
+        row = int(match.group(2))
+        grid[(row, col)] = _cell_value(cell, shared)
+        styles_by_cell[(row, col)] = cell.get("s")
+        max_col = max(max_col, col)
+    status_col = None
+    for col in range(1, max_col + 1):
+        if str(grid.get((2, col)) or "").strip() == header:
+            status_col = col
+            break
+    colors = {}
+    if status_col is None:
+        return colors
+    for (row, col), value in grid.items():
+        if col != status_col or row < 3 or value in (None, ""):
+            continue
+        style_id = styles_by_cell.get((row, col))
+        rgb = None
+        if style_id not in (None, "") and xfs:
+            font_id = xfs[int(style_id)]
+            if 0 <= font_id < len(fonts):
+                rgb = fonts[font_id]
+        colors[str(value)] = rgb
+    return colors

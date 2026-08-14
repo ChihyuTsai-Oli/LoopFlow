@@ -26,7 +26,15 @@ from loopflow.features.dictionary.layer_paths import (
 )
 from loopflow.features.dictionary.loader import load_from_table
 from loopflow.features.dictionary.sync import EXPORT_FILENAME, export_dictionary, export_layer_diff, sync_type_layers
-from loopflow.platform.excel import read_table, write_table
+from loopflow.platform.excel import (
+    DICTIONARY_FONT_NAME,
+    DICTIONARY_FONT_SIZE,
+    STATUS_FONT_COLORS,
+    read_font_table,
+    read_status_cell_colors,
+    read_table,
+    write_table,
+)
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
 
@@ -187,7 +195,16 @@ class LayerSyncTests(unittest.TestCase):
 
     def test_export_dictionary_writes_sidecar_not_official(self):
         session = _session()
-        catalog = _catalog(_row())
+        beam = to_full_path("00_STR_結構::Beam.樑")
+        extra = to_full_path("99_EXTRA::Thing")
+        session.ensure_layer(beam)
+        session.set_layer_user_text(beam, LAYER_TYPE_ID_KEY, "OLD")
+        session.set_layer_user_text(beam, LAYER_CONSTRUCTION_KEY, "Existing")
+        session.ensure_layer(extra)
+        catalog = _catalog(
+            _row(),
+            _row(layer_path="00_STR_結構::Column.柱", type_id="EX-02"),
+        )
         popups = []
         with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
             root = Path(raw)
@@ -210,7 +227,15 @@ class LayerSyncTests(unittest.TestCase):
             self.assertTrue(table.ok, table.message)
             self.assertIn("diff_status", table.details["headers"])
             statuses = [row[-1] for row in table.details["rows"]]
-            self.assertIn("missing_in_rhino", statuses)
+            self.assertEqual(set(statuses), {"modified", "missing_in_rhino", "added_in_rhino"})
+            fonts = read_font_table(exported)
+            self.assertTrue(fonts)
+            self.assertTrue(all(item["name"] == DICTIONARY_FONT_NAME for item in fonts))
+            self.assertTrue(all(item["size"] == DICTIONARY_FONT_SIZE for item in fonts))
+            colors = read_status_cell_colors(exported)
+            self.assertEqual(colors["missing_in_rhino"], STATUS_FONT_COLORS["missing_in_rhino"])
+            self.assertEqual(colors["added_in_rhino"], STATUS_FONT_COLORS["added_in_rhino"])
+            self.assertEqual(colors["modified"], STATUS_FONT_COLORS["modified"])
 
     def test_cancel_does_not_create_layers(self):
         session = _session()
