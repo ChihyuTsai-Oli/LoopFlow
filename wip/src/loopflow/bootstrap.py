@@ -19,12 +19,16 @@ def ensure_src_on_path() -> Path:
 
 
 def _run_nexus() -> Result:
-    from loopflow.features.project.console import open_console
+    from loopflow.features.project.menu import run_nexus_console
     from loopflow.platform.rhino.live import open_session
 
     opened = open_session()
     session = opened.details.get("session") if opened.ok else None
-    return open_console(session)
+    result = run_nexus_console(session, interactive=session is not None)
+    if session is not None and result.ok and result.warnings:
+        for warning in result.warnings:
+            print("警告：%s" % warning)
+    return result
 
 
 def run_command(command_id: str) -> Result:

@@ -19,6 +19,7 @@ from loopflow.features.project.console import (
     SCHEMA_VERSION_KEY,
     open_console,
 )
+from loopflow.features.project.menu import parse_menu_choice, run_nexus_console
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
@@ -159,6 +160,45 @@ class ConsoleOpenCheckTests(unittest.TestCase):
             self.assertFalse(session.get_view_state("a").locked)
             self.assertFalse(session.document_modified())
             self.assertFalse((root / "exchange").exists())
+
+
+class ConsoleMenuTests(unittest.TestCase):
+    def test_parse_menu_choice(self):
+        self.assertEqual(parse_menu_choice("4  Scan（不寫入）"), ("scan_apply_verify", "scan"))
+        self.assertEqual(parse_menu_choice("5"), ("scan_apply_verify", "apply"))
+        self.assertEqual(parse_menu_choice("2"), ("sync_type_layers", "scan"))
+        self.assertIsNone(parse_menu_choice(None))
+        self.assertIsNone(parse_menu_choice("取消"))
+
+    def test_interactive_cancel_keeps_open_check(self):
+        with tempfile.TemporaryDirectory(prefix="loopflow-menu-") as raw:
+            root = Path(raw)
+            _write_dictionary(root)
+            session = _session()
+            result = run_nexus_console(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
+                interactive=True,
+                chooser=lambda _labels: None,
+            )
+            self.assertEqual(result.status, "cancelled")
+            self.assertEqual(result.details["project_id"], PROJECT_ID)
+            self.assertFalse(session.document_modified())
+
+    def test_interactive_scan_does_not_write(self):
+        with tempfile.TemporaryDirectory(prefix="loopflow-menu-") as raw:
+            root = Path(raw)
+            _write_dictionary(root)
+            session = _session()
+            result = run_nexus_console(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
+                interactive=True,
+                chooser=lambda _labels: "4",
+            )
+            self.assertTrue(result.ok, result.message)
+            self.assertEqual(result.stage, "scan_identity")
+            self.assertFalse(result.details["publish_ready"])
 
 
 if __name__ == "__main__":
