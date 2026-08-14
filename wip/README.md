@@ -5,7 +5,7 @@
 ```text
 wip/
   docs/             # 實作階段的有效規格與進度
-  src/              # 2.0 原始碼（骨架與 foundation）
+  src/              # 2.0 原始碼（骨架、foundation、Rhino platform）
   tests/            # 自動測試
   fixtures/         # 可提交、不含私人資料的測試資料與 legacy 證據
   tools/            # 文件產生器、契約檢查器與開發輔助工具

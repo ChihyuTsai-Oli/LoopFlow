@@ -27,6 +27,10 @@ STAGES = (
     "check_schema",
     "write_log",
     "load_config",
+    "rhino_session",
+    "snapshot",
+    "restore",
+    "guarded_run",
 )
 
 
