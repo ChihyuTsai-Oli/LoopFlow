@@ -32,6 +32,7 @@ AI 或開發者依序閱讀：
 | `docs/開發任務與路徑.md` | 任務 ID、依賴、工作波次與驗收條件 |
 | `docs/系統設定.md` | repo、runtime、路徑、entrypoint、build／installer 等技術設定 |
 | `docs/重構進度.md` | 已完成工作、驗證、限制與唯一下一步 |
+| `docs/Nexus拆分計畫.md` | C02 專用工作包、依賴與分段驗收；不是每次開工作業的必讀 |
 
 `docs/工作流程.html` 是由 `docs/工作流程.md` 產生的閱讀版，不是第二份規格；修改 Markdown 後執行 `wip/tools/build_workflow_html.py` 更新。
 
