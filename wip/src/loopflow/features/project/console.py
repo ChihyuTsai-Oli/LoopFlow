@@ -43,9 +43,15 @@ CONSOLE_STEPS: Tuple[dict, ...] = (
     },
     {
         "id": "scan_apply_verify",
-        "title": "Scan → Apply → Verify",
+        "title": "Apply／Verify",
         "status": "available",
         "task": "NX-04～05",
+    },
+    {
+        "id": "export_dictionary",
+        "title": "寫回字典",
+        "status": "available",
+        "task": "NX-02",
     },
     {
         "id": "publish_registry",
@@ -175,9 +181,10 @@ def _open_check(
             "level_boundary",
             "space_boundary",
             "scan_apply_verify",
+            "export_dictionary",
         ),
     }
-    message = "開案檢查完成。可執行 Type layer、樓層／空間框與 Scan／Apply。發布尚未實作。"
+    message = "開案檢查完成。可執行 Type layer、樓層／空間框、Apply／Verify 與寫回字典。發布尚未實作。"
     if warnings:
         return results.ok_with_warnings(
             "open_check",
@@ -211,14 +218,14 @@ def open_console(
     datum=None,
     level_kind=None,
     isolate: bool = True,
+    show_message=None,
 ) -> results.Result:
     """開案檢查並列出 Console 步驟。step 指定時才執行該步。"""
-    from loopflow.features.dictionary.sync import sync_type_layers
+    from loopflow.features.dictionary.sync import export_dictionary, sync_type_layers
     from loopflow.features.model_data.identity import (
         apply_identity,
         rollback_identity,
         scan_identity,
-        verify_identity,
     )
     from loopflow.features.model_data.placement import apply_placement, scan_placement
     from loopflow.features.model_data.space import (
@@ -227,6 +234,7 @@ def open_console(
         register_space_boundaries,
         register_space_boundaries_interactive,
     )
+    from loopflow.features.model_data.verify import select_only, verify_model_data
 
     def action(current: RhinoSession) -> results.Result:
         checked = _open_check(current, environ=environ, cancel=cancel)
@@ -242,6 +250,15 @@ def open_console(
                 command_id=command_id,
                 layer_prefix=layer_prefix,
                 ask_prefix=ask_prefix,
+            )
+        if step == "export_dictionary":
+            return export_dictionary(
+                current,
+                environ=environ,
+                export_path=export_path,
+                guarded=False,
+                command_id=command_id,
+                show_message=show_message,
             )
         if step == "level_boundary":
             return register_level_boundaries_interactive(
@@ -347,19 +364,14 @@ def open_console(
                     return apply_all()
                 return apply_identity(current, mappings=mappings, **kwargs)
             if action_name == "verify_identity" or action_name == "verify":
-                if step == "scan_apply_verify":
-                    scanned = scan_all()
-                    if not scanned.ok:
-                        return scanned
-                    details = dict(scanned.details)
-                    details["publish_ready"] = False
-                    return results.ok(
-                        "verify_identity",
-                        "Verify 完成。發布尚未實作，不可發布。",
-                        command_id=command_id,
-                        details=details,
-                    )
-                return verify_identity(current, **kwargs)
+                return verify_model_data(
+                    current,
+                    environ=environ,
+                    selected_only=selected_only,
+                    guarded=False,
+                    command_id=command_id,
+                    show_message=show_message,
+                )
             if action_name == "rollback_identity" or action_name == "rollback":
                 return rollback_identity(
                     current,
@@ -381,4 +393,8 @@ def open_console(
 
     if session is None:
         return _open_check(None, environ=environ, cancel=cancel)
-    return run_guarded(session, action, command_id=command_id)
+    outcome = run_guarded(session, action, command_id=command_id)
+    mismatch_ids = (outcome.details or {}).get("mismatch_object_ids")
+    if outcome.ok and mismatch_ids:
+        select_only(session, mismatch_ids)
+    return outcome

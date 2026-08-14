@@ -10,7 +10,7 @@ Nexus 在 2.0 只做 **Project Console**：讓使用者查看開案狀態，並�
 開案檢查
 → 驗證 Dictionary／同步 Type Layers
 → 建立 Space Boundaries
-→ Scan → Apply → Verify
+→ Apply → Verify → 寫回字典
 → Publish Registry
 ```
 
@@ -74,7 +74,7 @@ B01–B03 骨架
 
 **前置**：C01、NX-01。  
 **模組**：`features/dictionary/`（sync／export；reader 已在 C01）。  
-**做**：第一次尚未記住專案名稱時彈出視窗（不預填 `M3D`），之後指令列詢問並記住（`lf_layer_prefix`）；Dictionary 有、Rhino 無的 layer 建立並帶 `construction_default`；已有同名 layer 保留既有 UserText；依圖層代號前綴套用顯示色，並建立相對路徑同名、顏色相同的材質（不含專案前綴）；`DNA_REF_` 為原點點物件，依 `type_id` 更新不累積；`20_DW` 排除 child layer；選用反向匯出獨立 XLSX。  
+**做**：第一次尚未記住專案名稱時彈出視窗（不預填 `M3D`），之後指令列詢問並記住（`lf_layer_prefix`）；Dictionary 有、Rhino 無的 layer 建立並帶 `construction_default`；已有同名 layer 保留既有 UserText；依圖層代號前綴套用顯示色，並建立相對路徑同名、顏色相同的材質（不含專案前綴）；`DNA_REF_` 為原點點物件，依 `type_id` 更新不累積；`20_DW` 排除 child layer；選單「寫回字典」在字典目錄匯出獨立 XLSX，不覆寫正式檔。  
 **不做**：寫物件 instance、覆寫正式 Dictionary、改物件 instance 顏色、ZoomExtents。  
 **fixtures／驗收**：新 layer、既有 layer 保留 UserText、顯示色／材質、DNA_REF 取代、反向匯出不碰 Object UserText；取消／失敗還原 visibility 與 selection。
 
@@ -98,7 +98,7 @@ B01–B03 骨架
 
 **前置**：NX-03、NX-04。  
 **模組**：`features/model_data/` 的 space hit 與 elevation。  
-**做**：命中 `space_id` 或 `EXT`（四種原因都要列出）；BH／TH／CH／BC；非 Block 用 BC 直接報錯；Apply 寫 `lf_space_*` 與高程欄。  
+**做**：命中 `space_id` 或 `EXT`（四種原因都要列出）；BH／TH／CH／BC；非 Block 用 BC 直接報錯；Apply 寫空間／高程欄。選單 Verify 在記憶體算出 Apply 結果後比對 UserText，不符則選取並彈窗。  
 **不做**：用 World bbox 猜尺寸；不寫寬深高／數量。  
 **fixtures／驗收**：EXT 四因、重疊已在 NX-03 擋住故命中時不再 silent 取第一個、`TH/BH` 只出現在 migration 報告。
 

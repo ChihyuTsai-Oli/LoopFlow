@@ -17,7 +17,8 @@ MENU_ITEMS: Tuple[Tuple[str, str, str], ...] = (
     ("level_boundary", "scan", "3  登記樓層框"),
     ("space_boundary", "scan", "4  登記空間框"),
     ("scan_apply_verify", "apply", "5  Apply（寫入 ID／Type／空間／高程）"),
-    ("scan_apply_verify", "scan", "6  Scan（檢查，不寫入）"),
+    ("scan_apply_verify", "verify", "6  Verify（核對 UserText，不寫入）"),
+    ("export_dictionary", "scan", "7  寫回字典（匯出，不覆寫正式檔）"),
 )
 MENU_LABELS: Tuple[str, ...] = tuple(item[2] for item in MENU_ITEMS)
 
@@ -87,10 +88,16 @@ def run_nexus_console(
             return ask_popup_string("請輸入專案名稱（圖層前綴）", "", "LoopFlow")
 
         extra["ask_prefix"] = _ask_prefix
-    return open_console(
+    result = open_console(
         session,
         environ=environ,
         step=step,
         identity_action=identity_action,
         **extra
     )
+    mismatch_ids = (result.details or {}).get("mismatch_object_ids")
+    if result.ok and mismatch_ids and session is not None:
+        from loopflow.features.model_data.verify import select_only
+
+        select_only(session, mismatch_ids)
+    return result

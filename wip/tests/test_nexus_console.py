@@ -111,6 +111,7 @@ class ConsoleOpenCheckTests(unittest.TestCase):
                     "level_boundary",
                     "space_boundary",
                     "scan_apply_verify",
+                    "export_dictionary",
                 ),
             )
             step_ids = [step["id"] for step in result.details["steps"]]
@@ -122,6 +123,7 @@ class ConsoleOpenCheckTests(unittest.TestCase):
                     "level_boundary",
                     "space_boundary",
                     "scan_apply_verify",
+                    "export_dictionary",
                     "publish_registry",
                 ],
             )
@@ -129,7 +131,8 @@ class ConsoleOpenCheckTests(unittest.TestCase):
             self.assertEqual(result.details["steps"][2]["status"], "available")
             self.assertEqual(result.details["steps"][3]["status"], "available")
             self.assertEqual(result.details["steps"][4]["status"], "available")
-            self.assertTrue(all(step["status"] == "not_implemented" for step in result.details["steps"][5:]))
+            self.assertEqual(result.details["steps"][5]["status"], "available")
+            self.assertTrue(all(step["status"] == "not_implemented" for step in result.details["steps"][6:]))
             self.assertFalse((root / "exchange").exists())
             self.assertFalse((root / "logs").exists())
             self.assertTrue(session.get_view_state("a").selected)
@@ -181,9 +184,10 @@ class ConsoleMenuTests(unittest.TestCase):
     def test_parse_menu_choice(self):
         self.assertEqual(parse_menu_choice("5"), ("scan_apply_verify", "apply"))
         self.assertEqual(parse_menu_choice("5  Apply（寫入 ID／Type／空間／高程）"), ("scan_apply_verify", "apply"))
-        self.assertEqual(parse_menu_choice("6"), ("scan_apply_verify", "scan"))
-        self.assertEqual(parse_menu_choice("6  Scan（檢查，不寫入）"), ("scan_apply_verify", "scan"))
-        self.assertIsNone(parse_menu_choice("7"))
+        self.assertEqual(parse_menu_choice("6"), ("scan_apply_verify", "verify"))
+        self.assertEqual(parse_menu_choice("6  Verify（核對 UserText，不寫入）"), ("scan_apply_verify", "verify"))
+        self.assertEqual(parse_menu_choice("7"), ("export_dictionary", "scan"))
+        self.assertIsNone(parse_menu_choice("8"))
         self.assertEqual(parse_menu_choice("3"), ("level_boundary", "scan"))
         self.assertEqual(parse_menu_choice("4"), ("space_boundary", "scan"))
         self.assertEqual(parse_menu_choice("2"), ("sync_type_layers", "scan"))
@@ -205,7 +209,8 @@ class ConsoleMenuTests(unittest.TestCase):
             self.assertEqual(result.details["project_id"], PROJECT_ID)
             self.assertFalse(session.document_modified())
 
-    def test_interactive_scan_does_not_write(self):
+    def test_interactive_verify_does_not_write(self):
+        popups = []
         with tempfile.TemporaryDirectory(prefix="loopflow-menu-") as raw:
             root = Path(raw)
             _write_dictionary(root)
@@ -215,15 +220,14 @@ class ConsoleMenuTests(unittest.TestCase):
                 environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
                 interactive=True,
                 chooser=lambda _labels: "6",
+                show_message=popups.append,
             )
             self.assertTrue(result.ok, result.message)
-            self.assertEqual(result.stage, "scan_identity")
+            self.assertEqual(result.stage, "verify_model")
             self.assertFalse(result.details["publish_ready"])
-            self.assertNotIn("dimensions", result.details)
             self.assertIsNone(session.get_object_user_text("a", "Q_01_寬度W"))
-            self.assertNotIn("尺寸", result.message)
-            self.assertNotIn("未寫 Space", result.message)
             self.assertNotIn("已 Apply", result.message)
+            self.assertTrue(popups)
 
     def test_apply_writes_id_space_not_dimensions(self):
         from loopflow.features.dictionary.layer_paths import to_full_path

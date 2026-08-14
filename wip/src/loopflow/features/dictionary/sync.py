@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Mapping, Optional, Set
+from typing import Callable, List, Mapping, Optional, Set
 
+from loopflow.features.dictionary import schema
 from loopflow.features.dictionary.layer_paths import (
     LAYER_CONSTRUCTION_KEY,
     LAYER_PREFIX_3D,
@@ -28,6 +29,8 @@ from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Nexus"
+EXPORT_FILENAME = "LoopFlow_Dictionary_Export.xlsx"
+EXPORT_HEADERS = schema.DISPLAY_COLUMNS + ("diff_status",)
 DIFF_HEADERS = (
     "__Rhino Layer",
     "type_id",
@@ -278,3 +281,130 @@ def export_layer_diff(
         command_id=COMMAND_ID,
         details={"filename": target.name, "row_count": len(rows)},
     )
+
+
+def _blank_display_row() -> List[str]:
+    return [""] * len(schema.DISPLAY_COLUMNS)
+
+
+def _record_display_row(record) -> List[str]:
+    values = {
+        "layer_path": record.layer_path,
+        "space_id": "",
+        "construction_default": record.construction_default or "",
+        "type_id": record.type_id,
+        "type_display_name": record.type_display_name or "",
+        "elevation_basis": record.elevation_basis or "",
+        "elevation_value": "",
+        "object_id": "",
+        "remarks_default": record.remarks_default or "",
+        "dimension_w": "",
+        "dimension_d": "",
+        "dimension_h": "",
+        "estimation_unit": record.estimation_unit or "",
+        "measurement_rule": record.measurement_rule or "",
+        "quantity": "",
+    }
+    return [values.get(key) or "" for key in schema.MACHINE_KEYS]
+
+
+def _dictionary_export_rows(session: RhinoSession, catalog: TypeCatalog, prefix: str) -> List[List[str]]:
+    rhino_paths = session.layer_paths()
+    exportable = [path for path in rhino_paths if is_exportable_type_layer(path, rhino_paths, prefix)]
+    by_rel = {to_relative_path(path, prefix): path for path in exportable}
+    rows = []
+    seen = set()
+    for record in catalog.types:
+        if is_dw_child(to_full_path(record.layer_path, prefix), prefix):
+            continue
+        seen.add(record.layer_path)
+        row = _record_display_row(record)
+        full = by_rel.get(record.layer_path)
+        if full is None:
+            rows.append(row + ["missing_in_rhino"])
+            continue
+        rhino_type = session.get_layer_user_text(full, LAYER_TYPE_ID_KEY) or ""
+        rhino_cons = session.get_layer_user_text(full, LAYER_CONSTRUCTION_KEY) or ""
+        status = "unchanged"
+        if (rhino_type and rhino_type != record.type_id) or (
+            rhino_cons and rhino_cons != (record.construction_default or "")
+        ):
+            status = "modified"
+            if rhino_type:
+                row[schema.MACHINE_KEYS.index("type_id")] = rhino_type
+            if rhino_cons:
+                row[schema.MACHINE_KEYS.index("construction_default")] = rhino_cons
+        rows.append(row + [status])
+    added = []
+    for relative, full in by_rel.items():
+        if relative in seen:
+            continue
+        row = _blank_display_row()
+        row[schema.MACHINE_KEYS.index("layer_path")] = relative
+        row[schema.MACHINE_KEYS.index("type_id")] = session.get_layer_user_text(full, LAYER_TYPE_ID_KEY) or ""
+        row[schema.MACHINE_KEYS.index("construction_default")] = (
+            session.get_layer_user_text(full, LAYER_CONSTRUCTION_KEY) or ""
+        )
+        added.append(row + ["added_in_rhino"])
+    rows.extend(added)
+    return rows
+
+
+def export_dictionary(
+    session: RhinoSession,
+    *,
+    environ: Optional[Mapping[str, str]] = None,
+    catalog: Optional[TypeCatalog] = None,
+    export_path: Optional[Path] = None,
+    guarded: bool = True,
+    command_id: str = COMMAND_ID,
+    show_message: Optional[Callable[[str], None]] = None,
+) -> results.Result:
+    """在字典目錄新增匯出檔。不讀 Object UserText，不覆寫正式 Dictionary。"""
+    workfiles = resolve_workfiles(environ=environ)
+    if not workfiles.ok:
+        return workfiles
+    dictionary_path = workfiles.details["paths"].dictionary
+    if catalog is None:
+        loaded = load_from_workfiles(environ=environ)
+        if not loaded.ok:
+            return loaded
+        catalog = loaded.details["catalog"]
+
+    def action(current: RhinoSession) -> results.Result:
+        prefix = read_layer_prefix(current)
+        target = Path(export_path) if export_path is not None else dictionary_path.parent / EXPORT_FILENAME
+        if target.resolve() == Path(dictionary_path).resolve():
+            return results.blocked(
+                "export_dictionary",
+                "寫回字典不得覆寫正式 Dictionary。",
+                blocking=("overwrite_dictionary_forbidden",),
+                command_id=command_id,
+            )
+        if not target.parent.exists():
+            return results.failed(
+                "export_dictionary",
+                "匯出目錄不存在，不建立。",
+                command_id=command_id,
+            )
+        rows = _dictionary_export_rows(current, catalog, prefix)
+        written = write_table(target, schema.TITLE_ROW, EXPORT_HEADERS, rows)
+        if not written.ok:
+            return written
+        message = "已在字典目錄匯出 %s，未改正式 Dictionary。" % target.name
+        if callable(show_message):
+            show_message(message)
+        else:
+            from loopflow.platform.rhino.prompts import show_message as live_popup
+
+            live_popup(message)
+        return results.ok(
+            "export_dictionary",
+            message,
+            command_id=command_id,
+            details={"filename": target.name, "path": str(target), "row_count": len(rows)},
+        )
+
+    if not guarded:
+        return action(session)
+    return run_guarded(session, action, command_id=command_id)

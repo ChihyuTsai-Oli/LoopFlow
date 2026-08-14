@@ -25,8 +25,8 @@ from loopflow.features.dictionary.layer_paths import (
     to_full_path,
 )
 from loopflow.features.dictionary.loader import load_from_table
-from loopflow.features.dictionary.sync import export_layer_diff, sync_type_layers
-from loopflow.platform.excel import write_table
+from loopflow.features.dictionary.sync import EXPORT_FILENAME, export_dictionary, export_layer_diff, sync_type_layers
+from loopflow.platform.excel import read_table, write_table
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
 
@@ -184,6 +184,33 @@ class LayerSyncTests(unittest.TestCase):
             self.assertEqual(official.read_bytes(), before)
             self.assertEqual(blocked.blocking, ("overwrite_dictionary_forbidden",))
             self.assertEqual(session.get_object_user_text("model-a", "lf_remarks"), "人工備註")
+
+    def test_export_dictionary_writes_sidecar_not_official(self):
+        session = _session()
+        catalog = _catalog(_row())
+        popups = []
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
+            root = Path(raw)
+            official = root / "LoopFlow_Dictionary.xlsx"
+            write_table(official, schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_row()])
+            before = official.read_bytes()
+            result = export_dictionary(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
+                catalog=catalog,
+                show_message=popups.append,
+            )
+            exported = root / EXPORT_FILENAME
+            self.assertTrue(result.ok, result.message)
+            self.assertTrue(exported.exists())
+            self.assertEqual(official.read_bytes(), before)
+            self.assertNotEqual(exported.resolve(), official.resolve())
+            self.assertTrue(popups)
+            table = read_table(exported)
+            self.assertTrue(table.ok, table.message)
+            self.assertIn("diff_status", table.details["headers"])
+            statuses = [row[-1] for row in table.details["rows"]]
+            self.assertIn("missing_in_rhino", statuses)
 
     def test_cancel_does_not_create_layers(self):
         session = _session()

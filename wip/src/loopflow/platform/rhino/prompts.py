@@ -36,6 +36,15 @@ def ask_popup_string(
     return str(value)
 
 
+def show_message(message: str, title: str = "LoopFlow") -> None:
+    try:
+        import rhinoscriptsyntax as rs  # type: ignore
+    except ImportError:
+        print(message)
+        return
+    rs.MessageBox(message, 64, title)
+
+
 def pick_curves() -> Optional[Tuple[str, ...]]:
     try:
         import rhinoscriptsyntax as rs  # type: ignore
