@@ -371,6 +371,128 @@ class LiveSession:
             return None
         return (float(point.X), float(point.Y), float(point.Z))
 
+    def geometry_kind(self, object_id: str):
+        rs = self._rs
+        if not rs.IsObject(object_id):
+            return None
+        if rs.IsBlockInstance(object_id):
+            return "block_instance"
+        try:
+            type_value = int(rs.ObjectType(object_id))
+        except (TypeError, ValueError, AttributeError):
+            return None
+        if type_value == 1073741824:
+            return "extrusion"
+        if type_value == 8:
+            try:
+                if rs.IsSurfacePlanar(object_id):
+                    return "planar_surface"
+            except Exception:
+                pass
+            return "closed_box"
+        if type_value == 16:
+            try:
+                brep = rs.coercebrep(object_id)
+                if brep is not None and getattr(brep.Faces, "Count", 0) == 1:
+                    ok, plane = brep.Faces[0].TryGetPlane()
+                    if ok and plane is not None:
+                        return "planar_surface"
+            except Exception:
+                pass
+            return "closed_box"
+        if type_value == 32:
+            return "closed_box"
+        if type_value == 4:
+            try:
+                if rs.IsCurvePlanar(object_id):
+                    return "planar_curve"
+            except Exception:
+                pass
+        return None
+
+    def derive_local_frame(self, object_id: str):
+        kind = self.geometry_kind(object_id)
+        method = {
+            "block_instance": "block_insertion",
+            "extrusion": "extrusion_base",
+            "planar_curve": "unique_plane",
+            "planar_surface": "unique_plane",
+        }.get(kind or "")
+        if method is None:
+            return None
+        axes = self._frame_axes(object_id, kind)
+        if axes is None:
+            return None
+        origin, x_axis, y_axis, z_axis = axes
+        return {
+            "schema_id": "loopflow.local_frame",
+            "schema_version": 1,
+            "origin": list(origin),
+            "x_axis": list(x_axis),
+            "y_axis": list(y_axis),
+            "z_axis": list(z_axis),
+            "derivation_method": method,
+        }
+
+    def _frame_axes(self, object_id: str, kind: str):
+        rs = self._rs
+        Rhino = self._rhino
+        try:
+            if kind == "block_instance":
+                origin = rs.BlockInstanceInsertPoint(object_id)
+                xform = rs.BlockInstanceXform(object_id)
+                if origin is None or xform is None or Rhino is None:
+                    return None
+                vx = Rhino.Geometry.Vector3d(1, 0, 0)
+                vy = Rhino.Geometry.Vector3d(0, 1, 0)
+                vz = Rhino.Geometry.Vector3d(0, 0, 1)
+                vx.Transform(xform)
+                vy.Transform(xform)
+                vz.Transform(xform)
+                if not vx.Unitize() or not vy.Unitize() or not vz.Unitize():
+                    return None
+                return (
+                    (float(origin.X), float(origin.Y), float(origin.Z)),
+                    (float(vx.X), float(vx.Y), float(vx.Z)),
+                    (float(vy.X), float(vy.Y), float(vy.Z)),
+                    (float(vz.X), float(vz.Y), float(vz.Z)),
+                )
+            plane = None
+            if kind == "extrusion":
+                geom = rs.coercegeometry(object_id)
+                if geom is not None and hasattr(geom, "GetProfilePlane"):
+                    plane = geom.GetProfilePlane(0.0)
+            elif kind == "planar_curve":
+                plane = rs.CurvePlane(object_id)
+            elif kind == "planar_surface":
+                try:
+                    brep = rs.coercebrep(object_id)
+                    if brep is not None and getattr(brep.Faces, "Count", 0) == 1:
+                        ok, plane = brep.Faces[0].TryGetPlane()
+                        if not ok:
+                            plane = None
+                except Exception:
+                    plane = None
+                if plane is None:
+                    try:
+                        plane = rs.SurfaceFrame(object_id, (0, 0))
+                    except Exception:
+                        plane = None
+            if plane is None:
+                return None
+            origin = plane.Origin
+            x_axis = plane.XAxis
+            y_axis = plane.YAxis
+            z_axis = plane.ZAxis
+            return (
+                (float(origin.X), float(origin.Y), float(origin.Z)),
+                (float(x_axis.X), float(x_axis.Y), float(x_axis.Z)),
+                (float(y_axis.X), float(y_axis.Y), float(y_axis.Z)),
+                (float(z_axis.X), float(z_axis.Y), float(z_axis.Z)),
+            )
+        except Exception:
+            return None
+
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)
 
