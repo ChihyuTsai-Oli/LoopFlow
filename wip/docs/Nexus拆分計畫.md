@@ -76,7 +76,7 @@ B01–B03 骨架
 
 **前置**：C01、NX-01。  
 **模組**：`features/dictionary/`（sync／export；reader 已在 C01）。  
-**做**：Dictionary 有、Rhino 無的 layer 建立並帶 `construction_default`；已有同名 layer 保留既有 UserText；依圖層代號前綴套用顯示色，並建立與圖層完整路徑同名、顏色相同的材質（1.x 顯示慣例）；`DNA_REF_` 依 `type_id` 更新不累積；`20_DW` 排除 child layer；選用反向匯出獨立 XLSX。  
+**做**：Dictionary 有、Rhino 無的 layer 建立並帶 `construction_default`；已有同名 layer 保留既有 UserText；依圖層代號前綴套用顯示色，並建立相對路徑同名、顏色相同的材質（不含 `M3D::`）；`DNA_REF_` 為原點點物件，依 `type_id` 更新不累積；`20_DW` 排除 child layer；選用反向匯出獨立 XLSX。  
 **不做**：寫物件 instance、覆寫正式 Dictionary、改物件 instance 顏色、ZoomExtents。  
 **fixtures／驗收**：新 layer、既有 layer 保留 UserText、顯示色／材質、DNA_REF 取代、反向匯出不碰 Object UserText；取消／失敗還原 visibility 與 selection。
 

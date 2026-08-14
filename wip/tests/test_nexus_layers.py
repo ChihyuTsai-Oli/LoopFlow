@@ -20,6 +20,7 @@ from loopflow.features.dictionary.layer_paths import (
     SYSTEM_LAYERS,
     color_for_layer_path,
     dna_ref_name,
+    material_name_for_layer,
     to_full_path,
 )
 from loopflow.features.dictionary.loader import load_from_table
@@ -96,6 +97,10 @@ class LayerSyncTests(unittest.TestCase):
         self.assertEqual(color_for_layer_path("M3D::00_STR_結構::Beam.樑"), (202, 16, 16))
         self.assertEqual(color_for_layer_path("M3D::20_DW"), (206, 255, 0))
         self.assertEqual(color_for_layer_path(SYSTEM_LAYERS[0]), (0, 0, 0))
+        self.assertEqual(
+            material_name_for_layer("M3D::01_Ceiling_天花::Lighting_Box.燈盒"),
+            "01_Ceiling_天花::Lighting_Box.燈盒",
+        )
 
     def test_sync_applies_color_and_material_name(self):
         session = _session()
@@ -105,9 +110,13 @@ class LayerSyncTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         full = to_full_path("00_STR_結構::Beam.樑")
         self.assertEqual(session.layer_color(full), (202, 16, 16))
-        self.assertEqual(session.layer_material_name(full), full)
+        self.assertEqual(session.layer_material_name(full), "00_STR_結構::Beam.樑")
+        self.assertEqual(session.layer_material_name(full), material_name_for_layer(full))
         self.assertEqual(session.layer_color(SYSTEM_LAYERS[0]), (0, 0, 0))
         self.assertIsNone(session.layer_material_name(SYSTEM_LAYERS[0]))
+        refs = session.objects_on_layer(full)
+        self.assertEqual(len(refs), 1)
+        self.assertEqual(session.placeholder_point(refs[0]), (0.0, 0.0, 0.0))
 
     def test_existing_layer_keeps_data(self):
         session = _session()
@@ -123,7 +132,7 @@ class LayerSyncTests(unittest.TestCase):
         self.assertEqual(session.get_layer_user_text(full, LAYER_CONSTRUCTION_KEY), "Demolished")
         self.assertEqual(session.get_layer_user_text(full, LAYER_TYPE_ID_KEY), "OLD")
         self.assertEqual(session.layer_color(full), (202, 16, 16))
-        self.assertEqual(session.layer_material_name(full), full)
+        self.assertEqual(session.layer_material_name(full), "00_STR_結構::Beam.樑")
 
     def test_dna_ref_replaces_and_does_not_accumulate(self):
         session = _session()

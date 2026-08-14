@@ -52,6 +52,12 @@ def to_relative_path(full: str) -> str:
     return full
 
 
+def material_name_for_layer(full: str) -> str:
+    """材質名稱＝去掉 M3D:: 的相對路徑，保留一個父圖層。"""
+    relative = to_relative_path(full)
+    return relative or full
+
+
 def ancestor_paths(full: str) -> Tuple[str, ...]:
     parts = full.split("::")
     paths = []

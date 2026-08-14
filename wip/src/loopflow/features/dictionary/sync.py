@@ -13,6 +13,7 @@ from loopflow.features.dictionary.layer_paths import (
     dna_ref_name,
     is_dw_child,
     is_exportable_type_layer,
+    material_name_for_layer,
     to_full_path,
     to_relative_path,
 )
@@ -47,18 +48,11 @@ def _rollback(session: RhinoSession, layers_before: Set[str], objects_before: Se
 
 def _ensure_dna_ref(session: RhinoSession, layer_path: str, type_id: str) -> None:
     wanted = dna_ref_name(type_id)
-    found = None
-    extras = []
     for object_id in session.objects_on_layer(layer_path):
         name = session.object_name(object_id) or ""
-        if name == wanted:
-            found = object_id
-        elif name.startswith("DNA_REF_"):
-            extras.append(object_id)
-    for extra in extras:
-        session.delete_object(extra)
-    if found is None:
-        session.add_placeholder(layer=layer_path, name=wanted)
+        if name.startswith("DNA_REF_"):
+            session.delete_object(object_id)
+    session.add_placeholder(layer=layer_path, name=wanted)
 
 
 def _sync_body(
@@ -91,7 +85,11 @@ def _sync_body(
                 continue
             existed = session.has_layer(full)
             session.ensure_layer(full)
-            session.set_layer_appearance(full, color_for_layer_path(full), material_name=full)
+            session.set_layer_appearance(
+                full,
+                color_for_layer_path(full),
+                material_name=material_name_for_layer(full),
+            )
             if not existed:
                 if record.construction_default:
                     session.set_layer_user_text(full, LAYER_CONSTRUCTION_KEY, record.construction_default)

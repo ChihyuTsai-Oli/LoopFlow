@@ -223,12 +223,23 @@ class LiveSession:
         except Exception:
             sys_color = color
         mat_idx = -1
+        legacy_name = "M3D::" + material_name if not str(material_name).startswith("M3D::") else None
         for material in self._sc.doc.Materials:
             if getattr(material, "IsDeleted", False):
                 continue
             if material.Name == material_name:
                 mat_idx = material.Index
                 break
+            if legacy_name and material.Name == legacy_name and mat_idx == -1:
+                mat_idx = material.Index
+        if mat_idx >= 0 and legacy_name:
+            try:
+                material = self._sc.doc.Materials[mat_idx]
+                if material.Name != material_name:
+                    material.Name = material_name
+                    self._sc.doc.Materials.Modify(material, mat_idx, True)
+            except Exception:
+                pass
         if mat_idx == -1:
             new_mat = self._rhino.DocObjects.Material()
             new_mat.Name = material_name
@@ -274,8 +285,8 @@ class LiveSession:
         return tuple(str(item) for item in ids)
 
     def add_placeholder(self, *, layer: str, name: str) -> str:
-        line_id = self._rs.AddLine((0, 0, 0), (-25, 0, 0))
-        object_id = str(line_id)
+        point_id = self._rs.AddPoint((0, 0, 0))
+        object_id = str(point_id)
         self._rs.ObjectLayer(object_id, layer)
         self._rs.ObjectName(object_id, name)
         return object_id

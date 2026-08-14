@@ -17,6 +17,7 @@ class MemorySession:
         self._curves: Dict[str, dict] = {}
         self._bboxes: Dict[str, tuple] = {}
         self._blocks: Dict[str, tuple] = {}
+        self._points: Dict[str, tuple] = {}
         self._modified = False
         self._model_unit = model_unit
         self._document_text = dict(document_text or {})
@@ -58,6 +59,7 @@ class MemorySession:
         self._curves.pop(object_id, None)
         self._bboxes.pop(object_id, None)
         self._blocks.pop(object_id, None)
+        self._points.pop(object_id, None)
         self._modified = True
 
     def iter_object_ids(self, *, include_hidden: bool = True, include_locked: bool = True):
@@ -183,7 +185,11 @@ class MemorySession:
         object_id = "mem-%s" % self._next_id
         self._next_id += 1
         self.add_object(object_id, name=name, layer=layer)
+        self._points[object_id] = (0.0, 0.0, 0.0)
         return object_id
+
+    def placeholder_point(self, object_id: str):
+        return self._points.get(object_id)
 
     def set_curve(self, object_id: str, polygon, *, closed: bool = True) -> None:
         self._curves[object_id] = {"polygon": tuple(tuple(pt) for pt in polygon), "closed": bool(closed)}
