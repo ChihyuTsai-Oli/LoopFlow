@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Nexus Project Console。開案檢查、Type layer 同步、Space Boundary；不 Scan／不發布。"""
+"""Nexus Project Console。開案檢查、Type layer、Space Boundary、Identity Scan／Apply；不發布。"""
 from __future__ import annotations
 
 import re
@@ -38,7 +38,7 @@ CONSOLE_STEPS: Tuple[dict, ...] = (
     {
         "id": "scan_apply_verify",
         "title": "Scan → Apply → Verify",
-        "status": "not_implemented",
+        "status": "available",
         "task": "NX-04",
     },
     {
@@ -138,9 +138,14 @@ def _open_check(
         "exchange_exists": paths.exchange_root.exists(),
         "package_version": PACKAGE_VERSION,
         "steps": _copy_steps(),
-        "executable_steps": ("open_check", "sync_type_layers", "space_boundary"),
+        "executable_steps": (
+            "open_check",
+            "sync_type_layers",
+            "space_boundary",
+            "scan_apply_verify",
+        ),
     }
-    message = "開案檢查完成。可執行 Type layer 同步與 Space Boundary。Scan／Apply／發布尚未實作。"
+    message = "開案檢查完成。可執行 Type layer、Space Boundary 與 Identity Scan／Apply。發布尚未實作。"
     if warnings:
         return results.ok_with_warnings(
             "open_check",
@@ -160,10 +165,19 @@ def open_console(
     step: str = "open_check",
     export_path=None,
     drafts=None,
+    mappings=None,
+    selected_only: bool = False,
+    identity_action: str = "scan",
     command_id: str = COMMAND_ID,
 ) -> results.Result:
     """開案檢查並列出 Console 步驟。step 指定時才執行該步。"""
     from loopflow.features.dictionary.sync import sync_type_layers
+    from loopflow.features.model_data.identity import (
+        apply_identity,
+        rollback_identity,
+        scan_identity,
+        verify_identity,
+    )
     from loopflow.features.model_data.space import drafts_from_selection, register_space_boundaries
 
     def action(current: RhinoSession) -> results.Result:
@@ -186,6 +200,34 @@ def open_console(
                 selected,
                 cancel=False,
                 guarded=False,
+                command_id=command_id,
+            )
+        if step in ("scan_apply_verify", "scan_identity", "apply_identity", "verify_identity", "rollback_identity"):
+            kwargs = {
+                "environ": environ,
+                "selected_only": selected_only,
+                "cancel": False,
+                "guarded": False,
+                "command_id": command_id,
+            }
+            action_name = identity_action if step == "scan_apply_verify" else step
+            if action_name in ("scan", "scan_identity", "scan_apply_verify"):
+                return scan_identity(current, **kwargs)
+            if action_name == "apply_identity" or action_name == "apply":
+                return apply_identity(current, mappings=mappings, **kwargs)
+            if action_name == "verify_identity" or action_name == "verify":
+                return verify_identity(current, **kwargs)
+            if action_name == "rollback_identity" or action_name == "rollback":
+                return rollback_identity(
+                    current,
+                    mappings or (),
+                    cancel=False,
+                    guarded=False,
+                    command_id=command_id,
+                )
+            return results.not_implemented(
+                "dispatch",
+                "未知 Identity 動作：%s" % action_name,
                 command_id=command_id,
             )
         return results.not_implemented(

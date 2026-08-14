@@ -36,6 +36,11 @@ STAGES = (
     "guarded_run",
     "open_check",
     "sync_type_layers",
+    "register_spaces",
+    "scan_identity",
+    "apply_identity",
+    "verify_identity",
+    "rollback_identity",
 )
 
 

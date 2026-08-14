@@ -179,6 +179,12 @@ class MemorySession:
             return None
         return curve["polygon"]
 
+    def is_model_object(self, object_id: str) -> bool:
+        if object_id not in self._objects or object_id in self._curves:
+            return False
+        name = self.object_name(object_id) or ""
+        return not name.startswith("DNA_REF_")
+
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)
 

@@ -220,6 +220,21 @@ class LiveSession:
         points = self._rs.CurvePoints(object_id) or []
         return tuple((float(pt.X), float(pt.Y)) for pt in points)
 
+    def is_model_object(self, object_id: str) -> bool:
+        rs = self._rs
+        if not rs.IsObject(object_id):
+            return False
+        name = rs.ObjectName(object_id) or ""
+        if str(name).startswith("DNA_REF_"):
+            return False
+        return bool(
+            rs.IsBlockInstance(object_id)
+            or rs.IsBrep(object_id)
+            or rs.IsMesh(object_id)
+            or rs.IsExtrusion(object_id)
+            or rs.IsSurface(object_id)
+        )
+
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)
 
