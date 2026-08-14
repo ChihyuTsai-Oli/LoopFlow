@@ -82,9 +82,9 @@ B01–B03 骨架
 
 **前置**：NX-01、B03。  
 **模組**：`features/model_data/` 的 space。  
-**做**：有效封閉曲線 → `space_id`／`level_id`／`space_display`；共邊允許、**同一 `level_id`** 面積重疊則停止並列出全部衝突；不同樓層平面重疊通過並警告。  
-**不做**：改既有物件的空間欄（那是 NX-05 Apply）。  
-**fixtures／驗收**：多樓層、共邊、重疊、無效曲線；ObjectName 只顯示。
+**做**：有效封閉曲線 → `space_id`／`level_id`／`space_display`；樓層 ID 由 FFL／FL 樓層框配對（高程差 ±20、空間整圈在樓層框內）；共邊允許、**同一 `level_id`** 面積重疊則停止並列出全部衝突；不同樓層平面重疊通過並警告。  
+**不做**：改既有物件的空間欄（那是 NX-05 Apply）；不手填樓層 UUID。  
+**fixtures／驗收**：多樓層、共邊、重疊、無效曲線、同高程 ±20 命中、差 21 不命中、空間超出樓層擋。
 
 ### NX-04 Object ID 與 Type 資料化／`nexus-object-id`
 

@@ -16,6 +16,10 @@ from loopflow.platform.rhino.session import RhinoSession, run_guarded
 COMMAND_ID = "LF_Nexus"
 SCHEMA_ID = "loopflow.space"
 SPACE_BOUNDARY_LAYER = SYSTEM_LAYERS[0]
+LEVEL_BOUNDARY_LAYERS = SYSTEM_LAYERS[1:3]
+LEVEL_FFL_LAYER = SYSTEM_LAYERS[1]
+# 模型單位；文件建議 cm 時即 ±20 cm。
+LEVEL_Z_TOLERANCE = 20.0
 UUID_V4_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
 )
@@ -27,6 +31,16 @@ class SpaceDraft:
     space_display: str
     level_id: str
     space_id: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class LevelFrame:
+    object_id: str
+    polygon: tuple
+    curve_z: float
+    datum: float
+    layer: str
+    prefer_ffl: bool
 
 
 def _xy(point) -> Tuple[float, float]:
@@ -68,6 +82,109 @@ def point_in_polygon(polygon, x: float, y: float) -> bool:
     return inside
 
 
+def _point_on_segment(px: float, py: float, ax: float, ay: float, bx: float, by: float, eps: float = 1e-6) -> bool:
+    dx, dy = bx - ax, by - ay
+    length2 = dx * dx + dy * dy
+    if length2 < eps * eps:
+        return abs(px - ax) <= eps and abs(py - ay) <= eps
+    t = ((px - ax) * dx + (py - ay) * dy) / length2
+    if t < -eps or t > 1.0 + eps:
+        return False
+    qx = ax + t * dx
+    qy = ay + t * dy
+    return abs(px - qx) <= eps and abs(py - qy) <= eps
+
+
+def point_on_polygon_edge(polygon, x: float, y: float) -> bool:
+    pts = [_xy(pt) for pt in polygon]
+    if len(pts) < 2:
+        return False
+    j = len(pts) - 1
+    for i, (xi, yi) in enumerate(pts):
+        xj, yj = pts[j]
+        if _point_on_segment(x, y, xi, yi, xj, yj):
+            return True
+        j = i
+    return False
+
+
+def polygon_inside(inner, outer) -> bool:
+    """內圈頂點都在外圈內或邊上（共邊可）。"""
+    if not inner or not outer:
+        return False
+    for pt in inner:
+        x, y = _xy(pt)
+        if not (point_in_polygon(outer, x, y) or point_on_polygon_edge(outer, x, y)):
+            return False
+    return True
+
+
+def parse_level_datum(name: str):
+    text = (name or "").strip()
+    if not text:
+        return None
+    try:
+        return float(text)
+    except ValueError:
+        return None
+
+
+def collect_level_frames(session: RhinoSession) -> Tuple[LevelFrame, ...]:
+    frames = []
+    for layer in LEVEL_BOUNDARY_LAYERS:
+        for object_id in session.objects_on_layer(layer):
+            if not session.is_closed_curve(object_id):
+                continue
+            polygon = session.curve_polygon(object_id)
+            if not polygon or len(polygon) < 3:
+                continue
+            curve_z = session.curve_elevation(object_id)
+            if curve_z is None:
+                continue
+            datum = parse_level_datum(session.object_name(object_id) or "")
+            if datum is None:
+                continue
+            frames.append(
+                LevelFrame(
+                    object_id=object_id,
+                    polygon=tuple(tuple(pt) for pt in polygon),
+                    curve_z=float(curve_z),
+                    datum=datum,
+                    layer=layer,
+                    prefer_ffl=layer == LEVEL_FFL_LAYER,
+                )
+            )
+    return tuple(frames)
+
+
+def match_level_frame(polygon, space_z: float, frames: Sequence[LevelFrame]):
+    """同高程 ±20 且空間整圈在樓層框內。同距離時優先 FFL。"""
+    candidates = []
+    for frame in frames:
+        if abs(frame.curve_z - space_z) > LEVEL_Z_TOLERANCE + 1e-9:
+            continue
+        if not polygon_inside(polygon, frame.polygon):
+            continue
+        candidates.append(frame)
+    if not candidates:
+        return None, "space_not_in_level"
+
+    def sort_key(frame: LevelFrame):
+        return (abs(frame.curve_z - space_z), 0 if frame.prefer_ffl else 1, frame.object_id)
+
+    ranked = sorted(candidates, key=sort_key)
+    best = ranked[0]
+    best_dz = abs(best.curve_z - space_z)
+    ties = [
+        frame
+        for frame in ranked[1:]
+        if abs(abs(frame.curve_z - space_z) - best_dz) <= 1e-9 and frame.prefer_ffl == best.prefer_ffl
+    ]
+    if ties:
+        return None, "ambiguous_level_frame"
+    return best, None
+
+
 def _new_id() -> str:
     return str(uuid.uuid4())
 
@@ -96,11 +213,13 @@ def find_xy_overlaps_other_level(spaces: Sequence[dict]) -> Tuple[Tuple[str, str
 
 
 def drafts_from_selection(session: RhinoSession) -> Tuple[SpaceDraft, ...]:
-    """把目前選取物件當成 Space 候選；名稱與樓層來自 ObjectName／既有 UserText。"""
+    """把目前選取物件當成 Space 候選；樓層框不列入，由文件上的 FFL／FL 曲線對應。"""
     drafts = []
     for object_id in session.iter_object_ids(include_hidden=True, include_locked=True):
         state = session.get_view_state(object_id)
         if state is None or not state.selected:
+            continue
+        if session.object_layer(object_id) in LEVEL_BOUNDARY_LAYERS:
             continue
         display = session.object_name(object_id) or read_text(
             session, object_id, SPACE_DISPLAY_KEY
@@ -145,8 +264,24 @@ def register_space_boundaries(
                 blocking=("missing_space_selection",),
                 command_id=command_id,
             )
+        frames = collect_level_frames(current)
         parsed = []
         invalid = []
+        not_in_level = []
+        ambiguous = []
+        pending_level_ids = {}
+
+        def resolve_frame_level_id(frame: LevelFrame) -> str:
+            if frame.object_id in pending_level_ids:
+                return pending_level_ids[frame.object_id]
+            existing = read_text(current, frame.object_id, LEVEL_ID_KEY)
+            if UUID_V4_RE.match(existing or ""):
+                pending_level_ids[frame.object_id] = existing
+                return existing
+            created = _new_id()
+            pending_level_ids[frame.object_id] = created
+            return created
+
         for draft in drafts:
             if not current.is_closed_curve(draft.object_id):
                 invalid.append(draft.object_id)
@@ -158,18 +293,32 @@ def register_space_boundaries(
             if not (draft.space_display or "").strip():
                 invalid.append(draft.object_id)
                 continue
-            if not UUID_V4_RE.match(draft.level_id or ""):
-                invalid.append(draft.object_id)
-                continue
             space_id = draft.space_id or read_text(current, draft.object_id, SPACE_ID_KEY)
             if space_id == "EXT" or (space_id and not UUID_V4_RE.match(space_id)):
+                invalid.append(draft.object_id)
+                continue
+            level_id = draft.level_id or ""
+            if frames:
+                space_z = current.curve_elevation(draft.object_id)
+                if space_z is None:
+                    not_in_level.append(draft.object_id)
+                    continue
+                hit, reason = match_level_frame(polygon, float(space_z), frames)
+                if hit is None:
+                    if reason == "ambiguous_level_frame":
+                        ambiguous.append(draft.object_id)
+                    else:
+                        not_in_level.append(draft.object_id)
+                    continue
+                level_id = resolve_frame_level_id(hit)
+            elif not UUID_V4_RE.match(level_id):
                 invalid.append(draft.object_id)
                 continue
             parsed.append(
                 {
                     "object_id": draft.object_id,
                     "space_display": draft.space_display.strip(),
-                    "level_id": draft.level_id,
+                    "level_id": level_id,
                     "space_id": space_id,
                     "polygon": polygon,
                 }
@@ -177,10 +326,27 @@ def register_space_boundaries(
         if invalid:
             return results.blocked(
                 "register_spaces",
-                "有 %s 條無效曲線（未封閉、頂點不足、或缺 level_id／名稱）。" % len(invalid),
+                "有 %s 條無效曲線（未封閉、頂點不足、或缺名稱／樓層）。" % len(invalid),
                 blocking=("invalid_space_curve",),
                 command_id=command_id,
                 details={"invalid_object_ids": tuple(invalid)},
+            )
+        if ambiguous:
+            return results.blocked(
+                "register_spaces",
+                "有 %s 個空間同時對到多個同高程樓層框，已停止。" % len(ambiguous),
+                blocking=("ambiguous_level_frame",),
+                command_id=command_id,
+                details={"invalid_object_ids": tuple(ambiguous)},
+            )
+        if not_in_level:
+            return results.blocked(
+                "register_spaces",
+                "有 %s 個空間對不到樓層框。空間框須與樓層框高程差在 ±%s 內，且整圈在樓層框裡面。"
+                % (len(not_in_level), int(LEVEL_Z_TOLERANCE) if LEVEL_Z_TOLERANCE == int(LEVEL_Z_TOLERANCE) else LEVEL_Z_TOLERANCE),
+                blocking=("space_not_in_level",),
+                command_id=command_id,
+                details={"invalid_object_ids": tuple(not_in_level)},
             )
         for item in parsed:
             if not item["space_id"]:
@@ -202,6 +368,8 @@ def register_space_boundaries(
                 command_id=command_id,
                 details={"conflicts": conflicts},
             )
+        for frame_id, level_id in pending_level_ids.items():
+            write_text(current, frame_id, LEVEL_ID_KEY, level_id)
         for item in parsed:
             oid = item["object_id"]
             write_text(current, oid, SPACE_ID_KEY, item["space_id"])
@@ -221,7 +389,7 @@ def register_space_boundaries(
         message = "已登記 %s 個 Space Boundary。未改模型物件空間欄。" % len(parsed)
         if cross_level:
             warning = (
-                "平面重疊但樓層不同（已允許）：%s。同樓層請用同一個樓層 ID。"
+                "平面重疊但樓層不同（已允許）：%s。同樓層請對到同一個樓層框。"
                 % "、".join("%s/%s" % pair for pair in cross_level)
             )
             return results.ok_with_warnings(

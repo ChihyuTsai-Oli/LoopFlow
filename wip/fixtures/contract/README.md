@@ -16,7 +16,7 @@ python wip/tools/check_contract_fixtures.py
 | `dictionary/measurement_rules.baseline.json` | 2026-08-14 字典快照 92 列；量綱須 92/92 通過 |
 | `dictionary/cases.json` | 合法量綱、空規則警告、錯單位／錯規則、未知欄、14 欄、重複 `type_id`、`_CB.*` |
 | `identity/object_id_cases.json` | 新建 UUID、大寫正規化、複製換號、碰撞 mapping、rollback、禁止靜默重建 |
-| `space/cases.json` | 多樓層投影重疊可通過、共邊可通過、面積重疊阻擋、EXT 四因 |
+| `space/cases.json` | 多樓層投影重疊可通過、共邊可通過、面積重疊阻擋、EXT 四因；樓層框配對由 unittest 覆蓋 |
 | `elevation/cases.json` | `BH`／`TH`／`CH`／`BC`；非 Block 的 `BC` 阻擋；`TH/BH` 只屬 migration |
 | `local_frame/cases.json` | Block 插入平面、Extrusion、唯一平面、封閉 Box、沿用、損壞框、禁止 World bbox |
 | `drawing/provenance_cases.json` | 零／一／多來源、人工修改不得標 current、過期 revision、索引不完整仍可出圖 |

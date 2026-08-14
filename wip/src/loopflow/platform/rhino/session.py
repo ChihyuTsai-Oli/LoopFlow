@@ -95,6 +95,9 @@ class RhinoSession(Protocol):
     def curve_polygon(self, object_id: str) -> Optional[Sequence[Sequence[float]]]:
         ...
 
+    def curve_elevation(self, object_id: str) -> Optional[float]:
+        ...
+
     def is_model_object(self, object_id: str) -> bool:
         ...
 

@@ -175,8 +175,8 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <p>使用者以 Rhino 一般工具建模。LoopFlow 不在背景自動注入資料。</p>
 <p><code>LF_Cabinet_Suite</code>／BOM 不屬 2.0；櫃體幾何與其他物件一樣使用一般 Type、Space、高程與 ID 規則。三個 2D Generator 是獨立工具，不阻擋主鏈。</p>
 <h2 id="4-建立或維護-Space-Boundaries">4. 建立或維護 Space Boundaries</h2>
-<p>使用者選取有效 closed curves，設定顯示名稱與樓層；系統建立穩定 <code>space_id</code>／<code>level_id</code>。</p>
-<ul><li>相鄰空間可以共邊，內部不可重疊。</li><li>面積重疊只檢查同一 <code>level_id</code>；不同樓層允許平面投影重疊，但會警告。</li><li>同樓層的房間必須用同一個 <code>lf_level_id</code>。每條曲線各自新 UUID 會被當成不同樓層。</li><li>重疊時停止並列出全部衝突 Space，不用 priority 自動選擇。</li><li>平面、boundary 或樓層變更後回到此階段，再重新資料化。</li></ul>
+<p>使用者先畫樓層框（FFL／FL，ObjectName 寫數字高程），再畫房間框（ObjectName 寫空間名稱），選取房間框後登記。系統建立穩定 <code>space_id</code>，樓層 ID 由配對到的樓層框帶入。</p>
+<ul><li>空間框須與樓層框高程差在 ±20 模型單位內，且整圈在樓層框裡面（共邊可）。</li><li>相鄰空間可以共邊，內部不可重疊。</li><li>面積重疊只檢查同一 <code>level_id</code>；不同樓層允許平面投影重疊，但會警告。</li><li>同樓層的房間會對到同一個樓層框，因而共用同一個 <code>level_id</code>。不必手填樓層 UUID。</li><li>重疊時停止並列出全部衝突 Space，不用 priority 自動選擇。</li><li>平面、boundary 或樓層變更後回到此階段，再重新資料化。</li></ul>
 <p><strong>安全停點</strong>：Boundary 完成可直接存檔；既有物件資料不會在背景改變。</p>
 <h2 id="5-資料化-Scan-Apply-Verify">5. 資料化：Scan → Apply → Verify</h2>
 <h3 id="Scan">Scan</h3>

@@ -14,13 +14,16 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from loopflow.features.dictionary import schema
+from loopflow.features.dictionary.layer_paths import SYSTEM_LAYERS
 from loopflow.features.model_data.space import (
+    LEVEL_FFL_LAYER,
     LEVEL_ID_KEY,
     SPACE_BOUNDARY_LAYER,
     SPACE_DISPLAY_KEY,
     SPACE_ID_KEY,
     UUID_V4_RE,
     SpaceDraft,
+    drafts_from_selection,
     register_space_boundaries,
 )
 from loopflow.features.project.console import (
@@ -36,6 +39,9 @@ from loopflow.platform.rhino.state import ObjectViewState
 CASES_PATH = WIP / "fixtures" / "contract" / "space" / "cases.json"
 LEVEL_1 = "11111111-1111-4111-8111-111111111111"
 SPACE_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+LEVEL_FL_LAYER = SYSTEM_LAYERS[2]
+FLOOR_POLY = [[0, 0], [20, 0], [20, 20], [0, 20]]
+ROOM_POLY = [[1, 1], [5, 1], [5, 5], [1, 5]]
 
 
 def _fixture_cases():
@@ -71,6 +77,20 @@ def _add_spaces(session: MemorySession, spaces, *, selected: bool = True):
             )
         )
     return drafts
+
+
+def _add_level(
+    session: MemorySession,
+    object_id: str,
+    name: str,
+    polygon,
+    *,
+    layer: str = LEVEL_FFL_LAYER,
+    elevation: float = 0.0,
+    selected: bool = False,
+):
+    session.add_object(object_id, selected=selected, name=name, layer=layer)
+    session.set_curve(object_id, polygon, closed=True, elevation=elevation)
 
 
 def _valid_row():
@@ -319,6 +339,103 @@ class SpaceBoundaryTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertTrue(UUID_V4_RE.match(session.get_object_user_text("curve-0", SPACE_ID_KEY)))
         self.assertEqual(session.get_object_user_text("curve-0", SPACE_DISPLAY_KEY), "客廳")
+
+    def test_matches_level_frame_within_z_tolerance(self):
+        session = _session()
+        _add_level(session, "ffl-1", "0", FLOOR_POLY, elevation=0.0)
+        session.add_object("room", selected=True, name="廊道")
+        session.set_curve("room", ROOM_POLY, closed=True, elevation=20.0)
+        result = register_space_boundaries(session, drafts_from_selection(session))
+        self.assertTrue(result.ok, result.message)
+        level_id = session.get_object_user_text("ffl-1", LEVEL_ID_KEY)
+        self.assertTrue(UUID_V4_RE.match(level_id))
+        self.assertEqual(session.get_object_user_text("room", LEVEL_ID_KEY), level_id)
+        self.assertEqual(session.get_object_user_text("room", SPACE_DISPLAY_KEY), "廊道")
+        self.assertEqual(session.object_name("ffl-1"), "0")
+
+    def test_z_difference_over_tolerance_blocks(self):
+        session = _session()
+        _add_level(session, "ffl-1", "0", FLOOR_POLY, elevation=0.0)
+        session.add_object("room", selected=True, name="廊道")
+        session.set_curve("room", ROOM_POLY, closed=True, elevation=21.0)
+        result = register_space_boundaries(session, drafts_from_selection(session))
+        self.assertEqual(result.blocking, ("space_not_in_level",))
+        self.assertIsNone(session.get_object_user_text("room", SPACE_ID_KEY))
+        self.assertIsNone(session.get_object_user_text("ffl-1", LEVEL_ID_KEY))
+
+    def test_space_outside_level_polygon_blocks(self):
+        session = _session()
+        _add_level(session, "ffl-1", "0", FLOOR_POLY, elevation=0.0)
+        session.add_object("room", selected=True, name="廊道")
+        session.set_curve("room", [[21, 21], [25, 21], [25, 25], [21, 25]], closed=True, elevation=0.0)
+        result = register_space_boundaries(session, drafts_from_selection(session))
+        self.assertEqual(result.blocking, ("space_not_in_level",))
+        self.assertIsNone(session.get_object_user_text("room", SPACE_ID_KEY))
+
+    def test_shared_edge_with_level_frame_passes(self):
+        session = _session()
+        _add_level(session, "ffl-1", "0", FLOOR_POLY, elevation=0.0)
+        session.add_object("room", selected=True, name="廊道")
+        session.set_curve("room", [[0, 0], [5, 0], [5, 5], [0, 5]], closed=True, elevation=0.0)
+        result = register_space_boundaries(session, drafts_from_selection(session))
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(
+            session.get_object_user_text("room", LEVEL_ID_KEY),
+            session.get_object_user_text("ffl-1", LEVEL_ID_KEY),
+        )
+
+    def test_two_floors_get_distinct_level_ids(self):
+        session = _session()
+        _add_level(session, "ffl-1", "0", FLOOR_POLY, elevation=0.0)
+        _add_level(session, "ffl-2", "320", FLOOR_POLY, elevation=320.0)
+        session.add_object("room-1", selected=True, name="廊道")
+        session.set_curve("room-1", ROOM_POLY, closed=True, elevation=5.0)
+        session.add_object("room-2", selected=True, name="衛浴")
+        session.set_curve("room-2", ROOM_POLY, closed=True, elevation=320.0)
+        result = register_space_boundaries(session, drafts_from_selection(session))
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.status, "ok_with_warnings")
+        id1 = session.get_object_user_text("ffl-1", LEVEL_ID_KEY)
+        id2 = session.get_object_user_text("ffl-2", LEVEL_ID_KEY)
+        self.assertNotEqual(id1, id2)
+        self.assertEqual(session.get_object_user_text("room-1", LEVEL_ID_KEY), id1)
+        self.assertEqual(session.get_object_user_text("room-2", LEVEL_ID_KEY), id2)
+
+    def test_ambiguous_same_height_level_frames_block(self):
+        session = _session()
+        _add_level(session, "ffl-a", "0", FLOOR_POLY, elevation=0.0)
+        _add_level(session, "ffl-b", "0", [[0, 0], [30, 0], [30, 30], [0, 30]], elevation=0.0)
+        session.add_object("room", selected=True, name="廊道")
+        session.set_curve("room", ROOM_POLY, closed=True, elevation=0.0)
+        result = register_space_boundaries(session, drafts_from_selection(session))
+        self.assertEqual(result.blocking, ("ambiguous_level_frame",))
+        self.assertIsNone(session.get_object_user_text("room", SPACE_ID_KEY))
+
+    def test_prefers_ffl_when_fl_also_matches(self):
+        session = _session()
+        _add_level(session, "ffl-1", "0", FLOOR_POLY, elevation=0.0)
+        _add_level(session, "fl-1", "0", FLOOR_POLY, layer=LEVEL_FL_LAYER, elevation=0.0)
+        session.add_object("room", selected=True, name="廊道")
+        session.set_curve("room", ROOM_POLY, closed=True, elevation=0.0)
+        result = register_space_boundaries(session, drafts_from_selection(session))
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(
+            session.get_object_user_text("room", LEVEL_ID_KEY),
+            session.get_object_user_text("ffl-1", LEVEL_ID_KEY),
+        )
+        self.assertIsNone(session.get_object_user_text("fl-1", LEVEL_ID_KEY))
+
+    def test_skips_selected_level_frames_as_spaces(self):
+        session = _session()
+        _add_level(session, "ffl-1", "0", FLOOR_POLY, elevation=0.0, selected=True)
+        session.add_object("room", selected=True, name="廊道")
+        session.set_curve("room", ROOM_POLY, closed=True, elevation=0.0)
+        drafts = drafts_from_selection(session)
+        self.assertEqual(tuple(item.object_id for item in drafts), ("room",))
+        result = register_space_boundaries(session, drafts)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.object_name("ffl-1"), "0")
+        self.assertEqual(session.object_layer("ffl-1"), LEVEL_FFL_LAYER)
 
 
 if __name__ == "__main__":

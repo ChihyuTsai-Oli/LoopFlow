@@ -195,8 +195,18 @@ class MemorySession:
     def placeholder_point(self, object_id: str):
         return self._points.get(object_id)
 
-    def set_curve(self, object_id: str, polygon, *, closed: bool = True) -> None:
-        self._curves[object_id] = {"polygon": tuple(tuple(pt) for pt in polygon), "closed": bool(closed)}
+    def set_curve(self, object_id: str, polygon, *, closed: bool = True, elevation=None) -> None:
+        pts = tuple(tuple(pt) for pt in polygon)
+        if elevation is None:
+            if pts and len(pts[0]) >= 3:
+                elevation = float(pts[0][2])
+            else:
+                elevation = 0.0
+        self._curves[object_id] = {
+            "polygon": pts,
+            "closed": bool(closed),
+            "elevation": float(elevation),
+        }
 
     def is_closed_curve(self, object_id: str) -> bool:
         curve = self._curves.get(object_id)
@@ -207,6 +217,12 @@ class MemorySession:
         if not curve:
             return None
         return curve["polygon"]
+
+    def curve_elevation(self, object_id: str):
+        curve = self._curves.get(object_id)
+        if not curve:
+            return None
+        return float(curve["elevation"])
 
     def is_model_object(self, object_id: str) -> bool:
         if object_id not in self._objects or object_id in self._curves:

@@ -335,6 +335,28 @@ class LiveSession:
             return None
         return cleaned
 
+    def curve_elevation(self, object_id: str):
+        rs = self._rs
+        if not rs.IsCurve(object_id):
+            return None
+        point = None
+        try:
+            point = rs.CurveStartPoint(object_id)
+        except Exception:
+            point = None
+        if point is None:
+            raw = rs.CurvePoints(object_id) or []
+            if not raw:
+                return None
+            point = raw[0]
+        try:
+            return float(point.Z)
+        except AttributeError:
+            try:
+                return float(point[2])
+            except (TypeError, IndexError, ValueError):
+                return None
+
     def is_model_object(self, object_id: str) -> bool:
         rs = self._rs
         if not rs.IsObject(object_id):
