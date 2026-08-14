@@ -113,8 +113,8 @@ class SnapshotRestoreTests(unittest.TestCase):
 
 
 class LiveAdapterGuardTests(unittest.TestCase):
-    def test_live_is_marked_unverified(self):
-        self.assertFalse(LIVE_VERIFIED_IN_RHINO)
+    def test_live_is_marked_verified(self):
+        self.assertTrue(LIVE_VERIFIED_IN_RHINO)
 
     def test_open_session_without_rhino_fails(self):
         result = open_session()

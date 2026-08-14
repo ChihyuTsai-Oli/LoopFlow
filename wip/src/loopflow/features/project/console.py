@@ -126,7 +126,10 @@ def _open_check(
     if not _is_cm(unit):
         extra.append("文件單位為 %s，不是 cm。可繼續，但量綱尚未保證安全，建議切換為 cm。" % unit)
     if session.__class__.__name__ == "LiveSession":
-        extra.append("live_adapter_unverified")
+        from loopflow.platform.rhino.live import LIVE_VERIFIED_IN_RHINO
+
+        if not LIVE_VERIFIED_IN_RHINO:
+            extra.append("live_adapter_unverified")
     warnings = tuple(warnings) + tuple(extra)
     payload = {
         "project_id": project_id,

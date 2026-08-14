@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Rhino 8 live adapter。
 
-模組載入不 import Rhino。實機 API 對應尚未在 Rhino 8 驗證，呼叫端必須接受這個限制。
+模組載入不 import Rhino。NX-01～04 使用的 API 已在家中 Rhino 8 驗證。
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from loopflow.foundation import results
 from loopflow.platform.rhino.session import capture_snapshot, restore_snapshot
 from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
 
-LIVE_VERIFIED_IN_RHINO = False
+LIVE_VERIFIED_IN_RHINO = True
 COLOR_SOURCE_BY_LAYER = 0
 COLOR_SOURCE_BY_OBJECT = 1
 # 對齊 1.x VALID_GEOM_TYPES，並納入 SubD。不呼叫可能不存在的 rs.IsExtrusion。
@@ -70,11 +70,17 @@ def open_session() -> results.Result:
     if sc.doc is None:
         return results.failed("rhino_session", "沒有作用中的 Rhino 文件")
     session = LiveSession(rs, sc, _Rhino)
+    if LIVE_VERIFIED_IN_RHINO:
+        return results.ok(
+            "rhino_session",
+            "已連接 Rhino 文件。",
+            details={"session": session, "verified": True},
+        )
     return results.ok(
         "rhino_session",
         "已連接 Rhino 文件。live adapter 尚未實機驗證。",
         warnings=("live_adapter_unverified",),
-        details={"session": session, "verified": LIVE_VERIFIED_IN_RHINO},
+        details={"session": session, "verified": False},
     )
 
 
