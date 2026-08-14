@@ -29,6 +29,7 @@ from loopflow.features.model_data.space import (
     register_space_boundaries,
     register_space_boundaries_interactive,
 )
+from loopflow.foundation.usertext import LEVEL_DATUM_KEY
 from loopflow.features.project.console import (
     PROJECT_ID_KEY,
     SCHEMA_ID_KEY,
@@ -95,6 +96,7 @@ def _add_level(
     session.ensure_layer(layer)
     session.add_object(object_id, selected=selected, name=name, layer=layer)
     session.set_curve(object_id, polygon, closed=True, elevation=elevation)
+    session.set_object_user_text(object_id, LEVEL_DATUM_KEY, name)
 
 
 def _valid_row():
@@ -148,7 +150,6 @@ class SpaceBoundaryTests(unittest.TestCase):
                         session.get_object_user_text(object_id, SPACE_DISPLAY_KEY),
                         space["space_display"],
                     )
-                    self.assertEqual(session.object_name(object_id), space["space_display"])
                 self.assertIsNone(session.get_object_user_text("wall", SPACE_ID_KEY))
                 self.assertEqual(session.get_object_user_text("wall", "lf_remarks"), "人工備註")
                 self.assertFalse(session.get_view_state("wall").selected)
@@ -375,6 +376,20 @@ class SpaceBoundaryTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("room", SPACE_DISPLAY_KEY), "廊道")
         self.assertEqual(session.object_name("ffl-1"), "0")
 
+    def test_level_datum_falls_back_to_object_name(self):
+        session = _session()
+        session.ensure_layer(LEVEL_FFL_LAYER)
+        session.add_object("ffl-1", name="0", layer=LEVEL_FFL_LAYER)
+        session.set_curve("ffl-1", FLOOR_POLY, closed=True, elevation=0.0)
+        session.add_object("room", selected=True, name="廊道")
+        session.set_curve("room", ROOM_POLY, closed=True, elevation=0.0)
+        result = register_space_boundaries(session, drafts_from_selection(session))
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(
+            session.get_object_user_text("room", LEVEL_ID_KEY),
+            session.get_object_user_text("ffl-1", LEVEL_ID_KEY),
+        )
+
     def test_z_difference_over_tolerance_blocks(self):
         session = _session()
         _add_level(session, "ffl-1", "0", FLOOR_POLY, elevation=0.0)
@@ -496,7 +511,8 @@ class SpaceBoundaryTests(unittest.TestCase):
             isolate=True,
         )
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(session.object_name("frame"), "320")
+        self.assertEqual(session.get_object_user_text("frame", LEVEL_DATUM_KEY), "320")
+        self.assertEqual(session.object_name("frame") or "", "")
         self.assertEqual(session.object_layer("frame"), LEVEL_FFL_LAYER)
         self.assertTrue(UUID_V4_RE.match(session.get_object_user_text("frame", LEVEL_ID_KEY)))
         self.assertFalse(session.get_view_state("box").locked)
@@ -515,9 +531,10 @@ class SpaceBoundaryTests(unittest.TestCase):
             isolate=True,
         )
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(session.object_name("a"), "廊道")
-        self.assertEqual(session.object_name("b"), "廊道")
+        self.assertEqual(session.object_name("a") or "", "")
+        self.assertEqual(session.object_name("b") or "", "")
         self.assertEqual(session.get_object_user_text("a", SPACE_DISPLAY_KEY), "廊道")
+        self.assertEqual(session.get_object_user_text("b", SPACE_DISPLAY_KEY), "廊道")
         self.assertEqual(
             session.get_object_user_text("a", LEVEL_ID_KEY),
             session.get_object_user_text("ffl-1", LEVEL_ID_KEY),

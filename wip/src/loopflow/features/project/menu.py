@@ -16,9 +16,8 @@ MENU_ITEMS: Tuple[Tuple[str, str, str], ...] = (
     ("sync_type_layers", "scan", "2  同步 Type Layers"),
     ("level_boundary", "scan", "3  登記樓層框"),
     ("space_boundary", "scan", "4  登記空間框"),
-    ("scan_apply_verify", "scan", "5  Scan（不寫入）"),
-    ("scan_apply_verify", "apply", "6  Apply（寫入 ID／Type／空間／高程）"),
-    ("scan_apply_verify", "verify", "7  Verify（再 Scan，仍不可發布）"),
+    ("scan_apply_verify", "apply", "5  Apply（寫入 ID／Type／空間／高程）"),
+    ("scan_apply_verify", "scan", "6  Scan（檢查，不寫入）"),
 )
 MENU_LABELS: Tuple[str, ...] = tuple(item[2] for item in MENU_ITEMS)
 
@@ -80,10 +79,12 @@ def run_nexus_console(
     if step == "open_check":
         return first
     if step == "sync_type_layers" and extra.get("ask_prefix") is None:
-        from loopflow.platform.rhino.prompts import ask_command_string
+        from loopflow.platform.rhino.prompts import ask_command_string, ask_popup_string
 
         def _ask_prefix(default):
-            return ask_command_string("專案名稱（圖層前綴）", default or "M3D")
+            if default:
+                return ask_command_string("專案名稱（圖層前綴）", default)
+            return ask_popup_string("請輸入專案名稱（圖層前綴）", "", "LoopFlow")
 
         extra["ask_prefix"] = _ask_prefix
     return open_console(

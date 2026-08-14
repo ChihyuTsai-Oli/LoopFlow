@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Rhino 指令列提示：Enter 確認，Esc 取消。不用對話框 OK。"""
+"""Rhino 提示：指令列 Enter，或彈出視窗。"""
 from __future__ import annotations
 
 from typing import Optional, Sequence, Tuple
@@ -16,6 +16,21 @@ def ask_command_string(
         return None
     strings = list(options) if options else None
     value = rs.GetString(message, default or None, strings)
+    if value is None:
+        return None
+    return str(value)
+
+
+def ask_popup_string(
+    message: str,
+    default: str = "",
+    title: str = "LoopFlow",
+) -> Optional[str]:
+    try:
+        import rhinoscriptsyntax as rs  # type: ignore
+    except ImportError:
+        return None
+    value = rs.StringBox(message, default, title)
     if value is None:
         return None
     return str(value)

@@ -200,6 +200,26 @@ class LayerSyncTests(unittest.TestCase):
         self.assertFalse(session.has_layer(to_full_path("00_STR_結構::Beam.樑")))
         self.assertTrue(session.get_view_state("model-a").selected)
 
+    def test_first_prefix_prompt_has_no_default(self):
+        session = _session()
+        catalog = _catalog(_row())
+        seen = []
+
+        def _ask(default):
+            seen.append(default)
+            return "大安邸"
+
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
+            result = sync_type_layers(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
+                catalog=catalog,
+                ask_prefix=_ask,
+            )
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(seen, [""])
+        self.assertEqual(session.document_user_text(LAYER_PREFIX_KEY), "大安邸")
+
     def test_custom_prefix_is_stored_and_reused_as_default(self):
         session = _session()
         catalog = _catalog(_row())

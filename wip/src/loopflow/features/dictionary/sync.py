@@ -172,9 +172,10 @@ def sync_type_layers(
 
     def action(current: RhinoSession) -> results.Result:
         current_prefix = read_layer_prefix(current)
+        stored = normalize_layer_prefix(current.document_user_text(LAYER_PREFIX_KEY) or "")
         chosen = layer_prefix
         if chosen is None and callable(ask_prefix):
-            chosen = ask_prefix(current_prefix)
+            chosen = ask_prefix(stored or "")
             if chosen is None:
                 return results.cancelled(
                     "sync_type_layers",
@@ -182,7 +183,7 @@ def sync_type_layers(
                     command_id=command_id,
                 )
         if chosen is None:
-            chosen = current_prefix or LAYER_PREFIX_3D
+            chosen = stored or current_prefix or LAYER_PREFIX_3D
         prefix = normalize_layer_prefix(chosen)
         if not prefix:
             return results.blocked(

@@ -14,7 +14,14 @@ from loopflow.features.dictionary.layer_paths import (
     system_layers,
 )
 from loopflow.foundation import results
-from loopflow.foundation.usertext import LEVEL_ID_KEY, SPACE_DISPLAY_KEY, SPACE_ID_KEY, read_text, write_text
+from loopflow.foundation.usertext import (
+    LEVEL_DATUM_KEY,
+    LEVEL_ID_KEY,
+    SPACE_DISPLAY_KEY,
+    SPACE_ID_KEY,
+    read_text,
+    write_text,
+)
 from loopflow.foundation.version import check_schema
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 from loopflow.platform.rhino.state import ObjectViewState
@@ -152,7 +159,8 @@ def collect_level_frames(session: RhinoSession) -> Tuple[LevelFrame, ...]:
             curve_z = session.curve_elevation(object_id)
             if curve_z is None:
                 continue
-            datum = parse_level_datum(session.object_name(object_id) or "")
+            raw = read_text(session, object_id, LEVEL_DATUM_KEY) or session.object_name(object_id) or ""
+            datum = parse_level_datum(raw)
             if datum is None:
                 continue
             frames.append(
@@ -232,8 +240,8 @@ def drafts_from_selection(session: RhinoSession) -> Tuple[SpaceDraft, ...]:
             continue
         if session.object_layer(object_id) in system_layers(read_layer_prefix(session))[1:3]:
             continue
-        display = session.object_name(object_id) or read_text(
-            session, object_id, SPACE_DISPLAY_KEY
+        display = read_text(session, object_id, SPACE_DISPLAY_KEY) or session.object_name(
+            object_id
         ) or ""
         level_id = read_text(session, object_id, LEVEL_ID_KEY) or ""
         space_id = read_text(session, object_id, SPACE_ID_KEY)
@@ -296,7 +304,7 @@ def register_level_boundaries(
     guarded: bool = True,
     command_id: str = COMMAND_ID,
 ) -> results.Result:
-    """把封閉曲線登記為樓層框。高程寫入物件名稱，曲線搬到 FFL 或 FL。"""
+    """把封閉曲線登記為樓層框。高程寫入 `_15_樓層高程`，曲線搬到 FFL 或 FL。"""
 
     def action(current: RhinoSession) -> results.Result:
         if cancel:
@@ -357,7 +365,7 @@ def register_level_boundaries(
             if not UUID_V4_RE.match(level_id or ""):
                 level_id = _new_id()
             write_text(current, object_id, LEVEL_ID_KEY, level_id)
-            current.set_object_name(object_id, display)
+            write_text(current, object_id, LEVEL_DATUM_KEY, display)
             if current.object_layer(object_id) != target:
                 current.set_object_layer(object_id, target)
             written.append(level_id)
@@ -399,7 +407,7 @@ def register_level_boundaries_interactive(
     guarded: bool = True,
     command_id: str = COMMAND_ID,
 ) -> results.Result:
-    """先選 FFL／FL，鎖非曲線，選線後輸入高程；Enter 完成。"""
+    """先選 FFL／FL（指令列），鎖非曲線，選線後彈出視窗輸入高程。"""
 
     def action(current: RhinoSession) -> results.Result:
         chosen = kind
@@ -433,7 +441,7 @@ def register_level_boundaries_interactive(
             if ask_text is not None:
                 text = ask_text("高程（例如 0 或 320）", "")
             else:
-                text = _ask_or_live(None, "ask_command_string", "高程（例如 0 或 320）", "")
+                text = _ask_or_live(None, "ask_popup_string", "高程（例如 0 或 320）", "", "LoopFlow")
             if text is None:
                 return results.cancelled(
                     "register_levels",
@@ -466,7 +474,7 @@ def register_space_boundaries_interactive(
     guarded: bool = True,
     command_id: str = COMMAND_ID,
 ) -> results.Result:
-    """鎖非曲線，可複選空間框，輸入同一個空間名稱；Enter 完成。"""
+    """鎖非曲線，可複選空間框，彈出視窗輸入同一個空間名稱。"""
 
     def action(current: RhinoSession) -> results.Result:
         if isolate:
@@ -488,7 +496,7 @@ def register_space_boundaries_interactive(
             if ask_text is not None:
                 name = ask_text("空間名稱", "")
             else:
-                name = _ask_or_live(None, "ask_command_string", "空間名稱", "")
+                name = _ask_or_live(None, "ask_popup_string", "空間名稱", "", "LoopFlow")
             if name is None:
                 return results.cancelled(
                     "register_spaces",
@@ -656,7 +664,6 @@ def register_space_boundaries(
             write_text(current, oid, SPACE_ID_KEY, item["space_id"])
             write_text(current, oid, LEVEL_ID_KEY, item["level_id"])
             write_text(current, oid, SPACE_DISPLAY_KEY, item["space_display"])
-            current.set_object_name(oid, item["space_display"])
             space_layer = system_layers(read_layer_prefix(current))[0]
             if current.object_layer(oid) != space_layer:
                 current.ensure_layer(space_layer)

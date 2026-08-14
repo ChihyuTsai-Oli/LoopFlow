@@ -179,8 +179,11 @@ class ConsoleOpenCheckTests(unittest.TestCase):
 
 class ConsoleMenuTests(unittest.TestCase):
     def test_parse_menu_choice(self):
-        self.assertEqual(parse_menu_choice("5  Scan（不寫入）"), ("scan_apply_verify", "scan"))
-        self.assertEqual(parse_menu_choice("6"), ("scan_apply_verify", "apply"))
+        self.assertEqual(parse_menu_choice("5"), ("scan_apply_verify", "apply"))
+        self.assertEqual(parse_menu_choice("5  Apply（寫入 ID／Type／空間／高程）"), ("scan_apply_verify", "apply"))
+        self.assertEqual(parse_menu_choice("6"), ("scan_apply_verify", "scan"))
+        self.assertEqual(parse_menu_choice("6  Scan（檢查，不寫入）"), ("scan_apply_verify", "scan"))
+        self.assertIsNone(parse_menu_choice("7"))
         self.assertEqual(parse_menu_choice("3"), ("level_boundary", "scan"))
         self.assertEqual(parse_menu_choice("4"), ("space_boundary", "scan"))
         self.assertEqual(parse_menu_choice("2"), ("sync_type_layers", "scan"))
@@ -211,7 +214,7 @@ class ConsoleMenuTests(unittest.TestCase):
                 session,
                 environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
                 interactive=True,
-                chooser=lambda _labels: "5",
+                chooser=lambda _labels: "6",
             )
             self.assertTrue(result.ok, result.message)
             self.assertEqual(result.stage, "scan_identity")

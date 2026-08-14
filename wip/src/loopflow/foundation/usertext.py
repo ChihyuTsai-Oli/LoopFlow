@@ -23,6 +23,7 @@ TYPE_CATEGORY_KEY = "_11_類型類別"
 TYPE_SEQUENCE_KEY = "_12_類型序號"
 ELEVATION_DISPLAY_KEY = "_13_高程顯示"
 DATA_REVISION_KEY = "_14_資料版次"
+LEVEL_DATUM_KEY = "_15_樓層高程"
 
 # 讀得到、寫入時清掉的舊 key：1.x 的 `lf_*`，以及 2.0 開發期改過編號的過渡 key。
 LEGACY_KEYS = {
@@ -39,6 +40,7 @@ LEGACY_KEYS = {
     TYPE_SEQUENCE_KEY: ("_03_類型序號", "_17_類型序號", "lf_type_sequence"),
     ELEVATION_DISPLAY_KEY: ("_11_高程顯示", "_18_高程顯示", "lf_elevation_display"),
     DATA_REVISION_KEY: ("_15_資料版次", "_20_資料版次", "lf_data_revision"),
+    LEVEL_DATUM_KEY: ("lf_level_datum",),
 }
 
 # 2.0 不再寫尺寸／數量／座標框；Apply 時清掉面板上的殘留。
