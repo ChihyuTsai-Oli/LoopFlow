@@ -35,6 +35,51 @@ class RhinoSession(Protocol):
     def model_unit_system(self) -> str:
         ...
 
+    def layer_paths(self) -> Sequence[str]:
+        ...
+
+    def has_layer(self, path: str) -> bool:
+        ...
+
+    def ensure_layer(self, path: str) -> bool:
+        ...
+
+    def delete_layer(self, path: str) -> None:
+        ...
+
+    def get_layer_user_text(self, path: str, key: str) -> Optional[str]:
+        ...
+
+    def set_layer_user_text(self, path: str, key: str, value: str) -> None:
+        ...
+
+    def object_name(self, object_id: str) -> Optional[str]:
+        ...
+
+    def set_object_name(self, object_id: str, name: str) -> None:
+        ...
+
+    def object_layer(self, object_id: str) -> Optional[str]:
+        ...
+
+    def set_object_layer(self, object_id: str, path: str) -> None:
+        ...
+
+    def get_object_user_text(self, object_id: str, key: str) -> Optional[str]:
+        ...
+
+    def set_object_user_text(self, object_id: str, key: str, value: str) -> None:
+        ...
+
+    def objects_on_layer(self, path: str) -> Sequence[str]:
+        ...
+
+    def add_placeholder(self, *, layer: str, name: str) -> str:
+        ...
+
+    def delete_object(self, object_id: str) -> None:
+        ...
+
     def snapshot(self) -> DocumentSnapshot:
         ...
 
@@ -50,6 +95,9 @@ class RhinoSession(Protocol):
 def capture_snapshot(session: RhinoSession) -> DocumentSnapshot:
     states = []
     for object_id in session.iter_object_ids(include_hidden=True, include_locked=True):
+        name = session.object_name(object_id) or ""
+        if name.startswith("DNA_REF_"):
+            continue
         state = session.get_view_state(object_id)
         if state is not None:
             states.append(state)

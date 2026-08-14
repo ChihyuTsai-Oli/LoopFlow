@@ -14,6 +14,7 @@ from loopflow.features.dictionary.schema import (
     classify_measurement,
     split_type_id,
 )
+from loopflow.features.dictionary.sync import export_layer_diff, sync_type_layers
 
 __all__ = [
     "DISPLAY_COLUMNS",
@@ -22,8 +23,10 @@ __all__ = [
     "TypeCatalog",
     "TypeRecord",
     "classify_measurement",
+    "export_layer_diff",
     "load_from_path",
     "load_from_table",
     "load_from_workfiles",
     "split_type_id",
+    "sync_type_layers",
 ]

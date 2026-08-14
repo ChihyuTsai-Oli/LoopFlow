@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""記憶體假 Rhino 文件，供純 Python 測試 snapshot／restore。"""
+"""記憶體假 Rhino 文件，供純 Python 測試 snapshot／restore 與圖層同步。"""
 from __future__ import annotations
 
 from typing import Dict, List, Optional
@@ -12,9 +12,12 @@ from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
 class MemorySession:
     def __init__(self, *, model_unit: str = "Centimeters", document_text=None) -> None:
         self._objects: Dict[str, ObjectViewState] = {}
+        self._object_meta: Dict[str, dict] = {}
+        self._layers: Dict[str, dict] = {}
         self._modified = False
         self._model_unit = model_unit
         self._document_text = dict(document_text or {})
+        self._next_id = 1
 
     def add_object(
         self,
@@ -25,6 +28,9 @@ class MemorySession:
         hidden: bool = False,
         color=(0, 0, 0),
         color_by_layer: bool = True,
+        name: Optional[str] = None,
+        layer: Optional[str] = None,
+        user_text=None,
     ) -> ObjectViewState:
         state = ObjectViewState(
             object_id=object_id,
@@ -35,11 +41,17 @@ class MemorySession:
             color_by_layer=color_by_layer,
         )
         self._objects[object_id] = state
+        self._object_meta[object_id] = {
+            "name": name,
+            "layer": layer,
+            "user_text": dict(user_text or {}),
+        }
         self._modified = True
         return state
 
     def delete_object(self, object_id: str) -> None:
         self._objects.pop(object_id, None)
+        self._object_meta.pop(object_id, None)
         self._modified = True
 
     def iter_object_ids(self, *, include_hidden: bool = True, include_locked: bool = True):
@@ -74,6 +86,83 @@ class MemorySession:
 
     def model_unit_system(self) -> str:
         return self._model_unit
+
+    def layer_paths(self):
+        return tuple(self._layers)
+
+    def has_layer(self, path: str) -> bool:
+        return path in self._layers
+
+    def ensure_layer(self, path: str) -> bool:
+        created = path not in self._layers
+        current = ""
+        for index, part in enumerate(path.split("::")):
+            current = part if index == 0 else current + "::" + part
+            if current not in self._layers:
+                self._layers[current] = {"user_text": {}}
+                self._modified = True
+        return created
+
+    def delete_layer(self, path: str) -> None:
+        self._layers.pop(path, None)
+        self._modified = True
+
+    def get_layer_user_text(self, path: str, key: str) -> Optional[str]:
+        layer = self._layers.get(path)
+        if not layer:
+            return None
+        value = layer["user_text"].get(key)
+        if value in (None, ""):
+            return None
+        return str(value)
+
+    def set_layer_user_text(self, path: str, key: str, value: str) -> None:
+        if path not in self._layers:
+            raise KeyError("未知圖層：%s" % path)
+        self._layers[path]["user_text"][key] = value
+        self._modified = True
+
+    def _meta(self, object_id: str) -> dict:
+        if object_id not in self._object_meta:
+            self._object_meta[object_id] = {"name": None, "layer": None, "user_text": {}}
+        return self._object_meta[object_id]
+
+    def object_name(self, object_id: str) -> Optional[str]:
+        return self._meta(object_id)["name"]
+
+    def set_object_name(self, object_id: str, name: str) -> None:
+        self._meta(object_id)["name"] = name
+        self._modified = True
+
+    def object_layer(self, object_id: str) -> Optional[str]:
+        return self._meta(object_id)["layer"]
+
+    def set_object_layer(self, object_id: str, path: str) -> None:
+        self._meta(object_id)["layer"] = path
+        self._modified = True
+
+    def get_object_user_text(self, object_id: str, key: str) -> Optional[str]:
+        value = self._meta(object_id)["user_text"].get(key)
+        if value in (None, ""):
+            return None
+        return str(value)
+
+    def set_object_user_text(self, object_id: str, key: str, value: str) -> None:
+        self._meta(object_id)["user_text"][key] = value
+        self._modified = True
+
+    def objects_on_layer(self, path: str):
+        return tuple(
+            object_id
+            for object_id, meta in self._object_meta.items()
+            if meta.get("layer") == path and object_id in self._objects
+        )
+
+    def add_placeholder(self, *, layer: str, name: str) -> str:
+        object_id = "mem-%s" % self._next_id
+        self._next_id += 1
+        self.add_object(object_id, name=name, layer=layer)
+        return object_id
 
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)

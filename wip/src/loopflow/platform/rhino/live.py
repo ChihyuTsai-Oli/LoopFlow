@@ -128,6 +128,89 @@ class LiveSession:
     def model_unit_system(self) -> str:
         return str(self._sc.doc.ModelUnitSystem)
 
+    def layer_paths(self):
+        names = self._rs.LayerNames() or []
+        return tuple(str(name) for name in names)
+
+    def has_layer(self, path: str) -> bool:
+        return bool(self._rs.IsLayer(path))
+
+    def ensure_layer(self, path: str) -> bool:
+        created = not self.has_layer(path)
+        current = ""
+        for index, part in enumerate(path.split("::")):
+            current = part if index == 0 else current + "::" + part
+            if not self._rs.IsLayer(current):
+                self._rs.AddLayer(current)
+        return created
+
+    def delete_layer(self, path: str) -> None:
+        if self._rs.IsLayer(path):
+            self._rs.DeleteLayer(path)
+
+    def _layer_obj(self, path: str):
+        index = self._sc.doc.Layers.FindByFullPath(path, -1)
+        if index < 0:
+            return None
+        return self._sc.doc.Layers[index]
+
+    def get_layer_user_text(self, path: str, key: str) -> Optional[str]:
+        layer = self._layer_obj(path)
+        if layer is None:
+            return None
+        value = layer.GetUserString(key)
+        if value in (None, ""):
+            return None
+        return str(value)
+
+    def set_layer_user_text(self, path: str, key: str, value: str) -> None:
+        layer = self._layer_obj(path)
+        if layer is None:
+            raise KeyError("未知圖層：%s" % path)
+        layer.SetUserString(key, value)
+        layer.CommitChanges()
+
+    def object_name(self, object_id: str) -> Optional[str]:
+        value = self._rs.ObjectName(object_id)
+        if value in (None, ""):
+            return None
+        return str(value)
+
+    def set_object_name(self, object_id: str, name: str) -> None:
+        self._rs.ObjectName(object_id, name)
+
+    def object_layer(self, object_id: str) -> Optional[str]:
+        value = self._rs.ObjectLayer(object_id)
+        if value in (None, ""):
+            return None
+        return str(value)
+
+    def set_object_layer(self, object_id: str, path: str) -> None:
+        self._rs.ObjectLayer(object_id, path)
+
+    def get_object_user_text(self, object_id: str, key: str) -> Optional[str]:
+        value = self._rs.GetUserText(object_id, key)
+        if value in (None, ""):
+            return None
+        return str(value)
+
+    def set_object_user_text(self, object_id: str, key: str, value: str) -> None:
+        self._rs.SetUserText(object_id, key, value)
+
+    def objects_on_layer(self, path: str):
+        ids = self._rs.ObjectsByLayer(path) or []
+        return tuple(str(item) for item in ids)
+
+    def add_placeholder(self, *, layer: str, name: str) -> str:
+        line_id = self._rs.AddLine((0, 0, 0), (-25, 0, 0))
+        object_id = str(line_id)
+        self._rs.ObjectLayer(object_id, layer)
+        self._rs.ObjectName(object_id, name)
+        return object_id
+
+    def delete_object(self, object_id: str) -> None:
+        self._rs.DeleteObject(object_id)
+
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)
 

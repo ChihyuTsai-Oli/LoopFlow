@@ -35,6 +35,7 @@ STAGES = (
     "restore",
     "guarded_run",
     "open_check",
+    "sync_type_layers",
 )
 
 

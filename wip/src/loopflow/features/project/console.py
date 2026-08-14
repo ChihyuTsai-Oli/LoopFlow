@@ -26,7 +26,7 @@ CONSOLE_STEPS: Tuple[dict, ...] = (
     {
         "id": "sync_type_layers",
         "title": "驗證 Dictionary／同步 Type Layers",
-        "status": "not_implemented",
+        "status": "available",
         "task": "NX-02",
     },
     {
@@ -138,9 +138,9 @@ def _open_check(
         "exchange_exists": paths.exchange_root.exists(),
         "package_version": PACKAGE_VERSION,
         "steps": _copy_steps(),
-        "executable_steps": ("open_check",),
+        "executable_steps": ("open_check", "sync_type_layers"),
     }
-    message = "開案檢查完成。後續 Scan／Apply／發布尚未實作。"
+    message = "開案檢查完成。可執行 Type layer 同步。Scan／Apply／發布尚未實作。"
     if warnings:
         return results.ok_with_warnings(
             "open_check",
@@ -157,12 +157,31 @@ def open_console(
     *,
     environ: Optional[Mapping[str, str]] = None,
     cancel: bool = False,
+    step: str = "open_check",
+    export_path=None,
     command_id: str = COMMAND_ID,
 ) -> results.Result:
-    """開案檢查並列出 Console 步驟。不建立檔案、不寫物件。"""
+    """開案檢查並列出 Console 步驟。step=sync_type_layers 時才同步圖層。"""
+    from loopflow.features.dictionary.sync import sync_type_layers
 
     def action(current: RhinoSession) -> results.Result:
-        return _open_check(current, environ=environ, cancel=cancel)
+        checked = _open_check(current, environ=environ, cancel=cancel)
+        if not checked.ok or step in (None, "open_check"):
+            return checked
+        if step == "sync_type_layers":
+            return sync_type_layers(
+                current,
+                environ=environ,
+                cancel=False,
+                export_path=export_path,
+                guarded=False,
+                command_id=command_id,
+            )
+        return results.not_implemented(
+            "dispatch",
+            "Console 步驟尚未實作：%s" % step,
+            command_id=command_id,
+        )
 
     if session is None:
         return _open_check(None, environ=environ, cancel=cancel)
