@@ -16,16 +16,20 @@ from loopflow.features.dictionary.layer_paths import (
 )
 from loopflow.features.dictionary.loader import TypeCatalog, load_from_workfiles
 from loopflow.foundation import results
+from loopflow.foundation.usertext import (
+    CONSTRUCTION_KEY,
+    DATA_REVISION_KEY,
+    OBJECT_ID_KEY,
+    REMARKS_KEY,
+    TYPE_CATEGORY_KEY,
+    TYPE_ID_KEY,
+    TYPE_SEQUENCE_KEY,
+    read_text,
+    write_text,
+)
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Nexus"
-OBJECT_ID_KEY = "lf_object_id"
-TYPE_ID_KEY = "lf_type_id"
-TYPE_CATEGORY_KEY = "lf_type_category"
-TYPE_SEQUENCE_KEY = "lf_type_sequence"
-CONSTRUCTION_KEY = "lf_construction_status"
-REMARKS_KEY = "lf_remarks"
-DATA_REVISION_KEY = "lf_data_revision"
 UUID_V4_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
 )
@@ -79,7 +83,7 @@ def _resolve_type(session: RhinoSession, object_id: str, catalog: TypeCatalog):
 def _classify_ids(session: RhinoSession, targets: Sequence[str]) -> Dict[str, List[str]]:
     grouped: Dict[str, List[str]] = {}
     for object_id in targets:
-        current = session.get_object_user_text(object_id, OBJECT_ID_KEY)
+        current = read_text(session, object_id, OBJECT_ID_KEY)
         if not current:
             continue
         grouped.setdefault(current, []).append(object_id)
@@ -106,7 +110,7 @@ def _build_items(session: RhinoSession, catalog: TypeCatalog, targets: Sequence[
     for object_id in targets:
         state = session.get_view_state(object_id)
         record, type_issue = _resolve_type(session, object_id, catalog)
-        current = session.get_object_user_text(object_id, OBJECT_ID_KEY)
+        current = read_text(session, object_id, OBJECT_ID_KEY)
         issues = _item_issues(current, grouped, type_issue)
         keeper = bool(
             current
@@ -287,16 +291,16 @@ def apply_identity(
                 remaining.append(item)
                 continue
             old_id = item["object_id"]
-            current.set_object_user_text(rhino_id, OBJECT_ID_KEY, object_id)
-            current.set_object_user_text(rhino_id, TYPE_ID_KEY, record.type_id)
-            current.set_object_user_text(rhino_id, TYPE_CATEGORY_KEY, record.type_category)
-            current.set_object_user_text(rhino_id, TYPE_SEQUENCE_KEY, record.type_sequence)
-            if not current.get_object_user_text(rhino_id, CONSTRUCTION_KEY) and record.construction_default:
-                current.set_object_user_text(rhino_id, CONSTRUCTION_KEY, record.construction_default)
-            if not current.get_object_user_text(rhino_id, REMARKS_KEY) and record.remarks_default:
-                current.set_object_user_text(rhino_id, REMARKS_KEY, record.remarks_default)
-            if not current.get_object_user_text(rhino_id, DATA_REVISION_KEY):
-                current.set_object_user_text(rhino_id, DATA_REVISION_KEY, "0")
+            write_text(current, rhino_id, OBJECT_ID_KEY, object_id)
+            write_text(current, rhino_id, TYPE_ID_KEY, record.type_id)
+            write_text(current, rhino_id, TYPE_CATEGORY_KEY, record.type_category)
+            write_text(current, rhino_id, TYPE_SEQUENCE_KEY, record.type_sequence)
+            if not read_text(current, rhino_id, CONSTRUCTION_KEY) and record.construction_default:
+                write_text(current, rhino_id, CONSTRUCTION_KEY, record.construction_default)
+            if not read_text(current, rhino_id, REMARKS_KEY) and record.remarks_default:
+                write_text(current, rhino_id, REMARKS_KEY, record.remarks_default)
+            if not read_text(current, rhino_id, DATA_REVISION_KEY):
+                write_text(current, rhino_id, DATA_REVISION_KEY, "0")
             applied.append(rhino_id)
             if old_id and old_id != object_id:
                 id_mappings.append({"object_id": rhino_id, "old_id": old_id, "new_id": object_id})
@@ -401,10 +405,10 @@ def rollback_identity(
             rhino_id = item["object_id"]
             old_id = item["old_id"]
             new_id = item["new_id"]
-            current_id = current.get_object_user_text(rhino_id, OBJECT_ID_KEY)
+            current_id = read_text(current, rhino_id, OBJECT_ID_KEY)
             if current_id != new_id:
                 continue
-            current.set_object_user_text(rhino_id, OBJECT_ID_KEY, old_id)
+            write_text(current, rhino_id, OBJECT_ID_KEY, old_id)
             restored.append(rhino_id)
         return results.ok(
             "rollback_identity",

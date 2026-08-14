@@ -175,7 +175,11 @@ class MemorySession:
         return str(value)
 
     def set_object_user_text(self, object_id: str, key: str, value: str) -> None:
-        self._meta(object_id)["user_text"][key] = value
+        text = self._meta(object_id)["user_text"]
+        if value in (None, ""):
+            text.pop(key, None)
+        else:
+            text[key] = value
         self._modified = True
 
     def objects_on_layer(self, path: str):

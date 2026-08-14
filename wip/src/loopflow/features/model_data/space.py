@@ -7,15 +7,15 @@ import uuid
 from dataclasses import dataclass
 from typing import Optional, Sequence, Tuple
 
+from loopflow.features.dictionary.layer_paths import SYSTEM_LAYERS
 from loopflow.foundation import results
+from loopflow.foundation.usertext import LEVEL_ID_KEY, SPACE_DISPLAY_KEY, SPACE_ID_KEY, read_text, write_text
 from loopflow.foundation.version import check_schema
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Nexus"
 SCHEMA_ID = "loopflow.space"
-SPACE_ID_KEY = "lf_space_id"
-LEVEL_ID_KEY = "lf_level_id"
-SPACE_DISPLAY_KEY = "lf_space_display"
+SPACE_BOUNDARY_LAYER = SYSTEM_LAYERS[0]
 UUID_V4_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
 )
@@ -49,6 +49,23 @@ def aabb_contains(polygon, x: float, y: float) -> bool:
     xs = [_xy(pt)[0] for pt in polygon]
     ys = [_xy(pt)[1] for pt in polygon]
     return min(xs) - 1e-9 <= x <= max(xs) + 1e-9 and min(ys) - 1e-9 <= y <= max(ys) + 1e-9
+
+
+def point_in_polygon(polygon, x: float, y: float) -> bool:
+    """射線法。先用 AABB 剔除。"""
+    if not aabb_contains(polygon, x, y):
+        return False
+    pts = [_xy(pt) for pt in polygon]
+    inside = False
+    j = len(pts) - 1
+    for i, (xi, yi) in enumerate(pts):
+        xj, yj = pts[j]
+        if (yi > y) != (yj > y):
+            at = (xj - xi) * (y - yi) / (yj - yi) + xi
+            if x < at:
+                inside = not inside
+        j = i
+    return inside
 
 
 def _new_id() -> str:
@@ -85,11 +102,11 @@ def drafts_from_selection(session: RhinoSession) -> Tuple[SpaceDraft, ...]:
         state = session.get_view_state(object_id)
         if state is None or not state.selected:
             continue
-        display = session.object_name(object_id) or session.get_object_user_text(
-            object_id, SPACE_DISPLAY_KEY
+        display = session.object_name(object_id) or read_text(
+            session, object_id, SPACE_DISPLAY_KEY
         ) or ""
-        level_id = session.get_object_user_text(object_id, LEVEL_ID_KEY) or ""
-        space_id = session.get_object_user_text(object_id, SPACE_ID_KEY)
+        level_id = read_text(session, object_id, LEVEL_ID_KEY) or ""
+        space_id = read_text(session, object_id, SPACE_ID_KEY)
         drafts.append(
             SpaceDraft(
                 object_id=object_id,
@@ -144,7 +161,7 @@ def register_space_boundaries(
             if not UUID_V4_RE.match(draft.level_id or ""):
                 invalid.append(draft.object_id)
                 continue
-            space_id = draft.space_id or current.get_object_user_text(draft.object_id, SPACE_ID_KEY)
+            space_id = draft.space_id or read_text(current, draft.object_id, SPACE_ID_KEY)
             if space_id == "EXT" or (space_id and not UUID_V4_RE.match(space_id)):
                 invalid.append(draft.object_id)
                 continue
@@ -187,10 +204,13 @@ def register_space_boundaries(
             )
         for item in parsed:
             oid = item["object_id"]
-            current.set_object_user_text(oid, SPACE_ID_KEY, item["space_id"])
-            current.set_object_user_text(oid, LEVEL_ID_KEY, item["level_id"])
-            current.set_object_user_text(oid, SPACE_DISPLAY_KEY, item["space_display"])
+            write_text(current, oid, SPACE_ID_KEY, item["space_id"])
+            write_text(current, oid, LEVEL_ID_KEY, item["level_id"])
+            write_text(current, oid, SPACE_DISPLAY_KEY, item["space_display"])
             current.set_object_name(oid, item["space_display"])
+            if current.object_layer(oid) != SPACE_BOUNDARY_LAYER:
+                current.ensure_layer(SPACE_BOUNDARY_LAYER)
+                current.set_object_layer(oid, SPACE_BOUNDARY_LAYER)
         cross_level = find_xy_overlaps_other_level(parsed)
         payload = {
             "space_ids": tuple(item["space_id"] for item in parsed),
@@ -201,7 +221,7 @@ def register_space_boundaries(
         message = "已登記 %s 個 Space Boundary。未改模型物件空間欄。" % len(parsed)
         if cross_level:
             warning = (
-                "平面重疊但樓層不同（已允許）：%s。同樓層請用同一個 lf_level_id。"
+                "平面重疊但樓層不同（已允許）：%s。同樓層請用同一個樓層 ID。"
                 % "、".join("%s/%s" % pair for pair in cross_level)
             )
             return results.ok_with_warnings(

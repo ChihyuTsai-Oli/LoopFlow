@@ -200,7 +200,7 @@ class ConsoleMenuTests(unittest.TestCase):
             self.assertEqual(result.stage, "scan_identity")
             self.assertFalse(result.details["publish_ready"])
             self.assertIn("dimensions", result.details)
-            self.assertIsNone(session.get_object_user_text("a", "lf_dimension_w"))
+            self.assertIsNone(session.get_object_user_text("a", "_05_寬度W"))
             self.assertNotIn("未寫 Space", result.message)
             self.assertNotIn("已 Apply", result.message)
 
@@ -237,8 +237,8 @@ class ConsoleMenuTests(unittest.TestCase):
             self.assertIn("尺寸", applied.message)
             self.assertNotIn("尺寸未寫入", applied.message)
             self.assertNotIn("未寫 Space", applied.message)
-            self.assertEqual(session.get_object_user_text("beam", "lf_dimension_w"), "90")
-            self.assertEqual(session.get_object_user_text("beam", "lf_quantity"), "1")
+            self.assertEqual(session.get_object_user_text("beam", "_05_寬度W"), "90")
+            self.assertEqual(session.get_object_user_text("beam", "_09_實作數量"), "1")
             self.assertIsNotNone(session.get_object_user_text("beam", FRAME_KEY))
 
     def test_closed_box_reports_unstable_frame(self):
@@ -291,8 +291,8 @@ class ConsoleMenuTests(unittest.TestCase):
             self.assertIn("空間／高程", applied.message)
             self.assertIn("尺寸未寫入：無穩定 local frame", applied.message)
             self.assertNotIn("未寫 Space", applied.message)
-            self.assertIsNotNone(session.get_object_user_text("box", "lf_object_id"))
-            self.assertEqual(session.get_object_user_text("box", "lf_space_id"), "EXT")
+            self.assertIsNotNone(session.get_object_user_text("box", "_12_UUID"))
+            self.assertEqual(session.get_object_user_text("box", "_01_空間ID"), "EXT")
             self.assertIsNone(session.get_object_user_text("box", FRAME_KEY))
 
     def test_apply_oriented_box_writes_dimensions(self):
@@ -318,8 +318,8 @@ class ConsoleMenuTests(unittest.TestCase):
             self.assertTrue(applied.ok, applied.message)
             self.assertIn("尺寸", applied.message)
             self.assertNotIn("尺寸未寫入", applied.message)
-            self.assertEqual(session.get_object_user_text("slab", "lf_dimension_w"), "90")
-            self.assertEqual(session.get_object_user_text("slab", "lf_dimension_h"), "12")
+            self.assertEqual(session.get_object_user_text("slab", "_05_寬度W"), "90")
+            self.assertEqual(session.get_object_user_text("slab", "_07_高度H"), "12")
             self.assertIsNotNone(session.get_object_user_text("slab", FRAME_KEY))
 
 

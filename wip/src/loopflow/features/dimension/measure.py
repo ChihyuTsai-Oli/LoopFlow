@@ -19,10 +19,10 @@ from loopflow.features.dimension.frame import (
 from loopflow.features.dimension.quantity import evaluate_quantity
 from loopflow.features.model_data.identity import TYPE_ID_KEY, iter_scan_targets
 from loopflow.foundation import results
+from loopflow.foundation.usertext import QUANTITY_KEY, read_text, write_text
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Nexus"
-QUANTITY_KEY = "lf_quantity"
 
 
 def _fmt(value: float) -> str:
@@ -38,7 +38,7 @@ def _load_catalog(catalog: Optional[TypeCatalog], environ) -> results.Result:
 
 
 def _type_record(session: RhinoSession, object_id: str, catalog: TypeCatalog):
-    type_id = session.get_object_user_text(object_id, TYPE_ID_KEY)
+    type_id = read_text(session, object_id, TYPE_ID_KEY)
     record = catalog.by_type_id(type_id) if type_id else None
     if record is None:
         layer = session.object_layer(object_id) or ""
@@ -191,14 +191,14 @@ def apply_dimensions(
             if hard or item["frame"] is None or item["dimension_w"] is None:
                 remaining.append(rhino_id)
                 continue
-            current.set_object_user_text(rhino_id, FRAME_KEY, dump_frame(item["frame"]))
-            current.set_object_user_text(rhino_id, DIM_W_KEY, _fmt(item["dimension_w"]))
-            current.set_object_user_text(rhino_id, DIM_D_KEY, _fmt(item["dimension_d"]))
-            current.set_object_user_text(rhino_id, DIM_H_KEY, _fmt(item["dimension_h"]))
+            write_text(current, rhino_id, FRAME_KEY, dump_frame(item["frame"]))
+            write_text(current, rhino_id, DIM_W_KEY, _fmt(item["dimension_w"]))
+            write_text(current, rhino_id, DIM_D_KEY, _fmt(item["dimension_d"]))
+            write_text(current, rhino_id, DIM_H_KEY, _fmt(item["dimension_h"]))
             if item["quantity"] is None:
-                current.set_object_user_text(rhino_id, QUANTITY_KEY, "-")
+                write_text(current, rhino_id, QUANTITY_KEY, "-")
             else:
-                current.set_object_user_text(rhino_id, QUANTITY_KEY, _fmt(item["quantity"]))
+                write_text(current, rhino_id, QUANTITY_KEY, _fmt(item["quantity"]))
             applied.append(rhino_id)
         payload = {
             "publish_ready": False,

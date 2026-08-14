@@ -118,7 +118,7 @@ class PlacementTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("wall", SPACE_DISPLAY_KEY), "客廳")
         self.assertEqual(session.get_object_user_text("wall", ELEVATION_BASIS_KEY), "BH")
         self.assertEqual(session.get_object_user_text("wall", ELEVATION_VALUE_KEY), "0")
-        self.assertIsNone(session.get_object_user_text("wall", "lf_dimension_w"))
+        self.assertIsNone(session.get_object_user_text("wall", "_05_寬度W"))
         self.assertFalse(applied.details["publish_ready"])
 
     def test_th_ch_and_bc(self):
@@ -201,6 +201,26 @@ class PlacementTests(unittest.TestCase):
         apply_placement(session, catalog=_catalog(_row()))
         self.assertEqual(session.get_object_user_text("left", SPACE_ID_KEY), SPACE_A)
         self.assertEqual(session.get_object_user_text("right", SPACE_ID_KEY), SPACE_B)
+
+    def test_named_curve_off_layer_still_hits(self):
+        session = _session()
+        session.add_object("hall", name="廊道", layer=FULL)
+        session.set_curve("hall", [[0, 0], [10, 0], [10, 8], [0, 8]], closed=True)
+        session.set_object_user_text("hall", SPACE_ID_KEY, SPACE_A)
+        session.set_object_user_text("hall", SPACE_DISPLAY_KEY, "廊道")
+        _add_model(session, "floor", bbox=((2, 2, 0), (3, 3, 1)))
+        applied = apply_placement(session, catalog=_catalog(_row()))
+        self.assertTrue(applied.ok, applied.message)
+        self.assertEqual(session.get_object_user_text("floor", SPACE_DISPLAY_KEY), "廊道")
+        self.assertEqual(session.get_object_user_text("floor", SPACE_ID_KEY), SPACE_A)
+
+    def test_wall_outside_center_hits_by_corner(self):
+        session = _session()
+        _add_space(session, "s1", [[0, 0], [10, 0], [10, 8], [0, 8]], SPACE_A, "衛浴")
+        _add_model(session, "wall", bbox=((-1, 2, 0), (0.4, 3, 270)))
+        applied = apply_placement(session, catalog=_catalog(_row()))
+        self.assertTrue(applied.ok, applied.message)
+        self.assertEqual(session.get_object_user_text("wall", SPACE_DISPLAY_KEY), "衛浴")
 
 
 if __name__ == "__main__":

@@ -4,26 +4,28 @@ from __future__ import annotations
 
 from typing import List, Mapping, Optional, Sequence, Tuple
 
-from loopflow.features.dictionary.layer_paths import SYSTEM_LAYERS, to_relative_path
+from loopflow.features.dictionary.layer_paths import to_relative_path
 from loopflow.features.dictionary.loader import TypeCatalog, load_from_workfiles
-from loopflow.features.model_data.identity import (
-    TYPE_ID_KEY,
-    iter_scan_targets,
-)
+from loopflow.features.model_data.identity import iter_scan_targets
 from loopflow.features.model_data.space import (
+    SPACE_BOUNDARY_LAYER,
     SPACE_DISPLAY_KEY,
     SPACE_ID_KEY,
     UUID_V4_RE,
-    aabb_contains,
+    point_in_polygon,
 )
 from loopflow.foundation import results
+from loopflow.foundation.usertext import (
+    ELEVATION_BASIS_KEY,
+    ELEVATION_DISPLAY_KEY,
+    ELEVATION_VALUE_KEY,
+    TYPE_ID_KEY,
+    read_text,
+    write_text,
+)
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Nexus"
-SPACE_BOUNDARY_LAYER = SYSTEM_LAYERS[0]
-ELEVATION_BASIS_KEY = "lf_elevation_basis"
-ELEVATION_VALUE_KEY = "lf_elevation_value"
-ELEVATION_DISPLAY_KEY = "lf_elevation_display"
 ALLOWED_BASES = ("BH", "TH", "CH", "BC")
 EXT_ID = "EXT"
 EXT_NO_LAYER = "no_boundary_layer"
@@ -39,19 +41,21 @@ def _format_elev(value: float) -> str:
     return text
 
 
-def _bottom_center(bbox) -> Optional[Tuple[float, float]]:
-    if bbox is None or len(bbox) < 6:
-        return None
-    return ((bbox[0] + bbox[3]) / 2.0, (bbox[1] + bbox[4]) / 2.0)
-
-
 def collect_spaces(session: RhinoSession) -> Tuple[Optional[str], Tuple[dict, ...]]:
-    """回傳 (layer 狀態, spaces)。layer 缺失時 spaces 為空且狀態為 no_boundary_layer。"""
-    if not session.has_layer(SPACE_BOUNDARY_LAYER):
-        return EXT_NO_LAYER, ()
+    """收集已登記的封閉曲線。不限 Space_Boundaries 圖層，以免畫在別層就找不到。"""
     found = []
-    for object_id in session.objects_on_layer(SPACE_BOUNDARY_LAYER):
-        space_id = session.get_object_user_text(object_id, SPACE_ID_KEY)
+    seen = set()
+    candidates = []
+    if session.has_layer(SPACE_BOUNDARY_LAYER):
+        candidates.extend(session.objects_on_layer(SPACE_BOUNDARY_LAYER) or ())
+    for object_id in session.iter_object_ids(include_hidden=True, include_locked=True):
+        if session.is_closed_curve(object_id):
+            candidates.append(object_id)
+    for object_id in candidates:
+        if object_id in seen:
+            continue
+        seen.add(object_id)
+        space_id = read_text(session, object_id, SPACE_ID_KEY)
         if not space_id or not UUID_V4_RE.match(space_id):
             continue
         if not session.is_closed_curve(object_id):
@@ -63,25 +67,60 @@ def collect_spaces(session: RhinoSession) -> Tuple[Optional[str], Tuple[dict, ..
             {
                 "object_id": object_id,
                 "space_id": space_id,
-                "space_display": session.get_object_user_text(object_id, SPACE_DISPLAY_KEY)
+                "space_display": read_text(session, object_id, SPACE_DISPLAY_KEY)
                 or session.object_name(object_id)
                 or space_id,
                 "polygon": polygon,
             }
         )
     if not found:
+        if not session.has_layer(SPACE_BOUNDARY_LAYER):
+            return EXT_NO_LAYER, ()
         return EXT_EMPTY_LAYER, ()
     return None, tuple(found)
 
 
 def hit_space(point, spaces: Sequence[dict]) -> Tuple[Optional[dict], Optional[str]]:
-    """XY 命中。多筆時不取第一個，回報 ambiguous_space。"""
-    matches = [space for space in spaces if aabb_contains(space["polygon"], point[0], point[1])]
+    """XY 命中多邊形內部。多筆時不取第一個。"""
+    matches = [space for space in spaces if point_in_polygon(space["polygon"], point[0], point[1])]
     if not matches:
         return None, EXT_MISS
     if len(matches) > 1:
         return None, "ambiguous_space"
     return matches[0], None
+
+
+def hit_object_space(bbox, spaces: Sequence[dict]) -> Tuple[Optional[dict], Optional[str]]:
+    """底面中心優先；沒命中再用四角，避免牆心落在房間外。"""
+    if bbox is None or len(bbox) < 6:
+        return None, EXT_NO_BBOX
+    xmin, ymin, xmax, ymax = float(bbox[0]), float(bbox[1]), float(bbox[3]), float(bbox[4])
+    samples = (
+        ((xmin + xmax) / 2.0, (ymin + ymax) / 2.0),
+        (xmin, ymin),
+        (xmax, ymin),
+        (xmin, ymax),
+        (xmax, ymax),
+    )
+    unique = []
+    seen = set()
+    saw_ambiguous = False
+    for point in samples:
+        hit, reason = hit_space(point, spaces)
+        if reason == "ambiguous_space":
+            saw_ambiguous = True
+            continue
+        if hit is None:
+            continue
+        if hit["space_id"] in seen:
+            continue
+        seen.add(hit["space_id"])
+        unique.append(hit)
+    if len(unique) == 1:
+        return unique[0], None
+    if len(unique) > 1 or saw_ambiguous:
+        return None, "ambiguous_space"
+    return None, EXT_MISS
 
 
 def _elevation(session: RhinoSession, object_id: str, basis: Optional[str], bbox):
@@ -105,7 +144,7 @@ def _elevation(session: RhinoSession, object_id: str, basis: Optional[str], bbox
 
 
 def _resolve_basis(session: RhinoSession, object_id: str, catalog: TypeCatalog) -> Optional[str]:
-    type_id = session.get_object_user_text(object_id, TYPE_ID_KEY)
+    type_id = read_text(session, object_id, TYPE_ID_KEY)
     record = catalog.by_type_id(type_id) if type_id else None
     if record is None:
         layer = session.object_layer(object_id) or ""
@@ -158,8 +197,7 @@ def scan_placement(
             elif bbox is None:
                 ext_reason = EXT_NO_BBOX
             else:
-                center = _bottom_center(bbox)
-                hit, reason = hit_space(center, spaces)
+                hit, reason = hit_object_space(bbox, spaces)
                 if hit is None:
                     ext_reason = reason
                     if reason == "ambiguous_space":
@@ -269,13 +307,13 @@ def apply_placement(
                 remaining.append(rhino_id)
                 continue
             if item["space_id"]:
-                current.set_object_user_text(rhino_id, SPACE_ID_KEY, item["space_id"])
-                current.set_object_user_text(rhino_id, SPACE_DISPLAY_KEY, item["space_display"])
+                write_text(current, rhino_id, SPACE_ID_KEY, item["space_id"])
+                write_text(current, rhino_id, SPACE_DISPLAY_KEY, item["space_display"])
             if item["elevation_value"] is not None and item["elevation_basis"] in ALLOWED_BASES:
-                current.set_object_user_text(rhino_id, ELEVATION_BASIS_KEY, item["elevation_basis"])
-                current.set_object_user_text(rhino_id, ELEVATION_VALUE_KEY, _format_elev(item["elevation_value"]))
-                current.set_object_user_text(
-                    rhino_id, ELEVATION_DISPLAY_KEY, _format_elev(item["elevation_value"])
+                write_text(current, rhino_id, ELEVATION_BASIS_KEY, item["elevation_basis"])
+                write_text(current, rhino_id, ELEVATION_VALUE_KEY, _format_elev(item["elevation_value"]))
+                write_text(
+                    current, rhino_id, ELEVATION_DISPLAY_KEY, _format_elev(item["elevation_value"])
                 )
             elif "bc_on_non_block" in hard or "invalid_elevation_basis" in hard:
                 remaining.append(rhino_id)

@@ -161,7 +161,7 @@ class LocalFrameTests(unittest.TestCase):
                     self.assertTrue(
                         "no_unique_plane" in item["issues"] or "corrupt_frame" in item["issues"]
                     )
-                    self.assertIsNone(session.get_object_user_text("obj", "lf_dimension_w"))
+                    self.assertIsNone(session.get_object_user_text("obj", "_05_寬度W"))
 
     def test_scan_does_not_write_and_apply_writes(self):
         session = _session()
@@ -172,13 +172,13 @@ class LocalFrameTests(unittest.TestCase):
             scanned = scan_dimensions(session, catalog=catalog, environ=environ)
             self.assertTrue(scanned.ok, scanned.message)
             self.assertIsNone(session.get_object_user_text("box", FRAME_KEY))
-            self.assertIsNone(session.get_object_user_text("box", "lf_quantity"))
+            self.assertIsNone(session.get_object_user_text("box", "_09_實作數量"))
             applied = apply_dimensions(session, catalog=catalog, environ=environ)
         self.assertTrue(applied.ok, applied.message)
-        self.assertEqual(session.get_object_user_text("box", "lf_dimension_w"), "90")
-        self.assertEqual(session.get_object_user_text("box", "lf_dimension_d"), "40")
-        self.assertEqual(session.get_object_user_text("box", "lf_dimension_h"), "210")
-        self.assertEqual(session.get_object_user_text("box", "lf_quantity"), "1")
+        self.assertEqual(session.get_object_user_text("box", "_05_寬度W"), "90")
+        self.assertEqual(session.get_object_user_text("box", "_06_深度D"), "40")
+        self.assertEqual(session.get_object_user_text("box", "_07_高度H"), "210")
+        self.assertEqual(session.get_object_user_text("box", "_09_實作數量"), "1")
         stored = json.loads(session.get_object_user_text("box", FRAME_KEY))
         self.assertEqual(stored["derivation_method"], "extrusion_base")
         self.assertIsNone(validate_frame(stored))
@@ -212,9 +212,9 @@ class LocalFrameTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="loopflow-c05-obox-") as raw:
             result = apply_dimensions(session, catalog=catalog, environ={"LOOPFLOW_WORKFILES_ROOT": raw})
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(session.get_object_user_text("slab", "lf_dimension_w"), "90")
-        self.assertEqual(session.get_object_user_text("slab", "lf_dimension_d"), "40")
-        self.assertEqual(session.get_object_user_text("slab", "lf_dimension_h"), "12")
+        self.assertEqual(session.get_object_user_text("slab", "_05_寬度W"), "90")
+        self.assertEqual(session.get_object_user_text("slab", "_06_深度D"), "40")
+        self.assertEqual(session.get_object_user_text("slab", "_07_高度H"), "12")
         stored = json.loads(session.get_object_user_text("slab", FRAME_KEY))
         self.assertEqual(stored["derivation_method"], "oriented_box")
 

@@ -127,7 +127,7 @@ class IdentityScanApplyTests(unittest.TestCase):
         _add_model(session, "new")
         _add_model(session, "keep")
         session.set_object_user_text("keep", OBJECT_ID_KEY, VALID_ID)
-        session.set_object_user_text("keep", "lf_space_id", "EXT")
+        session.set_object_user_text("keep", "_01_空間ID", "EXT")
         session.set_object_user_text("keep", REMARKS_KEY, "人工備註")
         applied = apply_identity(session, catalog=_catalog(_row()))
         self.assertTrue(applied.ok, applied.message)
@@ -140,8 +140,8 @@ class IdentityScanApplyTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("new", REMARKS_KEY), "(手動輸入備註)")
         self.assertEqual(session.get_object_user_text("new", DATA_REVISION_KEY), "0")
         self.assertEqual(session.get_object_user_text("keep", REMARKS_KEY), "人工備註")
-        self.assertEqual(session.get_object_user_text("keep", "lf_space_id"), "EXT")
-        self.assertIsNone(session.get_object_user_text("new", "lf_space_id"))
+        self.assertEqual(session.get_object_user_text("keep", "_01_空間ID"), "EXT")
+        self.assertIsNone(session.get_object_user_text("new", "_01_空間ID"))
         self.assertFalse(applied.details["publish_ready"])
 
     def test_duplicate_requires_mapping_then_rollback(self):

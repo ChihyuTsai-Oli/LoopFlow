@@ -6,12 +6,10 @@ import json
 import math
 from typing import Optional, Sequence, Tuple
 
+from loopflow.foundation.usertext import DIM_D_KEY, DIM_H_KEY, DIM_W_KEY, FRAME_KEY, read_text
+
 FRAME_SCHEMA_ID = "loopflow.local_frame"
 FRAME_SCHEMA_VERSION = 1
-FRAME_KEY = "lf_local_frame"
-DIM_W_KEY = "lf_dimension_w"
-DIM_D_KEY = "lf_dimension_d"
-DIM_H_KEY = "lf_dimension_h"
 METHODS = ("block_insertion", "extrusion_base", "unique_plane", "oriented_box")
 ISSUE_NO_PLANE = "no_unique_plane"
 ISSUE_CORRUPT = "corrupt_frame"
@@ -215,7 +213,7 @@ def dimensions_in_frame(frame: dict, bbox: Sequence[float]) -> Optional[Tuple[fl
 
 def resolve_frame(session, object_id: str, *, rederive: bool = False) -> dict:
     """沿用合法舊框；否則依幾何推導。不使用 World bbox。"""
-    stored_raw = session.get_object_user_text(object_id, FRAME_KEY)
+    stored_raw = read_text(session, object_id, FRAME_KEY)
     stored, stored_issue = parse_frame(stored_raw)
     if stored_issue:
         return {"frame": None, "status": "block", "reason": stored_issue, "reused": False}

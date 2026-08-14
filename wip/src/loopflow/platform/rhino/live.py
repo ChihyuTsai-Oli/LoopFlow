@@ -414,38 +414,117 @@ class LiveSession:
     def _try_oriented_box(self, object_id: str):
         rs = self._rs
         Rhino = self._rhino
+        sc = self._sc
         try:
-            brep = rs.coercebrep(object_id)
-            if brep is None:
-                return None
-            box = None
+            geom = None
             try:
-                ok, box = brep.TryGetBox()
-                if not ok:
-                    box = None
-            except TypeError:
-                if Rhino is None:
-                    return None
-                candidate = Rhino.Geometry.Box()
-                if brep.TryGetBox(candidate):
-                    box = candidate
+                guid = rs.coerceguid(object_id)
+                rhobj = sc.doc.Objects.FindId(guid)
+                if rhobj is not None:
+                    geom = rhobj.Geometry
             except Exception:
-                box = None
+                geom = None
+            if geom is None:
+                try:
+                    geom = rs.coercegeometry(object_id)
+                except Exception:
+                    geom = None
+            box = self._box_from_geometry(geom, Rhino)
+            if box is None:
+                brep = None
+                try:
+                    brep = rs.coercebrep(object_id)
+                except Exception:
+                    brep = None
+                box = self._box_from_geometry(brep, Rhino)
             if box is None:
                 return None
             plane = getattr(box, "Plane", None)
             if plane is None:
                 return None
-            aligned = axes_from_plane(
+            return axes_from_plane(
                 plane.Origin,
                 plane.XAxis,
                 plane.YAxis,
                 plane.ZAxis,
                 normal_is_depth=False,
             )
-            return aligned
         except Exception:
             return None
+
+    def _box_from_geometry(self, geom, Rhino):
+        if geom is None:
+            return None
+        name = type(geom).__name__
+        if name == "Box" and getattr(geom, "Plane", None) is not None:
+            return geom
+        brep = geom
+        if name != "Brep":
+            to_brep = getattr(geom, "ToBrep", None)
+            if to_brep is None:
+                return None
+            try:
+                brep = to_brep() if name != "Extrusion" else to_brep(True)
+            except TypeError:
+                try:
+                    brep = to_brep()
+                except Exception:
+                    return None
+            except Exception:
+                return None
+        if brep is None:
+            return None
+        box = self._try_get_box(brep, Rhino)
+        if box is not None:
+            return box
+        try:
+            faces = getattr(brep.Faces, "Count", 0)
+            verts = getattr(brep.Vertices, "Count", 0)
+            solid = bool(getattr(brep, "IsSolid", False))
+        except Exception:
+            return None
+        if not (solid and faces == 6 and verts == 8) or Rhino is None:
+            return None
+        try:
+            ok, plane = brep.Faces[0].TryGetPlane()
+            if not ok or plane is None:
+                return None
+            bbox = brep.GetBoundingBox(plane)
+            if bbox is None or not getattr(bbox, "IsValid", True):
+                return None
+            return Rhino.Geometry.Box(plane, bbox)
+        except Exception:
+            return None
+
+    def _try_get_box(self, brep, Rhino):
+        try:
+            result = brep.TryGetBox()
+        except TypeError:
+            result = None
+            if Rhino is not None:
+                try:
+                    candidate = Rhino.Geometry.Box()
+                    if brep.TryGetBox(candidate) and getattr(candidate, "IsValid", True):
+                        return candidate
+                except Exception:
+                    result = None
+        except Exception:
+            result = None
+        if result is None or result is False:
+            return None
+        if isinstance(result, tuple):
+            if not result:
+                return None
+            if len(result) >= 2 and isinstance(result[0], bool):
+                if not result[0]:
+                    return None
+                return result[1]
+            return result[0]
+        if result is True:
+            return None
+        if getattr(result, "Plane", None) is not None:
+            return result
+        return None
 
     def derive_local_frame(self, object_id: str):
         kind = self.geometry_kind(object_id)

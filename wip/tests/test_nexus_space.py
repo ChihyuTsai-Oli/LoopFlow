@@ -16,6 +16,7 @@ if str(SRC) not in sys.path:
 from loopflow.features.dictionary import schema
 from loopflow.features.model_data.space import (
     LEVEL_ID_KEY,
+    SPACE_BOUNDARY_LAYER,
     SPACE_DISPLAY_KEY,
     SPACE_ID_KEY,
     UUID_V4_RE,
@@ -294,6 +295,7 @@ class SpaceBoundaryTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(result.stage, "register_spaces")
         self.assertEqual(session.get_object_user_text("curve-0", SPACE_ID_KEY), SPACE_A)
+        self.assertEqual(session.object_layer("curve-0"), SPACE_BOUNDARY_LAYER)
         self.assertIsNone(session.get_object_user_text("wall", SPACE_ID_KEY))
 
     def test_console_reads_selected_curves(self):
