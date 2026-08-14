@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""把現行工作流程模擬.md 轉成深色好讀版 HTML。
+"""把現行工作流程.md 轉成深色好讀版 HTML。
 
 用途
-    `工作流程模擬.html` 是衍生檔，不應手動編輯。
+    `工作流程.html` 是衍生檔，不應手動編輯。
     修改對應的 `.md` 之後執行本腳本重新產生，兩者才會一致。
 
 執行
@@ -36,8 +36,8 @@ for _s in (sys.stdout, sys.stderr):
 
 # 專案內的預設位置：<repo>/wip/tools/ → <repo>/wip/docs/
 _DOCS_DIR = Path(__file__).resolve().parents[1] / "docs"
-DEFAULT_SRC = _DOCS_DIR / "工作流程模擬.md"
-DEFAULT_OUT = _DOCS_DIR / "工作流程模擬.html"
+DEFAULT_SRC = _DOCS_DIR / "工作流程.md"
+DEFAULT_OUT = _DOCS_DIR / "工作流程.html"
 
 
 # ==================================================================
@@ -420,7 +420,8 @@ def render(md: str) -> str:
     body, toc = convert(md)
     body = close_chapters(body)
 
-    nav = ['<div class="brand">LoopFlow 2.0</div>', '<div class="bt">模擬執行流程</div>']
+    nav_title = "模擬執行流程" if re.search(r"^# .*模擬", md, re.M) else "實作工作流程"
+    nav = ['<div class="brand">LoopFlow 2.0</div>', '<div class="bt">%s</div>' % nav_title]
     group_open = False
     group_index = 0
     for level, title, sid, variant in toc:
@@ -453,7 +454,7 @@ def render(md: str) -> str:
 # 進入點
 # ==================================================================
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="產生模擬執行流程的深色 HTML 版本")
+    ap = argparse.ArgumentParser(description="產生實作工作流程的深色 HTML 版本")
     ap.add_argument("--src", type=Path, default=DEFAULT_SRC, help="來源 Markdown")
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT, help="輸出 HTML")
     ap.add_argument(

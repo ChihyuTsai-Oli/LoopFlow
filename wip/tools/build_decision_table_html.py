@@ -11,7 +11,7 @@ from build_workflow_html import convert
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SRC = ROOT / "docs" / "資料生態決策表.md"
+DEFAULT_SRC = ROOT / "docs" / "前期規劃" / "資料生態決策表.md"
 DEFAULT_OUT = DEFAULT_SRC.with_suffix(".html")
 
 CSS = r"""

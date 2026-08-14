@@ -6,16 +6,14 @@
 
 AI 必須依序完整讀取：
 
-1. `wip/docs/_LoopFlow_使用說明.md`
-2. `wip/docs/_LoopFlow_系統設定.md`
-3. `wip/docs/_LoopFlow_命名與資料契約.md`
-4. `wip/docs/資料生態藍圖.md`
-5. `wip/docs/資料生態決策表.md`
-6. `wip/docs/工作流程模擬.md`
-7. `wip/docs/Nexus與字典盤點.md`
-8. `wip/docs/_LoopFlow_重構計畫.md`
-9. `wip/docs/開發任務與路徑.md`
-10. `wip/docs/重構進度.md`
+1. `wip/docs/實作總覽.md`
+2. `wip/docs/資料契約.md`
+3. `wip/docs/工作流程.md`
+4. `wip/docs/開發任務與路徑.md`
+5. `wip/docs/系統設定.md`
+6. `wip/docs/重構進度.md`
+
+`wip/docs/前期規劃/` 只保存決策過程、1.x 盤點與原始流程證據，不是實作規格；除非需要追溯特定決策，不列入每次開工作業的必讀清單。若內容與根目錄六份實作文件不同，以根目錄文件為準。
 
 公開的 `README.md`、`README_zh-TW.md`、`docs/USER_GUIDE*.md` 與 `docs/Dictionary_GUIDE*.md` 是使用者文件，不是重構指令的權威來源；改變使用行為時仍須同步更新。重構中的文件、原始碼、fixtures 與測試統一放在 `wip/`；Dropbox 工作檔路徑依上一層 `工作檔路徑.md` 解析，不得寫死單一電腦的絕對路徑。
 

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LoopFlow 2.0 — 工作流程</title>
+<style>
+/* ---- 色票與字體 ---- */
+:root{
+  --bg:#0e1014; --bg2:#141821; --panel:#171b25; --line:#252b39; --line2:#323a4d;
+  --tx:#dbe0ea; --tx2:#a6afc2; --tx3:#79839a;
+  --codex:#e0a458; --codex-d:#3a2c18;
+  --claude:#5fb8c4; --claude-d:#16323a;
+  --mono:"Cascadia Mono",Consolas,"SF Mono","Roboto Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei","PingFang TC","Noto Sans TC","Hiragino Sans",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);
+  font-size:15.5px;line-height:1.85;letter-spacing:.01em;-webkit-font-smoothing:antialiased}
+.wrap{display:grid;grid-template-columns:264px minmax(0,1fr);gap:0;max-width:1500px;margin:0 auto}
+
+/* ---- 側邊目錄 ---- */
+nav{position:sticky;top:0;height:100vh;overflow-y:auto;padding:26px 14px 40px 22px;
+  border-right:1px solid var(--line);background:var(--bg)}
+nav .brand{font-size:12px;letter-spacing:.16em;color:var(--tx3);text-transform:uppercase;margin-bottom:6px}
+nav .bt{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:20px;line-height:1.4}
+nav .nav-group{margin:0 0 9px}
+nav .nav-group summary{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:8px 9px;border-radius:6px;border-left:2px solid transparent;cursor:pointer;
+  list-style:none;font-size:13.4px;font-weight:650;line-height:1.45;user-select:none}
+nav .nav-group summary::-webkit-details-marker{display:none}
+nav .nav-group summary::after{content:"›";font-size:18px;line-height:1;color:var(--tx3);
+  transform:rotate(0);transition:transform .16s ease}
+nav .nav-group[open] summary::after{transform:rotate(90deg)}
+nav .nav-group summary:hover{background:var(--bg2)}
+nav .nav-group.codex summary{color:var(--codex);border-left-color:var(--codex)}
+nav .nav-group.claude summary{color:var(--claude);border-left-color:var(--claude)}
+nav .nav-items{padding:4px 0 7px}
+nav a{display:block;color:var(--tx2);text-decoration:none;font-size:12.8px;padding:3.5px 9px;
+  border-radius:5px;border-left:2px solid transparent;line-height:1.5}
+nav a:hover{color:var(--tx);background:var(--bg2)}
+nav a.overview{margin:1px 0 3px;padding-left:16px;font-size:12.3px;color:var(--tx3)}
+nav a.l2{padding-left:16px}
+nav a.l2.codex:hover{border-left-color:var(--codex)}
+nav a.l2.claude:hover{border-left-color:var(--claude)}
+
+/* ---- 內文 ---- */
+main{padding:44px 52px 120px;min-width:0}
+.doctitle{font-size:29px;font-weight:700;letter-spacing:.01em;margin:0 0 6px;line-height:1.35}
+p{margin:0 0 15px}
+strong{color:#fff;font-weight:650}
+hr{border:0;border-top:1px solid var(--line);margin:38px 0}
+ul,ol{margin:0 0 16px;padding-left:22px}
+li{margin:5px 0}
+li>ul{margin:6px 0 2px}
+code{font-family:var(--mono);font-size:.875em;background:#1d2230;color:#e8c07d;
+  padding:1.5px 5px;border-radius:4px;border:1px solid #262d3d;word-break:break-word}
+strong code{color:#f0cf9a}
+pre.code{background:#12161f;border:1px solid var(--line);border-left:3px solid var(--line2);
+  border-radius:7px;padding:15px 17px;overflow-x:auto;margin:0 0 18px}
+pre.code code{background:none;border:0;padding:0;color:#b9c4d8;font-size:13px;line-height:1.72;white-space:pre}
+
+/* ---- 章節（CodeX / Claude） ---- */
+.chapter{padding-top:12px}
+.chapter h1{font-size:25px;font-weight:700;margin:0 0 26px;padding:0 0 14px;
+  display:flex;align-items:center;gap:13px;flex-wrap:wrap;border-bottom:2px solid var(--line)}
+.tagpill{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 11px;border-radius:20px;white-space:nowrap}
+.chapter.codex h1{border-bottom-color:var(--codex)}
+.chapter.codex .tagpill{background:var(--codex-d);color:var(--codex);border:1px solid #5c4626}
+.chapter.claude h1{border-bottom-color:var(--claude)}
+.chapter.claude .tagpill{background:var(--claude-d);color:var(--claude);border:1px solid #2b5661}
+
+h2{font-size:19px;font-weight:660;margin:38px 0 14px;line-height:1.45}
+h3{font-size:16px;font-weight:640;margin:28px 0 11px;color:var(--tx)}
+.chapter.codex h2{color:#f0c68c}
+.chapter.claude h2{color:#93d5de}
+h2.stage{display:flex;align-items:center;gap:11px}
+h2.stage .num{display:inline-flex;align-items:center;justify-content:center;
+  width:27px;height:27px;border-radius:7px;font-size:13px;font-weight:700;font-family:var(--mono);flex:none}
+.chapter.claude h2.stage .num{background:var(--claude-d);color:var(--claude);border:1px solid #2b5661}
+.chapter.codex h2.stage .num{background:var(--codex-d);color:var(--codex);border:1px solid #5c4626}
+
+/* ---- 引言區塊 ---- */
+blockquote{margin:0 0 20px;padding:13px 18px;background:#151a24;
+  border-left:3px solid var(--line2);border-radius:0 7px 7px 0;color:var(--tx2);font-size:14.6px}
+blockquote strong{color:var(--tx)}
+blockquote p{margin:0 0 9px}
+blockquote p:last-child{margin-bottom:0}
+
+/* ---- 表格 ---- */
+.tw{overflow-x:auto;margin:0 0 22px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:600px;font-size:13.6px}
+th{background:#1b2130;color:var(--tx);font-weight:660;text-align:left;
+  padding:11px 14px;border-bottom:1px solid var(--line2);white-space:nowrap;font-size:13px}
+td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;
+  color:var(--tx2);line-height:1.72}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:rgba(255,255,255,.016)}
+tbody tr:hover{background:rgba(255,255,255,.038)}
+td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
+.chapter table td strong{color:#fff}
+
+/* ---- 響應式與列印 ---- */
+@media (max-width:1080px){
+  .wrap{grid-template-columns:1fr}
+  nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:20px 22px}
+  nav .nav-group{display:inline-block;width:min(330px,100%);margin:0 8px 8px 0;vertical-align:top}
+  nav a{display:block}
+  main{padding:30px 22px 80px}
+  .doctitle{font-size:24px}
+  .chapter h1{font-size:21px}
+}
+@media (max-width:720px){
+  nav .nav-group{display:block;width:100%;margin-right:0}
+}
+@media print{
+  nav{display:none} body{background:#fff;color:#111}
+  .tw,table,td,th{border-color:#bbb} main{padding:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav><div class="brand">LoopFlow 2.0</div>
+<div class="bt">實作工作流程</div>
+<a class="l2 intro" href="#工作原則">工作原則</a>
+<a class="l2 intro" href="#一條完整工作鏈">一條完整工作鏈</a>
+<a class="l2 intro" href="#1-開案檢查">1. 開案檢查</a>
+<a class="l2 intro" href="#2-驗證-Dictionary-並同步-Type-Layers">2. 驗證 Dictionary 並同步 Type Layers</a>
+<a class="l2 intro" href="#3-建立與修改-3D-模型">3. 建立與修改 3D 模型</a>
+<a class="l2 intro" href="#4-建立或維護-Space-Boundaries">4. 建立或維護 Space Boundaries</a>
+<a class="l2 intro" href="#5-資料化-Scan-Apply-Verify">5. 資料化：Scan → Apply → Verify</a>
+<a class="l2 intro" href="#6-發布-Registry">6. 發布 Registry</a>
+<a class="l2 intro" href="#7-建立-Section-並註冊-View">7. 建立 Section 並註冊 View</a>
+<a class="l2 intro" href="#8-Materialize-可編輯-Drawing">8. Materialize 可編輯 Drawing</a>
+<a class="l2 intro" href="#9-建立-Sheet-圖框與-Layout-ID">9. 建立 Sheet、圖框與 Layout ID</a>
+<a class="l2 intro" href="#10-建立與綁定-Tag">10. 建立與綁定 Tag</a>
+<a class="l2 intro" href="#11-同步顯示資料">11. 同步顯示資料</a>
+<a class="l2 intro" href="#12-Health-與-Repair">12. Health 與 Repair</a>
+<a class="l2 intro" href="#變更循環">變更循環</a>
+<a class="l2 intro" href="#實機驗收重點">實機驗收重點</a></nav>
+<main><h1 class="doctitle" id="LoopFlow-2-0-工作流程">LoopFlow 2.0 — 工作流程</h1>
+<p>本文件是實作與驗收使用者操作順序、介入點、安全停點與重跑行為的唯一來源。資料語意以 <code>資料契約.md</code> 為準；工程相依以 <code>開發任務與路徑.md</code> 為準。</p>
+<h2 id="工作原則">工作原則</h2>
+<ul><li>每一階段可以單獨執行、驗證、存檔與換機。</li><li>使用者決定何時寫入、何時發布、綁誰、更新當頁或全案。</li><li>系統先報告影響，再執行有副作用的動作。</li><li>取消、失敗或中斷不得破壞上一份有效資料或 Rhino 工作狀態。</li><li>1.x 按鈕順序不是限制；保留的是已驗證可行的工作邏輯與控制點。</li></ul>
+<h2 id="一條完整工作鏈">一條完整工作鏈</h2>
+<pre class="code" data-lang="text"><code>開案檢查
+→ 驗證 Dictionary／同步 Type Layers
+→ 建立 3D 模型
+→ 建立 Space Boundaries
+→ 全案 Scan
+→ 使用者確認後 Apply
+→ 再 Scan 驗證
+→ Publish Registry
+→ 建立 Section／註冊 View
+→ Materialize 可編輯 Drawing
+→ 建立 Sheet／圖框
+→ 建立並綁定 Tag
+→ Sync 顯示資料
+→ Health／Repair</code></pre>
+<h2 id="1-開案檢查">1. 開案檢查</h2>
+<p><strong>動作</strong>：解析 <code>LOOPFLOW_WORKFILES_ROOT</code>、Dictionary、<code>exchange/</code>、project identity、schema version 與 Rhino 文件單位。</p>
+<p><strong>使用者介入</strong>：只有設定缺失、專案辨識不明或非 cm 警告時處理。</p>
+<p><strong>結果</strong>：顯示實際生效的路徑、版本與單位。非 cm 不阻擋，但明確警告風險並建議切換為 cm。</p>
+<p><strong>失敗</strong>：停止，不猜磁碟機、不建立檔案、不修改 Rhino 文件。</p>
+<h2 id="2-驗證-Dictionary-並同步-Type-Layers">2. 驗證 Dictionary 並同步 Type Layers</h2>
+<p><strong>Validate</strong>：檢查 15 欄、schema、Type ID、類別與 layer mapping、單位、measurement rule、量綱與必填值。</p>
+<p><strong>Sync</strong>：</p>
+<ul><li>Dictionary 有、Rhino 沒有的 layer：建立並帶入初始 layer defaults。</li><li>已存在的同名 Rhino layer：保留既有資料。</li><li>不覆寫 object instance 的 <code>_02</code> 狀態，也不把 object data 回寫 Dictionary。</li><li><code>DNA_REF_</code> 依穩定 Type ID 更新或取代，避免空 Type layer 被 Purge 且不重複累積。</li><li><code>20_DW</code> 維持單一 Type，排除 child layers。</li></ul>
+<p><strong>選用反向匯出</strong>：將 layer defaults 與新增／刪除／改名／修改差異輸出到獨立 XLSX，供使用者人工合併；不匯總 Object UserText、不自動覆寫正式 Dictionary。</p>
+<p><strong>安全停點</strong>：Layer 建好即可存檔，不必繼續跑完整鏈。</p>
+<h2 id="3-建立與修改-3D-模型">3. 建立與修改 3D 模型</h2>
+<p>使用者以 Rhino 一般工具建模。LoopFlow 不在背景自動注入資料。</p>
+<p><code>LF_Cabinet_Suite</code>／BOM 不屬 2.0；櫃體幾何與其他物件一樣使用一般 Type、Space、高程與 ID 規則。三個 2D Generator 是獨立工具，不阻擋主鏈。</p>
+<h2 id="4-建立或維護-Space-Boundaries">4. 建立或維護 Space Boundaries</h2>
+<p>使用者選取有效 closed curves，設定顯示名稱與樓層；系統建立穩定 <code>space_id</code>／<code>level_id</code>。</p>
+<ul><li>相鄰空間可以共邊，內部不可重疊。</li><li>重疊時停止並列出全部衝突 Space，不用 priority 自動選擇。</li><li>平面、boundary 或樓層變更後回到此階段，再重新資料化。</li></ul>
+<p><strong>安全停點</strong>：Boundary 完成可直接存檔；既有物件資料不會在背景改變。</p>
+<h2 id="5-資料化-Scan-Apply-Verify">5. 資料化：Scan → Apply → Verify</h2>
+<h3 id="Scan">Scan</h3>
+<p>掃描 M3D 正式範圍內全部 3D 物件，包含 hidden／locked，且不寫入資料。報告至少列出：</p>
+<ul><li>待建立、重複或失效 Object ID。</li><li>未知 Type、錯誤 layer mapping。</li><li>Space 重疊與全部 <code>EXT</code> 物件及四種原因。</li><li>BC 使用於非 Block。</li><li>無法建立穩定 local frame 的非 Block 幾何。</li><li>measurement rule 缺失、單位／量綱不符。</li><li>預計寫入、保留、清除或略過的欄位。</li></ul>
+<p>局部 Scan 可作預覽，但不能宣告全案可發布。</p>
+<h3 id="Apply">Apply</h3>
+<p>使用者確認後才寫入：Object ID、Type reference、Space、高程、local W／D／H、quantity、remarks 與 revision。ID 變更必須保存 <code>old_id → new_id</code> mapping。</p>
+<h3 id="Verify">Verify</h3>
+<p>Apply 後再次全案 Scan。沒有阻擋項目，且所有警告已列出／確認，才可進入 Publish。</p>
+<p><strong>中斷</strong>：保留已完成且可驗證的寫入與 mapping；重跑 Scan 顯示剩餘工作，不假裝全案完成。</p>
+<h2 id="6-發布-Registry">6. 發布 Registry</h2>
+<p><strong>前置</strong>：全案 Verify 通過。</p>
+<p><strong>動作</strong>：取得 exclusive lock、重新讀取現況、寫 pending、驗證完整 payload，再 atomic replace 正式 Registry。</p>
+<p><strong>輸出</strong>：新的不可人工編輯 Registry revision，只包含 canonical schema 與明確 extension。</p>
+<p><strong>失敗</strong>：保留 last-good；顯示失敗階段，不先刪正式 JSON。</p>
+<h2 id="7-建立-Section-並註冊-View">7. 建立 Section 並註冊 View</h2>
+<p>使用 Rhino 8 內建 Clipping／Section 指令建立剖面、立面或平面。LoopFlow 將 Section、Detail 與固定 2D↔3D transform 註冊為 <code>view_id</code>。</p>
+<p>View 不依名稱或可變 bbox 重新猜測。Section linked output 可以先保留、更新與檢查，不必立即 Materialize 或 Tag。</p>
+<h2 id="8-Materialize-可編輯-Drawing">8. Materialize 可編輯 Drawing</h2>
+<p>使用者需要獨立整理線稿時，將 Section 結果轉為 <code>drawing_id</code>：</p>
+<ul><li>辨識前次產出，讓使用者選擇取代、新增或略過。</li><li>保存來源 <code>view_id</code>、source revision 與 drawing element provenance。</li><li>回報 indexed／unindexed／ambiguous 覆蓋率。</li><li>復原原有 selection、layer lock 與 visibility。</li><li>使用者補線、刪線或改樣式後標記為 modified；更新不靜默覆寫。</li></ul>
+<p><strong>安全停點</strong>：Drawing 完成即可獨立存檔與人工整理。</p>
+<h2 id="9-建立-Sheet-圖框與-Layout-ID">9. 建立 Sheet、圖框與 Layout ID</h2>
+<p>使用者建立 Layout、Detail、圖框與 Tag Blocks。系統以 Sheet metadata 產生 Layout 名稱、圖號與圖名。</p>
+<ul><li>只對 manifest 中 <code>role: title_frame</code> 的 Block 寫入圖框資料。</li><li>未知 Block 報告並略過。</li><li>比例維持人工輸入，canonical key 不含圖幅或排序資訊。</li></ul>
+<h3 id="Duplicate-Sheet">Duplicate Sheet</h3>
+<p>複製後建立新的 <code>sheet_id</code>、<code>drawing_id</code> 與 <code>tag_id</code>：</p>
+<ul><li>除 <code>TAG_DW</code> 外，所有 Tag 清除來源綁定、自動欄位與人工補充說明，並恢復 template 預設 lock。</li><li><code>TAG_DW</code> 的人工編號、寬、高與其他內容完整保留。</li><li>使用者重新綁定新頁 Tag。</li><li>不覆蓋系統剪貼簿。</li></ul>
+<h2 id="10-建立與綁定-Tag">10. 建立與綁定 Tag</h2>
+<div class="tw"><table><thead><tr><th>模式</th><th>使用者動作</th><th>結果</th></tr></thead><tbody><tr><td>Grab</td><td>選 Tag，再直接選模型來源</td><td>建立 <code>source_object_id</code></td></tr><tr><td>Laser</td><td>在 Drawing 點位置</td><td>以固定 transform／有效來源索引找候選；多候選由使用者選</td></tr><tr><td>Index</td><td>選 Tag，再選目標 View／Sheet</td><td>建立 <code>target_view_id</code>／<code>target_sheet_id</code></td></tr><tr><td>Furniture Item</td><td>選共用家具 Block</td><td>解析 <code>FF-01__Chair-1</code>；格式錯誤停止並警告</td></tr><tr><td><code>TAG_ELEV_0</code></td><td>使用者直接填方向／編號</td><td>不建立模型 binding</td></tr><tr><td><code>TAG_DW</code></td><td>使用者直接填編號／寬／高</td><td>純手動，不建立 binding</td></tr></tbody></table></div>
+<p>同款家具可共用 Block 名稱；家具 Tag 綁定名稱類型，不具 object-level orphan 偵測。Locked Tag 不允許重新綁定，必須先由使用者解除 lock。</p>
+<h2 id="11-同步顯示資料">11. 同步顯示資料</h2>
+<p>使用者可選同步當前頁或全部頁。Sync 從指定 Registry revision 與 Sheet metadata 計算 render output：</p>
+<ul><li>不覆寫 locked Tag。</li><li>不覆寫 <code>TAG_DW</code>、比例、Detail 編號及其他人工欄位。</li><li>缺來源、過期、歧義與未知 template 回報明確狀態，不以顏色作唯一真相。</li><li>Part 完成就是合法停點，不要求每次全案同步。</li></ul>
+<h2 id="12-Health-與-Repair">12. Health 與 Repair</h2>
+<p>Health 唯讀檢查 identity、binding、revision、template 與覆蓋範圍，包含 locked Tag；<code>TAG_DW</code> 無來源屬正常，不判 unbound。</p>
+<p>Repair 是獨立動作：先顯示影響與預覽，使用者確認後才執行。不得偷偷重綁、換 ID、刪 Drawing 或覆寫人工內容。提示顏色必須可還原原始顏色。</p>
+<h2 id="變更循環">變更循環</h2>
+<h3 id="只改資料">只改資料</h3>
+<p>重新 Scan／Apply／Verify → Publish 新 Registry revision → Sync → Health。若只是人工備註且屬 instance override，不得被 Dictionary 重匯覆寫。</p>
+<h3 id="修改模型幾何">修改模型幾何</h3>
+<p>重新資料化與發布 → 更新 Section → 使用者選擇保留、新增或取代 Drawing → 必要時重新綁定 → Sync → Health。</p>
+<h3 id="修改-Space-樓層">修改 Space／樓層</h3>
+<p>回到 Space Boundary → 全案 Scan／Apply／Verify → Publish → Sync → Health。</p>
+<h3 id="Detail-Layout-重整">Detail／Layout 重整</h3>
+<p>重新註冊 View 或執行 Duplicate Sheet 規則 → 重新綁定 → Sync → Health。不得沿用無法證明有效的舊 target ID。</p>
+<h2 id="實機驗收重點">實機驗收重點</h2>
+<ul><li>正常、取消、失敗、中斷與重跑。</li><li>hidden／locked 物件仍納入正式 Scan。</li><li>ID mapping 與 rollback。</li><li>Drawing 人工修改保護。</li><li>Duplicate Sheet 清除／保留規則。</li><li><code>TAG_DW</code> 永不被 Sync 覆寫。</li><li>家具共用名稱與格式錯誤警告。</li><li>非 cm 警告及量綱計算。</li><li>Registry last-good 與雙程序競態。</li></ul></main>
+</div>
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('nav a'));
+  var targets=links.map(function(a){return document.getElementById(a.getAttribute('href').slice(1));});
+  function upd(){
+    var y=window.scrollY+140, best=-1;
+    for(var i=0;i<targets.length;i++){ if(targets[i]&&targets[i].offsetTop<=y) best=i; }
+    links.forEach(function(a,i){ a.style.background = (i===best)?'#1e2432':''; });
+  }
+  function revealHash(){
+    if(!window.location.hash) return;
+    links.forEach(function(a){
+      if(a.getAttribute('href')===window.location.hash){
+        var group=a.closest('details');
+        if(group) group.open=true;
+      }
+    });
+  }
+  window.addEventListener('scroll',upd,{passive:true});
+  window.addEventListener('hashchange',revealHash);
+  revealHash(); upd();
+})();
+</script>
+</body>
+</html>
