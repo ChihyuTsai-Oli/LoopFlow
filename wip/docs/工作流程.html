@@ -181,10 +181,10 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <h2 id="5-資料化-Scan-Apply-Verify">5. 資料化：Scan → Apply → Verify</h2>
 <h3 id="Scan">Scan</h3>
 <p>掃描 M3D 正式範圍內全部 3D 物件，包含 hidden／locked，且不寫入資料。報告至少列出：</p>
-<ul><li>待建立、重複或失效 Object ID。</li><li>未知 Type、錯誤 layer mapping。</li><li>Space 重疊與全部 <code>EXT</code> 物件及四種原因。</li><li>BC 使用於非 Block。</li><li>無法建立穩定 local frame 的非 Block 幾何。</li><li>measurement rule 缺失、單位／量綱不符。</li><li>預計寫入、保留、清除或略過的欄位。</li></ul>
+<ul><li>待建立、重複或失效 Object ID。</li><li>未知 Type、錯誤 layer mapping。</li><li>Space 重疊與全部 <code>EXT</code> 物件及四種原因。</li><li>BC 使用於非 Block。</li><li>無法建立穩定 local frame 的非 Block 幾何（封閉 Box、多面 Brep 等沒有唯一平面者；規則見 <code>資料契約.md</code>）。</li><li>measurement rule 缺失、單位／量綱不符。</li><li>預計寫入、保留、清除或略過的欄位。</li></ul>
 <p>局部 Scan 可作預覽，但不能宣告全案可發布。</p>
 <h3 id="Apply">Apply</h3>
-<p>使用者確認後才寫入：Object ID、Type reference、Space、高程、local W／D／H、quantity、remarks 與 revision。ID 變更必須保存 <code>old_id → new_id</code> mapping。</p>
+<p>使用者確認後才寫入：Object ID、Type reference、Space、高程、local frame、local W／D／H、quantity、remarks 與 revision。ID 變更必須保存 <code>old_id → new_id</code> mapping。已有合法 local frame 時沿用，不默默重算。</p>
 <h3 id="Verify">Verify</h3>
 <p>Apply 後再次全案 Scan。沒有阻擋項目，且所有警告已列出／確認，才可進入 Publish。</p>
 <p><strong>中斷</strong>：保留已完成且可驗證的寫入與 mapping；重跑 Scan 顯示剩餘工作，不假裝全案完成。</p>
