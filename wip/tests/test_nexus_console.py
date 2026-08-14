@@ -101,14 +101,18 @@ class ConsoleOpenCheckTests(unittest.TestCase):
             self.assertEqual(result.stage, "open_check")
             self.assertEqual(result.details["project_id"], PROJECT_ID)
             self.assertEqual(result.details["type_count"], 1)
-            self.assertEqual(result.details["executable_steps"], ("open_check", "sync_type_layers"))
+            self.assertEqual(
+                result.details["executable_steps"],
+                ("open_check", "sync_type_layers", "space_boundary"),
+            )
             step_ids = [step["id"] for step in result.details["steps"]]
             self.assertEqual(
                 step_ids,
                 ["open_check", "sync_type_layers", "space_boundary", "scan_apply_verify", "publish_registry"],
             )
             self.assertEqual(result.details["steps"][1]["status"], "available")
-            self.assertTrue(all(step["status"] == "not_implemented" for step in result.details["steps"][2:]))
+            self.assertEqual(result.details["steps"][2]["status"], "available")
+            self.assertTrue(all(step["status"] == "not_implemented" for step in result.details["steps"][3:]))
             self.assertFalse((root / "exchange").exists())
             self.assertFalse((root / "logs").exists())
             self.assertTrue(session.get_view_state("a").selected)

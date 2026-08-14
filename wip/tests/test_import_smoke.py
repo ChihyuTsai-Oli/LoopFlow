@@ -35,7 +35,7 @@ class ImportSmokeTests(unittest.TestCase):
         spec = get_command("LF_Nexus")
         self.assertEqual(spec["status"], "console")
         self.assertEqual(spec["entrypoint"], "LF_Nexus.py")
-        self.assertEqual(spec["task"], "C02/NX-02")
+        self.assertEqual(spec["task"], "C02/NX-03")
 
     def test_run_command_does_not_claim_scan_success(self):
         from loopflow.bootstrap import run_command

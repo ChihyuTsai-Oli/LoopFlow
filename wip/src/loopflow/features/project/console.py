@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Nexus Project Console。NX-01 只做開案檢查與步驟清單，不讀寫物件、不建 layer、不發布。"""
+"""Nexus Project Console。開案檢查、Type layer 同步、Space Boundary；不 Scan／不發布。"""
 from __future__ import annotations
 
 import re
@@ -32,7 +32,7 @@ CONSOLE_STEPS: Tuple[dict, ...] = (
     {
         "id": "space_boundary",
         "title": "建立 Space Boundaries",
-        "status": "not_implemented",
+        "status": "available",
         "task": "NX-03",
     },
     {
@@ -138,9 +138,9 @@ def _open_check(
         "exchange_exists": paths.exchange_root.exists(),
         "package_version": PACKAGE_VERSION,
         "steps": _copy_steps(),
-        "executable_steps": ("open_check", "sync_type_layers"),
+        "executable_steps": ("open_check", "sync_type_layers", "space_boundary"),
     }
-    message = "開案檢查完成。可執行 Type layer 同步。Scan／Apply／發布尚未實作。"
+    message = "開案檢查完成。可執行 Type layer 同步與 Space Boundary。Scan／Apply／發布尚未實作。"
     if warnings:
         return results.ok_with_warnings(
             "open_check",
@@ -159,10 +159,12 @@ def open_console(
     cancel: bool = False,
     step: str = "open_check",
     export_path=None,
+    drafts=None,
     command_id: str = COMMAND_ID,
 ) -> results.Result:
-    """開案檢查並列出 Console 步驟。step=sync_type_layers 時才同步圖層。"""
+    """開案檢查並列出 Console 步驟。step 指定時才執行該步。"""
     from loopflow.features.dictionary.sync import sync_type_layers
+    from loopflow.features.model_data.space import drafts_from_selection, register_space_boundaries
 
     def action(current: RhinoSession) -> results.Result:
         checked = _open_check(current, environ=environ, cancel=cancel)
@@ -174,6 +176,15 @@ def open_console(
                 environ=environ,
                 cancel=False,
                 export_path=export_path,
+                guarded=False,
+                command_id=command_id,
+            )
+        if step == "space_boundary":
+            selected = drafts if drafts is not None else drafts_from_selection(current)
+            return register_space_boundaries(
+                current,
+                selected,
+                cancel=False,
                 guarded=False,
                 command_id=command_id,
             )

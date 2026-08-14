@@ -211,6 +211,15 @@ class LiveSession:
     def delete_object(self, object_id: str) -> None:
         self._rs.DeleteObject(object_id)
 
+    def is_closed_curve(self, object_id: str) -> bool:
+        return bool(self._rs.IsCurve(object_id) and self._rs.IsCurveClosed(object_id))
+
+    def curve_polygon(self, object_id: str):
+        if not self._rs.IsCurve(object_id):
+            return None
+        points = self._rs.CurvePoints(object_id) or []
+        return tuple((float(pt.X), float(pt.Y)) for pt in points)
+
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)
 

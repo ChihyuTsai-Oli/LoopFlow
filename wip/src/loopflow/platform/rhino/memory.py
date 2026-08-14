@@ -14,6 +14,7 @@ class MemorySession:
         self._objects: Dict[str, ObjectViewState] = {}
         self._object_meta: Dict[str, dict] = {}
         self._layers: Dict[str, dict] = {}
+        self._curves: Dict[str, dict] = {}
         self._modified = False
         self._model_unit = model_unit
         self._document_text = dict(document_text or {})
@@ -52,6 +53,7 @@ class MemorySession:
     def delete_object(self, object_id: str) -> None:
         self._objects.pop(object_id, None)
         self._object_meta.pop(object_id, None)
+        self._curves.pop(object_id, None)
         self._modified = True
 
     def iter_object_ids(self, *, include_hidden: bool = True, include_locked: bool = True):
@@ -163,6 +165,19 @@ class MemorySession:
         self._next_id += 1
         self.add_object(object_id, name=name, layer=layer)
         return object_id
+
+    def set_curve(self, object_id: str, polygon, *, closed: bool = True) -> None:
+        self._curves[object_id] = {"polygon": tuple(tuple(pt) for pt in polygon), "closed": bool(closed)}
+
+    def is_closed_curve(self, object_id: str) -> bool:
+        curve = self._curves.get(object_id)
+        return bool(curve and curve["closed"] and len(curve["polygon"]) >= 3)
+
+    def curve_polygon(self, object_id: str):
+        curve = self._curves.get(object_id)
+        if not curve:
+            return None
+        return curve["polygon"]
 
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)
