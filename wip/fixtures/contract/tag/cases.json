@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "unknown-block-zero-write",
+      "block_name": "Random_Furniture",
+      "expect": "report_and_zero_write"
+    },
+    {
+      "id": "title-frame-writes-drawing-ids",
+      "block_name": "Sample_Frame",
+      "expect": "write",
+      "allowed_keys": ["drawing_no", "drawing_name"]
+    },
+    {
+      "id": "title-frame-scale-manual",
+      "block_name": "Sample_Frame",
+      "field": "scale",
+      "expect": "leave_manual"
+    },
+    {
+      "id": "tag-dw-sync-skips",
+      "template_id": "TAG_DW",
+      "expect": "sync_skip_all_fields"
+    },
+    {
+      "id": "duplicate-clears-render-and-remarks",
+      "template_id": "TAG_HEIGHT_GRAB",
+      "expect": "clear_keys",
+      "must_clear": ["source_object_id", "elevation_basis", "elevation_display", "type_category", "type_sequence", "type_display_name", "remarks_manual"],
+      "lock_reset_to": false
+    },
+    {
+      "id": "duplicate-keeps-tag-dw",
+      "template_id": "TAG_DW",
+      "expect": "keep_keys",
+      "must_keep": ["dw_id", "dw_width", "dw_height"]
+    },
+    {
+      "id": "item-block-name-ok",
+      "source_block_name": "FF-01__Chair-1",
+      "expect": "pass"
+    },
+    {
+      "id": "item-block-name-bad",
+      "source_block_name": "Chair-1",
+      "expect": "block"
+    }
+  ]
+}

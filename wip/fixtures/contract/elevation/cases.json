@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "allowed": ["BH", "TH", "CH", "BC"],
+  "cases": [
+    {"id": "bh", "basis": "BH", "geometry": "brep", "expect": "pass"},
+    {"id": "th", "basis": "TH", "geometry": "brep", "expect": "pass"},
+    {"id": "ch", "basis": "CH", "geometry": "brep", "expect": "pass", "note": "天花取物件底部"},
+    {"id": "bc-block", "basis": "BC", "geometry": "block", "expect": "pass"},
+    {"id": "bc-non-block", "basis": "BC", "geometry": "brep", "expect": "block"},
+    {"id": "legacy-th-slash-bh", "basis": "TH/BH", "geometry": "brep", "expect": "migration_only"}
+  ]
+}

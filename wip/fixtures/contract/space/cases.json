@@ -1,0 +1,55 @@
+{
+  "schema_id": "loopflow.space",
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "multi-level-ok",
+      "expect": "pass",
+      "spaces": [
+        {"space_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "level_id": "11111111-1111-4111-8111-111111111111", "space_display": "1F客廳", "polygon": [[0, 0], [10, 0], [10, 8], [0, 8]]},
+        {"space_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", "level_id": "22222222-2222-4222-8222-222222222222", "space_display": "2F臥室", "polygon": [[0, 0], [10, 0], [10, 8], [0, 8]]}
+      ],
+      "note": "不同 level_id 的投影重疊不算衝突"
+    },
+    {
+      "id": "shared-edge-ok",
+      "expect": "pass",
+      "spaces": [
+        {"space_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "level_id": "11111111-1111-4111-8111-111111111111", "space_display": "客廳", "polygon": [[0, 0], [5, 0], [5, 4], [0, 4]]},
+        {"space_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", "level_id": "11111111-1111-4111-8111-111111111111", "space_display": "餐廳", "polygon": [[5, 0], [10, 0], [10, 4], [5, 4]]}
+      ]
+    },
+    {
+      "id": "area-overlap-block",
+      "expect": "block",
+      "spaces": [
+        {"space_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "level_id": "11111111-1111-4111-8111-111111111111", "space_display": "客廳", "polygon": [[0, 0], [6, 0], [6, 4], [0, 4]]},
+        {"space_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", "level_id": "11111111-1111-4111-8111-111111111111", "space_display": "餐廳", "polygon": [[4, 0], [10, 0], [10, 4], [4, 4]]}
+      ]
+    },
+    {
+      "id": "ext-no-boundary-layer",
+      "expect": "ext",
+      "reason": "no_boundary_layer",
+      "space_id": "EXT"
+    },
+    {
+      "id": "ext-layer-empty",
+      "expect": "ext",
+      "reason": "layer_without_boundary",
+      "space_id": "EXT"
+    },
+    {
+      "id": "ext-no-bbox",
+      "expect": "ext",
+      "reason": "bbox_unavailable",
+      "space_id": "EXT"
+    },
+    {
+      "id": "ext-miss",
+      "expect": "ext",
+      "reason": "outside_all_boundaries",
+      "space_id": "EXT"
+    }
+  ]
+}

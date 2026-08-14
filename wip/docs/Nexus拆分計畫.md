@@ -135,7 +135,7 @@ B01–B03 骨架
 | C03 | 唯一允許寫 Registry 檔的模組 |
 | C04 Data Viewer | 只讀；不是 Nexus 步驟，但應能顯示 NX-04 以後的 canonical 值 |
 | C05 | 唯一的尺寸／數量實作 |
-| A06 | 先備 Dictionary／UUID／Space／local frame／Registry 形狀；各 NX 包再補該包的 Scan 報告案例 |
+| A06 | **已完成**；Dictionary／UUID／Space／local frame／Registry 形狀已在 `wip/fixtures/contract/`；各 NX 包再補該包的 Scan 報告案例 |
 | D～E | 使用已發布 revision，不回寫 Nexus |
 
 ## 分段實機（C02 期間）

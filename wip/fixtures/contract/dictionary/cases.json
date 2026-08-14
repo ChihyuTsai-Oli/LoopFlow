@@ -1,0 +1,92 @@
+{
+  "schema_id": "loopflow.dictionary",
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "valid-count",
+      "expect": "pass",
+      "estimation_unit": "樘",
+      "measurement_rule": "COUNT"
+    },
+    {
+      "id": "valid-length",
+      "expect": "pass",
+      "estimation_unit": "cm",
+      "measurement_rule": "LEN_W"
+    },
+    {
+      "id": "valid-area-cai",
+      "expect": "pass",
+      "estimation_unit": "才",
+      "measurement_rule": "AREA_WH"
+    },
+    {
+      "id": "valid-area-ping",
+      "expect": "pass",
+      "estimation_unit": "坪",
+      "measurement_rule": "AREA_WD"
+    },
+    {
+      "id": "valid-volume",
+      "expect": "pass",
+      "estimation_unit": "m3",
+      "measurement_rule": "VOL_WDH"
+    },
+    {
+      "id": "rule-empty",
+      "expect": "warn_no_quantity",
+      "estimation_unit": "才",
+      "measurement_rule": null
+    },
+    {
+      "id": "mismatch-count-on-area-unit",
+      "expect": "block",
+      "estimation_unit": "坪",
+      "measurement_rule": "COUNT"
+    },
+    {
+      "id": "mismatch-area-on-count-unit",
+      "expect": "block",
+      "estimation_unit": "樘",
+      "measurement_rule": "AREA_WD"
+    },
+    {
+      "id": "mismatch-length-on-volume-unit",
+      "expect": "block",
+      "estimation_unit": "m3",
+      "measurement_rule": "LEN_H"
+    },
+    {
+      "id": "unknown-unit",
+      "expect": "block",
+      "estimation_unit": "kg",
+      "measurement_rule": "COUNT"
+    },
+    {
+      "id": "unknown-rule",
+      "expect": "block",
+      "estimation_unit": "cm",
+      "measurement_rule": "AREA_XX"
+    },
+    {
+      "id": "unknown-column",
+      "expect": "block",
+      "extra_display_columns": ["_99_測試"]
+    },
+    {
+      "id": "wrong-column-count",
+      "expect": "block",
+      "display_column_count": 14
+    },
+    {
+      "id": "duplicate-type-id",
+      "expect": "block",
+      "duplicate_type_id": "EX-01"
+    },
+    {
+      "id": "cb-columns-forbidden",
+      "expect": "block",
+      "extra_display_columns": ["_CB.01"]
+    }
+  ]
+}

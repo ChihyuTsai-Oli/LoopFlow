@@ -1,0 +1,62 @@
+{
+  "schema_id": "loopflow.dictionary",
+  "schema_version": 1,
+  "title_row": "LoopFlow Dictionary v2.0",
+  "display_columns": [
+    "__Rhino Layer",
+    "_01_空間名稱",
+    "_02_建構狀態",
+    "_03_ID編號",
+    "_04_ID名稱",
+    "_05_寬度W",
+    "_06_深度D",
+    "_07_高度H",
+    "_08_單位",
+    "(單位計量規則)",
+    "_09_實作數量",
+    "_10_高程基準",
+    "_11_高程計算",
+    "_12_UUID",
+    "_13_備註"
+  ],
+  "machine_keys": [
+    "layer_path",
+    "space_id",
+    "construction_default",
+    "type_id",
+    "type_display_name",
+    "dimension_w",
+    "dimension_d",
+    "dimension_h",
+    "estimation_unit",
+    "measurement_rule",
+    "quantity",
+    "elevation_basis",
+    "elevation_value",
+    "object_id",
+    "remarks_default"
+  ],
+  "computed_instance_columns": [
+    "_01_空間名稱",
+    "_05_寬度W",
+    "_06_深度D",
+    "_07_高度H",
+    "_09_實作數量",
+    "_11_高程計算",
+    "_12_UUID"
+  ],
+  "type_categories": [
+    "CB",
+    "CL",
+    "DW",
+    "EL",
+    "EQ",
+    "EX",
+    "FL",
+    "FP",
+    "LS",
+    "MP",
+    "SA",
+    "WL"
+  ]
+}
