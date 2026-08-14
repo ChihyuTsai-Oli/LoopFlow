@@ -5,10 +5,10 @@
 ```text
 wip/
   docs/             # 實作階段的有效規格與進度
-  src/              # 2.0 原始碼
+  src/              # 2.0 原始碼（目前僅可載入骨架）
   tests/            # 自動測試
   fixtures/         # 可提交、不含私人資料的測試資料與 legacy 證據
-  tools/            # 文件產生器與開發輔助工具
+  tools/            # 文件產生器、契約檢查器與開發輔助工具
 ```
 
 大型 Rhino 工作檔、人工測試輸出與 Dropbox 素材不放進 repo。本機根目錄由 `LOOPFLOW_WORKFILES_ROOT` 指定，雙機對照與設定方式見工作區根目錄 `工作檔路徑.md`。
