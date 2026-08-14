@@ -42,16 +42,12 @@ def _format_elev(value: float) -> str:
 
 
 def collect_spaces(session: RhinoSession) -> Tuple[Optional[str], Tuple[dict, ...]]:
-    """收集已登記的封閉曲線。不限 Space_Boundaries 圖層，以免畫在別層就找不到。"""
+    """收集 Space_Boundaries 圖層上已登記的封閉曲線。登記時會把曲線搬到該圖層。"""
     found = []
     seen = set()
-    candidates = []
-    if session.has_layer(SPACE_BOUNDARY_LAYER):
-        candidates.extend(session.objects_on_layer(SPACE_BOUNDARY_LAYER) or ())
-    for object_id in session.iter_object_ids(include_hidden=True, include_locked=True):
-        if session.is_closed_curve(object_id):
-            candidates.append(object_id)
-    for object_id in candidates:
+    if not session.has_layer(SPACE_BOUNDARY_LAYER):
+        return EXT_NO_LAYER, ()
+    for object_id in session.objects_on_layer(SPACE_BOUNDARY_LAYER) or ():
         if object_id in seen:
             continue
         seen.add(object_id)
@@ -74,8 +70,6 @@ def collect_spaces(session: RhinoSession) -> Tuple[Optional[str], Tuple[dict, ..
             }
         )
     if not found:
-        if not session.has_layer(SPACE_BOUNDARY_LAYER):
-            return EXT_NO_LAYER, ()
         return EXT_EMPTY_LAYER, ()
     return None, tuple(found)
 

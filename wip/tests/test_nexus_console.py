@@ -20,6 +20,7 @@ from loopflow.features.project.console import (
     open_console,
 )
 from loopflow.features.project.menu import parse_menu_choice, run_nexus_console
+from loopflow.foundation.usertext import SPACE_ID_KEY
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
@@ -292,7 +293,7 @@ class ConsoleMenuTests(unittest.TestCase):
             self.assertIn("尺寸未寫入：無穩定 local frame", applied.message)
             self.assertNotIn("未寫 Space", applied.message)
             self.assertIsNotNone(session.get_object_user_text("box", "_12_UUID"))
-            self.assertEqual(session.get_object_user_text("box", "_01_空間ID"), "EXT")
+            self.assertEqual(session.get_object_user_text("box", SPACE_ID_KEY), "EXT")
             self.assertIsNone(session.get_object_user_text("box", FRAME_KEY))
 
     def test_apply_oriented_box_writes_dimensions(self):

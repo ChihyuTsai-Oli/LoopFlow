@@ -185,6 +185,39 @@ class VersionConfigLogTests(unittest.TestCase):
         self.assertEqual(loopflow.__version__, PACKAGE_VERSION)
 
 
+class UserTextKeyTests(unittest.TestCase):
+    def test_numbers_are_unique_and_dictionary_columns_match(self):
+        from loopflow.features.dictionary.schema import DISPLAY_COLUMNS
+        from loopflow.foundation import usertext
+
+        keys = [
+            value
+            for name, value in vars(usertext).items()
+            if name.endswith("_KEY") and isinstance(value, str)
+        ]
+        numbers = [key.split("_")[1] for key in keys]
+        self.assertEqual(sorted(numbers), sorted(set(numbers)))
+        for key in keys:
+            number = key.split("_")[1]
+            if int(number) > 13:
+                continue
+            self.assertIn(key, DISPLAY_COLUMNS)
+
+    def test_write_clears_legacy_and_read_falls_back(self):
+        from loopflow.foundation.usertext import FRAME_KEY, read_text, write_text
+        from loopflow.platform.rhino.memory import MemorySession
+
+        session = MemorySession()
+        session.add_object("obj")
+        session.set_object_user_text("obj", "_14_座標框", "{}")
+        session.set_object_user_text("obj", "lf_local_frame", "{}")
+        self.assertEqual(read_text(session, "obj", FRAME_KEY), "{}")
+        write_text(session, "obj", FRAME_KEY, "{\"a\":1}")
+        self.assertEqual(read_text(session, "obj", FRAME_KEY), "{\"a\":1}")
+        self.assertIsNone(session.get_object_user_text("obj", "_14_座標框"))
+        self.assertIsNone(session.get_object_user_text("obj", "lf_local_frame"))
+
+
 class SourceHygieneTests(unittest.TestCase):
     def test_source_has_no_personal_or_drive_paths(self):
         root = SRC / "loopflow"

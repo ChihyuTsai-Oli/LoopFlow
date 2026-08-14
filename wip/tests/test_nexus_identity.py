@@ -33,6 +33,7 @@ from loopflow.features.project.console import (
     SCHEMA_VERSION_KEY,
     open_console,
 )
+from loopflow.foundation.usertext import SPACE_ID_KEY
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
@@ -127,7 +128,7 @@ class IdentityScanApplyTests(unittest.TestCase):
         _add_model(session, "new")
         _add_model(session, "keep")
         session.set_object_user_text("keep", OBJECT_ID_KEY, VALID_ID)
-        session.set_object_user_text("keep", "_01_空間ID", "EXT")
+        session.set_object_user_text("keep", SPACE_ID_KEY, "EXT")
         session.set_object_user_text("keep", REMARKS_KEY, "人工備註")
         applied = apply_identity(session, catalog=_catalog(_row()))
         self.assertTrue(applied.ok, applied.message)
@@ -140,8 +141,8 @@ class IdentityScanApplyTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("new", REMARKS_KEY), "(手動輸入備註)")
         self.assertEqual(session.get_object_user_text("new", DATA_REVISION_KEY), "0")
         self.assertEqual(session.get_object_user_text("keep", REMARKS_KEY), "人工備註")
-        self.assertEqual(session.get_object_user_text("keep", "_01_空間ID"), "EXT")
-        self.assertIsNone(session.get_object_user_text("new", "_01_空間ID"))
+        self.assertEqual(session.get_object_user_text("keep", SPACE_ID_KEY), "EXT")
+        self.assertIsNone(session.get_object_user_text("new", SPACE_ID_KEY))
         self.assertFalse(applied.details["publish_ready"])
 
     def test_duplicate_requires_mapping_then_rollback(self):

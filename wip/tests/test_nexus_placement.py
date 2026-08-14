@@ -202,7 +202,8 @@ class PlacementTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("left", SPACE_ID_KEY), SPACE_A)
         self.assertEqual(session.get_object_user_text("right", SPACE_ID_KEY), SPACE_B)
 
-    def test_named_curve_off_layer_still_hits(self):
+    def test_named_curve_off_boundary_layer_is_ignored(self):
+        """只有 Space_Boundaries 圖層上的曲線算 Space；登記（選單 3）會自動搬層。"""
         session = _session()
         session.add_object("hall", name="廊道", layer=FULL)
         session.set_curve("hall", [[0, 0], [10, 0], [10, 8], [0, 8]], closed=True)
@@ -211,8 +212,7 @@ class PlacementTests(unittest.TestCase):
         _add_model(session, "floor", bbox=((2, 2, 0), (3, 3, 1)))
         applied = apply_placement(session, catalog=_catalog(_row()))
         self.assertTrue(applied.ok, applied.message)
-        self.assertEqual(session.get_object_user_text("floor", SPACE_DISPLAY_KEY), "廊道")
-        self.assertEqual(session.get_object_user_text("floor", SPACE_ID_KEY), SPACE_A)
+        self.assertEqual(session.get_object_user_text("floor", SPACE_ID_KEY), "EXT")
 
     def test_wall_outside_center_hits_by_corner(self):
         session = _session()
