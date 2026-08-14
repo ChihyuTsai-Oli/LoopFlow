@@ -39,4 +39,4 @@ AI 或開發者依序閱讀：
 
 `docs/前期規劃/` 保存決策過程、雙 AI 比較、1.x 盤點與原始流程模擬。它只供歷史追溯，不作為 2.0 實作規格；與根目錄文件不同時，以根目錄文件為準。
 
-Rhino Block 文字擷取結果位於 `fixtures/legacy/tag_block_text/`。這些是建立 manifest 與 migration fixtures 的來源證據，不是實作說明。
+Rhino Block 文字擷取結果位於 `fixtures/legacy/tag_block_text/`。A04 的 Registry／Tag manifest 位於 `fixtures/schema/`。這些是契約與 migration 的來源，不是實作說明。
