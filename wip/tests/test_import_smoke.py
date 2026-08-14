@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import io
+import os
 import subprocess
 import sys
 import unittest
@@ -60,12 +61,16 @@ class ImportSmokeTests(unittest.TestCase):
             self.assertNotIn(forbidden, source)
 
     def test_entrypoint_script_loads(self):
+        env = dict(os.environ)
+        env["PYTHONIOENCODING"] = "utf-8"
         completed = subprocess.run(
             [sys.executable, str(ENTRY)],
             cwd=str(WIP.parent),
             capture_output=True,
             text=True,
             encoding="utf-8",
+            errors="replace",
+            env=env,
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn("尚未實作", completed.stdout)
