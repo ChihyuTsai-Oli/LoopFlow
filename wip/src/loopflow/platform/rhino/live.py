@@ -287,7 +287,12 @@ class LiveSession:
         self._rs.SetUserText(object_id, key, value)
 
     def objects_on_layer(self, path: str):
-        ids = self._rs.ObjectsByLayer(path) or []
+        if not self.has_layer(path):
+            return ()
+        try:
+            ids = self._rs.ObjectsByLayer(path) or []
+        except ValueError:
+            return ()
         return tuple(str(item) for item in ids)
 
     def add_placeholder(self, *, layer: str, name: str) -> str:

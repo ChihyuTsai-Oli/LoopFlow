@@ -132,6 +132,8 @@ def parse_level_datum(name: str):
 def collect_level_frames(session: RhinoSession) -> Tuple[LevelFrame, ...]:
     frames = []
     for layer in LEVEL_BOUNDARY_LAYERS:
+        if not session.has_layer(layer):
+            continue
         for object_id in session.objects_on_layer(layer):
             if not session.is_closed_curve(object_id):
                 continue

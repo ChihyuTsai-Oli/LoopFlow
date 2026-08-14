@@ -89,6 +89,7 @@ def _add_level(
     elevation: float = 0.0,
     selected: bool = False,
 ):
+    session.ensure_layer(layer)
     session.add_object(object_id, selected=selected, name=name, layer=layer)
     session.set_curve(object_id, polygon, closed=True, elevation=elevation)
 
@@ -108,6 +109,21 @@ def _valid_row():
     for key, value in values.items():
         row[schema.MACHINE_KEYS.index(key)] = value
     return row
+
+
+class _RhinoLikeSession:
+    """模擬 rhinoscriptsyntax：圖層不存在時 ObjectsByLayer 丟 ValueError。"""
+
+    def __init__(self, inner: MemorySession) -> None:
+        self._inner = inner
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+    def objects_on_layer(self, path: str):
+        if not self._inner.has_layer(path):
+            raise ValueError("%s does not exist in LayerTable" % path)
+        return self._inner.objects_on_layer(path)
 
 
 class SpaceBoundaryTests(unittest.TestCase):
@@ -436,6 +452,20 @@ class SpaceBoundaryTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(session.object_name("ffl-1"), "0")
         self.assertEqual(session.object_layer("ffl-1"), LEVEL_FFL_LAYER)
+
+    def test_missing_fl_layer_does_not_raise(self):
+        inner = _session()
+        _add_level(inner, "ffl-1", "0", FLOOR_POLY, elevation=0.0)
+        inner.add_object("room", selected=True, name="廊道")
+        inner.set_curve("room", ROOM_POLY, closed=True, elevation=0.0)
+        self.assertFalse(inner.has_layer(LEVEL_FL_LAYER))
+        session = _RhinoLikeSession(inner)
+        result = register_space_boundaries(session, drafts_from_selection(session))
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(
+            inner.get_object_user_text("room", LEVEL_ID_KEY),
+            inner.get_object_user_text("ffl-1", LEVEL_ID_KEY),
+        )
 
 
 if __name__ == "__main__":
