@@ -3,4 +3,4 @@
 
 完整責任、流程與資料契約見 `wip/docs/`，不在此重複。
 """
-__version__ = "2.0.0.dev0"
+from loopflow.foundation.version import PACKAGE_VERSION as __version__

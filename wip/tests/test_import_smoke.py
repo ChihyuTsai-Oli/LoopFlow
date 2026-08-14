@@ -40,17 +40,17 @@ class ImportSmokeTests(unittest.TestCase):
 
         with redirect_stdout(io.StringIO()):
             result = run_command("LF_Nexus")
-        self.assertFalse(result["ok"])
-        self.assertEqual(result["status"], "not_implemented")
-        self.assertIn("尚未實作", result["message"])
+        self.assertFalse(result.ok)
+        self.assertEqual(result.status, "not_implemented")
+        self.assertIn("尚未實作", result.message)
 
     def test_unknown_command_is_rejected(self):
         from loopflow.bootstrap import run_command
 
         with redirect_stdout(io.StringIO()):
             result = run_command("LF_Cabinet_Suite")
-        self.assertFalse(result["ok"])
-        self.assertEqual(result["status"], "unknown_command")
+        self.assertFalse(result.ok)
+        self.assertEqual(result.status, "unknown_command")
 
     def test_nexus_entrypoint_has_no_rhino_or_feature_code(self):
         source = ENTRY.read_text(encoding="utf-8")
