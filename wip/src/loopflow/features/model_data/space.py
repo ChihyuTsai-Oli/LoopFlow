@@ -66,6 +66,18 @@ def find_overlaps(spaces: Sequence[dict]) -> Tuple[Tuple[str, str], ...]:
     return tuple(conflicts)
 
 
+def find_xy_overlaps_other_level(spaces: Sequence[dict]) -> Tuple[Tuple[str, str], ...]:
+    """平面 AABB 重疊但樓層不同：契約允許，實機時需讓使用者看見。"""
+    pairs = []
+    for i, left in enumerate(spaces):
+        for right in spaces[i + 1 :]:
+            if left["level_id"] == right["level_id"]:
+                continue
+            if aabb_overlap_area(left["polygon"], right["polygon"]) > 0:
+                pairs.append((left["space_display"], right["space_display"]))
+    return tuple(pairs)
+
+
 def drafts_from_selection(session: RhinoSession) -> Tuple[SpaceDraft, ...]:
     """把目前選取物件當成 Space 候選；名稱與樓層來自 ObjectName／既有 UserText。"""
     drafts = []
@@ -168,7 +180,7 @@ def register_space_boundaries(
         if conflicts:
             return results.blocked(
                 "register_spaces",
-                "Space 面積重疊，已停止。衝突：%s" % "、".join("%s/%s" % pair for pair in conflicts),
+                "Space 面積重疊（同一樓層），已停止。衝突：%s" % "、".join("%s/%s" % pair for pair in conflicts),
                 blocking=("space_overlap",),
                 command_id=command_id,
                 details={"conflicts": conflicts},
@@ -179,14 +191,31 @@ def register_space_boundaries(
             current.set_object_user_text(oid, LEVEL_ID_KEY, item["level_id"])
             current.set_object_user_text(oid, SPACE_DISPLAY_KEY, item["space_display"])
             current.set_object_name(oid, item["space_display"])
+        cross_level = find_xy_overlaps_other_level(parsed)
+        payload = {
+            "space_ids": tuple(item["space_id"] for item in parsed),
+            "count": len(parsed),
+            "level_ids": tuple(sorted(set(item["level_id"] for item in parsed))),
+            "xy_overlap_other_level": cross_level,
+        }
+        message = "已登記 %s 個 Space Boundary。未改模型物件空間欄。" % len(parsed)
+        if cross_level:
+            warning = (
+                "平面重疊但樓層不同（已允許）：%s。同樓層請用同一個 lf_level_id。"
+                % "、".join("%s/%s" % pair for pair in cross_level)
+            )
+            return results.ok_with_warnings(
+                "register_spaces",
+                message,
+                (warning,),
+                command_id=command_id,
+                details=payload,
+            )
         return results.ok(
             "register_spaces",
-            "已登記 %s 個 Space Boundary。未改模型物件空間欄。" % len(parsed),
+            message,
             command_id=command_id,
-            details={
-                "space_ids": tuple(item["space_id"] for item in parsed),
-                "count": len(parsed),
-            },
+            details=payload,
         )
 
     if not guarded:

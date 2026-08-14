@@ -66,9 +66,6 @@ def run_nexus_console(
     first = open_console(session, environ=environ, step="open_check", **kwargs)
     if not first.ok or not interactive:
         return first
-    print(first.message)
-    for warning in first.warnings:
-        print("警告：%s" % warning)
     picked = prompt_nexus_menu(chooser)
     if picked is None:
         return results.cancelled(

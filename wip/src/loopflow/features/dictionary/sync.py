@@ -9,6 +9,7 @@ from loopflow.features.dictionary.layer_paths import (
     LAYER_CONSTRUCTION_KEY,
     LAYER_TYPE_ID_KEY,
     SYSTEM_LAYERS,
+    color_for_layer_path,
     dna_ref_name,
     is_dw_child,
     is_exportable_type_layer,
@@ -82,6 +83,7 @@ def _sync_body(
     try:
         for system_path in SYSTEM_LAYERS:
             session.ensure_layer(system_path)
+            session.set_layer_appearance(system_path, color_for_layer_path(system_path))
         for record in catalog.types:
             full = to_full_path(record.layer_path)
             if is_dw_child(full):
@@ -89,6 +91,7 @@ def _sync_body(
                 continue
             existed = session.has_layer(full)
             session.ensure_layer(full)
+            session.set_layer_appearance(full, color_for_layer_path(full), material_name=full)
             if not existed:
                 if record.construction_default:
                     session.set_layer_user_text(full, LAYER_CONSTRUCTION_KEY, record.construction_default)

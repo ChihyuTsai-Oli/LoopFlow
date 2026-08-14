@@ -13,7 +13,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from loopflow.foundation import results
-from loopflow.platform.rhino.live import LIVE_VERIFIED_IN_RHINO, open_session
+from loopflow.platform.rhino.live import LIVE_VERIFIED_IN_RHINO, open_session, rgb_tuple
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.session import run_guarded
 from loopflow.platform.rhino.state import ObjectViewState
@@ -99,6 +99,8 @@ class SnapshotRestoreTests(unittest.TestCase):
         self.assertEqual(outcome.stage, "guarded_run")
         self.assertFalse(session.document_modified())
         self.assertTrue(session.get_view_state("a").selected)
+        self.assertIn("simulated", outcome.message)
+        self.assertIn("RuntimeError", outcome.details["exception"])
 
     def test_missing_object_on_restore_fails(self):
         session = _sample_session()
@@ -132,6 +134,17 @@ class LiveAdapterGuardTests(unittest.TestCase):
         self.assertNotIn("Rhino", imported)
         self.assertNotIn("rhinoscriptsyntax", imported)
         self.assertNotIn("scriptcontext", imported)
+
+
+class ColorHelperTests(unittest.TestCase):
+    def test_rgb_tuple_accepts_tuple_and_object(self):
+        self.assertEqual(rgb_tuple((12, 34, 56)), (12, 34, 56))
+        self.assertEqual(rgb_tuple(None), (0, 0, 0))
+
+        class _Color:
+            R, G, B = 1, 2, 3
+
+        self.assertEqual(rgb_tuple(_Color()), (1, 2, 3))
 
 
 if __name__ == "__main__":

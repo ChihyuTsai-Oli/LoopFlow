@@ -125,6 +125,16 @@ class SpaceBoundaryTests(unittest.TestCase):
         self.assertIsNone(session.get_object_user_text("curve-1", SPACE_ID_KEY))
         self.assertIsNone(session.get_object_user_text("wall", SPACE_ID_KEY))
 
+    def test_cross_level_xy_overlap_warns_but_passes(self):
+        case = next(item for item in _fixture_cases() if item["id"] == "multi-level-ok")
+        session = _session()
+        drafts = _add_spaces(session, case["spaces"])
+        result = register_space_boundaries(session, drafts)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.status, "ok_with_warnings")
+        self.assertEqual(result.details["xy_overlap_other_level"], (("1F客廳", "2F臥室"),))
+        self.assertTrue(any("樓層不同" in item for item in result.warnings))
+
     def test_three_way_overlap_lists_every_pair(self):
         session = _session()
         drafts = _add_spaces(

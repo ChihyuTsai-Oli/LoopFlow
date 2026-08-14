@@ -18,17 +18,31 @@ def ensure_src_on_path() -> Path:
     return SRC_ROOT
 
 
+def _emit_result(result: Result) -> Result:
+    print(result.message)
+    details = result.details or {}
+    exception = details.get("exception")
+    if exception and str(exception) not in result.message:
+        print(exception)
+    traceback_text = details.get("traceback")
+    if traceback_text:
+        print(traceback_text)
+    seen = []
+    for warning in result.warnings or ():
+        if warning in seen:
+            continue
+        seen.append(warning)
+        print("警告：%s" % warning)
+    return result
+
+
 def _run_nexus() -> Result:
     from loopflow.features.project.menu import run_nexus_console
     from loopflow.platform.rhino.live import open_session
 
     opened = open_session()
     session = opened.details.get("session") if opened.ok else None
-    result = run_nexus_console(session, interactive=session is not None)
-    if session is not None and result.ok and result.warnings:
-        for warning in result.warnings:
-            print("警告：%s" % warning)
-    return result
+    return run_nexus_console(session, interactive=session is not None)
 
 
 def run_command(command_id: str) -> Result:
@@ -41,12 +55,9 @@ def run_command(command_id: str) -> Result:
             "未知指令：%s" % command_id,
             command_id=command_id,
         )
-        print(result.message)
-        return result
+        return _emit_result(result)
     if command_id == "LF_Nexus":
-        result = _run_nexus()
-        print(result.message)
-        return result
+        return _emit_result(_run_nexus())
     result = not_implemented(
         "dispatch",
         "這是 2.0 測試入口「%s」，功能尚未實作（%s）。" % (
@@ -56,5 +67,4 @@ def run_command(command_id: str) -> Result:
         command_id=command_id,
         details={"task": spec.get("task")},
     )
-    print(result.message)
-    return result
+    return _emit_result(result)

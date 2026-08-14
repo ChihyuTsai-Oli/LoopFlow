@@ -15,6 +15,23 @@ SYSTEM_LAYERS = (
 DNA_REF_PREFIX = "DNA_REF_"
 LAYER_TYPE_ID_KEY = "lf_type_id"
 LAYER_CONSTRUCTION_KEY = "lf_construction_default"
+# 顯示色依 1.x COLOR_LAYER_MAP：圖層代號前綴，不是 Dictionary 欄位。
+COLOR_DATA_LAYER = (0, 0, 0)
+COLOR_LAYER_MAP = {
+    "furniture": (190, 190, 190),
+    "00": (202, 16, 16),
+    "01": (119, 219, 225),
+    "02": (219, 179, 120),
+    "03": (116, 219, 153),
+    "04": (187, 153, 244),
+    "05": (236, 216, 110),
+    "06": (233, 137, 229),
+    "07": (215, 76, 110),
+    "08": (62, 97, 255),
+    "09": (210, 105, 30),
+    "10": (228, 80, 72),
+    "20": (206, 255, 0),
+}
 
 
 def to_full_path(relative: str) -> str:
@@ -58,6 +75,19 @@ def is_parent_path(full: str, all_paths: Sequence[str]) -> bool:
 
 def dna_ref_name(type_id: str) -> str:
     return DNA_REF_PREFIX + type_id
+
+
+def color_for_layer_path(full: str) -> Tuple[int, int, int]:
+    """依完整圖層路徑回傳顯示 RGB。系統層為黑；其餘取第一個已知代號前綴。"""
+    path = full or ""
+    if is_system_layer(path) or path == DATA_LAYER or path.startswith(DATA_LAYER + "::"):
+        return COLOR_DATA_LAYER
+    color = COLOR_LAYER_MAP["furniture"] if "_Furniture" in path else COLOR_DATA_LAYER
+    for part in path.split("::"):
+        prefix = part.split("_")[0]
+        if prefix in COLOR_LAYER_MAP:
+            return COLOR_LAYER_MAP[prefix]
+    return color
 
 
 def is_exportable_type_layer(full: str, all_paths: Sequence[str]) -> bool:

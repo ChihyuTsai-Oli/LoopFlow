@@ -2,6 +2,7 @@
 """Rhino session 契約與成功／取消／失敗的狀態還原。"""
 from __future__ import annotations
 
+import traceback
 from typing import Callable, Optional, Protocol, Sequence
 
 from loopflow.foundation import results
@@ -51,6 +52,14 @@ class RhinoSession(Protocol):
         ...
 
     def set_layer_user_text(self, path: str, key: str, value: str) -> None:
+        ...
+
+    def set_layer_appearance(
+        self,
+        path: str,
+        rgb: Sequence[int],
+        material_name: Optional[str] = None,
+    ) -> None:
         ...
 
     def object_name(self, object_id: str) -> Optional[str]:
@@ -156,16 +165,24 @@ def run_guarded(
     成功：保留文件 modified（指令可能已寫入資料）。
     取消、失敗、例外：連 modified 一併還原。
     """
-    snapshot = capture_snapshot(session)
+    try:
+        snapshot = capture_snapshot(session)
+    except Exception as exc:
+        return results.failed(
+            "guarded_run",
+            "建立快照時發生例外。\n%s" % exc,
+            command_id=command_id,
+            details={"exception": repr(exc), "traceback": traceback.format_exc()},
+        )
     try:
         outcome = action(session)
     except Exception as exc:
         restore_snapshot(session, snapshot, restore_document_modified=True)
         return results.failed(
             "guarded_run",
-            "執行中發生例外，已還原 Rhino 狀態。",
+            "執行中發生例外，已還原 Rhino 狀態。\n%s" % exc,
             command_id=command_id,
-            details={"exception": repr(exc)},
+            details={"exception": repr(exc), "traceback": traceback.format_exc()},
         )
     if not isinstance(outcome, results.Result):
         restore_snapshot(session, snapshot, restore_document_modified=True)

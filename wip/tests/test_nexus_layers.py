@@ -17,6 +17,8 @@ from loopflow.features.dictionary.layer_paths import (
     DW_PLAN_LAYER,
     LAYER_CONSTRUCTION_KEY,
     LAYER_TYPE_ID_KEY,
+    SYSTEM_LAYERS,
+    color_for_layer_path,
     dna_ref_name,
     to_full_path,
 )
@@ -90,6 +92,23 @@ class LayerSyncTests(unittest.TestCase):
         self.assertIsNone(session.get_object_user_text("model-a", "lf_construction_status"))
         self.assertTrue(session.get_view_state("model-a").selected)
 
+    def test_layer_color_follows_prefix_map(self):
+        self.assertEqual(color_for_layer_path("M3D::00_STR_結構::Beam.樑"), (202, 16, 16))
+        self.assertEqual(color_for_layer_path("M3D::20_DW"), (206, 255, 0))
+        self.assertEqual(color_for_layer_path(SYSTEM_LAYERS[0]), (0, 0, 0))
+
+    def test_sync_applies_color_and_material_name(self):
+        session = _session()
+        catalog = _catalog(_row())
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
+            result = sync_type_layers(session, environ={"LOOPFLOW_WORKFILES_ROOT": raw}, catalog=catalog)
+        self.assertTrue(result.ok, result.message)
+        full = to_full_path("00_STR_結構::Beam.樑")
+        self.assertEqual(session.layer_color(full), (202, 16, 16))
+        self.assertEqual(session.layer_material_name(full), full)
+        self.assertEqual(session.layer_color(SYSTEM_LAYERS[0]), (0, 0, 0))
+        self.assertIsNone(session.layer_material_name(SYSTEM_LAYERS[0]))
+
     def test_existing_layer_keeps_data(self):
         session = _session()
         full = to_full_path("00_STR_結構::Beam.樑")
@@ -103,6 +122,8 @@ class LayerSyncTests(unittest.TestCase):
         self.assertEqual(result.details["kept_type_ids"], ("EX-01",))
         self.assertEqual(session.get_layer_user_text(full, LAYER_CONSTRUCTION_KEY), "Demolished")
         self.assertEqual(session.get_layer_user_text(full, LAYER_TYPE_ID_KEY), "OLD")
+        self.assertEqual(session.layer_color(full), (202, 16, 16))
+        self.assertEqual(session.layer_material_name(full), full)
 
     def test_dna_ref_replaces_and_does_not_accumulate(self):
         session = _session()

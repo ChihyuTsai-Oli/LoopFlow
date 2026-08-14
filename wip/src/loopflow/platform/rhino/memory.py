@@ -128,6 +128,21 @@ class MemorySession:
         self._layers[path]["user_text"][key] = value
         self._modified = True
 
+    def set_layer_appearance(self, path: str, rgb, material_name: Optional[str] = None) -> None:
+        if path not in self._layers:
+            raise KeyError("未知圖層：%s" % path)
+        self._layers[path]["color"] = tuple(int(value) for value in rgb)
+        self._layers[path]["material_name"] = material_name
+        self._modified = True
+
+    def layer_color(self, path: str):
+        layer = self._layers.get(path) or {}
+        return layer.get("color")
+
+    def layer_material_name(self, path: str) -> Optional[str]:
+        layer = self._layers.get(path) or {}
+        return layer.get("material_name")
+
     def _meta(self, object_id: str) -> dict:
         if object_id not in self._object_meta:
             self._object_meta[object_id] = {"name": None, "layer": None, "user_text": {}}

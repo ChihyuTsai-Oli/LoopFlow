@@ -14,6 +14,42 @@ from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
 LIVE_VERIFIED_IN_RHINO = False
 COLOR_SOURCE_BY_LAYER = 0
 COLOR_SOURCE_BY_OBJECT = 1
+# 對齊 1.x VALID_GEOM_TYPES，並納入 SubD。不呼叫可能不存在的 rs.IsExtrusion。
+MODEL_OBJECT_TYPE_VALUES = frozenset(
+    (
+        8,  # Surface
+        16,  # Brep
+        32,  # Mesh
+        4096,  # Instance
+        262144,  # SubD
+        1073741824,  # Extrusion
+    )
+)
+
+
+def rgb_tuple(color) -> Tuple[int, int, int]:
+    """把 Rhino／.NET 顏色或 (r,g,b) 轉成整數 RGB。"""
+    if color is None:
+        return (0, 0, 0)
+    if isinstance(color, (tuple, list)) and len(color) >= 3:
+        return (int(color[0]), int(color[1]), int(color[2]))
+    red = getattr(color, "R", None)
+    green = getattr(color, "G", None)
+    blue = getattr(color, "B", None)
+    if red is not None and green is not None and blue is not None:
+        return (int(red), int(green), int(blue))
+    return (0, 0, 0)
+
+
+def _xy_point(point) -> Optional[Tuple[float, float]]:
+    if point is None:
+        return None
+    if hasattr(point, "X"):
+        return (float(point.X), float(point.Y))
+    try:
+        return (float(point[0]), float(point[1]))
+    except (TypeError, IndexError, ValueError):
+        return None
 
 
 def _load_rhino() -> Tuple[Optional[tuple], Optional[str]]:
@@ -33,7 +69,7 @@ def open_session() -> results.Result:
     _Rhino, rs, sc = loaded
     if sc.doc is None:
         return results.failed("rhino_session", "沒有作用中的 Rhino 文件")
-    session = LiveSession(rs, sc)
+    session = LiveSession(rs, sc, _Rhino)
     return results.ok(
         "rhino_session",
         "已連接 Rhino 文件。live adapter 尚未實機驗證。",
@@ -43,9 +79,10 @@ def open_session() -> results.Result:
 
 
 class LiveSession:
-    def __init__(self, rs, sc) -> None:
+    def __init__(self, rs, sc, rhino=None) -> None:
         self._rs = rs
         self._sc = sc
+        self._rhino = rhino
 
     def iter_object_ids(self, *, include_hidden: bool = True, include_locked: bool = True):
         ids = []
@@ -80,8 +117,7 @@ class LiveSession:
         rs = self._rs
         if not rs.IsObject(object_id):
             return None
-        color = rs.ObjectColor(object_id)
-        rgb = (int(color.R), int(color.G), int(color.B)) if color is not None else (0, 0, 0)
+        rgb = rgb_tuple(rs.ObjectColor(object_id))
         source = rs.ObjectColorSource(object_id)
         return ObjectViewState(
             object_id=str(object_id),
@@ -170,6 +206,42 @@ class LiveSession:
         layer.SetUserString(key, value)
         layer.CommitChanges()
 
+    def set_layer_appearance(self, path: str, rgb, material_name: Optional[str] = None) -> None:
+        if not self.has_layer(path):
+            raise KeyError("未知圖層：%s" % path)
+        color = rgb_tuple(rgb)
+        self._rs.LayerColor(path, color)
+        if not material_name or self._rhino is None:
+            return
+        layer = self._layer_obj(path)
+        if layer is None:
+            return
+        try:
+            import System  # type: ignore
+
+            sys_color = System.Drawing.Color.FromArgb(color[0], color[1], color[2])
+        except Exception:
+            sys_color = color
+        mat_idx = -1
+        for material in self._sc.doc.Materials:
+            if getattr(material, "IsDeleted", False):
+                continue
+            if material.Name == material_name:
+                mat_idx = material.Index
+                break
+        if mat_idx == -1:
+            new_mat = self._rhino.DocObjects.Material()
+            new_mat.Name = material_name
+            try:
+                new_mat.DiffuseColor = sys_color
+                new_mat.ToPhysicallyBased()
+                new_mat.PhysicallyBased.BaseColor = self._rhino.Display.Color4f(sys_color)
+            except Exception:
+                pass
+            mat_idx = self._sc.doc.Materials.Add(new_mat)
+        layer.RenderMaterialIndex = mat_idx
+        layer.CommitChanges()
+
     def object_name(self, object_id: str) -> Optional[str]:
         value = self._rs.ObjectName(object_id)
         if value in (None, ""):
@@ -215,10 +287,36 @@ class LiveSession:
         return bool(self._rs.IsCurve(object_id) and self._rs.IsCurveClosed(object_id))
 
     def curve_polygon(self, object_id: str):
-        if not self._rs.IsCurve(object_id):
+        rs = self._rs
+        if not rs.IsCurve(object_id):
             return None
-        points = self._rs.CurvePoints(object_id) or []
-        return tuple((float(pt.X), float(pt.Y)) for pt in points)
+        points = []
+        curve = None
+        try:
+            curve = rs.coercecurve(object_id)
+        except Exception:
+            curve = None
+        if curve is not None:
+            try:
+                ok, polyline = curve.TryGetPolyline()
+                if ok and polyline:
+                    points = [_xy_point(pt) for pt in polyline]
+            except Exception:
+                points = []
+            if len([pt for pt in points if pt is not None]) < 3:
+                try:
+                    params = curve.DivideByCount(32, True)
+                    if params:
+                        points = [_xy_point(curve.PointAt(t)) for t in params]
+                except Exception:
+                    points = []
+        if len([pt for pt in points if pt is not None]) < 3:
+            raw = rs.CurvePoints(object_id) or []
+            points = [_xy_point(pt) for pt in raw]
+        cleaned = tuple(pt for pt in points if pt is not None)
+        if len(cleaned) < 3:
+            return None
+        return cleaned
 
     def is_model_object(self, object_id: str) -> bool:
         rs = self._rs
@@ -227,16 +325,17 @@ class LiveSession:
         name = rs.ObjectName(object_id) or ""
         if str(name).startswith("DNA_REF_"):
             return False
-        return bool(
-            rs.IsBlockInstance(object_id)
-            or rs.IsBrep(object_id)
-            or rs.IsMesh(object_id)
-            or rs.IsExtrusion(object_id)
-            or rs.IsSurface(object_id)
-        )
+        try:
+            type_value = int(rs.ObjectType(object_id))
+        except (TypeError, ValueError, AttributeError):
+            return False
+        return type_value in MODEL_OBJECT_TYPE_VALUES
 
     def object_bbox(self, object_id: str):
-        box = self._rs.BoundingBox(object_id)
+        try:
+            box = self._rs.BoundingBox(object_id)
+        except Exception:
+            return None
         if not box:
             return None
         xs = [float(pt.X) for pt in box]
