@@ -50,7 +50,7 @@ flowchart LR
 | `LF_Anchor_Frame.py` | 產生圖面 anchor | 依賴 layer 與後續 Layout 流程 |
 | `LF_Extract_CP.py` | 建立剖面／可見線輸出 | 依賴 layer、顏色與 Rhino 狀態 |
 | `LF_Duplicate_Layout.py` | 複製 Layout | 依賴命名、Tag 與 Registry mapping |
-| `LF_Cabinet_Suite.py` | 產生櫃體及 `_CB.*` | 1.x 現況保留供 Cabinet fixtures；`_CB.*` 語意與所有權延後到 Cabinet 工作軌，不在核心契約先固定 |
+| `LF_Cabinet_Suite.py` | 產生櫃體及 `_CB.*` | 依 ED-18 不屬於 2.0；`_CB.*` 四欄已從字典移除，1.x 現況只保留作 migration 辨識 |
 | `LF_2D_DW_Gen.py` | 產生門窗 2D | 依賴 `20_DW` 特例與 2D layer |
 | `LF_2D_Cabinet_Gen.py` | 產生櫃體 2D | 獨立 2D 幾何工具；不依賴 Cabinet Suite 或 `_CB.*` |
 | `LF_2D_Shelf_Gap.py` | 產生層板間隙線 | 獨立 2D 幾何工具；只依使用者選取幾何、輸入與 2D layer |
@@ -65,13 +65,13 @@ flowchart LR
 - 資料列：92；`__Rhino Layer` 與 `_03_ID編號` 都沒有重複
 - 欄位：18；沒有公式
 - `_01`、`_05`、`_06`、`_07`、`_09`、`_11`、`_12` 與四個 `_CB` 欄目前全部留白
-- 欄名採中文，例如 `_01_空間名稱`、`_02_建構狀態`、`_CB.01_板材類型`
-- `_13_備註` 有 91 列為 `我是備註，UCCU`；`20_DW` 為正式操作說明
+- 欄名採中文，例如 `_01_空間名稱`、`_02_建構狀態`、`_03_ID編號`
+- `_13_備註` 原有 91 列為 `我是備註，UCCU`，依 ED-10 已於 2026-08-14 改為 `(手動輸入備註)`；`20_DW` 那列是正式操作說明，原樣保留
 - 單位值實際包含 `cm`、`mm`、`m3`、`坪`、`座`、`才`、`樘`、`片`、`組`、`台`
 - 沒有發現尾端空白值
-- 高程基準實際包含 `BH`、`TH`、`BC`、`CH`、`TH/BH`
+- 1.x 高程基準的合法值為 `BH`、`TH`、`BC`、`CH`、`TH/BH`（`LF_Nexus.py:179`）；現行字典只用到前四種，`TH/BH` 已退場
 
-### 18 欄的現行所有權
+### 現行欄位所有權（1.x 18 欄；現行字典為移除 `_CB.*` 後的 14 欄）
 
 | 欄位 | 現行來源／寫入者 | 主要 consumer | 現況問題 |
 |---|---|---|---|
@@ -88,11 +88,8 @@ flowchart LR
 | `_10_高程基準` | Dictionary | Nexus、Infuser | 同時承擔幾何規則與顯示標籤；`CH` 取底面，非 Block 的 `BC` 靜默退回底面 |
 | `_11_高程計算` | Nexus | Infuser | 是帶 `+`／`±0`／`TH / BH` 的顯示字串，不是單純數值 |
 | `_12_UUID` | Nexus | Push、Grab、Laser、Infuser、TAG-O | 重複時原件與複本都可能換號並切斷 Tag；需 mapping／rollback |
-| `_13_備註` | Dictionary 預設；物件既有值受保護 | 無已知行為 consumer | 91 個 layer 的預設為 `我是備註，UCCU`，需確認是否只是測試字串 |
-| `_CB.01_板材類型` | Cabinet；Nexus 條件保留或清為 `-` | 無已知行為 consumer | Cabinet layer 判定與實際生成位置可能不同 |
-| `_CB.02_長度L` | Cabinet；Nexus 條件保留或清為 `-` | 無已知行為 consumer | 現況依尺寸排序，丟失已有 local direction |
-| `_CB.03_寬度W` | Cabinet；Nexus 條件保留或清為 `-` | 無已知行為 consumer | 同上 |
-| `_CB.04_厚度T` | Cabinet；Nexus 條件保留或清為 `-` | 無已知行為 consumer | 同上 |
+| `_13_備註` | Dictionary 預設；物件既有值受保護 | 無已知行為 consumer | 原為 91 列 `我是備註，UCCU`；依 ED-10 已於 2026-08-14 改為提示字串 `(手動輸入備註)`，`20_DW` 的真操作說明保留 |
+| `_CB.01`～`_CB.04` | Cabinet；Nexus 條件保留或清為 `-` | 無已知行為 consumer | **已於 2026-08-14 從字典移除**（ED-18）；僅作舊專案 migration 辨識 |
 
 完整 producer／consumer、非 Dictionary key 與無 consumer 項目，以整合後的 `資料生態藍圖.md` 為準。
 
@@ -151,8 +148,8 @@ flowchart LR
 | CF-17 | `Layer to Dict` 讀 layer UserStrings，不是指南所稱 object UserText | 反向同步名稱容易造成錯誤期待 |
 | CF-18 | 反向匯出使用 `[NEW]`、`[DELETED]`、`[MODIFIED]`、`[EXCLUDED]` 混入主鍵 | 主鍵同時承擔狀態顯示，不利機器驗證 |
 | CF-19 | `_02`、`_09`、`_13` 以 prefix 保護，只驗存在或沿用物件值 | Dictionary 更新後無明確的繼承、覆寫、重設方式 |
-| CF-20 | 中文版 `_13` 有 91 列為 `我是備註，UCCU` | 可能把測試字串寫入大量正式物件與 Registry |
-| CF-21 | Cabinet 產物可在 current layer，BOM 更新卻只處理 `04_CB`；Nexus 也靠 layer 判定 `_CB` | 已延後：Cabinet／BOM 移出主鏈，2.0 Nexus 不再處理 `_CB.*`，本衝突隨之離開核心資料鏈 |
+| CF-20 | 中文版 `_13` 曾有 91 列為 `我是備註，UCCU` | **已處理**：2026-08-14 改為提示字串 `(手動輸入備註)`，不再是誤留的測試字串；`_13` 屬 WHITE_LIST，只寫入尚未填寫的物件 |
+| CF-21 | Cabinet 產物可在 current layer，BOM 更新卻只處理 `04_CB`；Nexus 也靠 layer 判定 `_CB` | **已消解**：`_CB.*` 四欄已從字典移除、Cabinet／BOM 不屬 2.0，Nexus 不再有依 layer 清空製作資料的分支 |
 | CF-22 | Infuser 把 `_03` 第一個 `-` 拆成兩個 Tag 值 | 一般 ID 若包含連字號會被誤解 |
 | CF-23 | Tag lock、warning color 與缺值規則分散；正式 key 目前可共用，但非 `x/X` 值會靜默未鎖，locked Tag 又停止 health／顏色更新 | 重構單一 Tagger 時可能破壞其他 Tag 流程或讓使用者誤以為已保護 |
 | CF-24 | Dictionary 沒有可執行的 `schema_version`、型別、允許值與 strict validator | 目前只能到執行中才發現格式問題 |

@@ -322,7 +322,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <ul><li>2.0 主鏈的 Nexus、Registry、Tag 與 Health <strong>都不處理 <code>_CB.*</code></strong>，也不得因為 Cabinet 而增加 layer 判定分支。</li><li>櫃體在主鏈裡就是一般 3D 幾何，走與其他模型物件相同的 Type、Space、高程與 ID 規則。</li><li>Cabinet 重建時另立工作軌，屆時再決定製作資料要放在哪一層、由誰擁有，以及是否需要獨立的 BOM 消費端。</li></ul>
 <p>以下 1.x 事實<strong>只作為該工作軌未來的輸入</strong>，不影響現在的主鏈設計：</p>
 <div class="tw"><table><thead><tr><th>1.x 事實</th><th>來源</th><th>說明</th></tr></thead><tbody><tr><td>Suite 產物可在任何 layer，都會寫入 <code>_CB.*</code></td><td><code>run_cabinet_gen</code> 不檢查 layer</td><td>錄影說明的「任何 layer 都可以」是對的</td></tr><tr><td>手工櫃體要用 BOM Update 必須在 <code>M3D::04_CB</code>；可安心全選，非櫃體 layer 會被忽略</td><td><code>run_bom_updater</code> 只處理 <code>04_CB</code></td><td>全選是安全操作</td></tr><tr><td><code>TagTrigger</code> 會把非 <code>04_CB</code> layer 上物件的 <code>_CB.*</code> 清成 <code>-</code></td><td><code>LF_Nexus.py:412-416</code></td><td>所以「任何 layer 都可以」只在跑 TagTrigger 之前成立</td></tr><tr><td>板件之間 1 mm 間隙（<code>gap_render = 0.1</code> cm）是刻意保留的 render gap</td><td><code>LF_Cabinet_Suite.py:318</code></td><td>不是容差</td></tr><tr><td>BOM 以 <code>+0.2</code> cm 還原 render gap，但實際是拿 <code>±0.2</code> 去比對既有 UserText 值猜哪一邊有間隙</td><td><code>LF_Cabinet_Suite.py:652-665</code></td><td>舊值缺失或被人工改過時可能補在錯的邊</td></tr></tbody></table></div>
-<p>前三項在 1.x 構成三方衝突（產生不限 layer、BOM 限 <code>04_CB</code>、Nexus 依 layer 清空）。既然 Cabinet 已移出主鏈，2.0 的處理方式是<strong>讓 Nexus 不再碰 <code>_CB.*</code></strong>，衝突隨之消失；如何保存製作資料留給 Cabinet 工作軌決定。</p>
+<p>前三項在 1.x 構成三方衝突（產生不限 layer、BOM 限 <code>04_CB</code>、Nexus 依 layer 清空）。既然 Cabinet 已移出主鏈，2.0 的處理方式是<strong>讓 Nexus 不再碰 <code>_CB.*</code></strong>，衝突隨之消失；<code>_CB.01</code>～<code>_CB.04</code> 已於 2026-08-14 從字典移除，如何保存製作資料留給日後的獨立建模工具／外掛決定。</p>
 <h2 id="從開案到交付的一條線">從開案到交付的一條線</h2>
 <pre class="code" data-lang="text"><code>2.0 開案檢查
 → Nexus Dict. to Layer（2.0：Validate → Type Sync）
@@ -365,7 +365,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <p>依 ED-01，<code>_03_ID編號</code> 在載入時就拆成 <code>type_category</code> + <code>type_sequence</code>（Excel 仍維持單欄，維護方式不變）。於是多出一條免費檢查：<code>WL-14</code> 必須位於 <code>02_Wall_牆面</code> 底下；有人把它放進 <code>03_Floor_地坪</code> 就會被擋下。現況沒有任何機制會發現這件事。</p>
 <p><strong>指令 <code>LF_Type_Sync</code></strong> → 依 Type Catalog 建立或更新 Rhino layer，把 <code>type_id</code> 寫成 layer 的正式屬性 → 使用者得到可建模的 layer 樹。</p>
 <p>對應 1.0 的 <code>LF_Nexus &gt; Dict. to Layer</code>。與現況的差別（依 ECO-10 與 ED-11）：</p>
-<ul><li>不再每次新增 92 條 <code>DNA_REF_</code> 參考線。若確認這些線有用途，改由獨立的 <code>LF_Type_Sample</code> 產生，重跑時<strong>先清除前次產物</strong>再重建。</li><li>材質建立與 layer 建立分成兩個明確動作，不是隱藏副作用。</li><li>不執行 <code>ZoomExtents</code>，不改變使用者視圖。</li></ul>
+<ul><li><code>DNA_REF_</code> 參考線依 ED-11 保留，用途是讓每個 Dictionary 圖層在場景中至少有一個物件、避免空圖層被 Purge。重跑必須依穩定 Type ID 更新或取代既有參考線，不得每次累積 92 條。它們是 curve，不在資料化的掃描型別內（見階段 5），所以不會變成 Registry 裡的模型物件。</li><li>材質建立與 layer 建立分成兩個明確動作，不是隱藏副作用。</li><li>不執行 <code>ZoomExtents</code>，不改變使用者視圖。</li></ul>
 <h3 id="選用支線-Layer-to-Dict-3D-Excel">選用支線：<code>Layer to Dict.</code>（3D → Excel）</h3>
 <p>1.0 允許使用者在建模過程調整 layer 後，反向匯出目前狀態到 Excel 人工核對。這是<strong>選用維護支線</strong>，不是每次發布的前置。2.0 保留這個意圖，但輸出必須是差異／候選檔：不把 <code>[NEW]</code>、<code>[DELETED]</code> 等狀態混進主鍵欄，也不未經確認覆寫正式 Dictionary。</p>
 <blockquote><p><strong>使用者介入</strong>：決定何時同步 Dictionary、哪些 layer 變化要正式納入 Type Catalog。</p><p><strong>安全停點</strong>：layer 建好即可存檔換機，不必接著跑完流程。</p></blockquote>
@@ -399,7 +399,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <h2 class="stage" id="階段-6-發布-Registry-3D-文件-exchange"><span class="num">6</span>發布 Registry（3D 文件 → <code>exchange/</code>）</h2>
 <p><strong><code>LF_Publish_Registry</code></strong> → 寫入 <code>registry.pending.json</code> → validate → atomic replace 成 <code>registry.current.json</code>，前一版保留為 <code>registry.previous.json</code> → 得到 revision <code>42</code>。</p>
 <p>對應 1.0 的 <code>LF_Push_3D_to_JSON</code>。三個差異：</p>
-<ul><li><strong>只發布有 consumer 的欄位</strong>。現況 18 欄裡有 11 欄沒有任何行為 consumer，卻全部寫進 Registry 成為事實上的公開 API。</li><li><strong>不建立沒有 consumer 的區段</strong>。現況 <code>Layout_Map</code> 只寫不讀、<code>Tag_Links</code> 連呼叫者都沒有。</li><li><strong>Reader 永不寫入</strong>。現況 <code>RegistryCenter</code> 的 constructor 會在檔案不存在時建立空骨架，若 2D 文件不在同資料夾，會建出空 Registry 並把全部 Tag 標成 broken。</li></ul>
+<ul><li><strong>只發布有 consumer 的欄位</strong>。1.x 的 18 欄裡有 11 欄沒有任何行為 consumer，卻全部寫進 Registry 成為事實上的公開 API；字典移除 <code>_CB.*</code> 後剩 14 欄、7 欄無 1.x consumer，其中 <code>_08</code>／<code>_09</code> 已由 ED-09 取得 2.0 的估算報表 consumer。</li><li><strong>不建立沒有 consumer 的區段</strong>。現況 <code>Layout_Map</code> 只寫不讀、<code>Tag_Links</code> 連呼叫者都沒有。</li><li><strong>Reader 永不寫入</strong>。現況 <code>RegistryCenter</code> 的 constructor 會在檔案不存在時建立空骨架，若 2D 文件不在同資料夾，會建出空 Registry 並把全部 Tag 標成 broken。</li></ul>
 <blockquote><p><strong>使用者介入</strong>：存檔與發布是兩件事；只有確認模型到了可出圖的狀態才發布。</p><p><strong>安全停點</strong>：這是最重要的跨文件／跨電腦停點。新發布失敗時，2D 端繼續使用 last-good revision。</p></blockquote>
 <h2 class="stage" id="階段-7-剖面與-View-註冊-3D-文件"><span class="num">7</span>剖面與 View 註冊（3D 文件）</h2>
 <p><strong>Rhino 內建 <code>! _ClippingSections</code></strong> → 使用者決定剖切位置、方向與範圍。 <strong>Rhino 內建 <code>! _ClippingDrawings</code></strong> → 產生 linked Generated Drawing。</p>

@@ -112,7 +112,7 @@ wip/
 - Manifest 明列 template ID、family、role、binding mode、欄位 owner、template version、缺值行為與 migration mapping。
 - `TAG_DW` 在 2.0 是純手動 Tag，Sync 與 unbound Health 不處理其欄位；1.x 的 DW 名稱解析只供 migration 參考。
 - 正式 `lock_state` 使用 typed value；保留「凍結內容與重新綁定」的意圖，但 Health 仍唯讀檢查來源。
-- 家具 `FF-01`、圖框 `03-A3 Scale` 與 `title_frame` role 依 ED-14～16 裁決後才固定 canonical schema。
+- 家具 `FF-01`（同款可共用名稱、`source_type: block_name`、不判 orphaned）、圖框 `03-A3 Scale`（維持人工，canonical ID 與圖幅／排序分離）與 `title_frame` role（未宣告即不寫入）已由 ED-14～16 裁決，可據以固定 canonical schema。
 
 ### Project path／環境
 
@@ -147,7 +147,7 @@ wip/
 4. **實機驗收關卡**：隔離 Rhino 8 與測試 `.3dm` 通過正常、取消、失敗、中斷、重跑、人工修改保護與 last-good 驗證。
 5. **Migration／發布關卡**：舊專案 scanner／converter／rollback、完整安裝套件、RC 與一次切換都通過後，才合入 `main` 發布 2.0。
 
-各關卡內的任務 ID、相依、分支 scope、具體完成檢查與目前波次全部以 `開發任務與路徑.md` 為準。Cabinet／BOM 維持延後工作軌，三個 2D Generator 維持獨立工具；兩者都不得反向污染核心契約。
+各關卡內的任務 ID、相依、分支 scope、具體完成檢查與目前波次全部以 `開發任務與路徑.md` 為準。Cabinet／BOM 依 ED-18 不屬於 LoopFlow 2.0（`_CB.*` 欄位已從字典移除），三個 2D Generator 維持獨立工具；兩者都不得反向污染核心契約。
 
 ## Git 與環境隔離
 
@@ -197,7 +197,7 @@ RHP 是 L8 包裝工作，不是當前功能。需重新驗證 Rhino Script Proj
 - Registry／installer P0 安全要求已完整實作於 2.0；若另有 1.x hotfix，須獨立記錄。
 - Tag、Dictionary、space、Registry、path、version 各有唯一來源。
 - 所有指令經 command catalog；舊 `.py` 只剩入口。
-- `LF_Nexus.py` 不再混合 UI、規則、I/O 與流程；`LF_Cabinet_Suite.py` 的相同拆分要求只在 Cabinet 工作軌啟動時適用，是否屬 2.0 首發完成條件依 ED-18。
+- `LF_Nexus.py` 不再混合 UI、規則、I/O 與流程；`LF_Cabinet_Suite.py` 依 ED-18 不屬於 2.0，相同的拆分要求只在它日後成為獨立建模工具／外掛時才適用。
 - Rhino 8 package import 或 build 備案通過實機驗證。
 - `main` 與開發環境隔離，`v1.0.0` 可完整回復。
 - 延後構想保留於文件，但未混入 2.0 核心範圍。

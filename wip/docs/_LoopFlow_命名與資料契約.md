@@ -105,7 +105,7 @@ provenance_state
 ## Dictionary 定義工作
 
 1. 盤點 `LoopFlow_Dictionary.xlsx` 的所有欄、版本列、型別與允許值。
-2. 對照 `Dictionary_GUIDE_TW.md`、Nexus、Tagger、Registry 與 2D consumer。Cabinet／BOM 已排除在主工作流程外，`_CB.*` 四欄不納入 2.0 主鏈 schema，改由 Cabinet 工作軌自行定義。
+2. 對照 `Dictionary_GUIDE_TW.md`、Nexus、Tagger、Registry 與 2D consumer。Cabinet／BOM 依 ED-18 不屬於 LoopFlow 2.0，`_CB.01`～`_CB.04` 已於 2026-08-14 從字典移除，2.0 schema 不含這組欄位。字典保留的 `04_CB_櫃體` 是櫃體材質分類，屬一般 Type，不是 BOM 資料。
 3. 找出同義欄位、中英文混用、prefix 推導、空值與預設值衝突。
 4. 定義 2.0 schema：欄位名稱、顯示名稱、程式 key、型別、必填、驗證與版本。
 5. 建立最小與完整 fixtures，包含合法、缺值、重複、未知欄位與舊版資料。

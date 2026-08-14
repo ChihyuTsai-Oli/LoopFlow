@@ -108,7 +108,7 @@ LF_2D_Shelf_Gap.py
 LF_2D_DW_Gen.py
 ```
 
-`LF_Cabinet_Suite.py` 與 BOM 是延後工作軌，不列入核心主鏈測試按鈕。它是否必須包含在 2.0 首次正式安裝包，仍待 ED-18 裁決：
+`LF_Cabinet_Suite.py` 與 BOM 依 ED-18 **不屬於 LoopFlow 2.0**，不列入核心主鏈測試按鈕，也不進 2.0 安裝包；1.x 版本仍可照舊使用。未來若需要，改為單純建模工具或獨立外掛：
 
 ```text
 LF_Cabinet_Suite.py
