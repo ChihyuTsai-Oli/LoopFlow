@@ -16,7 +16,13 @@ if str(SRC) not in sys.path:
 from loopflow.features.dictionary import schema
 from loopflow.features.dictionary.layer_paths import to_full_path
 from loopflow.features.dictionary.loader import load_from_table
-from loopflow.features.dimension.frame import FRAME_KEY, dump_frame, identity_frame, validate_frame
+from loopflow.features.dimension.frame import (
+    FRAME_KEY,
+    axes_from_plane,
+    dump_frame,
+    identity_frame,
+    validate_frame,
+)
 from loopflow.features.dimension.measure import apply_dimensions, scan_dimensions
 from loopflow.features.dimension.quantity import CAI_CM2, PING_FROM_M2, evaluate_quantity
 from loopflow.features.project.console import PROJECT_ID_KEY, SCHEMA_ID_KEY, SCHEMA_VERSION_KEY
@@ -125,6 +131,8 @@ class LocalFrameTests(unittest.TestCase):
                     session.set_geometry_kind("obj", "extrusion")
                 elif geom == "planar_curve":
                     session.set_geometry_kind("obj", "planar_curve")
+                elif geom == "oriented_box":
+                    session.set_geometry_kind("obj", "oriented_box")
                 elif geom == "closed_box":
                     session.set_geometry_kind("obj", "closed_box")
                 stored = case.get("stored_frame")
@@ -196,6 +204,33 @@ class LocalFrameTests(unittest.TestCase):
         self.assertEqual(result.status, "blocked")
         self.assertIn("no_unique_plane", result.blocking)
         self.assertIsNone(session.get_object_user_text("box", FRAME_KEY))
+
+    def test_oriented_box_apply_writes(self):
+        session = _session()
+        _add(session, "slab", kind="oriented_box", bbox=((0, 0, 0), (90, 40, 12)))
+        catalog = _catalog(_row())
+        with tempfile.TemporaryDirectory(prefix="loopflow-c05-obox-") as raw:
+            result = apply_dimensions(session, catalog=catalog, environ={"LOOPFLOW_WORKFILES_ROOT": raw})
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("slab", "lf_dimension_w"), "90")
+        self.assertEqual(session.get_object_user_text("slab", "lf_dimension_d"), "40")
+        self.assertEqual(session.get_object_user_text("slab", "lf_dimension_h"), "12")
+        stored = json.loads(session.get_object_user_text("slab", FRAME_KEY))
+        self.assertEqual(stored["derivation_method"], "oriented_box")
+
+    def test_vertical_plane_puts_thickness_on_depth(self):
+        aligned = axes_from_plane(
+            (0, 0, 0),
+            (0, 1, 0),
+            (0, 0, 1),
+            (1, 0, 0),
+            normal_is_depth=True,
+        )
+        self.assertIsNotNone(aligned)
+        _origin, x_axis, y_axis, z_axis = aligned
+        self.assertAlmostEqual(z_axis[2], 1.0)
+        self.assertAlmostEqual(abs(y_axis[0]), 1.0)
+        self.assertLess(abs(x_axis[2]), 1e-6)
 
 
 if __name__ == "__main__":

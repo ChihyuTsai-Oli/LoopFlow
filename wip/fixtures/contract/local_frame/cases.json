@@ -28,6 +28,12 @@
       "reason": "no_unique_plane"
     },
     {
+      "id": "oriented-box-derive",
+      "geometry": "oriented_box",
+      "expect": "derive",
+      "derivation_method": "oriented_box"
+    },
+    {
       "id": "reuse-stored-frame",
       "geometry": "closed_box",
       "stored_frame": {

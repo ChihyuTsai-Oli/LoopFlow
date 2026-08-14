@@ -12,18 +12,20 @@ FRAME_KEY = "lf_local_frame"
 DIM_W_KEY = "lf_dimension_w"
 DIM_D_KEY = "lf_dimension_d"
 DIM_H_KEY = "lf_dimension_h"
-METHODS = ("block_insertion", "extrusion_base", "unique_plane")
+METHODS = ("block_insertion", "extrusion_base", "unique_plane", "oriented_box")
 ISSUE_NO_PLANE = "no_unique_plane"
 ISSUE_CORRUPT = "corrupt_frame"
 ISSUE_NO_BBOX = "bbox_unavailable"
 ORTHO_EPS = 1e-6
 UNIT_EPS = 1e-6
+WORLD_Z = (0.0, 0.0, 1.0)
 
 DERIVE_KIND = {
     "block_instance": "block_insertion",
     "extrusion": "extrusion_base",
     "planar_curve": "unique_plane",
     "planar_surface": "unique_plane",
+    "oriented_box": "oriented_box",
 }
 
 
@@ -115,6 +117,62 @@ def identity_frame(method: str) -> dict:
         "z_axis": [0.0, 0.0, 1.0],
         "derivation_method": method,
     }
+
+
+def _cross(a, b) -> Tuple[float, float, float]:
+    return (
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    )
+
+
+def _flip(vector):
+    return (-vector[0], -vector[1], -vector[2])
+
+
+def axes_from_plane(origin, x_axis, y_axis, z_axis, *, normal_is_depth: bool = False):
+    """組成正交單位軸。高對齊世界垂直軸；唯一平面時深對齊法線。"""
+    origin_v = _vec(origin)
+    ux, uy, uz = _unit(_vec(x_axis)), _unit(_vec(y_axis)), _unit(_vec(z_axis))
+    if ux is None or uy is None or uz is None:
+        return None
+    if normal_is_depth:
+        normal = uz
+        if abs(_dot(normal, WORLD_Z)) > 0.999:
+            z_out = normal if _dot(normal, WORLD_Z) > 0 else _flip(normal)
+            y_out = uy
+            x_out = _unit(_cross(y_out, z_out)) or ux
+            y_out = _unit(_cross(z_out, x_out))
+            x_out = _unit(_cross(y_out, z_out))
+        else:
+            z_out = WORLD_Z
+            y_out = normal
+            x_out = _unit(_cross(y_out, z_out))
+            if x_out is None:
+                x_out = ux
+            y_out = _unit(_cross(z_out, x_out))
+            x_out = _unit(_cross(y_out, z_out))
+        if x_out is None or y_out is None:
+            return None
+        return (origin_v, x_out, y_out, z_out)
+    axes = (ux, uy, uz)
+    idx = max(range(3), key=lambda i: abs(_dot(axes[i], WORLD_Z)))
+    z_out = axes[idx]
+    if _dot(z_out, WORLD_Z) < 0:
+        z_out = _flip(z_out)
+    remaining = [axes[i] for i in range(3) if i != idx]
+    x_out = remaining[0]
+    y_out = _unit(_cross(z_out, x_out))
+    if y_out is None:
+        x_out = remaining[1]
+        y_out = _unit(_cross(z_out, x_out))
+    if y_out is None:
+        return None
+    x_out = _unit(_cross(y_out, z_out))
+    if x_out is None:
+        return None
+    return (origin_v, x_out, y_out, z_out)
 
 
 def frame_from_axes(origin, x_axis, y_axis, z_axis, method: str) -> Optional[dict]:

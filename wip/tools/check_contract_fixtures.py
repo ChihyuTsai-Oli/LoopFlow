@@ -230,6 +230,10 @@ def check_local_frame() -> None:
             got = "reuse" if frame_ok(stored) else "block"
         elif case.get("fallback") == "world_bbox":
             got = "block"
+        elif geom == "oriented_box":
+            got = "derive"
+            if case.get("derivation_method") != "oriented_box":
+                fail("local_frame %s method 錯誤" % cid)
         elif geom == "closed_box":
             got = "block"
         elif geom == "block_instance":

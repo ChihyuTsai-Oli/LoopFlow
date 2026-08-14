@@ -295,6 +295,33 @@ class ConsoleMenuTests(unittest.TestCase):
             self.assertEqual(session.get_object_user_text("box", "lf_space_id"), "EXT")
             self.assertIsNone(session.get_object_user_text("box", FRAME_KEY))
 
+    def test_apply_oriented_box_writes_dimensions(self):
+        from loopflow.features.dictionary.layer_paths import to_full_path
+        from loopflow.features.dimension.frame import FRAME_KEY
+
+        full = to_full_path("00_STR_結構::Beam.樑")
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx06-obox-") as raw:
+            root = Path(raw)
+            _write_dictionary(root)
+            session = _session()
+            session.ensure_layer(full)
+            session.set_layer_user_text(full, "lf_type_id", "EX-01")
+            session.add_object("slab", layer=full)
+            session.set_geometry_kind("slab", "oriented_box")
+            session.set_bbox("slab", (0, 0, 0), (90, 40, 12))
+            applied = open_console(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
+                step="scan_apply_verify",
+                identity_action="apply",
+            )
+            self.assertTrue(applied.ok, applied.message)
+            self.assertIn("尺寸", applied.message)
+            self.assertNotIn("尺寸未寫入", applied.message)
+            self.assertEqual(session.get_object_user_text("slab", "lf_dimension_w"), "90")
+            self.assertEqual(session.get_object_user_text("slab", "lf_dimension_h"), "12")
+            self.assertIsNotNone(session.get_object_user_text("slab", FRAME_KEY))
+
 
 if __name__ == "__main__":
     unittest.main()

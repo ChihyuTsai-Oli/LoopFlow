@@ -258,6 +258,7 @@ class MemorySession:
             "extrusion": "extrusion_base",
             "planar_curve": "unique_plane",
             "planar_surface": "unique_plane",
+            "oriented_box": "oriented_box",
         }.get(kind)
         if method is None:
             return None

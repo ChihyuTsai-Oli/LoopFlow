@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import Optional, Tuple
 
+from loopflow.features.dimension.frame import axes_from_plane
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import capture_snapshot, restore_snapshot
 from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
@@ -389,7 +390,6 @@ class LiveSession:
                     return "planar_surface"
             except Exception:
                 pass
-            return "closed_box"
         if type_value == 16:
             try:
                 brep = rs.coercebrep(object_id)
@@ -399,8 +399,9 @@ class LiveSession:
                         return "planar_surface"
             except Exception:
                 pass
-            return "closed_box"
-        if type_value == 32:
+        if type_value in (8, 16) and self._try_oriented_box(object_id) is not None:
+            return "oriented_box"
+        if type_value in (8, 16, 32):
             return "closed_box"
         if type_value == 4:
             try:
@@ -410,6 +411,42 @@ class LiveSession:
                 pass
         return None
 
+    def _try_oriented_box(self, object_id: str):
+        rs = self._rs
+        Rhino = self._rhino
+        try:
+            brep = rs.coercebrep(object_id)
+            if brep is None:
+                return None
+            box = None
+            try:
+                ok, box = brep.TryGetBox()
+                if not ok:
+                    box = None
+            except TypeError:
+                if Rhino is None:
+                    return None
+                candidate = Rhino.Geometry.Box()
+                if brep.TryGetBox(candidate):
+                    box = candidate
+            except Exception:
+                box = None
+            if box is None:
+                return None
+            plane = getattr(box, "Plane", None)
+            if plane is None:
+                return None
+            aligned = axes_from_plane(
+                plane.Origin,
+                plane.XAxis,
+                plane.YAxis,
+                plane.ZAxis,
+                normal_is_depth=False,
+            )
+            return aligned
+        except Exception:
+            return None
+
     def derive_local_frame(self, object_id: str):
         kind = self.geometry_kind(object_id)
         method = {
@@ -417,6 +454,7 @@ class LiveSession:
             "extrusion": "extrusion_base",
             "planar_curve": "unique_plane",
             "planar_surface": "unique_plane",
+            "oriented_box": "oriented_box",
         }.get(kind or "")
         if method is None:
             return None
@@ -457,6 +495,8 @@ class LiveSession:
                     (float(vy.X), float(vy.Y), float(vy.Z)),
                     (float(vz.X), float(vz.Y), float(vz.Z)),
                 )
+            if kind == "oriented_box":
+                return self._try_oriented_box(object_id)
             plane = None
             if kind == "extrusion":
                 geom = rs.coercegeometry(object_id)
@@ -480,15 +520,21 @@ class LiveSession:
                         plane = None
             if plane is None:
                 return None
-            origin = plane.Origin
-            x_axis = plane.XAxis
-            y_axis = plane.YAxis
-            z_axis = plane.ZAxis
+            aligned = axes_from_plane(
+                plane.Origin,
+                plane.XAxis,
+                plane.YAxis,
+                plane.ZAxis,
+                normal_is_depth=kind in ("planar_curve", "planar_surface"),
+            )
+            if aligned is None:
+                return None
+            origin, x_axis, y_axis, z_axis = aligned
             return (
-                (float(origin.X), float(origin.Y), float(origin.Z)),
-                (float(x_axis.X), float(x_axis.Y), float(x_axis.Z)),
-                (float(y_axis.X), float(y_axis.Y), float(y_axis.Z)),
-                (float(z_axis.X), float(z_axis.Y), float(z_axis.Z)),
+                (float(origin[0]), float(origin[1]), float(origin[2])),
+                (float(x_axis[0]), float(x_axis[1]), float(x_axis[2])),
+                (float(y_axis[0]), float(y_axis[1]), float(y_axis[2])),
+                (float(z_axis[0]), float(z_axis[1]), float(z_axis[2])),
             )
         except Exception:
             return None
