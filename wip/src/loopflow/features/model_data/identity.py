@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""物件 ID 與 Type 資料化。Scan 不寫入；Apply 不寫 Space／高程／尺寸／quantity。"""
+"""物件 ID 與 Type 資料化。Scan 不寫入；Apply 不寫 Space／高程。"""
 from __future__ import annotations
 
 import re
@@ -24,6 +24,7 @@ from loopflow.foundation.usertext import (
     TYPE_CATEGORY_KEY,
     TYPE_ID_KEY,
     TYPE_SEQUENCE_KEY,
+    clear_stale_object_text,
     read_text,
     write_text,
 )
@@ -295,6 +296,7 @@ def apply_identity(
             write_text(current, rhino_id, TYPE_ID_KEY, record.type_id)
             write_text(current, rhino_id, TYPE_CATEGORY_KEY, record.type_category)
             write_text(current, rhino_id, TYPE_SEQUENCE_KEY, record.type_sequence)
+            clear_stale_object_text(current, rhino_id)
             if not read_text(current, rhino_id, CONSTRUCTION_KEY) and record.construction_default:
                 write_text(current, rhino_id, CONSTRUCTION_KEY, record.construction_default)
             if not read_text(current, rhino_id, REMARKS_KEY) and record.remarks_default:
@@ -319,7 +321,7 @@ def apply_identity(
                 command_id=command_id,
                 details=payload,
             )
-        message = "已 Apply %s 個物件的 ID／Type。未寫 Space／高程／尺寸。不可發布。" % len(applied)
+        message = "已 Apply %s 個物件的 ID／Type。未寫 Space／高程。不可發布。" % len(applied)
         if remaining:
             return results.ok_with_warnings(
                 "apply_identity",
@@ -370,7 +372,7 @@ def verify_identity(
         )
     return results.ok(
         "verify_identity",
-        "Identity Verify 通過。Space／高程／尺寸尚未資料化，不可發布。",
+        "Identity Verify 通過。Space／高程尚未資料化，不可發布。",
         command_id=command_id,
         details=details,
     )

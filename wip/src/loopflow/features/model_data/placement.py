@@ -326,7 +326,7 @@ def apply_placement(
                 command_id=command_id,
                 details=payload,
             )
-        message = "已 Apply Space／高程。未寫尺寸。不可發布。"
+        message = "已 Apply Space／高程。不可發布。"
         if remaining:
             return results.ok_with_warnings(
                 "apply_placement",

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Nexus Project Console。開案檢查、Type layer、Space Boundary、Scan／Apply（含尺寸）；不發布。"""
+"""Nexus Project Console。開案檢查、Type layer、Space Boundary、Scan／Apply（ID／空間／高程）；不發布、不算尺寸。"""
 from __future__ import annotations
 
 import re
@@ -39,7 +39,7 @@ CONSOLE_STEPS: Tuple[dict, ...] = (
         "id": "scan_apply_verify",
         "title": "Scan → Apply → Verify",
         "status": "available",
-        "task": "NX-04～06",
+        "task": "NX-04～05",
     },
     {
         "id": "publish_registry",
@@ -58,69 +58,26 @@ def _copy_steps() -> Tuple[dict, ...]:
     return tuple(dict(step) for step in CONSOLE_STEPS)
 
 
-def _result_has_issue(result, code: str) -> bool:
-    if code in result.warnings or code in result.blocking:
-        return True
-    details = result.details or {}
-    if code in (details.get("blocking") or ()):
-        return True
-    for item in details.get("items") or ():
-        if code in (item.get("issues") or ()):
-            return True
-    return False
-
-
-def _unstable_frame_count(dimensions) -> int:
-    items = (dimensions.details or {}).get("items") or ()
-    if items:
-        return sum(1 for item in items if "no_unique_plane" in (item.get("issues") or ()))
-    if not _result_has_issue(dimensions, "no_unique_plane"):
-        return 0
-    remaining = (dimensions.details or {}).get("remaining") or ()
-    if remaining:
-        return len(remaining)
-    return 1
-
-
-def compose_scan_apply_message(mode: str, identity, placement, dimensions) -> str:
-    """把 ID／空間／尺寸三句合併成一句，避免「未寫／已寫」互相打架。"""
+def compose_scan_apply_message(mode: str, identity, placement) -> str:
+    """把 ID／空間兩句合併成一句，避免「未寫／已寫」互相打架。"""
     details = identity.details or {}
     count = details.get("count")
     if count is None:
         count = len(details.get("applied") or details.get("items") or ())
     ext = len((placement.details or {}).get("ext") or ())
-    dim_applied = len((dimensions.details or {}).get("applied") or ())
-    unstable = _unstable_frame_count(dimensions)
     if mode == "scan":
-        parts = ["Scan 完成，%s 個物件。尚未寫入。" % count]
-        parts.append("空間 %s 個 EXT。" % ext)
-        if unstable:
-            parts.append("尺寸 %s 個無穩定 local frame。" % unstable)
-        else:
-            parts.append("尺寸已計算、未寫入。")
-        parts.append("不可發布。")
-        return " ".join(parts)
+        return "Scan 完成，%s 個物件。尚未寫入。空間 %s 個 EXT。不可發布。" % (count, ext)
     written = []
     if details.get("applied"):
         written.append("ID／Type")
     if (placement.details or {}).get("applied"):
         written.append("空間／高程")
-    if dim_applied:
-        written.append("尺寸")
     n_applied = len(details.get("applied") or ())
     if written:
         message = "已寫入 %s 個物件的 %s。" % (n_applied, "、".join(written))
     else:
         message = "沒有可寫入的欄位。"
-    extra = []
-    if unstable and not dim_applied:
-        extra.append("尺寸未寫入：無穩定 local frame。")
-    elif unstable:
-        extra.append("%s 個無穩定 local frame。" % unstable)
-    elif not dim_applied:
-        extra.append("尺寸未寫入。")
-    extra.append("不可發布。")
-    return " ".join([message] + extra)
+    return message + " 不可發布。"
 
 
 def _open_check(
@@ -213,7 +170,7 @@ def _open_check(
             "scan_apply_verify",
         ),
     }
-    message = "開案檢查完成。可執行 Type layer、Space Boundary 與 Scan／Apply（含尺寸）。發布尚未實作。"
+    message = "開案檢查完成。可執行 Type layer、Space Boundary 與 Scan／Apply（ID／空間／高程）。發布尚未實作。"
     if warnings:
         return results.ok_with_warnings(
             "open_check",
@@ -239,7 +196,6 @@ def open_console(
     command_id: str = COMMAND_ID,
 ) -> results.Result:
     """開案檢查並列出 Console 步驟。step 指定時才執行該步。"""
-    from loopflow.features.dimension.measure import apply_dimensions, scan_dimensions
     from loopflow.features.dictionary.sync import sync_type_layers
     from loopflow.features.model_data.identity import (
         apply_identity,
@@ -292,14 +248,10 @@ def open_console(
                     if result.blocking:
                         warnings.extend(result.blocking)
                 details["publish_ready"] = False
-                if any(_result_has_issue(item, "no_unique_plane") for item in by_name.values()):
-                    if "no_unique_plane" not in warnings:
-                        warnings.append("no_unique_plane")
                 message = compose_scan_apply_message(
                     mode,
                     by_name["identity"],
                     by_name["placement"],
-                    by_name["dimensions"],
                 )
                 unique = tuple(dict.fromkeys(warnings))
                 if unique:
@@ -319,15 +271,11 @@ def open_console(
                 placement = scan_placement(current, **kwargs)
                 if not placement.ok:
                     return placement
-                dimensions = scan_dimensions(current, **kwargs)
-                if not dimensions.ok:
-                    return dimensions
                 return _merge(
                     "scan_identity",
                     "scan",
                     ("identity", identity),
                     ("placement", placement),
-                    ("dimensions", dimensions),
                 )
 
             def apply_all():
@@ -335,13 +283,11 @@ def open_console(
                 if not identity.ok:
                     return identity
                 placement = apply_placement(current, **kwargs)
-                dimensions = apply_dimensions(current, **kwargs)
                 return _merge(
                     "apply_identity",
                     "apply",
                     ("identity", identity),
                     ("placement", placement),
-                    ("dimensions", dimensions),
                 )
 
             action_name = identity_action if step == "scan_apply_verify" else step

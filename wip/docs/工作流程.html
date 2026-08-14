@@ -168,7 +168,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <h2 id="2-驗證-Dictionary-並同步-Type-Layers">2. 驗證 Dictionary 並同步 Type Layers</h2>
 <p><strong>Validate</strong>：檢查 15 欄、schema、Type ID、類別與 layer mapping、單位、measurement rule、量綱與必填值。</p>
 <p><strong>Sync</strong>：</p>
-<ul><li>Dictionary 有、Rhino 沒有的 layer：建立並帶入初始 layer defaults。</li><li>已存在的同名 Rhino layer：保留既有資料。</li><li>不覆寫 object instance 的 <code>_02</code> 狀態，也不把 object data 回寫 Dictionary。</li><li><code>DNA_REF_</code> 依穩定 Type ID 更新或取代，避免空 Type layer 被 Purge 且不重複累積。</li><li><code>20_DW</code> 維持單一 Type，排除 child layers。</li></ul>
+<ul><li>Dictionary 有、Rhino 沒有的 layer：建立並帶入初始 layer defaults。</li><li>已存在的同名 Rhino layer：保留既有 UserText／construction；顯示色與材質依圖層代號前綴重套（1.x 顯示慣例），材質名稱不含 <code>M3D::</code>，不改物件 instance 顏色。</li><li>不覆寫 object instance 的 <code>_02</code> 狀態，也不把 object data 回寫 Dictionary。</li><li>不執行 ZoomExtents，不改變使用者視圖。</li><li><code>DNA_REF_</code> 參考點放在 <code>(0,0,0)</code>，依穩定 Type ID 更新或取代，避免空 Type layer 被 Purge 且不重複累積。</li><li><code>20_DW</code> 維持單一 Type，排除 child layers。</li></ul>
 <p><strong>選用反向匯出</strong>：將 layer defaults 與新增／刪除／改名／修改差異輸出到獨立 XLSX，供使用者人工合併；不匯總 Object UserText、不自動覆寫正式 Dictionary。</p>
 <p><strong>安全停點</strong>：Layer 建好即可存檔，不必繼續跑完整鏈。</p>
 <h2 id="3-建立與修改-3D-模型">3. 建立與修改 3D 模型</h2>
@@ -176,15 +176,15 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <p><code>LF_Cabinet_Suite</code>／BOM 不屬 2.0；櫃體幾何與其他物件一樣使用一般 Type、Space、高程與 ID 規則。三個 2D Generator 是獨立工具，不阻擋主鏈。</p>
 <h2 id="4-建立或維護-Space-Boundaries">4. 建立或維護 Space Boundaries</h2>
 <p>使用者選取有效 closed curves，設定顯示名稱與樓層；系統建立穩定 <code>space_id</code>／<code>level_id</code>。</p>
-<ul><li>相鄰空間可以共邊，內部不可重疊。</li><li>重疊時停止並列出全部衝突 Space，不用 priority 自動選擇。</li><li>平面、boundary 或樓層變更後回到此階段，再重新資料化。</li></ul>
+<ul><li>相鄰空間可以共邊，內部不可重疊。</li><li>面積重疊只檢查同一 <code>level_id</code>；不同樓層允許平面投影重疊，但會警告。</li><li>同樓層的房間必須用同一個 <code>lf_level_id</code>。每條曲線各自新 UUID 會被當成不同樓層。</li><li>重疊時停止並列出全部衝突 Space，不用 priority 自動選擇。</li><li>平面、boundary 或樓層變更後回到此階段，再重新資料化。</li></ul>
 <p><strong>安全停點</strong>：Boundary 完成可直接存檔；既有物件資料不會在背景改變。</p>
 <h2 id="5-資料化-Scan-Apply-Verify">5. 資料化：Scan → Apply → Verify</h2>
 <h3 id="Scan">Scan</h3>
 <p>掃描 M3D 正式範圍內全部 3D 物件，包含 hidden／locked，且不寫入資料。報告至少列出：</p>
-<ul><li>待建立、重複或失效 Object ID。</li><li>未知 Type、錯誤 layer mapping。</li><li>Space 重疊與全部 <code>EXT</code> 物件及四種原因。</li><li>BC 使用於非 Block。</li><li>無法建立穩定 local frame 的非 Block 幾何（封閉 Box、多面 Brep 等沒有唯一平面者；規則見 <code>資料契約.md</code>）。</li><li>measurement rule 缺失、單位／量綱不符。</li><li>預計寫入、保留、清除或略過的欄位。</li></ul>
+<ul><li>待建立、重複或失效 Object ID。</li><li>未知 Type、錯誤 layer mapping。</li><li>Space 重疊與全部 <code>EXT</code> 物件及四種原因。</li><li>BC 使用於非 Block。</li><li>預計寫入、保留、清除或略過的欄位。</li></ul>
 <p>局部 Scan 可作預覽，但不能宣告全案可發布。</p>
 <h3 id="Apply">Apply</h3>
-<p>使用者確認後才寫入：Object ID、Type reference、Space、高程、local frame、local W／D／H、quantity、remarks 與 revision。ID 變更必須保存 <code>old_id → new_id</code> mapping。已有合法 local frame 時沿用，不默默重算。</p>
+<p>使用者確認後才寫入：Object ID、Type reference、Space、高程、remarks 與 revision。ID 變更必須保存 <code>old_id → new_id</code> mapping。不寫寬深高、數量或座標框。</p>
 <h3 id="Verify">Verify</h3>
 <p>Apply 後再次全案 Scan。沒有阻擋項目，且所有警告已列出／確認，才可進入 Publish。</p>
 <p><strong>中斷</strong>：保留已完成且可驗證的寫入與 mapping；重跑 Scan 顯示剩餘工作，不假裝全案完成。</p>
@@ -225,7 +225,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <h3 id="Detail-Layout-重整">Detail／Layout 重整</h3>
 <p>重新註冊 View 或執行 Duplicate Sheet 規則 → 重新綁定 → Sync → Health。不得沿用無法證明有效的舊 target ID。</p>
 <h2 id="實機驗收重點">實機驗收重點</h2>
-<ul><li>正常、取消、失敗、中斷與重跑。</li><li>hidden／locked 物件仍納入正式 Scan。</li><li>ID mapping 與 rollback。</li><li>Drawing 人工修改保護。</li><li>Duplicate Sheet 清除／保留規則。</li><li><code>TAG_DW</code> 永不被 Sync 覆寫。</li><li>家具共用名稱與格式錯誤警告。</li><li>非 cm 警告及量綱計算。</li><li>Registry last-good 與雙程序競態。</li></ul></main>
+<ul><li>正常、取消、失敗、中斷與重跑。</li><li>hidden／locked 物件仍納入正式 Scan。</li><li>ID mapping 與 rollback。</li><li>Drawing 人工修改保護。</li><li>Duplicate Sheet 清除／保留規則。</li><li><code>TAG_DW</code> 永不被 Sync 覆寫。</li><li>家具共用名稱與格式錯誤警告。</li><li>非 cm 警告。</li><li>Registry last-good 與雙程序競態。</li></ul></main>
 </div>
 <script>
 (function(){

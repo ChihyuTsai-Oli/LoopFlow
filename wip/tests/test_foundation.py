@@ -198,24 +198,38 @@ class UserTextKeyTests(unittest.TestCase):
         numbers = [key.split("_")[1] for key in keys]
         self.assertEqual(sorted(numbers), sorted(set(numbers)))
         for key in keys:
-            number = key.split("_")[1]
-            if int(number) > 13:
-                continue
-            self.assertIn(key, DISPLAY_COLUMNS)
+            self.assertFalse(key.startswith("Q_"))
+            number = int(key.split("_")[1])
+            if number <= 8:
+                self.assertIn(key, DISPLAY_COLUMNS)
+            else:
+                self.assertNotIn(key, DISPLAY_COLUMNS)
 
     def test_write_clears_legacy_and_read_falls_back(self):
-        from loopflow.foundation.usertext import FRAME_KEY, read_text, write_text
+        from loopflow.foundation.usertext import OBJECT_ID_KEY, read_text, write_text
         from loopflow.platform.rhino.memory import MemorySession
 
         session = MemorySession()
         session.add_object("obj")
+        session.set_object_user_text("obj", "_12_UUID", "old")
+        session.set_object_user_text("obj", "lf_object_id", "old")
+        self.assertEqual(read_text(session, "obj", OBJECT_ID_KEY), "old")
+        write_text(session, "obj", OBJECT_ID_KEY, "new")
+        self.assertEqual(read_text(session, "obj", OBJECT_ID_KEY), "new")
+        self.assertIsNone(session.get_object_user_text("obj", "_12_UUID"))
+        self.assertIsNone(session.get_object_user_text("obj", "lf_object_id"))
+
+    def test_apply_clears_stale_dimension_keys(self):
+        from loopflow.foundation.usertext import clear_stale_object_text
+        from loopflow.platform.rhino.memory import MemorySession
+
+        session = MemorySession()
+        session.add_object("obj")
+        session.set_object_user_text("obj", "_05_寬度W", "90")
         session.set_object_user_text("obj", "_14_座標框", "{}")
-        session.set_object_user_text("obj", "lf_local_frame", "{}")
-        self.assertEqual(read_text(session, "obj", FRAME_KEY), "{}")
-        write_text(session, "obj", FRAME_KEY, "{\"a\":1}")
-        self.assertEqual(read_text(session, "obj", FRAME_KEY), "{\"a\":1}")
+        clear_stale_object_text(session, "obj")
+        self.assertIsNone(session.get_object_user_text("obj", "_05_寬度W"))
         self.assertIsNone(session.get_object_user_text("obj", "_14_座標框"))
-        self.assertIsNone(session.get_object_user_text("obj", "lf_local_frame"))
 
 
 class SourceHygieneTests(unittest.TestCase):

@@ -21,7 +21,7 @@ Nexus 在 2.0 只做 **Project Console**：讓使用者查看開案狀態，並�
 - Cabinet／BOM／`_CB.*`（ED-18）
 - Dictionary 欄位解析本體（C01）
 - Registry lock／pending／atomic replace 本體（C03）
-- local frame 與 quantity 計算本體（C05）
+- 尺寸／數量計算（不屬 2.0；數量欄留在 Dictionary 給 GH）
 
 `LF_Nexus.py` 入口只轉交 command catalog，不保存第二份業務邏輯。`LF_Push_3D_to_JSON` 可保留按鈕，但必須呼叫與 Console「發布」相同的 command。
 
@@ -39,8 +39,8 @@ Nexus 在 2.0 只做 **Project Console**：讓使用者查看開案狀態，並�
 | `check_global_uuids`／`func_tag_trigger` 的 ID 段 | 建立／修復 Object ID，不可靜默換號 | NX-04 |
 | `get_space_name_at_object` | 把物件歸到空間或 `EXT` | NX-05 |
 | `get_elevation_value` | BH／TH／CH／BC | NX-05 |
-| `get_dimensions` | local 寬深高 | C05；NX-06 只接線 |
-| `func_tag_checker` | 寫入前／後的唯讀報告 | NX-04～06 的 Scan／Verify |
+| `get_dimensions` | 1.x 有 local 寬深高 | **不進 2.0**；數量交給後續 GH |
+| `func_tag_checker` | 寫入前／後的唯讀報告 | NX-04～05 的 Scan／Verify |
 | `execute_push_to_json` | 明確發布 | NX-07 組 payload，C03 負責安全寫入 |
 | 無差別寫入 Dictionary 每一欄、Zoom、亂改顏色 | 不保留 | 禁止 |
 
@@ -56,8 +56,6 @@ B01–B03 骨架
 → NX-03 Space Boundary
 → NX-04 Object ID／Type 資料化
 → NX-05 Space 命中與高程
-→ C05 Dimension／Quantity（可與 NX-05 並行準備，接線在 NX-06）
-→ NX-06 把 C05 接進 Scan／Apply
 → C03 Registry 安全發布
 → NX-07 Verify 通過後組 payload 並呼叫 C03
 ```
@@ -101,20 +99,16 @@ B01–B03 骨架
 **前置**：NX-03、NX-04。  
 **模組**：`features/model_data/` 的 space hit 與 elevation。  
 **做**：命中 `space_id` 或 `EXT`（四種原因都要列出）；BH／TH／CH／BC；非 Block 用 BC 直接報錯；Apply 寫 `lf_space_*` 與高程欄。  
-**不做**：用 World bbox 猜尺寸。  
+**不做**：用 World bbox 猜尺寸；不寫寬深高／數量。  
 **fixtures／驗收**：EXT 四因、重疊已在 NX-03 擋住故命中時不再 silent 取第一個、`TH/BH` 只出現在 migration 報告。
 
-### NX-06 接上尺寸與數量／`nexus-dimension-wire`
+### NX-06 尺寸與數量／已取消
 
-**前置**：C05、NX-04。  
-**模組**：不複製 C05 規則；Scan／Apply 呼叫 C05。  
-**做**：**已完成**。把 local frame／W／D／H／quantity 的成功、阻擋、沿用既有框寫進同一份 Scan 報告；無穩定 frame 時命令列標明。  
-**不做**：另寫一套 bbox 後備、宣告可發布。  
-**fixtures／驗收**：沿用 C05；Console 顯示「無穩定 local frame」為阻擋警告。
+**不做**。2.0 只要圖面表達（高程、材料編號、空間）。寬深高／面積／長度／數量留給後續 GH。既有 `features/dimension` 已刪。
 
 ### NX-07 Verify 與發布交接／`nexus-publish-handoff`
 
-**前置**：NX-04～06、C03。  
+**前置**：NX-04～05、C03。  
 **模組**：`features/registry/` 的 payload 組裝；寫入走 C03。  
 **做**：Verify＝全案再 Scan，無阻擋且警告已列出才允許發布；組 `loopflow.registry` payload（`types`／`spaces`／`objects`）；呼叫 C03。  
 **不做**：自己做 lock 檔或先刪正式 JSON。  
@@ -134,7 +128,7 @@ B01–B03 骨架
 | C01 | 載入／驗證 Dictionary；NX-02 不得自己解析 Excel 欄名 |
 | C03 | 唯一允許寫 Registry 檔的模組 |
 | C04 Data Viewer | 只讀；不是 Nexus 步驟，但應能顯示 NX-04 以後的 canonical 值 |
-| C05 | 唯一的尺寸／數量實作 |
+| C05 | **不屬 2.0**；`Q_04`／`Q_05` 仍由 C01 驗證量綱 |
 | A06 | **已完成**；Dictionary／UUID／Space／local frame／Registry 形狀已在 `wip/fixtures/contract/`；各 NX 包再補該包的 Scan 報告案例 |
 | D～E | 使用已發布 revision，不回寫 Nexus |
 

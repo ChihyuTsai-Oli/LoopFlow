@@ -16,7 +16,6 @@ SCHEMA_VERSIONS = {
     "loopflow.dictionary": 1,
     "loopflow.object": 1,
     "loopflow.space": 1,
-    "loopflow.local_frame": 1,
     "loopflow.view": 1,
     "loopflow.drawing": 1,
     "loopflow.sheet": 1,

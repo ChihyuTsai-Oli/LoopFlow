@@ -118,7 +118,7 @@ class PlacementTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("wall", SPACE_DISPLAY_KEY), "客廳")
         self.assertEqual(session.get_object_user_text("wall", ELEVATION_BASIS_KEY), "BH")
         self.assertEqual(session.get_object_user_text("wall", ELEVATION_VALUE_KEY), "0")
-        self.assertIsNone(session.get_object_user_text("wall", "_05_寬度W"))
+        self.assertIsNone(session.get_object_user_text("wall", "Q_01_寬度W"))
         self.assertFalse(applied.details["publish_ready"])
 
     def test_th_ch_and_bc(self):

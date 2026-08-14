@@ -200,33 +200,26 @@ class ConsoleMenuTests(unittest.TestCase):
             self.assertTrue(result.ok, result.message)
             self.assertEqual(result.stage, "scan_identity")
             self.assertFalse(result.details["publish_ready"])
-            self.assertIn("dimensions", result.details)
-            self.assertIsNone(session.get_object_user_text("a", "_05_寬度W"))
+            self.assertNotIn("dimensions", result.details)
+            self.assertIsNone(session.get_object_user_text("a", "Q_01_寬度W"))
+            self.assertNotIn("尺寸", result.message)
             self.assertNotIn("未寫 Space", result.message)
             self.assertNotIn("已 Apply", result.message)
 
-    def test_apply_writes_dimensions_for_extrusion(self):
+    def test_apply_writes_id_space_not_dimensions(self):
         from loopflow.features.dictionary.layer_paths import to_full_path
-        from loopflow.features.dimension.frame import FRAME_KEY
+        from loopflow.foundation.usertext import OBJECT_ID_KEY
 
         full = to_full_path("00_STR_結構::Beam.樑")
-        with tempfile.TemporaryDirectory(prefix="loopflow-nx06-") as raw:
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx05-") as raw:
             root = Path(raw)
             _write_dictionary(root)
             session = _session()
             session.ensure_layer(full)
             session.set_layer_user_text(full, "lf_type_id", "EX-01")
             session.add_object("beam", layer=full)
-            session.set_geometry_kind("beam", "extrusion")
             session.set_bbox("beam", (0, 0, 0), (90, 40, 210))
-            scanned = run_nexus_console(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-                interactive=True,
-                chooser=lambda _labels: "4",
-            )
-            self.assertTrue(scanned.ok, scanned.message)
-            self.assertIsNone(session.get_object_user_text("beam", FRAME_KEY))
+            session.set_object_user_text("beam", "_05_寬度W", "90")
             applied = open_console(
                 session,
                 environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
@@ -235,93 +228,13 @@ class ConsoleMenuTests(unittest.TestCase):
             )
             self.assertTrue(applied.ok, applied.message)
             self.assertFalse(applied.details["publish_ready"])
-            self.assertIn("尺寸", applied.message)
-            self.assertNotIn("尺寸未寫入", applied.message)
-            self.assertNotIn("未寫 Space", applied.message)
-            self.assertEqual(session.get_object_user_text("beam", "_05_寬度W"), "90")
-            self.assertEqual(session.get_object_user_text("beam", "_09_實作數量"), "1")
-            self.assertIsNotNone(session.get_object_user_text("beam", FRAME_KEY))
-
-    def test_closed_box_reports_unstable_frame(self):
-        from loopflow.features.dictionary.layer_paths import to_full_path
-
-        full = to_full_path("00_STR_結構::Beam.樑")
-        with tempfile.TemporaryDirectory(prefix="loopflow-nx06-box-") as raw:
-            root = Path(raw)
-            _write_dictionary(root)
-            session = _session()
-            session.ensure_layer(full)
-            session.add_object("box", layer=full)
-            session.set_geometry_kind("box", "closed_box")
-            session.set_bbox("box", (0, 0, 0), (10, 10, 10))
-            result = open_console(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-                step="scan_apply_verify",
-                identity_action="scan",
-            )
-            self.assertTrue(result.ok, result.message)
-            self.assertIn("no_unique_plane", result.warnings)
-            self.assertIn("無穩定 local frame", result.message)
-            self.assertIn("尚未寫入", result.message)
-            self.assertNotIn("未寫 Space", result.message)
-            self.assertFalse(result.details["publish_ready"])
-
-    def test_apply_closed_box_writes_id_not_dimensions(self):
-        from loopflow.features.dictionary.layer_paths import to_full_path
-        from loopflow.features.dimension.frame import FRAME_KEY
-
-        full = to_full_path("00_STR_結構::Beam.樑")
-        with tempfile.TemporaryDirectory(prefix="loopflow-nx06-box-apply-") as raw:
-            root = Path(raw)
-            _write_dictionary(root)
-            session = _session()
-            session.ensure_layer(full)
-            session.set_layer_user_text(full, "lf_type_id", "EX-01")
-            session.add_object("box", layer=full)
-            session.set_geometry_kind("box", "closed_box")
-            session.set_bbox("box", (0, 0, 0), (10, 10, 10))
-            applied = open_console(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-                step="scan_apply_verify",
-                identity_action="apply",
-            )
-            self.assertTrue(applied.ok, applied.message)
             self.assertIn("ID／Type", applied.message)
             self.assertIn("空間／高程", applied.message)
-            self.assertIn("尺寸未寫入：無穩定 local frame", applied.message)
-            self.assertNotIn("未寫 Space", applied.message)
-            self.assertIsNotNone(session.get_object_user_text("box", "_12_UUID"))
-            self.assertEqual(session.get_object_user_text("box", SPACE_ID_KEY), "EXT")
-            self.assertIsNone(session.get_object_user_text("box", FRAME_KEY))
-
-    def test_apply_oriented_box_writes_dimensions(self):
-        from loopflow.features.dictionary.layer_paths import to_full_path
-        from loopflow.features.dimension.frame import FRAME_KEY
-
-        full = to_full_path("00_STR_結構::Beam.樑")
-        with tempfile.TemporaryDirectory(prefix="loopflow-nx06-obox-") as raw:
-            root = Path(raw)
-            _write_dictionary(root)
-            session = _session()
-            session.ensure_layer(full)
-            session.set_layer_user_text(full, "lf_type_id", "EX-01")
-            session.add_object("slab", layer=full)
-            session.set_geometry_kind("slab", "oriented_box")
-            session.set_bbox("slab", (0, 0, 0), (90, 40, 12))
-            applied = open_console(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-                step="scan_apply_verify",
-                identity_action="apply",
-            )
-            self.assertTrue(applied.ok, applied.message)
-            self.assertIn("尺寸", applied.message)
-            self.assertNotIn("尺寸未寫入", applied.message)
-            self.assertEqual(session.get_object_user_text("slab", "_05_寬度W"), "90")
-            self.assertEqual(session.get_object_user_text("slab", "_07_高度H"), "12")
-            self.assertIsNotNone(session.get_object_user_text("slab", FRAME_KEY))
+            self.assertNotIn("尺寸", applied.message)
+            self.assertIsNotNone(session.get_object_user_text("beam", OBJECT_ID_KEY))
+            self.assertEqual(session.get_object_user_text("beam", SPACE_ID_KEY), "EXT")
+            self.assertIsNone(session.get_object_user_text("beam", "_05_寬度W"))
+            self.assertIsNone(session.get_object_user_text("beam", "Q_01_寬度W"))
 
 
 if __name__ == "__main__":

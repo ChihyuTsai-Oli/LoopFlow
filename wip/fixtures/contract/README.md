@@ -26,6 +26,8 @@ python wip/tools/check_contract_fixtures.py
 
 `schema/` 的 `registry.json` 與 `tag_templates.json` 由檢查器一併核對：10 份 manifest、恰好一個 `title_frame`、24 個 legacy key 與畫面擷取一致。
 
+`local_frame/` 與 `quantity/` 是後續 GH 數量計算的材料，2.0 不從模型求值；檢查器仍核對常數與案例，以免契約腐壞。
+
 ## 量綱對照
 
 | 規則 | 量綱 | 允許單位 |
@@ -36,4 +38,4 @@ python wip/tools/check_contract_fixtures.py
 | `VOL_WDH` | volume | m3 |
 | 規則空 | — | 不阻擋量綱，quantity 為空並警告 |
 
-不符列為阻擋。baseline 目前只用到 `COUNT`、`LEN_W`、`AREA_WH`、`AREA_WD`、`VOL_WDH`；其餘 token 仍屬契約，供 C05 實作。
+不符列為阻擋。baseline 目前只用到 `COUNT`、`LEN_W`、`AREA_WH`、`AREA_WD`、`VOL_WDH`；其餘 token 仍屬 GH 契約。

@@ -389,7 +389,7 @@ def main() -> int:
         for msg in FAILS:
             print(" -", msg)
         return 1
-    print("契約 fixtures 通過：92 筆量綱、15 欄、24 個 Tag key、Space／frame／Registry／Duplicate 案例。")
+    print("契約 fixtures 通過：92 筆量綱、15 欄、24 個 Tag key、Space／Registry／Duplicate 案例；quantity／frame 常數保留給 GH。")
     return 0
 
 

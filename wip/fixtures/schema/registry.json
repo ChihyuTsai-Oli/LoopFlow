@@ -39,21 +39,17 @@
     "construction_status",
     "space_id",
     "space_display",
-    "dimension_w",
-    "dimension_d",
-    "dimension_h",
-    "quantity",
     "elevation_basis",
     "elevation_value",
     "elevation_display",
     "remarks",
-    "local_frame",
     "data_revision"
   ],
   "reserved_space_id": "EXT",
   "notes": [
     "Tag、View、Drawing、Sheet 不進 Registry。",
     "未知核心欄阻擋；非核心資料只放 extension。",
-    "type_display_name 在 objects[] 是發布快照，不回寫物件 UserText。"
+    "type_display_name 在 objects[] 是發布快照，不回寫物件 UserText。",
+    "dimension_*、quantity、local_frame 不進 2.0 Registry；數量欄留在 types[] 的 estimation_unit／measurement_rule，供後續 GH 使用。"
   ]
 }

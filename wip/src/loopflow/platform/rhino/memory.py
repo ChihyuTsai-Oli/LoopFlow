@@ -18,8 +18,6 @@ class MemorySession:
         self._bboxes: Dict[str, tuple] = {}
         self._blocks: Dict[str, tuple] = {}
         self._points: Dict[str, tuple] = {}
-        self._kinds: Dict[str, str] = {}
-        self._derived_frames: Dict[str, dict] = {}
         self._modified = False
         self._model_unit = model_unit
         self._document_text = dict(document_text or {})
@@ -62,8 +60,6 @@ class MemorySession:
         self._bboxes.pop(object_id, None)
         self._blocks.pop(object_id, None)
         self._points.pop(object_id, None)
-        self._kinds.pop(object_id, None)
-        self._derived_frames.pop(object_id, None)
         self._modified = True
 
     def iter_object_ids(self, *, include_hidden: bool = True, include_locked: bool = True):
@@ -239,44 +235,6 @@ class MemorySession:
         if not point:
             return None
         return tuple(float(v) for v in point)
-
-    def set_geometry_kind(self, object_id: str, kind: str) -> None:
-        self._kinds[object_id] = kind
-
-    def set_derived_frame(self, object_id: str, frame: dict) -> None:
-        self._derived_frames[object_id] = dict(frame)
-
-    def geometry_kind(self, object_id: str):
-        if object_id in self._kinds:
-            return self._kinds[object_id]
-        if self.is_block_instance(object_id):
-            return "block_instance"
-        return "closed_box"
-
-    def derive_local_frame(self, object_id: str):
-        if object_id in self._derived_frames:
-            return dict(self._derived_frames[object_id])
-        kind = self.geometry_kind(object_id)
-        method = {
-            "block_instance": "block_insertion",
-            "extrusion": "extrusion_base",
-            "planar_curve": "unique_plane",
-            "planar_surface": "unique_plane",
-            "oriented_box": "oriented_box",
-        }.get(kind)
-        if method is None:
-            return None
-        insertion = self.insertion_point(object_id) if kind == "block_instance" else None
-        origin = list(insertion) if insertion else [0.0, 0.0, 0.0]
-        return {
-            "schema_id": "loopflow.local_frame",
-            "schema_version": 1,
-            "origin": origin,
-            "x_axis": [1.0, 0.0, 0.0],
-            "y_axis": [0.0, 1.0, 0.0],
-            "z_axis": [0.0, 0.0, 1.0],
-            "derivation_method": method,
-        }
 
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)
