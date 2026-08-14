@@ -178,6 +178,7 @@ def open_console(
         scan_identity,
         verify_identity,
     )
+    from loopflow.features.model_data.placement import apply_placement, scan_placement
     from loopflow.features.model_data.space import drafts_from_selection, register_space_boundaries
 
     def action(current: RhinoSession) -> results.Result:
@@ -210,12 +211,84 @@ def open_console(
                 "guarded": False,
                 "command_id": command_id,
             }
+
+            def scan_all():
+                identity = scan_identity(current, **kwargs)
+                if not identity.ok:
+                    return identity
+                placement = scan_placement(current, **kwargs)
+                if not placement.ok:
+                    return placement
+                details = dict(identity.details)
+                details["placement"] = placement.details
+                details["publish_ready"] = False
+                warnings = tuple(identity.warnings) + tuple(placement.warnings)
+                message = identity.message + " " + placement.message
+                if warnings:
+                    return results.ok_with_warnings(
+                        "scan_identity",
+                        message,
+                        warnings,
+                        command_id=command_id,
+                        details=details,
+                    )
+                return results.ok("scan_identity", message, command_id=command_id, details=details)
+
+            def apply_all():
+                identity = apply_identity(current, mappings=mappings, **kwargs)
+                if not identity.ok and identity.status not in ("ok_with_warnings",):
+                    return identity
+                placement = apply_placement(current, **kwargs)
+                if not placement.ok and placement.status not in ("ok_with_warnings",):
+                    if identity.ok:
+                        details = dict(identity.details)
+                        details["placement"] = placement.details
+                        details["publish_ready"] = False
+                        return results.ok_with_warnings(
+                            "apply_identity",
+                            identity.message + " " + placement.message,
+                            placement.warnings or placement.blocking or ("placement_blocked",),
+                            command_id=command_id,
+                            details=details,
+                        )
+                    return placement
+                details = dict(identity.details)
+                details["placement"] = placement.details
+                details["publish_ready"] = False
+                warnings = tuple(identity.warnings) + tuple(placement.warnings)
+                message = identity.message + " " + placement.message
+                if warnings:
+                    return results.ok_with_warnings(
+                        "apply_identity",
+                        message,
+                        warnings,
+                        command_id=command_id,
+                        details=details,
+                    )
+                return results.ok("apply_identity", message, command_id=command_id, details=details)
+
             action_name = identity_action if step == "scan_apply_verify" else step
             if action_name in ("scan", "scan_identity", "scan_apply_verify"):
+                if step == "scan_apply_verify":
+                    return scan_all()
                 return scan_identity(current, **kwargs)
             if action_name == "apply_identity" or action_name == "apply":
+                if step == "scan_apply_verify":
+                    return apply_all()
                 return apply_identity(current, mappings=mappings, **kwargs)
             if action_name == "verify_identity" or action_name == "verify":
+                if step == "scan_apply_verify":
+                    scanned = scan_all()
+                    if not scanned.ok:
+                        return scanned
+                    details = dict(scanned.details)
+                    details["publish_ready"] = False
+                    return results.ok(
+                        "verify_identity",
+                        "Verify 完成。尺寸／發布尚未實作，不可發布。",
+                        command_id=command_id,
+                        details=details,
+                    )
                 return verify_identity(current, **kwargs)
             if action_name == "rollback_identity" or action_name == "rollback":
                 return rollback_identity(

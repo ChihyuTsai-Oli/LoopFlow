@@ -45,6 +45,12 @@ def aabb_overlap_area(polygon_a, polygon_b) -> float:
     return 0.0
 
 
+def aabb_contains(polygon, x: float, y: float) -> bool:
+    xs = [_xy(pt)[0] for pt in polygon]
+    ys = [_xy(pt)[1] for pt in polygon]
+    return min(xs) - 1e-9 <= x <= max(xs) + 1e-9 and min(ys) - 1e-9 <= y <= max(ys) + 1e-9
+
+
 def _new_id() -> str:
     return str(uuid.uuid4())
 

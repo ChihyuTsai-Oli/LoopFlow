@@ -37,7 +37,7 @@ _COMMANDS = {
     for command_id in CORE_COMMANDS
 }
 _COMMANDS["LF_Nexus"]["status"] = "console"
-_COMMANDS["LF_Nexus"]["task"] = "C02/NX-04"
+_COMMANDS["LF_Nexus"]["task"] = "C02/NX-05"
 
 
 def get_command(command_id: str) -> Optional[dict]:

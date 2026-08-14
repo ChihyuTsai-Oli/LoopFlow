@@ -41,6 +41,8 @@ STAGES = (
     "apply_identity",
     "verify_identity",
     "rollback_identity",
+    "scan_placement",
+    "apply_placement",
 )
 
 

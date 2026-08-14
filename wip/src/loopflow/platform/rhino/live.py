@@ -235,6 +235,26 @@ class LiveSession:
             or rs.IsSurface(object_id)
         )
 
+    def object_bbox(self, object_id: str):
+        box = self._rs.BoundingBox(object_id)
+        if not box:
+            return None
+        xs = [float(pt.X) for pt in box]
+        ys = [float(pt.Y) for pt in box]
+        zs = [float(pt.Z) for pt in box]
+        return (min(xs), min(ys), min(zs), max(xs), max(ys), max(zs))
+
+    def is_block_instance(self, object_id: str) -> bool:
+        return bool(self._rs.IsBlockInstance(object_id))
+
+    def insertion_point(self, object_id: str):
+        if not self._rs.IsBlockInstance(object_id):
+            return None
+        point = self._rs.BlockInstanceInsertPoint(object_id)
+        if point is None:
+            return None
+        return (float(point.X), float(point.Y), float(point.Z))
+
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)
 

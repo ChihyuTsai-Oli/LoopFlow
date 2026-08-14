@@ -6,6 +6,7 @@ from loopflow.features.model_data.identity import (
     scan_identity,
     verify_identity,
 )
+from loopflow.features.model_data.placement import apply_placement, scan_placement
 from loopflow.features.model_data.space import (
     SpaceDraft,
     drafts_from_selection,
@@ -15,9 +16,11 @@ from loopflow.features.model_data.space import (
 __all__ = [
     "SpaceDraft",
     "apply_identity",
+    "apply_placement",
     "drafts_from_selection",
     "register_space_boundaries",
     "rollback_identity",
     "scan_identity",
+    "scan_placement",
     "verify_identity",
 ]

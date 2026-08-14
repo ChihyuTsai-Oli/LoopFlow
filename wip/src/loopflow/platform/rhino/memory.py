@@ -15,6 +15,8 @@ class MemorySession:
         self._object_meta: Dict[str, dict] = {}
         self._layers: Dict[str, dict] = {}
         self._curves: Dict[str, dict] = {}
+        self._bboxes: Dict[str, tuple] = {}
+        self._blocks: Dict[str, tuple] = {}
         self._modified = False
         self._model_unit = model_unit
         self._document_text = dict(document_text or {})
@@ -54,6 +56,8 @@ class MemorySession:
         self._objects.pop(object_id, None)
         self._object_meta.pop(object_id, None)
         self._curves.pop(object_id, None)
+        self._bboxes.pop(object_id, None)
+        self._blocks.pop(object_id, None)
         self._modified = True
 
     def iter_object_ids(self, *, include_hidden: bool = True, include_locked: bool = True):
@@ -184,6 +188,28 @@ class MemorySession:
             return False
         name = self.object_name(object_id) or ""
         return not name.startswith("DNA_REF_")
+
+    def set_bbox(self, object_id: str, min_xyz, max_xyz) -> None:
+        self._bboxes[object_id] = (tuple(min_xyz), tuple(max_xyz))
+
+    def object_bbox(self, object_id: str):
+        box = self._bboxes.get(object_id)
+        if not box:
+            return None
+        (x0, y0, z0), (x1, y1, z1) = box
+        return (float(x0), float(y0), float(z0), float(x1), float(y1), float(z1))
+
+    def set_block(self, object_id: str, insertion) -> None:
+        self._blocks[object_id] = tuple(insertion)
+
+    def is_block_instance(self, object_id: str) -> bool:
+        return object_id in self._blocks
+
+    def insertion_point(self, object_id: str):
+        point = self._blocks.get(object_id)
+        if not point:
+            return None
+        return tuple(float(v) for v in point)
 
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)
