@@ -29,7 +29,7 @@ wip/
 | `docs/開發任務與路徑.md` | 任務 ID、相依順序、工作波次與雙機安全停點 |
 | `docs/重構進度.md` | 已完成工作、驗證結果、限制與唯一下一步 |
 
-`docs/工作流程模擬.html` 是 Markdown 的衍生閱讀版，不是另一份規格。已整合且過時的原始評閱副本已刪除；採納內容與雙 AI 比較保留在現行文件及 Git 歷史中。
+`docs/工作流程模擬.html` 與 `docs/資料生態決策表.html` 都是對應 Markdown 的衍生閱讀版，分別由 `wip/tools/build_workflow_html.py`、`wip/tools/build_decision_table_html.py` 產生，不是另一份規格，不手動編輯；兩者都可用 `--check` 驗證是否過期。已整合且過時的原始評閱副本已刪除；採納內容與雙 AI 比較保留在現行文件及 Git 歷史中。
 
 `docs/tag_block_text/` 保存從 Rhino 實際 Block instance 擷取的 9 份 Tag 與 1 份圖框文字，是 migration／template fixture 的來源證據。已過時的 workflow simulation 初版提案已刪除，不再作為追溯來源。
 

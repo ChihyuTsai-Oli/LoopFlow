@@ -42,7 +42,7 @@ LoopFlow 是 Rhino 8 的半自動化設計與出圖工具。使用者決定何�
 
 三個 2D Generator 是獨立工具，不是主工作鏈的必要節點，1.x 版本可以一直使用。
 
-**Cabinet 與 BOM 已排除在主工作流程之外**，列入後續開發：1.0 的 BOM 功能過於零碎，混入主鏈會汙染核心資料契約。1.x 的 `LF_Cabinet_Suite` 仍可照舊使用，但 2.0 主鏈的 Nexus、Registry、Tag 與 Health 都不處理 `_CB.*`，櫃體在主鏈中視為一般 3D 幾何。
+**`LF_Cabinet_Suite` 與 BOM 依 ED-18 不屬於 LoopFlow 2.0**：1.0 的 BOM 功能過於零碎，混入主鏈會汙染核心資料契約。1.x 的 `LF_Cabinet_Suite` 仍可照舊使用，但 2.0 主鏈的 Nexus、Registry、Tag 與 Health 都不處理 `_CB.*`，櫃體在主鏈中視為一般 3D 幾何。未來若仍需要，改為單純建模工具或獨立外掛，不是 2.0 待辦。
 
 ## 指令分組
 
@@ -54,7 +54,7 @@ LoopFlow 是 Rhino 8 的半自動化設計與出圖工具。使用者決定何�
 | 圖面同步 | `LF_Infuser_Part`、`LF_Infuser_All` | 更新部分或全部 Tag Blocks |
 | Layout / Section | `LF_Anchor_Frame`、`LF_Extract_CP`、`LF_Duplicate_Layout` | 建立基準、擷取剖線與複製 Layout |
 | 獨立 2D 工具 | `LF_2D_Cabinet_Gen`、`LF_2D_Shelf_Gap`、`LF_2D_DW_Gen` | 可獨立使用的櫃體、層板與門窗圖面工具；不依賴 Cabinet 主程式 |
-| 延後工作軌 | `LF_Cabinet_Suite` | 櫃體建模與 BOM；不屬 2.0 主工作鏈 |
+| 不屬於 2.0 | `LF_Cabinet_Suite` | 櫃體建模與 BOM；依 ED-18 排除，未來若需要改為獨立工具，不是 2.0 待辦 |
 | 協作 | `LF_Sync_Worksession` | 監看與更新 Worksession |
 
 ## Tag Block 的 1.x 操作事實
@@ -88,7 +88,7 @@ LoopFlow 是 Rhino 8 的半自動化設計與出圖工具。使用者決定何�
 以下是從現行使用方式抽出的回歸案例範圍；測試門檻由 `_LoopFlow_重構計畫.md` 負責，實際任務與結果分別記錄於 `開發任務與路徑.md`、`重構進度.md`：
 
 - 核心主鏈：Tag／Dictionary、Registry／Nexus、Layout／Infuser／Worksession。
-- 延後或獨立工作軌：Cabinet 與三個 2D 工具各自建立代表案例；不納入核心主鏈端到端通過條件。
+- 獨立於核心主鏈：三個 2D 工具各自建立代表案例，不納入核心主鏈端到端通過條件；`LF_Cabinet_Suite` 依 ED-18 不屬於 2.0，不建立代表案例。
 
 目前實機驗證狀態以 `重構進度.md` 為準。
 

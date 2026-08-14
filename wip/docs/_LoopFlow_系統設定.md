@@ -48,6 +48,7 @@ wip/
     _LoopFlow_*.md        # 重構維護 SSOT
     資料生態藍圖.md
     資料生態決策表.md
+    資料生態決策表.html   # 衍生檔，由 tools 產生，勿手改
     工作流程模擬.md       # 衝突時的暫定操作基準
     工作流程模擬.html     # 衍生檔，由 tools 產生，勿手改
     Nexus與字典盤點.md
@@ -56,8 +57,9 @@ wip/
     loopflow_1.0_workflow_YT.txt  # 1.0 逐步操作說明；操作邏輯參考，不是 2.0 流程契約
     tag_block_text/       # 從實際 Rhino Block instance 擷取的 9 Tag＋1 圖框文字證據
   tools/
-    build_workflow_html.py  # 預設由 v2 流程 md 產生 v2 html；`--check` 可驗證是否過期
-    擷取tag_block文字.py    # Rhino 內唯讀擷取 Block／巢狀 Block 原始文字公式
+    build_workflow_html.py       # 由工作流程模擬.md 產生對應 html；`--check` 可驗證是否過期
+    build_decision_table_html.py # 由資料生態決策表.md 產生對應 html；`--check` 可驗證是否過期
+    擷取tag_block文字.py         # Rhino 內唯讀擷取 Block／巢狀 Block 原始文字公式
   src/                    # 2.0 原始碼（後續建立）
   tests/                  # 自動測試（後續建立）
   fixtures/               # 可提交的輕量測試資料（後續建立）
@@ -141,7 +143,7 @@ LF_Cabinet_Suite.py
 | Tagger 系列 | UserText／Tag Block 建立與更新 |
 | `LF_Nexus.py` | Dictionary、幾何、UUID、space、Registry 與 Excel 的整合流程 |
 | Infuser 系列 | 將資料寫入圖面 Tag Blocks |
-| Cabinet Suite | 延後的櫃體建模與 BOM 工作軌；不向主鏈注入 `_CB.*` |
+| Cabinet Suite | 依 ED-18 不屬於 LoopFlow 2.0；不向主鏈注入 `_CB.*` |
 | 2D Generator 系列 | 彼此獨立的櫃體、層板與門窗圖面幾何工具 |
 | Layout／Section 系列 | Layout、anchor、section curve 與複製流程 |
 | `LF_Sync_Worksession.py` | Worksession 事件生命週期與同步 |
