@@ -7,13 +7,17 @@ from typing import List, Mapping, Optional, Set
 
 from loopflow.features.dictionary.layer_paths import (
     LAYER_CONSTRUCTION_KEY,
+    LAYER_PREFIX_3D,
+    LAYER_PREFIX_KEY,
     LAYER_TYPE_ID_KEY,
-    SYSTEM_LAYERS,
     color_for_layer_path,
     dna_ref_name,
     is_dw_child,
     is_exportable_type_layer,
     material_name_for_layer,
+    normalize_layer_prefix,
+    read_layer_prefix,
+    system_layers,
     to_full_path,
     to_relative_path,
 )
@@ -62,6 +66,7 @@ def _sync_body(
     cancel: bool,
     export_path: Optional[Path],
     dictionary_path: Path,
+    prefix: str,
 ) -> results.Result:
     if cancel:
         return results.cancelled(
@@ -75,20 +80,21 @@ def _sync_body(
     created_types = []
     kept_types = []
     try:
-        for system_path in SYSTEM_LAYERS:
+        session.set_document_user_text(LAYER_PREFIX_KEY, prefix)
+        for system_path in system_layers(prefix):
             session.ensure_layer(system_path)
-            session.set_layer_appearance(system_path, color_for_layer_path(system_path))
+            session.set_layer_appearance(system_path, color_for_layer_path(system_path, prefix))
         for record in catalog.types:
-            full = to_full_path(record.layer_path)
-            if is_dw_child(full):
+            full = to_full_path(record.layer_path, prefix)
+            if is_dw_child(full, prefix):
                 skipped_dw_children.append(record.layer_path)
                 continue
             existed = session.has_layer(full)
             session.ensure_layer(full)
             session.set_layer_appearance(
                 full,
-                color_for_layer_path(full),
-                material_name=material_name_for_layer(full),
+                color_for_layer_path(full, prefix),
+                material_name=material_name_for_layer(full, prefix),
             )
             if not existed:
                 if record.construction_default:
@@ -104,6 +110,7 @@ def _sync_body(
                 catalog,
                 export_path,
                 dictionary_path=dictionary_path,
+                prefix=prefix,
             )
             if not exported.ok:
                 _rollback(session, layers_before, objects_before)
@@ -122,12 +129,13 @@ def _sync_body(
         "kept_type_ids": tuple(kept_types),
         "skipped_dw_children": tuple(skipped_dw_children),
         "created_layer_count": len(created_types),
+        "layer_prefix": prefix,
         "steps_hint": "layer 已同步，可存檔。Scan／Apply／發布尚未實作。",
     }
     warnings = ()
     if skipped_dw_children:
         warnings = ("已排除 %s 個 20_DW 子圖層，不建 Type。" % len(skipped_dw_children),)
-    message = "Type layer 同步完成：新建 %s、保留 %s。" % (len(created_types), len(kept_types))
+    message = "Type layer 同步完成（%s）：新建 %s、保留 %s。" % (prefix, len(created_types), len(kept_types))
     if warnings:
         return results.ok_with_warnings(
             "sync_type_layers",
@@ -148,6 +156,8 @@ def sync_type_layers(
     export_path: Optional[Path] = None,
     guarded: bool = True,
     command_id: str = COMMAND_ID,
+    layer_prefix: Optional[str] = None,
+    ask_prefix=None,
 ) -> results.Result:
     """Dictionary → Rhino Type layer。既有 layer 保留資料；不寫物件 instance。"""
     if catalog is None:
@@ -161,12 +171,33 @@ def sync_type_layers(
         dictionary_path = workfiles.details["paths"].dictionary if workfiles.ok else Path(DICTIONARY_FILENAME)
 
     def action(current: RhinoSession) -> results.Result:
+        current_prefix = read_layer_prefix(current)
+        chosen = layer_prefix
+        if chosen is None and callable(ask_prefix):
+            chosen = ask_prefix(current_prefix)
+            if chosen is None:
+                return results.cancelled(
+                    "sync_type_layers",
+                    "使用者取消輸入專案名稱。",
+                    command_id=command_id,
+                )
+        if chosen is None:
+            chosen = current_prefix or LAYER_PREFIX_3D
+        prefix = normalize_layer_prefix(chosen)
+        if not prefix:
+            return results.blocked(
+                "sync_type_layers",
+                "專案名稱不能空白，也不能含 : \\ / * ? \" < > |",
+                blocking=("invalid_layer_prefix",),
+                command_id=command_id,
+            )
         return _sync_body(
             current,
             catalog,
             cancel=cancel,
             export_path=export_path,
             dictionary_path=dictionary_path,
+            prefix=prefix,
         )
 
     if not guarded:
@@ -174,14 +205,14 @@ def sync_type_layers(
     return run_guarded(session, action, command_id=command_id)
 
 
-def _diff_rows(session: RhinoSession, catalog: TypeCatalog) -> List[List[str]]:
+def _diff_rows(session: RhinoSession, catalog: TypeCatalog, prefix: str) -> List[List[str]]:
     rhino_paths = session.layer_paths()
-    exportable = [path for path in rhino_paths if is_exportable_type_layer(path, rhino_paths)]
-    by_rel = {to_relative_path(path): path for path in exportable}
+    exportable = [path for path in rhino_paths if is_exportable_type_layer(path, rhino_paths, prefix)]
+    by_rel = {to_relative_path(path, prefix): path for path in exportable}
     dict_by_rel = {
         record.layer_path: record
         for record in catalog.types
-        if not is_dw_child(to_full_path(record.layer_path))
+        if not is_dw_child(to_full_path(record.layer_path, prefix), prefix)
     }
     rows = []
     seen = set()
@@ -219,6 +250,7 @@ def export_layer_diff(
     export_path: Path,
     *,
     dictionary_path: Path,
+    prefix: str = LAYER_PREFIX_3D,
 ) -> results.Result:
     """匯出獨立比較用 xlsx。不讀 Object UserText，不覆寫正式 Dictionary。"""
     target = Path(export_path)
@@ -235,7 +267,7 @@ def export_layer_diff(
             "匯出目錄不存在，不建立。",
             command_id=COMMAND_ID,
         )
-    rows = _diff_rows(session, catalog)
+    rows = _diff_rows(session, catalog, prefix)
     written = write_table(target, DIFF_TITLE, DIFF_HEADERS, rows)
     if not written.ok:
         return written

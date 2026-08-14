@@ -33,6 +33,9 @@ class RhinoSession(Protocol):
     def document_user_text(self, key: str) -> Optional[str]:
         ...
 
+    def set_document_user_text(self, key: str, value: str) -> None:
+        ...
+
     def model_unit_system(self) -> str:
         ...
 

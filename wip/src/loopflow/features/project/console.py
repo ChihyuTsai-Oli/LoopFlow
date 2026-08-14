@@ -30,8 +30,14 @@ CONSOLE_STEPS: Tuple[dict, ...] = (
         "task": "NX-02",
     },
     {
+        "id": "level_boundary",
+        "title": "登記樓層框",
+        "status": "available",
+        "task": "NX-03",
+    },
+    {
         "id": "space_boundary",
-        "title": "建立 Space Boundaries",
+        "title": "登記空間框",
         "status": "available",
         "task": "NX-03",
     },
@@ -166,11 +172,12 @@ def _open_check(
         "executable_steps": (
             "open_check",
             "sync_type_layers",
+            "level_boundary",
             "space_boundary",
             "scan_apply_verify",
         ),
     }
-    message = "開案檢查完成。可執行 Type layer、Space Boundary 與 Scan／Apply（ID／空間／高程）。發布尚未實作。"
+    message = "開案檢查完成。可執行 Type layer、樓層／空間框與 Scan／Apply。發布尚未實作。"
     if warnings:
         return results.ok_with_warnings(
             "open_check",
@@ -194,6 +201,16 @@ def open_console(
     selected_only: bool = False,
     identity_action: str = "scan",
     command_id: str = COMMAND_ID,
+    layer_prefix=None,
+    ask_prefix=None,
+    pick_objects=None,
+    ask_text=None,
+    ask_kind=None,
+    object_ids=None,
+    space_name=None,
+    datum=None,
+    level_kind=None,
+    isolate: bool = True,
 ) -> results.Result:
     """開案檢查並列出 Console 步驟。step 指定時才執行該步。"""
     from loopflow.features.dictionary.sync import sync_type_layers
@@ -204,7 +221,12 @@ def open_console(
         verify_identity,
     )
     from loopflow.features.model_data.placement import apply_placement, scan_placement
-    from loopflow.features.model_data.space import drafts_from_selection, register_space_boundaries
+    from loopflow.features.model_data.space import (
+        drafts_from_selection,
+        register_level_boundaries_interactive,
+        register_space_boundaries,
+        register_space_boundaries_interactive,
+    )
 
     def action(current: RhinoSession) -> results.Result:
         checked = _open_check(current, environ=environ, cancel=cancel)
@@ -218,13 +240,38 @@ def open_console(
                 export_path=export_path,
                 guarded=False,
                 command_id=command_id,
+                layer_prefix=layer_prefix,
+                ask_prefix=ask_prefix,
+            )
+        if step == "level_boundary":
+            return register_level_boundaries_interactive(
+                current,
+                kind=level_kind,
+                object_ids=object_ids,
+                datum=datum,
+                ask_kind=ask_kind,
+                pick_objects=pick_objects,
+                ask_text=ask_text,
+                isolate=isolate,
+                guarded=False,
+                command_id=command_id,
             )
         if step == "space_boundary":
-            selected = drafts if drafts is not None else drafts_from_selection(current)
-            return register_space_boundaries(
+            if drafts is not None:
+                return register_space_boundaries(
+                    current,
+                    drafts,
+                    cancel=False,
+                    guarded=False,
+                    command_id=command_id,
+                )
+            return register_space_boundaries_interactive(
                 current,
-                selected,
-                cancel=False,
+                object_ids=object_ids,
+                space_name=space_name,
+                pick_objects=pick_objects,
+                ask_text=ask_text,
+                isolate=isolate,
                 guarded=False,
                 command_id=command_id,
             )

@@ -167,6 +167,9 @@ class LiveSession:
             return None
         return str(value)
 
+    def set_document_user_text(self, key: str, value: str) -> None:
+        self._rs.SetDocumentUserText(key, value)
+
     def model_unit_system(self) -> str:
         return str(self._sc.doc.ModelUnitSystem)
 

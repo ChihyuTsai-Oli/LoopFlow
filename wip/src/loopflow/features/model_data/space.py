@@ -5,13 +5,19 @@ from __future__ import annotations
 import re
 import uuid
 from dataclasses import dataclass
-from typing import Optional, Sequence, Tuple
+from typing import Callable, Optional, Sequence, Tuple
 
-from loopflow.features.dictionary.layer_paths import SYSTEM_LAYERS
+from loopflow.features.dictionary.layer_paths import (
+    DNA_REF_PREFIX,
+    SYSTEM_LAYERS,
+    read_layer_prefix,
+    system_layers,
+)
 from loopflow.foundation import results
 from loopflow.foundation.usertext import LEVEL_ID_KEY, SPACE_DISPLAY_KEY, SPACE_ID_KEY, read_text, write_text
 from loopflow.foundation.version import check_schema
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.platform.rhino.state import ObjectViewState
 
 COMMAND_ID = "LF_Nexus"
 SCHEMA_ID = "loopflow.space"
@@ -131,7 +137,10 @@ def parse_level_datum(name: str):
 
 def collect_level_frames(session: RhinoSession) -> Tuple[LevelFrame, ...]:
     frames = []
-    for layer in LEVEL_BOUNDARY_LAYERS:
+    prefix = read_layer_prefix(session)
+    layers = system_layers(prefix)
+    ffl_layer = layers[1]
+    for layer in layers[1:3]:
         if not session.has_layer(layer):
             continue
         for object_id in session.objects_on_layer(layer):
@@ -153,7 +162,7 @@ def collect_level_frames(session: RhinoSession) -> Tuple[LevelFrame, ...]:
                     curve_z=float(curve_z),
                     datum=datum,
                     layer=layer,
-                    prefer_ffl=layer == LEVEL_FFL_LAYER,
+                    prefer_ffl=layer == ffl_layer,
                 )
             )
     return tuple(frames)
@@ -221,7 +230,7 @@ def drafts_from_selection(session: RhinoSession) -> Tuple[SpaceDraft, ...]:
         state = session.get_view_state(object_id)
         if state is None or not state.selected:
             continue
-        if session.object_layer(object_id) in LEVEL_BOUNDARY_LAYERS:
+        if session.object_layer(object_id) in system_layers(read_layer_prefix(session))[1:3]:
             continue
         display = session.object_name(object_id) or read_text(
             session, object_id, SPACE_DISPLAY_KEY
@@ -237,6 +246,276 @@ def drafts_from_selection(session: RhinoSession) -> Tuple[SpaceDraft, ...]:
             )
         )
     return tuple(drafts)
+
+
+def isolate_closed_curves(session: RhinoSession) -> int:
+    """鎖住非封閉曲線，解鎖並顯示封閉曲線以便選取。回傳鎖住數量。"""
+    locked = 0
+    for object_id in session.iter_object_ids(include_hidden=True, include_locked=True):
+        name = session.object_name(object_id) or ""
+        if name.startswith(DNA_REF_PREFIX):
+            continue
+        state = session.get_view_state(object_id)
+        if state is None:
+            continue
+        if session.is_closed_curve(object_id):
+            if state.locked or state.hidden:
+                session.set_view_state(
+                    ObjectViewState(
+                        object_id=object_id,
+                        selected=state.selected,
+                        locked=False,
+                        hidden=False,
+                        color=state.color,
+                        color_by_layer=state.color_by_layer,
+                    )
+                )
+            continue
+        if not state.locked:
+            session.set_view_state(
+                ObjectViewState(
+                    object_id=object_id,
+                    selected=False,
+                    locked=True,
+                    hidden=state.hidden,
+                    color=state.color,
+                    color_by_layer=state.color_by_layer,
+                )
+            )
+            locked += 1
+    return locked
+
+
+def register_level_boundaries(
+    session: RhinoSession,
+    object_ids: Sequence[str],
+    *,
+    kind: str,
+    datum: str,
+    cancel: bool = False,
+    guarded: bool = True,
+    command_id: str = COMMAND_ID,
+) -> results.Result:
+    """把封閉曲線登記為樓層框。高程寫入物件名稱，曲線搬到 FFL 或 FL。"""
+
+    def action(current: RhinoSession) -> results.Result:
+        if cancel:
+            return results.cancelled(
+                "register_levels",
+                "使用者取消樓層框。",
+                command_id=command_id,
+            )
+        chosen = (kind or "").strip().upper()
+        if chosen not in ("FFL", "FL"):
+            return results.blocked(
+                "register_levels",
+                "樓層框請選 FFL 或 FL。",
+                blocking=("invalid_level_kind",),
+                command_id=command_id,
+            )
+        display = (datum or "").strip()
+        if parse_level_datum(display) is None:
+            return results.blocked(
+                "register_levels",
+                "高程必須是數字，例如 0 或 320。",
+                blocking=("invalid_level_datum",),
+                command_id=command_id,
+            )
+        ids = tuple(object_ids)
+        if not ids:
+            return results.blocked(
+                "register_levels",
+                "沒有選取樓層框。請選取封閉曲線後按 Enter。",
+                blocking=("missing_level_selection",),
+                command_id=command_id,
+            )
+        invalid = []
+        parsed = []
+        for object_id in ids:
+            if not current.is_closed_curve(object_id):
+                invalid.append(object_id)
+                continue
+            polygon = current.curve_polygon(object_id)
+            if not polygon or len(polygon) < 3:
+                invalid.append(object_id)
+                continue
+            parsed.append(object_id)
+        if invalid:
+            return results.blocked(
+                "register_levels",
+                "有 %s 條無效曲線（未封閉或頂點不足）。" % len(invalid),
+                blocking=("invalid_level_curve",),
+                command_id=command_id,
+                details={"invalid_object_ids": tuple(invalid)},
+            )
+        prefix = read_layer_prefix(current)
+        target = system_layers(prefix)[1 if chosen == "FFL" else 2]
+        current.ensure_layer(target)
+        written = []
+        for object_id in parsed:
+            level_id = read_text(current, object_id, LEVEL_ID_KEY)
+            if not UUID_V4_RE.match(level_id or ""):
+                level_id = _new_id()
+            write_text(current, object_id, LEVEL_ID_KEY, level_id)
+            current.set_object_name(object_id, display)
+            if current.object_layer(object_id) != target:
+                current.set_object_layer(object_id, target)
+            written.append(level_id)
+        return results.ok(
+            "register_levels",
+            "已登記 %s 個 %s 樓層框（高程 %s）。" % (len(written), chosen, display),
+            command_id=command_id,
+            details={
+                "count": len(written),
+                "kind": chosen,
+                "datum": display,
+                "layer": target,
+                "level_ids": tuple(written),
+            },
+        )
+
+    if not guarded:
+        return action(session)
+    return run_guarded(session, action, command_id=command_id)
+
+
+def _ask_or_live(injected, live_name: str, *args):
+    if injected is not None:
+        return injected(*args) if callable(injected) else injected
+    from loopflow.platform.rhino import prompts
+    return getattr(prompts, live_name)(*args)
+
+
+def register_level_boundaries_interactive(
+    session: RhinoSession,
+    *,
+    kind: Optional[str] = None,
+    object_ids: Optional[Sequence[str]] = None,
+    datum: Optional[str] = None,
+    ask_kind: Optional[Callable] = None,
+    pick_objects: Optional[Callable] = None,
+    ask_text: Optional[Callable] = None,
+    isolate: bool = True,
+    guarded: bool = True,
+    command_id: str = COMMAND_ID,
+) -> results.Result:
+    """先選 FFL／FL，鎖非曲線，選線後輸入高程；Enter 完成。"""
+
+    def action(current: RhinoSession) -> results.Result:
+        chosen = kind
+        if chosen is None:
+            if ask_kind is not None:
+                chosen = ask_kind("樓層框類型", ("FFL", "FL"), "FFL")
+            else:
+                chosen = _ask_or_live(None, "ask_command_string", "樓層框類型", "FFL", ("FFL", "FL"))
+            if chosen is None:
+                return results.cancelled(
+                    "register_levels",
+                    "使用者取消樓層框類型。",
+                    command_id=command_id,
+                )
+        if isolate:
+            isolate_closed_curves(current)
+        ids = object_ids
+        if ids is None:
+            if pick_objects is not None:
+                ids = pick_objects()
+            else:
+                ids = _ask_or_live(None, "pick_curves")
+            if not ids:
+                return results.cancelled(
+                    "register_levels",
+                    "使用者取消選取樓層框。",
+                    command_id=command_id,
+                )
+        text = datum
+        if text is None:
+            if ask_text is not None:
+                text = ask_text("高程（例如 0 或 320）", "")
+            else:
+                text = _ask_or_live(None, "ask_command_string", "高程（例如 0 或 320）", "")
+            if text is None:
+                return results.cancelled(
+                    "register_levels",
+                    "使用者取消輸入高程。",
+                    command_id=command_id,
+                )
+        return register_level_boundaries(
+            current,
+            ids,
+            kind=chosen,
+            datum=text,
+            cancel=False,
+            guarded=False,
+            command_id=command_id,
+        )
+
+    if not guarded:
+        return action(session)
+    return run_guarded(session, action, command_id=command_id)
+
+
+def register_space_boundaries_interactive(
+    session: RhinoSession,
+    *,
+    object_ids: Optional[Sequence[str]] = None,
+    space_name: Optional[str] = None,
+    pick_objects: Optional[Callable] = None,
+    ask_text: Optional[Callable] = None,
+    isolate: bool = True,
+    guarded: bool = True,
+    command_id: str = COMMAND_ID,
+) -> results.Result:
+    """鎖非曲線，可複選空間框，輸入同一個空間名稱；Enter 完成。"""
+
+    def action(current: RhinoSession) -> results.Result:
+        if isolate:
+            isolate_closed_curves(current)
+        ids = object_ids
+        if ids is None:
+            if pick_objects is not None:
+                ids = pick_objects()
+            else:
+                ids = _ask_or_live(None, "pick_curves")
+            if not ids:
+                return results.cancelled(
+                    "register_spaces",
+                    "使用者取消選取空間框。",
+                    command_id=command_id,
+                )
+        name = space_name
+        if name is None:
+            if ask_text is not None:
+                name = ask_text("空間名稱", "")
+            else:
+                name = _ask_or_live(None, "ask_command_string", "空間名稱", "")
+            if name is None:
+                return results.cancelled(
+                    "register_spaces",
+                    "使用者取消輸入空間名稱。",
+                    command_id=command_id,
+                )
+        display = (name or "").strip()
+        drafts = tuple(
+            SpaceDraft(
+                object_id=oid,
+                space_display=display,
+                level_id=read_text(current, oid, LEVEL_ID_KEY) or "",
+                space_id=read_text(current, oid, SPACE_ID_KEY),
+            )
+            for oid in ids
+        )
+        return register_space_boundaries(
+            current,
+            drafts,
+            cancel=False,
+            guarded=False,
+            command_id=command_id,
+        )
+
+    if not guarded:
+        return action(session)
+    return run_guarded(session, action, command_id=command_id)
 
 
 def register_space_boundaries(
@@ -378,9 +657,10 @@ def register_space_boundaries(
             write_text(current, oid, LEVEL_ID_KEY, item["level_id"])
             write_text(current, oid, SPACE_DISPLAY_KEY, item["space_display"])
             current.set_object_name(oid, item["space_display"])
-            if current.object_layer(oid) != SPACE_BOUNDARY_LAYER:
-                current.ensure_layer(SPACE_BOUNDARY_LAYER)
-                current.set_object_layer(oid, SPACE_BOUNDARY_LAYER)
+            space_layer = system_layers(read_layer_prefix(current))[0]
+            if current.object_layer(oid) != space_layer:
+                current.ensure_layer(space_layer)
+                current.set_object_layer(oid, space_layer)
         cross_level = find_xy_overlaps_other_level(parsed)
         payload = {
             "space_ids": tuple(item["space_id"] for item in parsed),

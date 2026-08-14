@@ -105,17 +105,31 @@ class ConsoleOpenCheckTests(unittest.TestCase):
             self.assertEqual(result.details["type_count"], 1)
             self.assertEqual(
                 result.details["executable_steps"],
-                ("open_check", "sync_type_layers", "space_boundary", "scan_apply_verify"),
+                (
+                    "open_check",
+                    "sync_type_layers",
+                    "level_boundary",
+                    "space_boundary",
+                    "scan_apply_verify",
+                ),
             )
             step_ids = [step["id"] for step in result.details["steps"]]
             self.assertEqual(
                 step_ids,
-                ["open_check", "sync_type_layers", "space_boundary", "scan_apply_verify", "publish_registry"],
+                [
+                    "open_check",
+                    "sync_type_layers",
+                    "level_boundary",
+                    "space_boundary",
+                    "scan_apply_verify",
+                    "publish_registry",
+                ],
             )
             self.assertEqual(result.details["steps"][1]["status"], "available")
             self.assertEqual(result.details["steps"][2]["status"], "available")
             self.assertEqual(result.details["steps"][3]["status"], "available")
-            self.assertTrue(all(step["status"] == "not_implemented" for step in result.details["steps"][4:]))
+            self.assertEqual(result.details["steps"][4]["status"], "available")
+            self.assertTrue(all(step["status"] == "not_implemented" for step in result.details["steps"][5:]))
             self.assertFalse((root / "exchange").exists())
             self.assertFalse((root / "logs").exists())
             self.assertTrue(session.get_view_state("a").selected)
@@ -165,8 +179,10 @@ class ConsoleOpenCheckTests(unittest.TestCase):
 
 class ConsoleMenuTests(unittest.TestCase):
     def test_parse_menu_choice(self):
-        self.assertEqual(parse_menu_choice("4  Scan（不寫入）"), ("scan_apply_verify", "scan"))
-        self.assertEqual(parse_menu_choice("5"), ("scan_apply_verify", "apply"))
+        self.assertEqual(parse_menu_choice("5  Scan（不寫入）"), ("scan_apply_verify", "scan"))
+        self.assertEqual(parse_menu_choice("6"), ("scan_apply_verify", "apply"))
+        self.assertEqual(parse_menu_choice("3"), ("level_boundary", "scan"))
+        self.assertEqual(parse_menu_choice("4"), ("space_boundary", "scan"))
         self.assertEqual(parse_menu_choice("2"), ("sync_type_layers", "scan"))
         self.assertIsNone(parse_menu_choice(None))
         self.assertIsNone(parse_menu_choice("取消"))
@@ -195,7 +211,7 @@ class ConsoleMenuTests(unittest.TestCase):
                 session,
                 environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
                 interactive=True,
-                chooser=lambda _labels: "4",
+                chooser=lambda _labels: "5",
             )
             self.assertTrue(result.ok, result.message)
             self.assertEqual(result.stage, "scan_identity")

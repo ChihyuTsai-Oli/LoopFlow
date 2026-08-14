@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from typing import List, Mapping, Optional, Sequence, Tuple
 
-from loopflow.features.dictionary.layer_paths import to_relative_path
+from loopflow.features.dictionary.layer_paths import read_layer_prefix, system_layers, to_relative_path
 from loopflow.features.dictionary.loader import TypeCatalog, load_from_workfiles
 from loopflow.features.model_data.identity import iter_scan_targets
 from loopflow.features.model_data.space import (
-    SPACE_BOUNDARY_LAYER,
     SPACE_DISPLAY_KEY,
     SPACE_ID_KEY,
     UUID_V4_RE,
@@ -45,9 +44,10 @@ def collect_spaces(session: RhinoSession) -> Tuple[Optional[str], Tuple[dict, ..
     """收集 Space_Boundaries 圖層上已登記的封閉曲線。登記時會把曲線搬到該圖層。"""
     found = []
     seen = set()
-    if not session.has_layer(SPACE_BOUNDARY_LAYER):
+    space_layer = system_layers(read_layer_prefix(session))[0]
+    if not session.has_layer(space_layer):
         return EXT_NO_LAYER, ()
-    for object_id in session.objects_on_layer(SPACE_BOUNDARY_LAYER) or ():
+    for object_id in session.objects_on_layer(space_layer) or ():
         if object_id in seen:
             continue
         seen.add(object_id)
@@ -142,7 +142,7 @@ def _resolve_basis(session: RhinoSession, object_id: str, catalog: TypeCatalog) 
     record = catalog.by_type_id(type_id) if type_id else None
     if record is None:
         layer = session.object_layer(object_id) or ""
-        record = catalog.by_layer_path(to_relative_path(layer))
+        record = catalog.by_layer_path(to_relative_path(layer, read_layer_prefix(session)))
     if record is None:
         return None
     return record.elevation_basis

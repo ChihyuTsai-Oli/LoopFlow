@@ -92,6 +92,13 @@ class MemorySession:
             return None
         return str(value)
 
+    def set_document_user_text(self, key: str, value: str) -> None:
+        if value in (None, ""):
+            self._document_text.pop(key, None)
+        else:
+            self._document_text[key] = value
+        self._modified = True
+
     def model_unit_system(self) -> str:
         return self._model_unit
 

@@ -16,6 +16,7 @@ from loopflow.features.dictionary import schema
 from loopflow.features.dictionary.layer_paths import (
     DW_PLAN_LAYER,
     LAYER_CONSTRUCTION_KEY,
+    LAYER_PREFIX_KEY,
     LAYER_TYPE_ID_KEY,
     SYSTEM_LAYERS,
     color_for_layer_path,
@@ -198,6 +199,51 @@ class LayerSyncTests(unittest.TestCase):
         self.assertEqual(result.status, "cancelled")
         self.assertFalse(session.has_layer(to_full_path("00_STR_結構::Beam.樑")))
         self.assertTrue(session.get_view_state("model-a").selected)
+
+    def test_custom_prefix_is_stored_and_reused_as_default(self):
+        session = _session()
+        catalog = _catalog(_row())
+        seen = []
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
+            environ = {"LOOPFLOW_WORKFILES_ROOT": raw}
+            first = sync_type_layers(
+                session,
+                environ=environ,
+                catalog=catalog,
+                layer_prefix="大安邸",
+            )
+            self.assertTrue(first.ok, first.message)
+            self.assertEqual(session.document_user_text(LAYER_PREFIX_KEY), "大安邸")
+            self.assertTrue(session.has_layer("大安邸::00_STR_結構::Beam.樑"))
+            self.assertTrue(session.has_layer("大安邸::_Data::Space_Boundaries"))
+            self.assertFalse(session.has_layer(to_full_path("00_STR_結構::Beam.樑")))
+
+            def _ask(default):
+                seen.append(default)
+                return default
+
+            second = sync_type_layers(
+                session,
+                environ=environ,
+                catalog=catalog,
+                ask_prefix=_ask,
+            )
+        self.assertTrue(second.ok, second.message)
+        self.assertEqual(seen, ["大安邸"])
+        self.assertEqual(session.document_user_text(LAYER_PREFIX_KEY), "大安邸")
+
+    def test_invalid_prefix_blocks(self):
+        session = _session()
+        catalog = _catalog(_row())
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
+            result = sync_type_layers(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
+                catalog=catalog,
+                layer_prefix="A::B",
+            )
+        self.assertEqual(result.blocking, ("invalid_layer_prefix",))
+        self.assertIsNone(session.document_user_text(LAYER_PREFIX_KEY))
 
 
 if __name__ == "__main__":

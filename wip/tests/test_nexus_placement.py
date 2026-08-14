@@ -17,11 +17,10 @@ from loopflow.features.dictionary.loader import TypeCatalog, TypeRecord, load_fr
 from loopflow.features.model_data.placement import (
     ELEVATION_BASIS_KEY,
     ELEVATION_VALUE_KEY,
-    SPACE_BOUNDARY_LAYER,
     apply_placement,
     scan_placement,
 )
-from loopflow.features.model_data.space import SPACE_DISPLAY_KEY, SPACE_ID_KEY
+from loopflow.features.model_data.space import SPACE_BOUNDARY_LAYER, SPACE_DISPLAY_KEY, SPACE_ID_KEY
 from loopflow.platform.rhino.memory import MemorySession
 
 LAYER = "00_STR_結構::Beam.樑"

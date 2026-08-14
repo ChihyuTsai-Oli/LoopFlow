@@ -24,7 +24,10 @@ from loopflow.features.model_data.space import (
     UUID_V4_RE,
     SpaceDraft,
     drafts_from_selection,
+    isolate_closed_curves,
+    register_level_boundaries_interactive,
     register_space_boundaries,
+    register_space_boundaries_interactive,
 )
 from loopflow.features.project.console import (
     PROJECT_ID_KEY,
@@ -351,6 +354,9 @@ class SpaceBoundaryTests(unittest.TestCase):
                 session,
                 environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
                 step="space_boundary",
+                pick_objects=lambda: ("curve-0",),
+                space_name="客廳",
+                isolate=False,
             )
         self.assertTrue(result.ok, result.message)
         self.assertTrue(UUID_V4_RE.match(session.get_object_user_text("curve-0", SPACE_ID_KEY)))
@@ -465,6 +471,56 @@ class SpaceBoundaryTests(unittest.TestCase):
         self.assertEqual(
             inner.get_object_user_text("room", LEVEL_ID_KEY),
             inner.get_object_user_text("ffl-1", LEVEL_ID_KEY),
+        )
+
+    def test_isolate_locks_non_curves_and_unlocks_closed_curves(self):
+        session = _session()
+        session.add_object("box", locked=False, name="Wall")
+        session.add_object("room", locked=True, hidden=True, name="")
+        session.set_curve("room", ROOM_POLY, closed=True)
+        isolate_closed_curves(session)
+        self.assertTrue(session.get_view_state("box").locked)
+        self.assertFalse(session.get_view_state("room").locked)
+        self.assertFalse(session.get_view_state("room").hidden)
+
+    def test_level_prompt_writes_datum_and_restores_locks(self):
+        session = _session()
+        session.add_object("box", locked=False, name="Wall")
+        session.add_object("frame", name="")
+        session.set_curve("frame", FLOOR_POLY, closed=True, elevation=0.0)
+        result = register_level_boundaries_interactive(
+            session,
+            kind="FFL",
+            object_ids=("frame",),
+            datum="320",
+            isolate=True,
+        )
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.object_name("frame"), "320")
+        self.assertEqual(session.object_layer("frame"), LEVEL_FFL_LAYER)
+        self.assertTrue(UUID_V4_RE.match(session.get_object_user_text("frame", LEVEL_ID_KEY)))
+        self.assertFalse(session.get_view_state("box").locked)
+
+    def test_space_prompt_applies_one_name_to_multiple_curves(self):
+        session = _session()
+        _add_level(session, "ffl-1", "0", FLOOR_POLY, elevation=0.0)
+        session.add_object("a", name="")
+        session.set_curve("a", ROOM_POLY, closed=True, elevation=0.0)
+        session.add_object("b", name="")
+        session.set_curve("b", [[6, 6], [9, 6], [9, 9], [6, 9]], closed=True, elevation=0.0)
+        result = register_space_boundaries_interactive(
+            session,
+            object_ids=("a", "b"),
+            space_name="廊道",
+            isolate=True,
+        )
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.object_name("a"), "廊道")
+        self.assertEqual(session.object_name("b"), "廊道")
+        self.assertEqual(session.get_object_user_text("a", SPACE_DISPLAY_KEY), "廊道")
+        self.assertEqual(
+            session.get_object_user_text("a", LEVEL_ID_KEY),
+            session.get_object_user_text("ffl-1", LEVEL_ID_KEY),
         )
 
 

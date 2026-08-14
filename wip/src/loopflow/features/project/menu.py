@@ -14,10 +14,11 @@ Chooser = Callable[[Sequence[str]], Optional[str]]
 MENU_ITEMS: Tuple[Tuple[str, str, str], ...] = (
     ("open_check", "scan", "1  開案檢查（只看狀態，不寫入）"),
     ("sync_type_layers", "scan", "2  同步 Type Layers"),
-    ("space_boundary", "scan", "3  建立 Space Boundaries（請先選取封閉曲線）"),
-    ("scan_apply_verify", "scan", "4  Scan（不寫入）"),
-    ("scan_apply_verify", "apply", "5  Apply（寫入 ID／Type／空間／高程）"),
-    ("scan_apply_verify", "verify", "6  Verify（再 Scan，仍不可發布）"),
+    ("level_boundary", "scan", "3  登記樓層框"),
+    ("space_boundary", "scan", "4  登記空間框"),
+    ("scan_apply_verify", "scan", "5  Scan（不寫入）"),
+    ("scan_apply_verify", "apply", "6  Apply（寫入 ID／Type／空間／高程）"),
+    ("scan_apply_verify", "verify", "7  Verify（再 Scan，仍不可發布）"),
 )
 MENU_LABELS: Tuple[str, ...] = tuple(item[2] for item in MENU_ITEMS)
 
@@ -75,12 +76,20 @@ def run_nexus_console(
             details=first.details,
         )
     step, identity_action = picked
+    extra = dict(kwargs)
     if step == "open_check":
         return first
+    if step == "sync_type_layers" and extra.get("ask_prefix") is None:
+        from loopflow.platform.rhino.prompts import ask_command_string
+
+        def _ask_prefix(default):
+            return ask_command_string("專案名稱（圖層前綴）", default or "M3D")
+
+        extra["ask_prefix"] = _ask_prefix
     return open_console(
         session,
         environ=environ,
         step=step,
         identity_action=identity_action,
-        **kwargs
+        **extra
     )

@@ -10,7 +10,11 @@ from loopflow.features.model_data.placement import apply_placement, scan_placeme
 from loopflow.features.model_data.space import (
     SpaceDraft,
     drafts_from_selection,
+    isolate_closed_curves,
+    register_level_boundaries,
+    register_level_boundaries_interactive,
     register_space_boundaries,
+    register_space_boundaries_interactive,
 )
 
 __all__ = [
@@ -18,7 +22,11 @@ __all__ = [
     "apply_identity",
     "apply_placement",
     "drafts_from_selection",
+    "isolate_closed_curves",
+    "register_level_boundaries",
+    "register_level_boundaries_interactive",
     "register_space_boundaries",
+    "register_space_boundaries_interactive",
     "rollback_identity",
     "scan_identity",
     "scan_placement",

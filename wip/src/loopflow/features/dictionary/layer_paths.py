@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Type layer 路徑規則。Dictionary 存相對 path，Rhino 使用 M3D:: 完整 path。"""
+"""Type layer 路徑規則。Dictionary 存相對 path，Rhino 使用「專案名稱::」完整 path。"""
 from __future__ import annotations
 
-from typing import Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 LAYER_PREFIX_3D = "M3D"
-DATA_LAYER = "M3D::_Data"
-DW_PLAN_LAYER = "M3D::20_DW"
-SYSTEM_LAYERS = (
-    "M3D::_Data::Space_Boundaries",
-    "M3D::_Data::Level_Boundaries_FFL",
-    "M3D::_Data::Level_Boundaries_FL",
-)
+LAYER_PREFIX_KEY = "lf_layer_prefix"
+DATA_SUFFIX = "_Data"
 DNA_REF_PREFIX = "DNA_REF_"
 LAYER_TYPE_ID_KEY = "lf_type_id"
 LAYER_CONSTRUCTION_KEY = "lf_construction_default"
@@ -34,27 +29,64 @@ COLOR_LAYER_MAP = {
 }
 
 
-def to_full_path(relative: str) -> str:
+def normalize_layer_prefix(name: Optional[str]) -> Optional[str]:
+    """專案名稱＝3D 圖層樹根。禁止空白與圖層非法字元。"""
+    text = (name or "").strip()
+    if not text:
+        return None
+    if any(ch in text for ch in ':\\/:*?<>|"'):
+        return None
+    return text
+
+
+def read_layer_prefix(session) -> str:
+    stored = normalize_layer_prefix(session.document_user_text(LAYER_PREFIX_KEY) or "")
+    return stored or LAYER_PREFIX_3D
+
+
+def data_layer(prefix: str = LAYER_PREFIX_3D) -> str:
+    return prefix + "::" + DATA_SUFFIX
+
+
+def dw_plan_layer(prefix: str = LAYER_PREFIX_3D) -> str:
+    return prefix + "::20_DW"
+
+
+def system_layers(prefix: str = LAYER_PREFIX_3D) -> Tuple[str, ...]:
+    root = data_layer(prefix)
+    return (
+        root + "::Space_Boundaries",
+        root + "::Level_Boundaries_FFL",
+        root + "::Level_Boundaries_FL",
+    )
+
+
+DATA_LAYER = data_layer()
+DW_PLAN_LAYER = dw_plan_layer()
+SYSTEM_LAYERS = system_layers()
+
+
+def to_full_path(relative: str, prefix: str = LAYER_PREFIX_3D) -> str:
     text = relative or ""
     if not text:
-        return LAYER_PREFIX_3D
-    if text == LAYER_PREFIX_3D or text.startswith(LAYER_PREFIX_3D + "::"):
+        return prefix
+    if text == prefix or text.startswith(prefix + "::"):
         return text
-    return LAYER_PREFIX_3D + "::" + text
+    return prefix + "::" + text
 
 
-def to_relative_path(full: str) -> str:
-    prefix = LAYER_PREFIX_3D + "::"
-    if full.startswith(prefix):
-        return full[len(prefix):]
-    if full == LAYER_PREFIX_3D:
+def to_relative_path(full: str, prefix: str = LAYER_PREFIX_3D) -> str:
+    token = prefix + "::"
+    if full.startswith(token):
+        return full[len(token):]
+    if full == prefix:
         return ""
     return full
 
 
-def material_name_for_layer(full: str) -> str:
-    """材質名稱＝去掉 M3D:: 的相對路徑，保留一個父圖層。"""
-    relative = to_relative_path(full)
+def material_name_for_layer(full: str, prefix: str = LAYER_PREFIX_3D) -> str:
+    """材質名稱＝去掉專案前綴的相對路徑，保留一個父圖層。"""
+    relative = to_relative_path(full, prefix)
     return relative or full
 
 
@@ -66,41 +98,47 @@ def ancestor_paths(full: str) -> Tuple[str, ...]:
     return tuple(paths)
 
 
-def is_dw_child(full: str) -> bool:
-    return full.startswith(DW_PLAN_LAYER + "::")
+def is_dw_child(full: str, prefix: str = LAYER_PREFIX_3D) -> bool:
+    return full.startswith(dw_plan_layer(prefix) + "::")
 
 
-def is_system_layer(full: str) -> bool:
-    return full == DATA_LAYER or full in SYSTEM_LAYERS
+def is_system_layer(full: str, prefix: str = LAYER_PREFIX_3D) -> bool:
+    root = data_layer(prefix)
+    return full == root or full in system_layers(prefix)
+
+
+def is_in_project(full: str, prefix: str = LAYER_PREFIX_3D) -> bool:
+    return full == prefix or (full or "").startswith(prefix + "::")
 
 
 def is_parent_path(full: str, all_paths: Sequence[str]) -> bool:
-    prefix = full + "::"
-    return any(path.startswith(prefix) for path in all_paths)
+    token = full + "::"
+    return any(path.startswith(token) for path in all_paths)
 
 
 def dna_ref_name(type_id: str) -> str:
     return DNA_REF_PREFIX + type_id
 
 
-def color_for_layer_path(full: str) -> Tuple[int, int, int]:
+def color_for_layer_path(full: str, prefix: str = LAYER_PREFIX_3D) -> Tuple[int, int, int]:
     """依完整圖層路徑回傳顯示 RGB。系統層為黑；其餘取第一個已知代號前綴。"""
     path = full or ""
-    if is_system_layer(path) or path == DATA_LAYER or path.startswith(DATA_LAYER + "::"):
+    root = data_layer(prefix)
+    if is_system_layer(path, prefix) or path == root or path.startswith(root + "::"):
         return COLOR_DATA_LAYER
     color = COLOR_LAYER_MAP["furniture"] if "_Furniture" in path else COLOR_DATA_LAYER
     for part in path.split("::"):
-        prefix = part.split("_")[0]
-        if prefix in COLOR_LAYER_MAP:
-            return COLOR_LAYER_MAP[prefix]
+        code = part.split("_")[0]
+        if code in COLOR_LAYER_MAP:
+            return COLOR_LAYER_MAP[code]
     return color
 
 
-def is_exportable_type_layer(full: str, all_paths: Sequence[str]) -> bool:
-    if not full.startswith(LAYER_PREFIX_3D):
+def is_exportable_type_layer(full: str, all_paths: Sequence[str], prefix: str = LAYER_PREFIX_3D) -> bool:
+    if not is_in_project(full, prefix):
         return False
-    if is_system_layer(full) or is_dw_child(full):
+    if is_system_layer(full, prefix) or is_dw_child(full, prefix):
         return False
-    if full == DW_PLAN_LAYER:
+    if full == dw_plan_layer(prefix):
         return True
     return not is_parent_path(full, all_paths)

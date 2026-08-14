@@ -74,7 +74,7 @@ B01–B03 骨架
 
 **前置**：C01、NX-01。  
 **模組**：`features/dictionary/`（sync／export；reader 已在 C01）。  
-**做**：Dictionary 有、Rhino 無的 layer 建立並帶 `construction_default`；已有同名 layer 保留既有 UserText；依圖層代號前綴套用顯示色，並建立相對路徑同名、顏色相同的材質（不含 `M3D::`）；`DNA_REF_` 為原點點物件，依 `type_id` 更新不累積；`20_DW` 排除 child layer；選用反向匯出獨立 XLSX。  
+**做**：指令列詢問並記住專案名稱（`lf_layer_prefix`，預設 `M3D`）；Dictionary 有、Rhino 無的 layer 建立並帶 `construction_default`；已有同名 layer 保留既有 UserText；依圖層代號前綴套用顯示色，並建立相對路徑同名、顏色相同的材質（不含專案前綴）；`DNA_REF_` 為原點點物件，依 `type_id` 更新不累積；`20_DW` 排除 child layer；選用反向匯出獨立 XLSX。  
 **不做**：寫物件 instance、覆寫正式 Dictionary、改物件 instance 顏色、ZoomExtents。  
 **fixtures／驗收**：新 layer、既有 layer 保留 UserText、顯示色／材質、DNA_REF 取代、反向匯出不碰 Object UserText；取消／失敗還原 visibility 與 selection。
 
@@ -82,8 +82,8 @@ B01–B03 骨架
 
 **前置**：NX-01、B03。  
 **模組**：`features/model_data/` 的 space。  
-**做**：有效封閉曲線 → `space_id`／`level_id`／`space_display`；樓層 ID 由 FFL／FL 樓層框配對（高程差 ±20、空間整圈在樓層框內）；共邊允許、**同一 `level_id`** 面積重疊則停止並列出全部衝突；不同樓層平面重疊通過並警告。  
-**不做**：改既有物件的空間欄（那是 NX-05 Apply）；不手填樓層 UUID。  
+**做**：有效封閉曲線 → `space_id`／`level_id`／`space_display`；樓層框先選 FFL／FL 再輸入高程；空間框可複選後輸入名稱；選線時鎖非封閉曲線，Enter 完成；樓層 ID 由 FFL／FL 樓層框配對（高程差 ±20、空間整圈在樓層框內）；共邊允許、**同一 `level_id`** 面積重疊則停止並列出全部衝突；不同樓層平面重疊通過並警告。  
+**不做**：改既有物件的空間欄（那是 NX-05 Apply）；不手填樓層 UUID；不用對話框 OK。  
 **fixtures／驗收**：多樓層、共邊、重疊、無效曲線、同高程 ±20 命中、差 21 不命中、空間超出樓層擋。
 
 ### NX-04 Object ID 與 Type 資料化／`nexus-object-id`

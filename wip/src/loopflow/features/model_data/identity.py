@@ -7,11 +7,12 @@ import uuid
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
 from loopflow.features.dictionary.layer_paths import (
-    DATA_LAYER,
     DNA_REF_PREFIX,
-    LAYER_PREFIX_3D,
     LAYER_TYPE_ID_KEY,
+    data_layer,
+    is_in_project,
     is_system_layer,
+    read_layer_prefix,
     to_relative_path,
 )
 from loopflow.features.dictionary.loader import TypeCatalog, load_from_workfiles
@@ -40,12 +41,13 @@ def _new_id() -> str:
     return str(uuid.uuid4())
 
 
-def _in_m3d(layer: str) -> bool:
-    return layer == LAYER_PREFIX_3D or layer.startswith(LAYER_PREFIX_3D + "::")
+def _in_project(layer: str, prefix: str) -> bool:
+    return is_in_project(layer, prefix)
 
 
-def _is_data_layer(layer: str) -> bool:
-    return is_system_layer(layer) or layer == DATA_LAYER or layer.startswith(DATA_LAYER + "::")
+def _is_data_layer(layer: str, prefix: str) -> bool:
+    root = data_layer(prefix)
+    return is_system_layer(layer, prefix) or layer == root or layer.startswith(root + "::")
 
 
 def iter_scan_targets(
@@ -53,6 +55,7 @@ def iter_scan_targets(
     *,
     selected_only: bool = False,
 ) -> Tuple[str, ...]:
+    prefix = read_layer_prefix(session)
     targets = []
     for object_id in session.iter_object_ids(include_hidden=True, include_locked=True):
         state = session.get_view_state(object_id)
@@ -64,18 +67,19 @@ def iter_scan_targets(
         if name.startswith(DNA_REF_PREFIX):
             continue
         layer = session.object_layer(object_id) or ""
-        if not _in_m3d(layer) or _is_data_layer(layer):
+        if not _in_project(layer, prefix) or _is_data_layer(layer, prefix):
             continue
         targets.append(object_id)
     return tuple(targets)
 
 
 def _resolve_type(session: RhinoSession, object_id: str, catalog: TypeCatalog):
+    prefix = read_layer_prefix(session)
     layer = session.object_layer(object_id) or ""
     type_id = session.get_layer_user_text(layer, LAYER_TYPE_ID_KEY)
     record = catalog.by_type_id(type_id) if type_id else None
     if record is None:
-        record = catalog.by_layer_path(to_relative_path(layer))
+        record = catalog.by_layer_path(to_relative_path(layer, prefix))
     if record is None:
         return None, "unknown_type" if type_id else "unmapped_layer"
     return record, None
