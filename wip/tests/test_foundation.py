@@ -201,9 +201,9 @@ class SourceHygieneTests(unittest.TestCase):
         with redirect_stdout(io.StringIO()):
             result = run_command("LF_Nexus")
         self.assertFalse(result.ok)
-        self.assertEqual(result.status, "not_implemented")
-        self.assertEqual(result.stage, "dispatch")
-        self.assertEqual(result.to_dict()["status"], "not_implemented")
+        self.assertNotEqual(result.status, "ok")
+        self.assertNotEqual(result.status, "not_implemented")
+        self.assertEqual(result.to_dict()["ok"], False)
 
 
 if __name__ == "__main__":

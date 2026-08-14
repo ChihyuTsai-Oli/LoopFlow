@@ -34,6 +34,7 @@ STAGES = (
     "snapshot",
     "restore",
     "guarded_run",
+    "open_check",
 )
 
 

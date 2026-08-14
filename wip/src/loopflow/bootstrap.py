@@ -18,6 +18,15 @@ def ensure_src_on_path() -> Path:
     return SRC_ROOT
 
 
+def _run_nexus() -> Result:
+    from loopflow.features.project.console import open_console
+    from loopflow.platform.rhino.live import open_session
+
+    opened = open_session()
+    session = opened.details.get("session") if opened.ok else None
+    return open_console(session)
+
+
 def run_command(command_id: str) -> Result:
     """轉交已登錄指令。尚未實作時回報 not_implemented。"""
     ensure_src_on_path()
@@ -28,6 +37,10 @@ def run_command(command_id: str) -> Result:
             "未知指令：%s" % command_id,
             command_id=command_id,
         )
+        print(result.message)
+        return result
+    if command_id == "LF_Nexus":
+        result = _run_nexus()
         print(result.message)
         return result
     result = not_implemented(

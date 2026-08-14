@@ -119,6 +119,15 @@ class LiveSession:
     def set_document_modified(self, value: bool) -> None:
         self._sc.doc.Modified = bool(value)
 
+    def document_user_text(self, key: str) -> Optional[str]:
+        value = self._rs.GetDocumentUserText(key)
+        if value in (None, ""):
+            return None
+        return str(value)
+
+    def model_unit_system(self) -> str:
+        return str(self._sc.doc.ModelUnitSystem)
+
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)
 

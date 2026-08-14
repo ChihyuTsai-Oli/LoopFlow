@@ -10,9 +10,11 @@ from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
 
 
 class MemorySession:
-    def __init__(self) -> None:
+    def __init__(self, *, model_unit: str = "Centimeters", document_text=None) -> None:
         self._objects: Dict[str, ObjectViewState] = {}
         self._modified = False
+        self._model_unit = model_unit
+        self._document_text = dict(document_text or {})
 
     def add_object(
         self,
@@ -63,6 +65,15 @@ class MemorySession:
 
     def set_document_modified(self, value: bool) -> None:
         self._modified = bool(value)
+
+    def document_user_text(self, key: str) -> Optional[str]:
+        value = self._document_text.get(key)
+        if value in (None, ""):
+            return None
+        return str(value)
+
+    def model_unit_system(self) -> str:
+        return self._model_unit
 
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)

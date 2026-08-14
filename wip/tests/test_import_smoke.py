@@ -28,22 +28,24 @@ class ImportSmokeTests(unittest.TestCase):
         self.assertTrue(callable(bootstrap.run_command))
         self.assertGreaterEqual(len(command_catalog.CORE_COMMANDS), 1)
 
-    def test_catalog_lists_nexus_as_not_implemented(self):
+    def test_catalog_lists_nexus_console(self):
         from loopflow.command_catalog import CORE_COMMANDS, get_command
 
         self.assertIn("LF_Nexus", CORE_COMMANDS)
         spec = get_command("LF_Nexus")
-        self.assertEqual(spec["status"], "not_implemented")
+        self.assertEqual(spec["status"], "console")
         self.assertEqual(spec["entrypoint"], "LF_Nexus.py")
+        self.assertEqual(spec["task"], "C02/NX-01")
 
-    def test_run_command_does_not_claim_success(self):
+    def test_run_command_does_not_claim_scan_success(self):
         from loopflow.bootstrap import run_command
 
         with redirect_stdout(io.StringIO()):
             result = run_command("LF_Nexus")
         self.assertFalse(result.ok)
-        self.assertEqual(result.status, "not_implemented")
-        self.assertIn("尚未實作", result.message)
+        self.assertNotEqual(result.status, "ok")
+        self.assertNotIn("套用完成", result.message)
+        self.assertNotIn("已發布", result.message)
 
     def test_unknown_command_is_rejected(self):
         from loopflow.bootstrap import run_command
@@ -73,7 +75,14 @@ class ImportSmokeTests(unittest.TestCase):
             env=env,
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertIn("尚未實作", completed.stdout)
+        self.assertNotIn("套用完成", completed.stdout)
+        self.assertTrue(
+            any(
+                token in completed.stdout
+                for token in ("不在 Rhino", "LOOPFLOW_WORKFILES_ROOT", "尚未有 project_id")
+            ),
+            completed.stdout,
+        )
 
 
 if __name__ == "__main__":

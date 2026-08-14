@@ -32,10 +32,12 @@ _COMMANDS = {
         "command_id": command_id,
         "entrypoint": "%s.py" % command_id,
         "status": "not_implemented",
-        "task": "C02/NX-01" if command_id == "LF_Nexus" else "pending",
+        "task": "pending",
     }
     for command_id in CORE_COMMANDS
 }
+_COMMANDS["LF_Nexus"]["status"] = "console"
+_COMMANDS["LF_Nexus"]["task"] = "C02/NX-01"
 
 
 def get_command(command_id: str) -> Optional[dict]:
