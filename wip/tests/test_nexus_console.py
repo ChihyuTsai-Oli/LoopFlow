@@ -199,6 +199,65 @@ class ConsoleMenuTests(unittest.TestCase):
             self.assertTrue(result.ok, result.message)
             self.assertEqual(result.stage, "scan_identity")
             self.assertFalse(result.details["publish_ready"])
+            self.assertIn("dimensions", result.details)
+            self.assertIsNone(session.get_object_user_text("a", "lf_dimension_w"))
+
+    def test_apply_writes_dimensions_for_extrusion(self):
+        from loopflow.features.dictionary.layer_paths import to_full_path
+        from loopflow.features.dimension.frame import FRAME_KEY
+
+        full = to_full_path("00_STR_結構::Beam.樑")
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx06-") as raw:
+            root = Path(raw)
+            _write_dictionary(root)
+            session = _session()
+            session.ensure_layer(full)
+            session.set_layer_user_text(full, "lf_type_id", "EX-01")
+            session.add_object("beam", layer=full)
+            session.set_geometry_kind("beam", "extrusion")
+            session.set_bbox("beam", (0, 0, 0), (90, 40, 210))
+            scanned = run_nexus_console(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
+                interactive=True,
+                chooser=lambda _labels: "4",
+            )
+            self.assertTrue(scanned.ok, scanned.message)
+            self.assertIsNone(session.get_object_user_text("beam", FRAME_KEY))
+            applied = open_console(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
+                step="scan_apply_verify",
+                identity_action="apply",
+            )
+            self.assertTrue(applied.ok, applied.message)
+            self.assertFalse(applied.details["publish_ready"])
+            self.assertEqual(session.get_object_user_text("beam", "lf_dimension_w"), "90")
+            self.assertEqual(session.get_object_user_text("beam", "lf_quantity"), "1")
+            self.assertIsNotNone(session.get_object_user_text("beam", FRAME_KEY))
+
+    def test_closed_box_reports_unstable_frame(self):
+        from loopflow.features.dictionary.layer_paths import to_full_path
+
+        full = to_full_path("00_STR_結構::Beam.樑")
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx06-box-") as raw:
+            root = Path(raw)
+            _write_dictionary(root)
+            session = _session()
+            session.ensure_layer(full)
+            session.add_object("box", layer=full)
+            session.set_geometry_kind("box", "closed_box")
+            session.set_bbox("box", (0, 0, 0), (10, 10, 10))
+            result = open_console(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
+                step="scan_apply_verify",
+                identity_action="scan",
+            )
+            self.assertTrue(result.ok, result.message)
+            self.assertIn("no_unique_plane", result.warnings)
+            self.assertIn("無穩定 local frame", result.message)
+            self.assertFalse(result.details["publish_ready"])
 
 
 if __name__ == "__main__":

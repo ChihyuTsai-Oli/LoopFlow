@@ -16,7 +16,7 @@ MENU_ITEMS: Tuple[Tuple[str, str, str], ...] = (
     ("sync_type_layers", "scan", "2  同步 Type Layers"),
     ("space_boundary", "scan", "3  建立 Space Boundaries（請先選取封閉曲線）"),
     ("scan_apply_verify", "scan", "4  Scan（不寫入）"),
-    ("scan_apply_verify", "apply", "5  Apply（寫入 ID／Type／空間／高程）"),
+    ("scan_apply_verify", "apply", "5  Apply（寫入 ID／Type／空間／高程／尺寸）"),
     ("scan_apply_verify", "verify", "6  Verify（再 Scan，仍不可發布）"),
 )
 MENU_LABELS: Tuple[str, ...] = tuple(item[2] for item in MENU_ITEMS)

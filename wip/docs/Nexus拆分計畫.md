@@ -108,9 +108,9 @@ B01–B03 骨架
 
 **前置**：C05、NX-04。  
 **模組**：不複製 C05 規則；Scan／Apply 呼叫 C05。  
-**做**：把 local frame／W／D／H／quantity 的成功、阻擋、沿用既有框寫進同一份 Scan 報告。  
-**不做**：另寫一套 bbox 後備。  
-**fixtures／驗收**：沿用 C05；Console 能顯示「無穩定 frame」為阻擋項。
+**做**：**已完成**。把 local frame／W／D／H／quantity 的成功、阻擋、沿用既有框寫進同一份 Scan 報告；無穩定 frame 時命令列標明。  
+**不做**：另寫一套 bbox 後備、宣告可發布。  
+**fixtures／驗收**：沿用 C05；Console 顯示「無穩定 local frame」為阻擋警告。
 
 ### NX-07 Verify 與發布交接／`nexus-publish-handoff`
 

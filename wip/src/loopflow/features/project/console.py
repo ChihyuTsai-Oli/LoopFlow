@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Nexus Project Console。開案檢查、Type layer、Space Boundary、Identity Scan／Apply；不發布。"""
+"""Nexus Project Console。開案檢查、Type layer、Space Boundary、Scan／Apply（含尺寸）；不發布。"""
 from __future__ import annotations
 
 import re
@@ -39,7 +39,7 @@ CONSOLE_STEPS: Tuple[dict, ...] = (
         "id": "scan_apply_verify",
         "title": "Scan → Apply → Verify",
         "status": "available",
-        "task": "NX-04",
+        "task": "NX-04～06",
     },
     {
         "id": "publish_registry",
@@ -148,7 +148,7 @@ def _open_check(
             "scan_apply_verify",
         ),
     }
-    message = "開案檢查完成。可執行 Type layer、Space Boundary 與 Identity Scan／Apply。發布尚未實作。"
+    message = "開案檢查完成。可執行 Type layer、Space Boundary 與 Scan／Apply（含尺寸）。發布尚未實作。"
     if warnings:
         return results.ok_with_warnings(
             "open_check",
@@ -174,6 +174,7 @@ def open_console(
     command_id: str = COMMAND_ID,
 ) -> results.Result:
     """開案檢查並列出 Console 步驟。step 指定時才執行該步。"""
+    from loopflow.features.dimension.measure import apply_dimensions, scan_dimensions
     from loopflow.features.dictionary.sync import sync_type_layers
     from loopflow.features.model_data.identity import (
         apply_identity,
@@ -215,6 +216,37 @@ def open_console(
                 "command_id": command_id,
             }
 
+            def _merge(stage, *named):
+                primary = named[0][1]
+                details = dict(primary.details)
+                warnings = list(primary.warnings)
+                messages = [primary.message]
+                for key, result in named[1:]:
+                    details[key] = result.details
+                    warnings.extend(result.warnings)
+                    if result.blocking:
+                        warnings.extend(result.blocking)
+                    messages.append(result.message)
+                details["publish_ready"] = False
+                if any(
+                    "no_unique_plane" in (item.warnings + item.blocking + tuple(item.details.get("blocking") or ()))
+                    for _key, item in named
+                ):
+                    messages.append("無穩定 local frame。")
+                    if "no_unique_plane" not in warnings:
+                        warnings.append("no_unique_plane")
+                message = " ".join(part for part in messages if part)
+                unique = tuple(dict.fromkeys(warnings))
+                if unique:
+                    return results.ok_with_warnings(
+                        stage,
+                        message,
+                        unique,
+                        command_id=command_id,
+                        details=details,
+                    )
+                return results.ok(stage, message, command_id=command_id, details=details)
+
             def scan_all():
                 identity = scan_identity(current, **kwargs)
                 if not identity.ok:
@@ -222,53 +254,28 @@ def open_console(
                 placement = scan_placement(current, **kwargs)
                 if not placement.ok:
                     return placement
-                details = dict(identity.details)
-                details["placement"] = placement.details
-                details["publish_ready"] = False
-                warnings = tuple(identity.warnings) + tuple(placement.warnings)
-                message = identity.message + " " + placement.message
-                if warnings:
-                    return results.ok_with_warnings(
-                        "scan_identity",
-                        message,
-                        warnings,
-                        command_id=command_id,
-                        details=details,
-                    )
-                return results.ok("scan_identity", message, command_id=command_id, details=details)
+                dimensions = scan_dimensions(current, **kwargs)
+                if not dimensions.ok:
+                    return dimensions
+                return _merge(
+                    "scan_identity",
+                    ("identity", identity),
+                    ("placement", placement),
+                    ("dimensions", dimensions),
+                )
 
             def apply_all():
                 identity = apply_identity(current, mappings=mappings, **kwargs)
-                if not identity.ok and identity.status not in ("ok_with_warnings",):
+                if not identity.ok:
                     return identity
                 placement = apply_placement(current, **kwargs)
-                if not placement.ok and placement.status not in ("ok_with_warnings",):
-                    if identity.ok:
-                        details = dict(identity.details)
-                        details["placement"] = placement.details
-                        details["publish_ready"] = False
-                        return results.ok_with_warnings(
-                            "apply_identity",
-                            identity.message + " " + placement.message,
-                            placement.warnings or placement.blocking or ("placement_blocked",),
-                            command_id=command_id,
-                            details=details,
-                        )
-                    return placement
-                details = dict(identity.details)
-                details["placement"] = placement.details
-                details["publish_ready"] = False
-                warnings = tuple(identity.warnings) + tuple(placement.warnings)
-                message = identity.message + " " + placement.message
-                if warnings:
-                    return results.ok_with_warnings(
-                        "apply_identity",
-                        message,
-                        warnings,
-                        command_id=command_id,
-                        details=details,
-                    )
-                return results.ok("apply_identity", message, command_id=command_id, details=details)
+                dimensions = apply_dimensions(current, **kwargs)
+                return _merge(
+                    "apply_identity",
+                    ("identity", identity),
+                    ("placement", placement),
+                    ("dimensions", dimensions),
+                )
 
             action_name = identity_action if step == "scan_apply_verify" else step
             if action_name in ("scan", "scan_identity", "scan_apply_verify"):
@@ -288,7 +295,7 @@ def open_console(
                     details["publish_ready"] = False
                     return results.ok(
                         "verify_identity",
-                        "Verify 完成。尺寸／發布尚未實作，不可發布。",
+                        "Verify 完成。發布尚未實作，不可發布。",
                         command_id=command_id,
                         details=details,
                     )
