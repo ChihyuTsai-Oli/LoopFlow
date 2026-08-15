@@ -43,6 +43,12 @@ STAGES = (
     "rollback_identity",
     "scan_placement",
     "apply_placement",
+    "acquire_registry_lock",
+    "read_registry",
+    "write_registry_pending",
+    "validate_registry",
+    "replace_registry",
+    "publish_registry",
 )
 
 
