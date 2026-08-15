@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Nexus Project Console。開案檢查、Type layer、Space Boundary、Scan／Apply（ID／空間／高程）；不發布、不算尺寸。"""
+"""Nexus Project Console。開案檢查、Type layer、Space Boundary、Apply／Verify、寫回字典與發布。"""
 from __future__ import annotations
 
 import re
@@ -56,7 +56,7 @@ CONSOLE_STEPS: Tuple[dict, ...] = (
     {
         "id": "publish_registry",
         "title": "Publish Registry",
-        "status": "not_implemented",
+        "status": "available",
         "task": "NX-07",
     },
 )
@@ -182,9 +182,10 @@ def _open_check(
             "space_boundary",
             "scan_apply_verify",
             "export_dictionary",
+            "publish_registry",
         ),
     }
-    message = "開案檢查完成。可執行 Type layer、樓層／空間框、Apply／Verify 與寫回字典。發布尚未實作。"
+    message = "開案檢查完成。可執行 Type layer、樓層／空間框、Apply／Verify、寫回字典與發布。"
     if warnings:
         return results.ok_with_warnings(
             "open_check",
@@ -256,6 +257,18 @@ def open_console(
                 current,
                 environ=environ,
                 export_path=export_path,
+                guarded=False,
+                command_id=command_id,
+                show_message=show_message,
+            )
+        if step == "publish_registry":
+            from loopflow.features.registry.handoff import publish_from_session
+
+            return publish_from_session(
+                current,
+                environ=environ,
+                selected_only=selected_only,
+                cancel=False,
                 guarded=False,
                 command_id=command_id,
                 show_message=show_message,
@@ -395,6 +408,6 @@ def open_console(
         return _open_check(None, environ=environ, cancel=cancel)
     outcome = run_guarded(session, action, command_id=command_id)
     mismatch_ids = (outcome.details or {}).get("mismatch_object_ids")
-    if outcome.ok and mismatch_ids:
+    if mismatch_ids:
         select_only(session, mismatch_ids)
     return outcome

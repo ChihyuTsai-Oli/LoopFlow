@@ -19,6 +19,7 @@ MENU_ITEMS: Tuple[Tuple[str, str, str], ...] = (
     ("scan_apply_verify", "apply", "5  Apply（寫入 ID／Type／空間／高程）"),
     ("scan_apply_verify", "verify", "6  Verify（核對 UserText，不寫入）"),
     ("export_dictionary", "scan", "7  寫回字典（匯出，不覆寫正式檔）"),
+    ("publish_registry", "scan", "8  發布 Registry"),
 )
 MENU_LABELS: Tuple[str, ...] = tuple(item[2] for item in MENU_ITEMS)
 
@@ -45,7 +46,7 @@ def _rhino_listbox(labels: Sequence[str]) -> Optional[str]:
         return None
     return rs.ListBox(
         list(labels),
-        "開案檢查已完成。選一個步驟；Esc 取消。發布尚未實作。",
+        "開案檢查已完成。選一個步驟；Esc 取消。",
         "LoopFlow Nexus",
     )
 
@@ -96,7 +97,7 @@ def run_nexus_console(
         **extra
     )
     mismatch_ids = (result.details or {}).get("mismatch_object_ids")
-    if result.ok and mismatch_ids and session is not None:
+    if mismatch_ids and session is not None:
         from loopflow.features.model_data.verify import select_only
 
         select_only(session, mismatch_ids)

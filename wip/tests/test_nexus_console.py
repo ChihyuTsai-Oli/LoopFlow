@@ -112,6 +112,7 @@ class ConsoleOpenCheckTests(unittest.TestCase):
                     "space_boundary",
                     "scan_apply_verify",
                     "export_dictionary",
+                    "publish_registry",
                 ),
             )
             step_ids = [step["id"] for step in result.details["steps"]]
@@ -132,7 +133,8 @@ class ConsoleOpenCheckTests(unittest.TestCase):
             self.assertEqual(result.details["steps"][3]["status"], "available")
             self.assertEqual(result.details["steps"][4]["status"], "available")
             self.assertEqual(result.details["steps"][5]["status"], "available")
-            self.assertTrue(all(step["status"] == "not_implemented" for step in result.details["steps"][6:]))
+            self.assertEqual(result.details["steps"][6]["status"], "available")
+            self.assertTrue(all(step["status"] == "available" for step in result.details["steps"]))
             self.assertFalse((root / "exchange").exists())
             self.assertFalse((root / "logs").exists())
             self.assertTrue(session.get_view_state("a").selected)
@@ -187,7 +189,8 @@ class ConsoleMenuTests(unittest.TestCase):
         self.assertEqual(parse_menu_choice("6"), ("scan_apply_verify", "verify"))
         self.assertEqual(parse_menu_choice("6  Verify（核對 UserText，不寫入）"), ("scan_apply_verify", "verify"))
         self.assertEqual(parse_menu_choice("7"), ("export_dictionary", "scan"))
-        self.assertIsNone(parse_menu_choice("8"))
+        self.assertEqual(parse_menu_choice("8"), ("publish_registry", "scan"))
+        self.assertIsNone(parse_menu_choice("9"))
         self.assertEqual(parse_menu_choice("3"), ("level_boundary", "scan"))
         self.assertEqual(parse_menu_choice("4"), ("space_boundary", "scan"))
         self.assertEqual(parse_menu_choice("2"), ("sync_type_layers", "scan"))

@@ -188,10 +188,10 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <h3 id="寫回字典">寫回字典</h3>
 <p>在字典目錄新增 <code>LoopFlow_Dictionary_Export.xlsx</code>，供人工核對後合併進正式 Dictionary。字體、字高與正式字典相同；<code>diff_status</code> 有變動時只改該格文字顏色。不得覆寫 <code>LoopFlow_Dictionary.xlsx</code>。</p>
 <h2 id="6-發布-Registry">6. 發布 Registry</h2>
-<p><strong>前置</strong>：全案 Verify 通過。Nexus 組 payload 後呼叫 C03；C03 才寫檔。</p>
+<p><strong>前置</strong>：全案 Verify 通過。Nexus 組 payload 後呼叫 C03；C03 才寫檔。局部選取不得發布。</p>
 <p><strong>動作</strong>：取得 exclusive lock（PID、主機、時間）、重新讀取現況並遞增 <code>registry_revision</code>、寫 pending、驗證完整 payload，再 atomic replace 正式 Registry。</p>
 <p><strong>輸出</strong>：新的不可人工編輯 Registry revision，只包含 canonical schema 與明確 extension。</p>
-<p><strong>失敗</strong>：保留 last-good；顯示失敗階段，不先刪正式 JSON。目前選單尚未接發布。</p>
+<p><strong>失敗</strong>：保留 last-good；顯示失敗階段，不先刪正式 JSON。選單 <strong>8</strong> 與 <code>LF_Push_3D_to_JSON</code> 走同一條發布。</p>
 <h2 id="7-建立-Section-並註冊-View">7. 建立 Section 並註冊 View</h2>
 <p>使用 Rhino 8 內建 Clipping／Section 指令建立剖面、立面或平面。LoopFlow 將 Section、Detail 與固定 2D↔3D transform 註冊為 <code>view_id</code>。</p>
 <p>View 不依名稱或可變 bbox 重新猜測。Section linked output 可以先保留、更新與檢查，不必立即 Materialize 或 Tag。</p>
