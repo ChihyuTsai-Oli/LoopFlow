@@ -110,6 +110,9 @@ class RhinoSession(Protocol):
     def is_block_instance(self, object_id: str) -> bool:
         ...
 
+    def block_definition_name(self, object_id: str) -> Optional[str]:
+        ...
+
     def insertion_point(self, object_id: str) -> Optional[Sequence[float]]:
         ...
 

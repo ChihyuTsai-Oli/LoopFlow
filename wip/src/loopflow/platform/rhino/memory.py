@@ -17,6 +17,7 @@ class MemorySession:
         self._curves: Dict[str, dict] = {}
         self._bboxes: Dict[str, tuple] = {}
         self._blocks: Dict[str, tuple] = {}
+        self._block_names: Dict[str, str] = {}
         self._points: Dict[str, tuple] = {}
         self._modified = False
         self._model_unit = model_unit
@@ -59,6 +60,7 @@ class MemorySession:
         self._curves.pop(object_id, None)
         self._bboxes.pop(object_id, None)
         self._blocks.pop(object_id, None)
+        self._block_names.pop(object_id, None)
         self._points.pop(object_id, None)
         self._modified = True
 
@@ -247,11 +249,16 @@ class MemorySession:
         (x0, y0, z0), (x1, y1, z1) = box
         return (float(x0), float(y0), float(z0), float(x1), float(y1), float(z1))
 
-    def set_block(self, object_id: str, insertion) -> None:
+    def set_block(self, object_id: str, insertion, name: Optional[str] = None) -> None:
         self._blocks[object_id] = tuple(insertion)
+        if name not in (None, ""):
+            self._block_names[object_id] = str(name)
 
     def is_block_instance(self, object_id: str) -> bool:
         return object_id in self._blocks
+
+    def block_definition_name(self, object_id: str) -> Optional[str]:
+        return self._block_names.get(object_id)
 
     def insertion_point(self, object_id: str):
         point = self._blocks.get(object_id)

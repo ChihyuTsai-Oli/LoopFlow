@@ -393,6 +393,14 @@ class LiveSession:
     def is_block_instance(self, object_id: str) -> bool:
         return bool(self._rs.IsBlockInstance(object_id))
 
+    def block_definition_name(self, object_id: str) -> Optional[str]:
+        if not self._rs.IsBlockInstance(object_id):
+            return None
+        value = self._rs.BlockInstanceName(object_id)
+        if value in (None, ""):
+            return None
+        return str(value)
+
     def insertion_point(self, object_id: str):
         if not self._rs.IsBlockInstance(object_id):
             return None

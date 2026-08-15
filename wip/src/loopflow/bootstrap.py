@@ -55,6 +55,16 @@ def _run_publish() -> Result:
     return open_console(opened.details["session"], step="publish_registry")
 
 
+def _run_data_viewer() -> Result:
+    from loopflow.features.viewer.command import run_data_viewer
+    from loopflow.platform.rhino.live import open_session
+
+    opened = open_session()
+    if not opened.ok:
+        return opened
+    return run_data_viewer(opened.details["session"])
+
+
 def run_command(command_id: str) -> Result:
     """轉交已登錄指令。尚未實作時回報 not_implemented。"""
     ensure_src_on_path()
@@ -70,6 +80,8 @@ def run_command(command_id: str) -> Result:
         return _emit_result(_run_nexus())
     if command_id == "LF_Push_3D_to_JSON":
         return _emit_result(_run_publish())
+    if command_id == "LF_Data_Viewer":
+        return _emit_result(_run_data_viewer())
     result = not_implemented(
         "dispatch",
         "這是 2.0 測試入口「%s」，功能尚未實作（%s）。" % (

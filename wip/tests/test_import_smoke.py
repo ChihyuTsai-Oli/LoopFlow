@@ -37,6 +37,14 @@ class ImportSmokeTests(unittest.TestCase):
         self.assertEqual(spec["entrypoint"], "LF_Nexus.py")
         self.assertEqual(spec["task"], "C02/menu")
 
+    def test_catalog_lists_data_viewer(self):
+        from loopflow.command_catalog import get_command
+
+        spec = get_command("LF_Data_Viewer")
+        self.assertEqual(spec["status"], "console")
+        self.assertEqual(spec["entrypoint"], "LF_Data_Viewer.py")
+        self.assertEqual(spec["task"], "C04")
+
     def test_run_command_does_not_claim_scan_success(self):
         from loopflow.bootstrap import run_command
 

@@ -40,6 +40,8 @@ _COMMANDS["LF_Nexus"]["status"] = "console"
 _COMMANDS["LF_Nexus"]["task"] = "C02/menu"
 _COMMANDS["LF_Push_3D_to_JSON"]["status"] = "console"
 _COMMANDS["LF_Push_3D_to_JSON"]["task"] = "C02/NX-07"
+_COMMANDS["LF_Data_Viewer"]["status"] = "console"
+_COMMANDS["LF_Data_Viewer"]["task"] = "C04"
 
 
 def get_command(command_id: str) -> Optional[dict]:

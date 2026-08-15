@@ -49,6 +49,7 @@ STAGES = (
     "validate_registry",
     "replace_registry",
     "publish_registry",
+    "inspect_object",
 )
 
 

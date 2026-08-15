@@ -54,3 +54,56 @@ def pick_curves() -> Optional[Tuple[str, ...]]:
     if not ids:
         return None
     return tuple(str(item) for item in ids)
+
+
+def pick_object(message: str = "點選要查看的物件（Enter／Esc 結束）") -> Optional[str]:
+    try:
+        import rhinoscriptsyntax as rs  # type: ignore
+    except ImportError:
+        return None
+    object_id = rs.GetObject(message, preselect=True)
+    if not object_id:
+        return None
+    return str(object_id)
+
+
+def show_readonly_text(message: str, title: str = "LF Data Viewer") -> None:
+    try:
+        import Eto.Drawing as drawing  # type: ignore
+        import Eto.Forms as forms  # type: ignore
+        import Rhino  # type: ignore
+        import Rhino.UI  # type: ignore
+    except ImportError:
+        show_message(message, title)
+        return
+
+    class _ReadonlyDialog(forms.Dialog[bool]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.Title = title
+            self.ClientSize = drawing.Size(520, 420)
+            self.Padding = drawing.Padding(10)
+            self.Resizable = True
+            dark_bg = drawing.Color.FromArgb(30, 30, 30)
+            dark_text = drawing.Color.FromArgb(220, 220, 220)
+            self.BackgroundColor = dark_bg
+            text_area = forms.TextArea()
+            text_area.ReadOnly = True
+            text_area.Text = message
+            text_area.Wrap = False
+            text_area.Font = drawing.Font("Consolas", 10)
+            text_area.BackgroundColor = dark_bg
+            text_area.TextColor = dark_text
+            layout = forms.DynamicLayout()
+            layout.AddRow(text_area)
+            self.Content = layout
+            close_btn = forms.Button()
+            close_btn.Click += self._on_close
+            self.AbortButton = close_btn
+            self.DefaultButton = close_btn
+
+        def _on_close(self, sender, e) -> None:
+            self.Close(True)
+
+    dialog = _ReadonlyDialog()
+    dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
