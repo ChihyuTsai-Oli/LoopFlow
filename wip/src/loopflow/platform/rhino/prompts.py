@@ -81,6 +81,67 @@ def show_message(message: str, title: str = "LoopFlow") -> None:
     rs.MessageBox(message, 64, title)
 
 
+def split_hint_message(message: str, hint: str) -> Tuple[str, Optional[str]]:
+    """把提醒句從本文拆出。沒有提醒句時第二個回傳值為 None。"""
+    text = (message or "").replace("\r\n", "\n").strip()
+    hint_text = (hint or "").strip()
+    if not hint_text or hint_text not in text:
+        return text, None
+    body = text.replace(hint_text, "").strip()
+    return body, hint_text
+
+
+def show_message_with_red_hint(message: str, hint: str, title: str = "LoopFlow") -> None:
+    """本文維持預設色；提醒句紅字。Eto 不可用時退回單色 MessageBox。"""
+    body, hint_text = split_hint_message(message, hint)
+    if hint_text is None:
+        show_message(body or message, title)
+        return
+    try:
+        import Eto.Drawing as drawing  # type: ignore
+        import Eto.Forms as forms  # type: ignore
+        import Rhino.UI  # type: ignore
+    except ImportError:
+        show_message(message, title)
+        return
+
+    class _HintDialog(forms.Dialog[bool]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.Title = title
+            self.Padding = drawing.Padding(12)
+            self.Resizable = True
+            self.ClientSize = drawing.Size(480, 280)
+            body_area = forms.TextArea()
+            body_area.ReadOnly = True
+            body_area.Text = body
+            body_area.Wrap = True
+            hint_label = forms.Label()
+            hint_label.Text = hint_text
+            hint_label.TextColor = drawing.Color.FromArgb(196, 32, 32)
+            try:
+                hint_label.Wrap = forms.WrapMode.Word
+            except Exception:
+                pass
+            ok = forms.Button()
+            ok.Text = "確定"
+            ok.Click += self._on_close
+            self.DefaultButton = ok
+            self.AbortButton = ok
+            layout = forms.DynamicLayout()
+            layout.Spacing = drawing.Size(0, 10)
+            layout.Add(body_area, xscale=True, yscale=True)
+            layout.Add(hint_label, xscale=True)
+            layout.AddRow(None, ok)
+            self.Content = layout
+
+        def _on_close(self, sender, e) -> None:
+            self.Close(True)
+
+    dialog = _HintDialog()
+    dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
+
+
 def pick_curves() -> Optional[Tuple[str, ...]]:
     try:
         import rhinoscriptsyntax as rs  # type: ignore

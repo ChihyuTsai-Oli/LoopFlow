@@ -69,6 +69,7 @@ HARD_PLACEMENT_ISSUES = (
     "bbox_unavailable",
 )
 MAX_POPUP_LINES = 12
+APPLY_REMINDER = "請執行選單 5 寫入模型 Metadata，把正確資料寫回。"
 
 
 def _text(value) -> str:
@@ -275,7 +276,7 @@ def format_verify_popup(result: results.Result) -> str:
     extra = len(mismatches) - MAX_POPUP_LINES
     if extra > 0:
         lines.append("…其餘 %s 項。" % extra)
-    lines.append("請執行選單 5 寫入模型 Metadata，把正確資料寫回。")
+    lines.append(APPLY_REMINDER)
     return "\n".join(lines)
 
 
@@ -314,9 +315,9 @@ def verify_model_data(
         if callable(show_message):
             show_message(popup)
         else:
-            from loopflow.platform.rhino.prompts import show_message as live_popup
+            from loopflow.platform.rhino.prompts import show_message_with_red_hint
 
-            live_popup(popup)
+            show_message_with_red_hint(popup, APPLY_REMINDER)
         if guarded:
             select_only(session, compared.details.get("mismatch_object_ids") or ())
     return compared
