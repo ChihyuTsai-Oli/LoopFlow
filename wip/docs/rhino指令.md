@@ -29,6 +29,9 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Publish_Exchange
 
 LF_Data_Viewer
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Data_Viewer.py"
+
+LF_Tagger_Grab
+_-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Tagger_Grab.py"
 ```
 
 ## 按鈕配置
@@ -40,6 +43,9 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Data_Viewer.py"
 | 匯出字典 | `LF_Export_Type_Layers` | — |
 | 發布 | `LF_Publish_Exchange` | — |
 | 檢視 | `LF_Data_Viewer` | — |
+| Grab | `LF_Tagger_Grab` | — |
+
+Grab：先選 Tag 圖塊，再選來源。Height／Finish 綁物件 `_07_UUID`；家具 Item 綁 Block 名稱（`FF-01__Chair-1`）。Esc、鎖定、`TAG_DW`、Laser／Index／圖框圖塊都不寫入。不填 Infuser 顯示欄。
 
 左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。正式工具列在 G02 封裝時才建立。
 
@@ -79,4 +85,4 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Test_Random_M3D_
 |---|---|---|
 | `LF_Help` | 開啟 GitHub 說明頁，分中／英文版 | GitHub 說明頁尚未建立。**頁面建好後才實作**入口與按鈕，本階段不登錄為可跑指令 |
 
-Tagger／Infuser／Anchor／Extract／Layout／Worksession 等指令已在 `資料契約.md` 登錄 ID，但 2.0 尚未實作；按了只會回報尚未實作。它們進入可跑狀態時再列入本文件上方清單。
+Tagger／Infuser／Anchor／Extract／Layout／Worksession 等其餘指令已在 `資料契約.md` 登錄 ID，但 2.0 尚未實作；按了只會回報尚未實作。它們進入可跑狀態時再列入本文件上方清單。

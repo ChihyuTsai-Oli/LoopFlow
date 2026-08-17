@@ -75,6 +75,15 @@ def run_data_viewer() -> Result:
     return run_viewer(opened.details["session"])
 
 
+def run_tagger_grab() -> Result:
+    from loopflow.features.tagger.grab import run_tagger_grab as run_grab
+
+    opened = _open_live_session()
+    if not opened.ok:
+        return opened
+    return _present_failure(run_grab(opened.details["session"]))
+
+
 RUNNERS: Dict[str, Runner] = {
     "LF_Nexus": run_nexus,
     "LF_Open_Dictionary": run_open_dictionary,
@@ -82,6 +91,7 @@ RUNNERS: Dict[str, Runner] = {
     "LF_Export_Type_Layers": run_export_type_layers,
     "LF_Publish_Exchange": run_publish_exchange,
     "LF_Data_Viewer": run_data_viewer,
+    "LF_Tagger_Grab": run_tagger_grab,
 }
 
 

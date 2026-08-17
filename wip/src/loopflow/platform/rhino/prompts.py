@@ -118,6 +118,17 @@ def pick_object(message: str = "點選要查看的物件（Enter／Esc 結束）
     return str(object_id)
 
 
+def pick_block_instance(message: str = "選取圖塊（Esc 取消）") -> Optional[str]:
+    try:
+        import rhinoscriptsyntax as rs  # type: ignore
+    except ImportError:
+        return None
+    object_id = rs.GetObject(message, 4096, preselect=True)
+    if not object_id:
+        return None
+    return str(object_id)
+
+
 def show_readonly_text(message: str, title: str = "LF Data Viewer") -> None:
     try:
         import Eto.Drawing as drawing  # type: ignore

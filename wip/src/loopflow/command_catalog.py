@@ -36,6 +36,7 @@ _READY = {
     "LF_Export_Type_Layers": "C02/NX-02-export",
     "LF_Publish_Exchange": "C02/NX-07",
     "LF_Data_Viewer": "C04",
+    "LF_Tagger_Grab": "D01",
 }
 
 _COMMANDS = {

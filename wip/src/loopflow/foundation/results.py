@@ -50,6 +50,7 @@ STAGES = (
     "replace_registry",
     "publish_registry",
     "inspect_object",
+    "bind_tag",
 )
 
 
