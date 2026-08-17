@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""LF_Tagger_Grab：選 Tag 再選來源，只寫 binding。不填 Infuser 顯示欄。"""
+"""LF_Tagger_Grab：Layout 選 Tag，點進 Detail 再選來源。只寫 binding。不填 Infuser 顯示欄。"""
 from __future__ import annotations
 
 import re
@@ -82,15 +82,15 @@ def _default_pick_tag(_session: RhinoSession) -> Optional[str]:
 
 
 def _default_pick_object(_session: RhinoSession) -> Optional[str]:
-    from loopflow.platform.rhino.prompts import pick_object
+    from loopflow.platform.rhino.prompts import pick_source_through_detail
 
-    return pick_object("選取模型來源（Esc 取消）")
+    return pick_source_through_detail("選取模型來源（Esc 取消）")
 
 
 def _default_pick_block(_session: RhinoSession) -> Optional[str]:
-    from loopflow.platform.rhino.prompts import pick_block_instance
+    from loopflow.platform.rhino.prompts import GRAB_BLOCK_FILTER, pick_source_through_detail
 
-    return pick_block_instance("選取家具圖塊來源（Esc 取消）")
+    return pick_source_through_detail("選取家具圖塊來源（Esc 取消）", GRAB_BLOCK_FILTER)
 
 
 def bind_tag(

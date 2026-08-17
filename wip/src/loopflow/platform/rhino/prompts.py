@@ -96,12 +96,34 @@ def show_message(message: str, title: str = "LoopFlow") -> None:
     rs.MessageBox(message, 64, title)
 
 
+# 與 Rhino ObjectType／rs.filter 對齊。第二個 GetObject 參數是 filter，不可傳 True。
+FILTER_CURVE = 4
+FILTER_SURFACE = 8
+FILTER_POLYSURFACE = 16
+FILTER_MESH = 32
+FILTER_INSTANCE = 4096
+FILTER_HATCH = 65536
+FILTER_SUBD = 262144
+FILTER_EXTRUSION = 1073741824
+GRAB_BLOCK_FILTER = FILTER_INSTANCE
+GRAB_SOURCE_FILTER = (
+    FILTER_CURVE
+    | FILTER_SURFACE
+    | FILTER_POLYSURFACE
+    | FILTER_MESH
+    | FILTER_INSTANCE
+    | FILTER_HATCH
+    | FILTER_SUBD
+    | FILTER_EXTRUSION
+)
+
+
 def pick_curves() -> Optional[Tuple[str, ...]]:
     try:
         import rhinoscriptsyntax as rs  # type: ignore
     except ImportError:
         return None
-    ids = rs.GetObjects("選取封閉曲線，按 Enter 完成", 4, True, True)
+    ids = rs.GetObjects("選取封閉曲線，按 Enter 完成", FILTER_CURVE, True, True)
     if not ids:
         return None
     return tuple(str(item) for item in ids)
@@ -112,7 +134,7 @@ def pick_object(message: str = "點選要查看的物件（Enter／Esc 結束）
         import rhinoscriptsyntax as rs  # type: ignore
     except ImportError:
         return None
-    object_id = rs.GetObject(message, preselect=True)
+    object_id = rs.GetObject(message, 0, preselect=True)
     if not object_id:
         return None
     return str(object_id)
@@ -123,7 +145,52 @@ def pick_block_instance(message: str = "選取圖塊（Esc 取消）") -> Option
         import rhinoscriptsyntax as rs  # type: ignore
     except ImportError:
         return None
-    object_id = rs.GetObject(message, 4096, preselect=True)
+    object_id = rs.GetObject(message, FILTER_INSTANCE, preselect=True)
+    if not object_id:
+        return None
+    return str(object_id)
+
+
+def pick_source_through_detail(
+    message: str,
+    filter_value: int = GRAB_SOURCE_FILTER,
+) -> Optional[str]:
+    """Layout 點進 Detail 再選來源。Esc／點在 Detail 外不寫入；結束必回紙空間。"""
+    try:
+        import Rhino  # type: ignore
+        import rhinoscriptsyntax as rs  # type: ignore
+        import scriptcontext as sc  # type: ignore
+    except ImportError:
+        return None
+    page_view = sc.doc.Views.ActiveView
+    if not isinstance(page_view, Rhino.Display.RhinoPageView):
+        show_message("請在 Layout 執行 Grab。")
+        return None
+    page_view.SetPageAsActive()
+    sc.doc.Views.Redraw()
+    getter = Rhino.Input.Custom.GetPoint()
+    getter.SetCommandPrompt("在目標 Detail 內點一下（Esc 取消）")
+    getter.Get()
+    if getter.CommandResult() != Rhino.Commands.Result.Success:
+        return None
+    point = getter.Point()
+    target_detail_id = None
+    for detail in page_view.GetDetailViews():
+        box = detail.Geometry.GetBoundingBox(True)
+        if box.Min.X <= point.X <= box.Max.X and box.Min.Y <= point.Y <= box.Max.Y:
+            target_detail_id = detail.Id
+            break
+    if target_detail_id is None:
+        show_message("點擊位置不在任何 Detail 內。")
+        return None
+    object_id = None
+    try:
+        page_view.SetActiveDetail(target_detail_id)
+        sc.doc.Views.Redraw()
+        object_id = rs.GetObject(message, filter_value, preselect=False)
+    finally:
+        page_view.SetPageAsActive()
+        sc.doc.Views.Redraw()
     if not object_id:
         return None
     return str(object_id)

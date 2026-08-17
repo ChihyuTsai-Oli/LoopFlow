@@ -45,7 +45,7 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Tagger_Grab.py"
 | 檢視 | `LF_Data_Viewer` | — |
 | Grab | `LF_Tagger_Grab` | — |
 
-Grab：先選 Tag 圖塊，再選來源。Height／Finish 綁物件 `_07_UUID`；家具 Item 綁 Block 名稱（`FF-01__Chair-1`）。Esc、鎖定、`TAG_DW`、Laser／Index／圖框圖塊都不寫入。不填 Infuser 顯示欄。
+Grab：在 **Layout** 先選 Tag 圖塊，再在目標 Detail 內點一下進入模型空間，然後選來源（剖面 2D 線、3D 物件或家具圖塊）。Height／Finish 綁物件 `_07_UUID`；家具 Item 綁 Block 名稱（`FF-01__Chair-1`）。Esc、點在 Detail 外、鎖定、`TAG_DW`、Laser／Index／圖框圖塊都不寫入。結束後回到 Layout。不填 Infuser 顯示欄。來源沒有 UUID 時不猜測對應的 3D 物件。
 
 左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。正式工具列在 G02 封裝時才建立。
 

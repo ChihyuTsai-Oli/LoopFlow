@@ -80,6 +80,19 @@ class TemplateLoadTests(unittest.TestCase):
         self.assertIsNone(catalog.by_block_name("UNKNOWN_BLOCK"))
 
 
+class PromptFilterTests(unittest.TestCase):
+    def test_grab_source_filter_includes_curve(self):
+        from loopflow.platform.rhino.prompts import FILTER_CURVE, GRAB_BLOCK_FILTER, GRAB_SOURCE_FILTER
+
+        self.assertTrue(GRAB_SOURCE_FILTER & FILTER_CURVE)
+        self.assertEqual(GRAB_BLOCK_FILTER, 4096)
+
+    def test_pick_object_does_not_pass_true_as_filter(self):
+        text = (WIP / "src" / "loopflow" / "platform" / "rhino" / "prompts.py").read_text(encoding="utf-8")
+        self.assertNotIn("GetObject(message, preselect=True)", text)
+        self.assertIn("GetObject(message, 0, preselect=True)", text)
+
+
 class BindTests(unittest.TestCase):
     def test_height_grab_writes_source_object_id_not_source_usertext(self):
         session = _session()
@@ -236,6 +249,19 @@ class CommandTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY), OBJECT_ID)
         self.assertTrue(session.get_view_state("wall").selected)
+
+    def test_command_binds_title_case_tag_via_injected_picks(self):
+        session = _session()
+        session.set_block("tag", (0, 0, 0), name="Tag_Height_Grab")
+        result = run_tagger_grab(
+            session,
+            pick_tag=lambda _s: "tag",
+            pick_source=lambda _s: "wall",
+            catalog=_catalog(),
+        )
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY), OBJECT_ID)
+        self.assertEqual(session.get_object_user_text("tag", TEMPLATE_ID_KEY), "Tag_Height_Grab")
 
     def test_missing_schema_stops_without_picking(self):
         session = MemorySession(document_text={})
