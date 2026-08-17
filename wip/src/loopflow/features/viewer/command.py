@@ -22,10 +22,11 @@ Notify = Callable[[str], None]
 def _optional_catalog(
     catalog: Optional[TypeCatalog],
     environ: Optional[Mapping[str, str]],
+    session: Optional[RhinoSession] = None,
 ) -> Optional[TypeCatalog]:
     if catalog is not None:
         return catalog
-    loaded = load_from_workfiles(environ=environ)
+    loaded = load_from_workfiles(environ=environ, session=session)
     if loaded.ok:
         return loaded.details.get("catalog")
     return None
@@ -66,7 +67,7 @@ def run_data_viewer(
     if not schema.ok:
         _notify(notify, schema.message)
         return schema
-    loaded_catalog = _optional_catalog(catalog, environ)
+    loaded_catalog = _optional_catalog(catalog, environ, session)
     picker = pick_object or _default_pick
     shower = show_report or _default_show
     warnings = list(schema.warnings or ())

@@ -62,7 +62,7 @@ def publish_from_session(
                 command_id=command_id,
                 details=dict(verified.details or {}, publish_ready=False),
             )
-        loaded = _load_catalog(catalog, environ)
+        loaded = _load_catalog(catalog, environ, current)
         if not loaded.ok:
             return loaded
         type_catalog = loaded.details["catalog"]

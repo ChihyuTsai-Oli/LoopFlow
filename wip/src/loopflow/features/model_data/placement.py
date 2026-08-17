@@ -216,10 +216,10 @@ def _resolve_basis(session: RhinoSession, object_id: str, catalog: TypeCatalog) 
     return record.elevation_basis
 
 
-def _load_catalog(catalog: Optional[TypeCatalog], environ) -> results.Result:
+def _load_catalog(catalog: Optional[TypeCatalog], environ, session=None) -> results.Result:
     if catalog is not None:
         return results.ok("load_dictionary", "已使用注入的 Type Catalog。", details={"catalog": catalog})
-    return load_from_workfiles(environ=environ)
+    return load_from_workfiles(environ=environ, session=session)
 
 
 def scan_placement(
@@ -241,7 +241,7 @@ def scan_placement(
                 "使用者取消 Space／高程 Scan。",
                 command_id=command_id,
             )
-        loaded = _load_catalog(catalog, environ)
+        loaded = _load_catalog(catalog, environ, current)
         if not loaded.ok:
             return loaded
         type_catalog = loaded.details["catalog"]

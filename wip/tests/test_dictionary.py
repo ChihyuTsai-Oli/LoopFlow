@@ -198,6 +198,22 @@ class PathAndExcelTests(unittest.TestCase):
             self.assertEqual(result.stage, "resolve_dictionary")
             self.assertFalse(xlsx.exists())
 
+    def test_custom_filename_loads_from_workfiles_root(self):
+        with tempfile.TemporaryDirectory(prefix="loopflow-dict-") as raw:
+            root = Path(raw)
+            path = root / "TeamA.xlsx"
+            written = write_table(path, schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_valid_row()])
+            self.assertTrue(written.ok)
+            missing_default = load_from_workfiles(environ={"LOOPFLOW_WORKFILES_ROOT": str(root)})
+            self.assertFalse(missing_default.ok)
+            result = load_from_workfiles(
+                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
+                dictionary_filename="TeamA.xlsx",
+            )
+            self.assertTrue(result.ok, result.message)
+            self.assertEqual(result.details["dictionary_filename"], "TeamA.xlsx")
+            self.assertEqual(result.details["catalog"].by_type_id("EX-01").type_display_name, "鋼筋混凝土")
+
     def test_xlsx_roundtrip(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-xlsx-") as raw:
             path = Path(raw) / "LoopFlow_Dictionary.xlsx"

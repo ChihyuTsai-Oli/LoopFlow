@@ -8,7 +8,7 @@ from typing import Mapping, Optional, Sequence, Tuple
 
 from loopflow.features.dictionary import schema
 from loopflow.foundation import results
-from loopflow.foundation.paths import resolve_workfiles
+from loopflow.foundation.paths import dictionary_filename_from_session, resolve_workfiles
 from loopflow.foundation.version import check_schema
 from loopflow.platform import excel
 
@@ -250,16 +250,39 @@ def load_from_path(path: Path) -> results.Result:
     )
 
 
-def load_from_workfiles(environ: Optional[Mapping[str, str]] = None) -> results.Result:
+def load_from_workfiles(
+    environ: Optional[Mapping[str, str]] = None,
+    dictionary_filename: Optional[str] = None,
+    session=None,
+) -> results.Result:
     """經 LOOPFLOW_WORKFILES_ROOT 解析 Dictionary 路徑後載入。不建立檔案。"""
-    workfiles = resolve_workfiles(environ=environ)
+    filename = dictionary_filename
+    if filename in (None, "") and session is not None:
+        filename = dictionary_filename_from_session(session)
+    workfiles = resolve_workfiles(environ=environ, dictionary_filename=filename)
     if not workfiles.ok:
         return workfiles
     dictionary = workfiles.details["paths"].dictionary
     if not dictionary.exists() or not dictionary.is_file():
         return results.failed(
             "resolve_dictionary",
-            "找不到 Dictionary 檔案 %s。不建立檔案。" % dictionary.name,
+            "找不到 Dictionary 檔案 %s。請把 .xlsx 放到工作檔資料夾，或改用該資料夾內的其他檔名。不建立檔案。"
+            % dictionary.name,
             details={"filename": dictionary.name},
         )
-    return load_from_path(dictionary)
+    loaded = load_from_path(dictionary)
+    if not loaded.ok:
+        return loaded
+    details = dict(loaded.details or {})
+    details["dictionary_filename"] = dictionary.name
+    details["dictionary_path"] = dictionary
+    return results.Result(
+        ok=loaded.ok,
+        status=loaded.status,
+        stage=loaded.stage,
+        message=loaded.message,
+        warnings=loaded.warnings,
+        blocking=loaded.blocking,
+        details=details,
+        command_id=loaded.command_id,
+    )

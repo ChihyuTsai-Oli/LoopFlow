@@ -7,7 +7,12 @@ from typing import Mapping, Optional, Sequence, Tuple
 
 from loopflow.features.dictionary.loader import load_from_workfiles
 from loopflow.foundation import results
-from loopflow.foundation.paths import resolve_workfiles
+from loopflow.foundation.paths import (
+    DICTIONARY_FILENAME_KEY,
+    dictionary_filename_from_session,
+    normalize_dictionary_filename,
+    resolve_workfiles,
+)
 from loopflow.foundation.version import PACKAGE_VERSION, check_schema
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
@@ -97,6 +102,7 @@ def _open_check(
     *,
     environ: Optional[Mapping[str, str]],
     cancel: bool,
+    ask_dictionary=None,
 ) -> results.Result:
     if cancel:
         return results.cancelled(
@@ -107,10 +113,25 @@ def _open_check(
     workfiles = resolve_workfiles(environ=environ)
     if not workfiles.ok:
         return workfiles
-    paths = workfiles.details["paths"]
-    catalog = load_from_workfiles(environ=environ)
+    filename = dictionary_filename_from_session(session) if session is not None else None
+    catalog = load_from_workfiles(environ=environ, dictionary_filename=filename, session=session)
+    if not catalog.ok and catalog.stage == "resolve_dictionary" and session is not None and callable(ask_dictionary):
+        chosen = ask_dictionary(filename or dictionary_filename_from_session(session))
+        if chosen is None:
+            return results.cancelled(
+                "open_check",
+                "使用者取消選擇 Dictionary。",
+                command_id=COMMAND_ID,
+            )
+        normalized = normalize_dictionary_filename(chosen, root=workfiles.details["paths"].root)
+        if not normalized.ok:
+            return normalized
+        filename = str(normalized.details["filename"])
+        session.set_document_user_text(DICTIONARY_FILENAME_KEY, filename)
+        catalog = load_from_workfiles(environ=environ, dictionary_filename=filename)
     if not catalog.ok:
         return catalog
+    paths = resolve_workfiles(environ=environ, dictionary_filename=filename).details["paths"]
     if session is None:
         return results.failed(
             "rhino_session",
@@ -221,6 +242,7 @@ def open_console(
     isolate: bool = True,
     show_message=None,
     ask_space=None,
+    ask_dictionary=None,
 ) -> results.Result:
     """開案檢查並列出 Console 步驟。step 指定時才執行該步。"""
     from loopflow.features.dictionary.sync import export_dictionary, sync_type_layers
@@ -243,7 +265,12 @@ def open_console(
     from loopflow.features.model_data.verify import select_only, verify_model_data
 
     def action(current: RhinoSession) -> results.Result:
-        checked = _open_check(current, environ=environ, cancel=cancel)
+        checked = _open_check(
+            current,
+            environ=environ,
+            cancel=cancel,
+            ask_dictionary=ask_dictionary,
+        )
         if not checked.ok or step in (None, "open_check"):
             return checked
         if step == "sync_type_layers":
@@ -256,6 +283,7 @@ def open_console(
                 command_id=command_id,
                 layer_prefix=layer_prefix,
                 ask_prefix=ask_prefix,
+                ask_dictionary=ask_dictionary,
             )
         if step == "export_dictionary":
             return export_dictionary(

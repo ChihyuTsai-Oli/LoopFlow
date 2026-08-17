@@ -24,17 +24,31 @@ from loopflow.features.dictionary.layer_paths import (
 )
 from loopflow.features.dictionary.loader import TypeCatalog, load_from_workfiles
 from loopflow.foundation import results
-from loopflow.foundation.paths import DICTIONARY_FILENAME, resolve_workfiles
+from loopflow.foundation.paths import (
+    DICTIONARY_FILENAME,
+    DICTIONARY_FILENAME_KEY,
+    dictionary_filename_from_session,
+    export_dictionary_filename,
+    normalize_dictionary_filename,
+    resolve_workfiles,
+)
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Nexus"
 EXPORT_FILENAME = "LoopFlow_Dictionary_Export.xlsx"
 EXPORT_HEADERS = schema.DISPLAY_COLUMNS + ("diff_status",)
-EXPORT_HINT = (
-    "此檔只供核對，不能當正式字典開啟，也不可覆寫 LoopFlow_Dictionary.xlsx。"
-    "藍字 added_in_rhino 合併時必須給新的 _03_ID編號，不可沿用舊圖層編號。"
-)
+
+
+def export_hint(official_name: str = DICTIONARY_FILENAME) -> str:
+    return (
+        "此檔只供核對，不能當正式字典開啟，也不可覆寫 %s。"
+        "藍字 added_in_rhino 合併時必須給新的 _03_ID編號，不可沿用舊圖層編號。"
+        % (official_name or DICTIONARY_FILENAME)
+    )
+
+
+EXPORT_HINT = export_hint()
 DIFF_HEADERS = (
     "__Rhino Layer",
     "type_id",
@@ -165,17 +179,10 @@ def sync_type_layers(
     command_id: str = COMMAND_ID,
     layer_prefix: Optional[str] = None,
     ask_prefix=None,
+    dictionary_filename: Optional[str] = None,
+    ask_dictionary=None,
 ) -> results.Result:
     """Dictionary → Rhino Type layer。既有 layer 保留資料；不寫物件 instance。"""
-    if catalog is None:
-        loaded = load_from_workfiles(environ=environ)
-        if not loaded.ok:
-            return loaded
-        catalog = loaded.details["catalog"]
-        dictionary_path = resolve_workfiles(environ=environ).details["paths"].dictionary
-    else:
-        workfiles = resolve_workfiles(environ=environ)
-        dictionary_path = workfiles.details["paths"].dictionary if workfiles.ok else Path(DICTIONARY_FILENAME)
 
     def action(current: RhinoSession) -> results.Result:
         current_prefix = read_layer_prefix(current)
@@ -199,12 +206,40 @@ def sync_type_layers(
                 blocking=("invalid_layer_prefix",),
                 command_id=command_id,
             )
+
+        workfiles = resolve_workfiles(environ=environ)
+        if not workfiles.ok:
+            return workfiles
+        root = workfiles.details["paths"].root
+        chosen_dict = dictionary_filename
+        if chosen_dict is None and callable(ask_dictionary):
+            chosen_dict = ask_dictionary(dictionary_filename_from_session(current))
+            if chosen_dict is None:
+                return results.cancelled(
+                    "sync_type_layers",
+                    "使用者取消選擇 Dictionary。",
+                    command_id=command_id,
+                )
+        if chosen_dict is None:
+            chosen_dict = dictionary_filename_from_session(current)
+        normalized = normalize_dictionary_filename(chosen_dict, root=root)
+        if not normalized.ok:
+            return normalized
+        filename = str(normalized.details["filename"])
+        current.set_document_user_text(DICTIONARY_FILENAME_KEY, filename)
+        dictionary_file = root / filename
+        type_catalog = catalog
+        if type_catalog is None:
+            loaded = load_from_workfiles(environ=environ, dictionary_filename=filename)
+            if not loaded.ok:
+                return loaded
+            type_catalog = loaded.details["catalog"]
         return _sync_body(
             current,
-            catalog,
+            type_catalog,
             cancel=cancel,
             export_path=export_path,
-            dictionary_path=dictionary_path,
+            dictionary_path=dictionary_file,
             prefix=prefix,
         )
 
@@ -365,19 +400,21 @@ def export_dictionary(
     show_message: Optional[Callable[[str], None]] = None,
 ) -> results.Result:
     """在字典目錄新增匯出檔。不讀 Object UserText，不覆寫正式 Dictionary。"""
-    workfiles = resolve_workfiles(environ=environ)
+    filename = dictionary_filename_from_session(session)
+    workfiles = resolve_workfiles(environ=environ, dictionary_filename=filename)
     if not workfiles.ok:
         return workfiles
     dictionary_path = workfiles.details["paths"].dictionary
     if catalog is None:
-        loaded = load_from_workfiles(environ=environ)
+        loaded = load_from_workfiles(environ=environ, dictionary_filename=filename)
         if not loaded.ok:
             return loaded
         catalog = loaded.details["catalog"]
 
     def action(current: RhinoSession) -> results.Result:
         prefix = read_layer_prefix(current)
-        target = Path(export_path) if export_path is not None else dictionary_path.parent / EXPORT_FILENAME
+        default_export = dictionary_path.parent / export_dictionary_filename(dictionary_path.name)
+        target = Path(export_path) if export_path is not None else default_export
         if target.resolve() == Path(dictionary_path).resolve():
             return results.blocked(
                 "export_dictionary",
@@ -398,7 +435,7 @@ def export_dictionary(
             EXPORT_HEADERS,
             rows,
             profile="dictionary",
-            hint=EXPORT_HINT,
+            hint=export_hint(dictionary_path.name),
         )
         if not written.ok:
             return written

@@ -32,6 +32,7 @@ from loopflow.features.dictionary.sync import (
     export_layer_diff,
     sync_type_layers,
 )
+from loopflow.foundation.paths import DICTIONARY_FILENAME_KEY
 from loopflow.platform.excel import (
     DICTIONARY_FONT_NAME,
     DICTIONARY_FONT_SIZE,
@@ -320,6 +321,39 @@ class LayerSyncTests(unittest.TestCase):
         self.assertTrue(second.ok, second.message)
         self.assertEqual(seen, ["大安邸"])
         self.assertEqual(session.document_user_text(LAYER_PREFIX_KEY), "大安邸")
+
+    def test_custom_dictionary_filename_is_stored_and_exported_beside(self):
+        session = _session()
+        catalog = _catalog(_row())
+        seen = []
+
+        def _ask(default):
+            seen.append(default)
+            return "TeamA.xlsx"
+
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
+            root = Path(raw)
+            custom = root / "TeamA.xlsx"
+            write_table(custom, schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_row()])
+            result = sync_type_layers(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
+                catalog=catalog,
+                ask_dictionary=_ask,
+            )
+            exported = export_dictionary(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
+                catalog=catalog,
+                show_message=lambda _msg: None,
+            )
+            self.assertTrue(result.ok, result.message)
+            self.assertEqual(seen, ["LoopFlow_Dictionary.xlsx"])
+            self.assertEqual(session.document_user_text(DICTIONARY_FILENAME_KEY), "TeamA.xlsx")
+            self.assertTrue(exported.ok, exported.message)
+            self.assertTrue((root / "TeamA_Export.xlsx").exists())
+            self.assertFalse((root / EXPORT_FILENAME).exists())
+            self.assertTrue(custom.exists())
 
     def test_invalid_prefix_blocks(self):
         session = _session()

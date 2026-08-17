@@ -21,6 +21,7 @@ from loopflow.features.project.console import (
     open_console,
 )
 from loopflow.features.project.menu import parse_menu_choice, run_nexus_console
+from loopflow.foundation.paths import DICTIONARY_FILENAME_KEY
 from loopflow.foundation.usertext import LEVEL_DATUM_KEY, LEVEL_ID_KEY, OBJECT_ID_KEY, SPACE_ID_KEY
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.memory import MemorySession
@@ -140,6 +141,40 @@ class ConsoleOpenCheckTests(unittest.TestCase):
             self.assertFalse((root / "logs").exists())
             self.assertTrue(session.get_view_state("a").selected)
             self.assertFalse(session.document_modified())
+
+    def test_open_check_uses_stored_custom_dictionary_filename(self):
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:
+            root = Path(raw)
+            custom = root / "TeamA.xlsx"
+            written = write_table(custom, schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_valid_row()])
+            self.assertTrue(written.ok)
+            session = _session(document_text={DICTIONARY_FILENAME_KEY: "TeamA.xlsx"})
+            result = open_console(session, environ={"LOOPFLOW_WORKFILES_ROOT": str(root)})
+            self.assertTrue(result.ok, result.message)
+            self.assertEqual(result.details["dictionary_filename"], "TeamA.xlsx")
+
+    def test_open_check_can_pick_missing_custom_filename(self):
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:
+            root = Path(raw)
+            custom = root / "TeamA.xlsx"
+            written = write_table(custom, schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_valid_row()])
+            self.assertTrue(written.ok)
+            session = _session()
+            seen = []
+
+            def _ask(default):
+                seen.append(default)
+                return "TeamA.xlsx"
+
+            result = open_console(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
+                ask_dictionary=_ask,
+            )
+            self.assertTrue(result.ok, result.message)
+            self.assertEqual(seen, ["LoopFlow_Dictionary.xlsx"])
+            self.assertEqual(session.document_user_text(DICTIONARY_FILENAME_KEY), "TeamA.xlsx")
+            self.assertEqual(result.details["dictionary_filename"], "TeamA.xlsx")
 
     def test_non_cm_warns_but_still_enters(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:

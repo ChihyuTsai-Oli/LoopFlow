@@ -137,6 +137,43 @@ class PathTests(unittest.TestCase):
         self.assertEqual(folder.name, "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
 
 
+class DictionaryFilenameTests(unittest.TestCase):
+    def test_normalize_accepts_basename_and_adds_xlsx(self):
+        from loopflow.foundation.paths import (
+            normalize_dictionary_filename,
+            export_dictionary_filename,
+        )
+
+        named = normalize_dictionary_filename("TeamA.xlsx")
+        self.assertTrue(named.ok, named.message)
+        self.assertEqual(named.details["filename"], "TeamA.xlsx")
+        stem = normalize_dictionary_filename("TeamA")
+        self.assertTrue(stem.ok, stem.message)
+        self.assertEqual(stem.details["filename"], "TeamA.xlsx")
+        self.assertEqual(export_dictionary_filename("TeamA.xlsx"), "TeamA_Export.xlsx")
+
+    def test_normalize_rejects_path_and_export_file(self):
+        from loopflow.foundation.paths import normalize_dictionary_filename
+
+        nested = normalize_dictionary_filename("sub/TeamA.xlsx")
+        self.assertFalse(nested.ok)
+        exported = normalize_dictionary_filename("LoopFlow_Dictionary_Export.xlsx")
+        self.assertFalse(exported.ok)
+        self.assertEqual(exported.blocking, ("export_file_not_dictionary",))
+
+    def test_resolve_workfiles_uses_custom_filename(self):
+        from loopflow.foundation.paths import resolve_workfiles
+
+        with tempfile.TemporaryDirectory(prefix="loopflow-dict-name-") as raw:
+            root = Path(raw)
+            result = resolve_workfiles(
+                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
+                dictionary_filename="TeamA.xlsx",
+            )
+            self.assertTrue(result.ok, result.message)
+            self.assertEqual(result.details["paths"].dictionary, root / "TeamA.xlsx")
+
+
 class VersionConfigLogTests(unittest.TestCase):
     def test_unknown_schema_stops(self):
         from loopflow.foundation.version import check_schema

@@ -56,6 +56,32 @@ def prompt_nexus_menu(chooser: Optional[Chooser] = None) -> Optional[MenuChoice]
     return parse_menu_choice(picker(MENU_LABELS))
 
 
+def _live_ask_dictionary(environ: Optional[Mapping[str, str]]):
+    from loopflow.foundation.paths import DICTIONARY_FILENAME, resolve_workfiles
+    from loopflow.platform.rhino.prompts import ask_open_filename, ask_popup_string
+
+    def _ask(default):
+        folder = None
+        workfiles = resolve_workfiles(environ=environ)
+        if workfiles.ok:
+            folder = str(workfiles.details["paths"].root)
+        try:
+            return ask_open_filename(
+                "選 Dictionary Excel（須在工作檔資料夾內）",
+                "Excel (*.xlsx)|*.xlsx||",
+                folder,
+                default or DICTIONARY_FILENAME,
+            )
+        except ImportError:
+            return ask_popup_string(
+                "Dictionary 檔名（工作檔資料夾內的 .xlsx）",
+                default or DICTIONARY_FILENAME,
+                "LoopFlow",
+            )
+
+    return _ask
+
+
 def run_nexus_console(
     session: Optional[RhinoSession] = None,
     *,
@@ -65,8 +91,16 @@ def run_nexus_console(
     **kwargs
 ) -> results.Result:
     """先開案檢查；interactive 時再選步驟。測試可注入 chooser。"""
-    presenter = kwargs.get("show_message")
-    first = open_console(session, environ=environ, step="open_check", **kwargs)
+    extra = dict(kwargs)
+    if extra.get("ask_dictionary") is None:
+        try:
+            import rhinoscriptsyntax  # type: ignore  # noqa: F401
+        except ImportError:
+            pass
+        else:
+            extra["ask_dictionary"] = _live_ask_dictionary(environ)
+    presenter = extra.get("show_message")
+    first = open_console(session, environ=environ, step="open_check", **extra)
     if not first.ok:
         from loopflow.platform.rhino.prompts import show_failure_popup
 
@@ -82,7 +116,7 @@ def run_nexus_console(
             details=first.details,
         )
     step, identity_action = picked
-    extra = dict(kwargs)
+    extra = dict(extra)
     if step == "open_check":
         return first
     if step == "sync_type_layers" and extra.get("ask_prefix") is None:

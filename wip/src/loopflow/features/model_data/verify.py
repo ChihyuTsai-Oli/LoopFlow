@@ -181,7 +181,7 @@ def compare_apply_usertext(
     )
     if not placement.ok:
         return placement
-    loaded = _load_catalog(catalog, environ)
+    loaded = _load_catalog(catalog, environ, session)
     if not loaded.ok:
         return loaded
     type_catalog = loaded.details["catalog"]

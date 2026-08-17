@@ -180,10 +180,10 @@ def _blocking_codes(items: Sequence[dict]) -> Tuple[str, ...]:
     return tuple(codes)
 
 
-def _load_catalog(catalog: Optional[TypeCatalog], environ) -> results.Result:
+def _load_catalog(catalog: Optional[TypeCatalog], environ, session=None) -> results.Result:
     if catalog is not None:
         return results.ok("load_dictionary", "已使用注入的 Type Catalog。", details={"catalog": catalog})
-    loaded = load_from_workfiles(environ=environ)
+    loaded = load_from_workfiles(environ=environ, session=session)
     if not loaded.ok:
         return loaded
     return loaded
@@ -208,7 +208,7 @@ def scan_identity(
                 "使用者取消 Scan。",
                 command_id=command_id,
             )
-        loaded = _load_catalog(catalog, environ)
+        loaded = _load_catalog(catalog, environ, current)
         if not loaded.ok:
             return loaded
         type_catalog = loaded.details["catalog"]
@@ -285,7 +285,7 @@ def apply_identity(
                 "使用者取消 Apply。",
                 command_id=command_id,
             )
-        loaded = _load_catalog(catalog, environ)
+        loaded = _load_catalog(catalog, environ, current)
         if not loaded.ok:
             return loaded
         type_catalog = loaded.details["catalog"]
