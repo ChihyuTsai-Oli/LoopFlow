@@ -86,12 +86,10 @@ def run_nexus_console(
     if step == "open_check":
         return first
     if step == "sync_type_layers" and extra.get("ask_prefix") is None:
-        from loopflow.platform.rhino.prompts import ask_command_string, ask_popup_string
+        from loopflow.platform.rhino.prompts import ask_popup_string
 
         def _ask_prefix(default):
-            if default:
-                return ask_command_string("專案名稱（圖層前綴）", default)
-            return ask_popup_string("請輸入專案名稱（圖層前綴）", "", "LoopFlow")
+            return ask_popup_string("請輸入專案名稱（圖層前綴）", default or "", "LoopFlow")
 
         extra["ask_prefix"] = _ask_prefix
     result = open_console(

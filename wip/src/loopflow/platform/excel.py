@@ -15,7 +15,9 @@ PKG_REL_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
 OFFICE_REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 CONTENT_NS = "http://schemas.openxmlformats.org/package/2006/content-types"
 CELL_REF_RE = re.compile(r"^([A-Z]+)(\d+)$")
+# 繁中 Dictionary／匯出用微軟正黑體；英文版日後用 Arial。本階段只寫繁中。
 DICTIONARY_FONT_NAME = "微軟正黑體"
+DICTIONARY_FONT_NAME_EN = "Arial"
 DICTIONARY_FONT_SIZE = "10"
 DICTIONARY_HINT_FONT_SIZE = "20"
 DICTIONARY_ROW_HEIGHT = "20.1"

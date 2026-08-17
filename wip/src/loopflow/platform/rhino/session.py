@@ -155,8 +155,11 @@ def restore_snapshot(
     try:
         missing = []
         for state in snapshot.objects:
-            if session.get_view_state(state.object_id) is None:
+            current = session.get_view_state(state.object_id)
+            if current is None:
                 missing.append(state.object_id)
+                continue
+            if current == state:
                 continue
             session.set_view_state(state)
         if restore_document_modified:

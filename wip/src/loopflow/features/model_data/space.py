@@ -262,41 +262,45 @@ def drafts_from_selection(session: RhinoSession) -> Tuple[SpaceDraft, ...]:
 
 
 def isolate_closed_curves(session: RhinoSession) -> int:
-    """鎖住非封閉曲線，解鎖並顯示封閉曲線以便選取。回傳鎖住數量。"""
-    locked = 0
-    for object_id in session.iter_object_ids(include_hidden=True, include_locked=True):
-        name = session.object_name(object_id) or ""
-        if name.startswith(DNA_REF_PREFIX):
-            continue
-        state = session.get_view_state(object_id)
-        if state is None:
-            continue
-        if session.is_closed_curve(object_id):
-            if state.locked or state.hidden:
-                session.set_view_state(
-                    ObjectViewState(
-                        object_id=object_id,
-                        selected=state.selected,
-                        locked=False,
-                        hidden=False,
-                        color=state.color,
-                        color_by_layer=state.color_by_layer,
-                    )
-                )
-            continue
-        if not state.locked:
+    """選線對齊 1.x：用曲線過濾，不鎖全檔物件。
+
+    只把已鎖定／隱藏的封閉曲線解開並顯示。回傳解開數量。
+    """
+    redraw = getattr(session, "set_redraw_enabled", None)
+    if callable(redraw):
+        redraw(False)
+    revealed = 0
+    try:
+        curve_ids = getattr(session, "iter_curve_ids", None)
+        ids = curve_ids() if callable(curve_ids) else session.iter_object_ids(
+            include_hidden=True, include_locked=True
+        )
+        for object_id in ids:
+            name = session.object_name(object_id) or ""
+            if name.startswith(DNA_REF_PREFIX):
+                continue
+            if not session.is_closed_curve(object_id):
+                continue
+            state = session.get_view_state(object_id)
+            if state is None:
+                continue
+            if not state.locked and not state.hidden:
+                continue
             session.set_view_state(
                 ObjectViewState(
                     object_id=object_id,
-                    selected=False,
-                    locked=True,
-                    hidden=state.hidden,
+                    selected=state.selected,
+                    locked=False,
+                    hidden=False,
                     color=state.color,
                     color_by_layer=state.color_by_layer,
                 )
             )
-            locked += 1
-    return locked
+            revealed += 1
+    finally:
+        if callable(redraw):
+            redraw(True)
+    return revealed
 
 
 def register_level_boundaries(
@@ -412,7 +416,7 @@ def register_level_boundaries_interactive(
     guarded: bool = True,
     command_id: str = COMMAND_ID,
 ) -> results.Result:
-    """先選 FFL／FL（指令列），鎖非曲線，選線後彈出視窗輸入高程。"""
+    """先彈出清單選 FFL／FL，選線用曲線過濾（不鎖全檔），再彈出視窗輸入高程。"""
 
     def action(current: RhinoSession) -> results.Result:
         chosen = kind
@@ -420,7 +424,7 @@ def register_level_boundaries_interactive(
             if ask_kind is not None:
                 chosen = ask_kind("高程框類型", ("FFL", "FL"), "FFL")
             else:
-                chosen = _ask_or_live(None, "ask_command_string", "高程框類型", "FFL", ("FFL", "FL"))
+                chosen = _ask_or_live(None, "ask_popup_choice", "請選擇高程框類型", ("FFL", "FL"))
             if chosen is None:
                 return results.cancelled(
                     "register_levels",
@@ -479,7 +483,7 @@ def register_space_boundaries_interactive(
     guarded: bool = True,
     command_id: str = COMMAND_ID,
 ) -> results.Result:
-    """鎖非曲線，可複選空間框，彈出視窗輸入同一個空間名稱。"""
+    """選線用曲線過濾（不鎖全檔），可複選空間框，彈出視窗輸入同一個空間名稱。"""
 
     def action(current: RhinoSession) -> results.Result:
         if isolate:

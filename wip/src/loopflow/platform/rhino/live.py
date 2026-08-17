@@ -119,6 +119,27 @@ class LiveSession:
             return tuple(filtered)
         return tuple(ids)
 
+    def iter_curve_ids(self):
+        rs = self._rs
+        ids = []
+        seen = set()
+        groups = [rs.ObjectsByType(4) or []]
+        try:
+            groups.append(rs.HiddenObjects() or [])
+            groups.append(rs.LockedObjects() or [])
+        except Exception:
+            pass
+        for group in groups:
+            for object_id in group:
+                key = str(object_id)
+                if key in seen:
+                    continue
+                if not rs.IsCurve(object_id):
+                    continue
+                seen.add(key)
+                ids.append(key)
+        return tuple(ids)
+
     def get_view_state(self, object_id: str) -> Optional[ObjectViewState]:
         rs = self._rs
         if not rs.IsObject(object_id):

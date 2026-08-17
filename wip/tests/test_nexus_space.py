@@ -488,15 +488,36 @@ class SpaceBoundaryTests(unittest.TestCase):
             inner.get_object_user_text("ffl-1", LEVEL_ID_KEY),
         )
 
-    def test_isolate_locks_non_curves_and_unlocks_closed_curves(self):
+    def test_isolate_reveals_closed_curves_without_locking_solids(self):
         session = _session()
         session.add_object("box", locked=False, name="Wall")
         session.add_object("room", locked=True, hidden=True, name="")
         session.set_curve("room", ROOM_POLY, closed=True)
         isolate_closed_curves(session)
-        self.assertTrue(session.get_view_state("box").locked)
+        self.assertFalse(session.get_view_state("box").locked)
         self.assertFalse(session.get_view_state("room").locked)
         self.assertFalse(session.get_view_state("room").hidden)
+
+    def test_level_kind_prompt_writes_fl_layer(self):
+        session = _session()
+        session.add_object("frame", name="")
+        session.set_curve("frame", FLOOR_POLY, closed=True, elevation=0.0)
+        seen = []
+
+        def ask_kind(message, options, default):
+            seen.append((message, tuple(options), default))
+            return "FL"
+
+        result = register_level_boundaries_interactive(
+            session,
+            object_ids=("frame",),
+            datum="0",
+            ask_kind=ask_kind,
+            isolate=False,
+        )
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(seen, [("高程框類型", ("FFL", "FL"), "FFL")])
+        self.assertEqual(session.object_layer("frame"), LEVEL_FL_LAYER)
 
     def test_level_prompt_writes_datum_and_restores_locks(self):
         session = _session()

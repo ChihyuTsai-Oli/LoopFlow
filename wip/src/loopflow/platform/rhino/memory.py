@@ -75,6 +75,9 @@ class MemorySession:
             ids.append(state.object_id)
         return tuple(ids)
 
+    def iter_curve_ids(self):
+        return tuple(self._curves)
+
     def get_view_state(self, object_id: str) -> Optional[ObjectViewState]:
         return self._objects.get(object_id)
 
