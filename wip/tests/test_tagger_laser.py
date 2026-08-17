@@ -25,7 +25,9 @@ from loopflow.features.tagger.keys import (
 )
 from loopflow.features.tagger.laser import (
     bind_laser_hit,
+    choice_labels,
     cluster_hits,
+    hit_choice_label,
     run_tagger_laser,
     view_frames_containing,
 )
@@ -140,6 +142,43 @@ class ClusterTests(unittest.TestCase):
         )
         ids = [item["object_id"] for item in hits]
         self.assertEqual(ids, ["a", "b"])
+
+
+class ChoiceLabelTests(unittest.TestCase):
+    def test_shows_layer_terminal_not_object_id(self):
+        label = hit_choice_label(
+            {
+                "object_id": OBJECT_ID,
+                "layer": "M3D::00_STR_結構::Beam.樑",
+                "name": "",
+                "dist": 123.4,
+            }
+        )
+        self.assertEqual(label, "Beam.樑")
+        self.assertNotIn(OBJECT_ID, label)
+
+    def test_appends_object_name_when_present(self):
+        label = hit_choice_label(
+            {
+                "object_id": OBJECT_ID,
+                "layer": "M3D::FF",
+                "name": "Chair",
+            }
+        )
+        self.assertEqual(label, "FF  Chair")
+        self.assertNotIn(OBJECT_ID, label)
+
+    def test_duplicate_labels_get_index_suffix(self):
+        labels = choice_labels(
+            (
+                {"layer": "M3D::Beam.樑", "name": "", "object_id": "one"},
+                {"layer": "M3D::Beam.樑", "name": "", "object_id": "two"},
+                {"layer": "M3D::Wall.牆", "name": "", "object_id": "three"},
+            )
+        )
+        self.assertEqual(labels, ("Beam.樑（1）", "Beam.樑（2）", "Wall.牆"))
+        self.assertNotIn("one", "".join(labels))
+        self.assertNotIn("two", "".join(labels))
 
 
 class BindTests(unittest.TestCase):

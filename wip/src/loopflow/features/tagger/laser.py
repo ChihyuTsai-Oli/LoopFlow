@@ -90,6 +90,32 @@ def _default_probe(session: RhinoSession, origin, direction):
     return shooter(origin, direction) or ()
 
 
+def hit_choice_label(item: dict) -> str:
+    """選取清單只顯示圖層終端名；有物件名稱才附上。不顯示 GUID／UUID。"""
+    layer = str(item.get("layer") or "").split("::")[-1].strip() or "（無圖層）"
+    name = str(item.get("name") or "").strip()
+    if name:
+        return "%s  %s" % (layer, name)
+    return layer
+
+
+def choice_labels(hits: Sequence[dict]):
+    """同名列加上（2）（3），避免 ListBox 回傳值對不到第二筆。"""
+    base = [hit_choice_label(item) for item in hits]
+    counts = {}
+    for label in base:
+        counts[label] = counts.get(label, 0) + 1
+    seen = {}
+    labels = []
+    for label in base:
+        if counts[label] == 1:
+            labels.append(label)
+            continue
+        seen[label] = seen.get(label, 0) + 1
+        labels.append("%s（%s）" % (label, seen[label]))
+    return tuple(labels)
+
+
 def _default_choose(hits: Sequence[dict]):
     if not hits:
         return None
@@ -97,11 +123,7 @@ def _default_choose(hits: Sequence[dict]):
         return hits[0]
     from loopflow.platform.rhino.prompts import ask_popup_choice
 
-    labels = []
-    for item in hits:
-        layer = str(item.get("layer") or "").split("::")[-1] or "（無圖層）"
-        name = item.get("name") or item.get("object_id") or ""
-        labels.append("%s  %s  (%.1f)" % (layer, name, float(item.get("dist") or 0.0)))
+    labels = list(choice_labels(hits))
     chosen = ask_popup_choice("多個重疊物件，請選要標註的來源", labels)
     if chosen is None:
         return None
