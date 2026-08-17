@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from typing import Callable, List, Mapping, Optional, Sequence, Tuple
 
-from loopflow.features.model_data.identity import _load_catalog, iter_scan_targets, scan_identity
+from loopflow.features.model_data.identity import (
+    _load_catalog,
+    expected_data_revision,
+    iter_scan_targets,
+    scan_identity,
+)
 from loopflow.features.model_data.placement import (
     ALLOWED_BASES,
     _format_elev,
@@ -78,7 +83,7 @@ def _label(object_id: str, session: RhinoSession) -> str:
     return short or object_id
 
 
-def _identity_expected(item: dict, session: RhinoSession, catalog) -> dict:
+def _identity_expected(item: dict, session: RhinoSession, catalog, revision: str) -> dict:
     rhino_id = item["rhino_id"]
     expected = {}
     type_id = item.get("type_id")
@@ -98,7 +103,7 @@ def _identity_expected(item: dict, session: RhinoSession, catalog) -> dict:
         or (record.remarks_default if record else "")
         or ""
     )
-    expected[DATA_REVISION_KEY] = read_text(session, rhino_id, DATA_REVISION_KEY) or "0"
+    expected[DATA_REVISION_KEY] = revision
     current_id = read_text(session, rhino_id, OBJECT_ID_KEY) or ""
     expected[OBJECT_ID_KEY] = current_id
     return expected
@@ -179,6 +184,7 @@ def compare_apply_usertext(
     if not loaded.ok:
         return loaded
     type_catalog = loaded.details["catalog"]
+    revision = expected_data_revision(session, environ)
 
     identity_by_id = {item["rhino_id"]: item for item in identity.details.get("items") or ()}
     placement_by_id = {item["rhino_id"]: item for item in placement.details.get("items") or ()}
@@ -194,7 +200,7 @@ def compare_apply_usertext(
                 continue
             notes.append(ISSUE_LABELS.get(issue, issue))
         expected = {}
-        expected.update(_identity_expected(ident, session, type_catalog))
+        expected.update(_identity_expected(ident, session, type_catalog, revision))
         expected.update(_placement_expected(place))
         notes.extend(_field_mismatches(session, object_id, expected))
         notes.extend(_stale_notes(session, object_id))
@@ -269,6 +275,7 @@ def format_verify_popup(result: results.Result) -> str:
     extra = len(mismatches) - MAX_POPUP_LINES
     if extra > 0:
         lines.append("…其餘 %s 項。" % extra)
+    lines.append("請執行選單 5 Apply，把正確資料寫回。")
     return "\n".join(lines)
 
 
@@ -282,6 +289,7 @@ def verify_model_data(
     guarded: bool = True,
     command_id: str = COMMAND_ID,
     show_message: Optional[Callable[[str], None]] = None,
+    show_popup: bool = True,
 ) -> results.Result:
     """核對 UserText 是否等於再跑一次 Apply 的結果。符合／不符都彈窗；不符則選取那些物件。"""
 
@@ -301,7 +309,7 @@ def verify_model_data(
         )
 
     compared = action(session) if not guarded else run_guarded(session, action, command_id=command_id)
-    if compared.ok:
+    if compared.ok and show_popup:
         popup = format_verify_popup(compared)
         if callable(show_message):
             show_message(popup)

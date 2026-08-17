@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import uuid
+from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
 from loopflow.features.dictionary.layer_paths import (
@@ -17,6 +18,8 @@ from loopflow.features.dictionary.layer_paths import (
 )
 from loopflow.features.dictionary.loader import TypeCatalog, load_from_workfiles
 from loopflow.foundation import results
+from loopflow.foundation.atomic_io import read_json
+from loopflow.foundation.paths import resolve_workfiles
 from loopflow.foundation.usertext import (
     CONSTRUCTION_KEY,
     DATA_REVISION_KEY,
@@ -32,6 +35,7 @@ from loopflow.foundation.usertext import (
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Nexus"
+PROJECT_ID_KEY = "lf_project_id"
 UUID_V4_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
 )
@@ -39,6 +43,34 @@ UUID_V4_RE = re.compile(
 
 def _new_id() -> str:
     return str(uuid.uuid4())
+
+
+def expected_data_revision(
+    session: RhinoSession,
+    environ: Optional[Mapping[str, str]] = None,
+) -> str:
+    """尚未發布為 0；已有正式 Registry 則用該檔的 registry_revision。"""
+    project_id = session.document_user_text(PROJECT_ID_KEY) or ""
+    if not UUID_V4_RE.match(project_id):
+        return "0"
+    workfiles = resolve_workfiles(environ=environ)
+    if not workfiles.ok:
+        return "0"
+    paths = workfiles.details["paths"]
+    resolved = paths.registry(project_id)
+    if not resolved.ok:
+        return "0"
+    official = Path(resolved.details["registry"])
+    if not official.is_file():
+        return "0"
+    loaded = read_json(official)
+    if not loaded.ok:
+        return "0"
+    payload = loaded.details.get("payload") or {}
+    try:
+        return str(int(payload.get("registry_revision") or 0))
+    except (TypeError, ValueError):
+        return "0"
 
 
 def _in_project(layer: str, prefix: str) -> bool:
@@ -257,6 +289,7 @@ def apply_identity(
         if not loaded.ok:
             return loaded
         type_catalog = loaded.details["catalog"]
+        revision = expected_data_revision(current, environ)
         mapping_table = dict(mappings or {})
         for new_id in mapping_table.values():
             if not UUID_V4_RE.match(new_id):
@@ -305,8 +338,7 @@ def apply_identity(
                 write_text(current, rhino_id, CONSTRUCTION_KEY, record.construction_default)
             if not read_text(current, rhino_id, REMARKS_KEY) and record.remarks_default:
                 write_text(current, rhino_id, REMARKS_KEY, record.remarks_default)
-            if not read_text(current, rhino_id, DATA_REVISION_KEY):
-                write_text(current, rhino_id, DATA_REVISION_KEY, "0")
+            write_text(current, rhino_id, DATA_REVISION_KEY, revision)
             applied.append(rhino_id)
             if old_id and old_id != object_id:
                 id_mappings.append({"object_id": rhino_id, "old_id": old_id, "new_id": object_id})

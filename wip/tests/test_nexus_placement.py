@@ -21,7 +21,12 @@ from loopflow.features.model_data.placement import (
     apply_placement,
     scan_placement,
 )
-from loopflow.features.model_data.space import SPACE_BOUNDARY_LAYER, SPACE_DISPLAY_KEY, SPACE_ID_KEY
+from loopflow.features.model_data.space import (
+    SPACE_BOUNDARY_LAYER,
+    SPACE_DISPLAY_KEY,
+    SPACE_FRAME_DISPLAY_KEY,
+    SPACE_ID_KEY,
+)
 from loopflow.features.model_data.verify import verify_model_data
 from loopflow.foundation.usertext import LEVEL_DATUM_KEY, LEVEL_ID_KEY
 from loopflow.platform.rhino.memory import MemorySession
@@ -70,7 +75,7 @@ def _add_space(session, object_id, polygon, space_id, display, level_id=LEVEL_1)
     session.add_object(object_id, name=display, layer=SPACE_BOUNDARY_LAYER)
     session.set_curve(object_id, polygon, closed=True)
     session.set_object_user_text(object_id, SPACE_ID_KEY, space_id)
-    session.set_object_user_text(object_id, SPACE_DISPLAY_KEY, display)
+    session.set_object_user_text(object_id, SPACE_FRAME_DISPLAY_KEY, display)
     session.set_object_user_text(object_id, LEVEL_ID_KEY, level_id)
 
 

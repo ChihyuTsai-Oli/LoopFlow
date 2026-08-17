@@ -17,7 +17,11 @@ from loopflow.features.dictionary.layer_paths import to_full_path
 from loopflow.features.dictionary.loader import load_from_table
 from loopflow.features.model_data.identity import apply_identity
 from loopflow.features.model_data.placement import apply_placement
-from loopflow.features.model_data.space import SPACE_BOUNDARY_LAYER, SPACE_DISPLAY_KEY, SPACE_ID_KEY
+from loopflow.features.model_data.space import (
+    SPACE_BOUNDARY_LAYER,
+    SPACE_FRAME_DISPLAY_KEY,
+    SPACE_ID_KEY,
+)
 from loopflow.features.project.console import PROJECT_ID_KEY, SCHEMA_ID_KEY, SCHEMA_VERSION_KEY, open_console
 from loopflow.features.registry.handoff import publish_from_session
 from loopflow.features.registry.lock import acquire_lock, release_lock
@@ -83,7 +87,7 @@ def _add_space(session):
     session.add_object("s1", layer=SPACE_BOUNDARY_LAYER)
     session.set_curve("s1", [[0, 0], [10, 0], [10, 8], [0, 8]], closed=True)
     session.set_object_user_text("s1", SPACE_ID_KEY, SPACE_A)
-    session.set_object_user_text("s1", SPACE_DISPLAY_KEY, "客廳")
+    session.set_object_user_text("s1", SPACE_FRAME_DISPLAY_KEY, "客廳")
     session.set_object_user_text("s1", LEVEL_ID_KEY, LEVEL_A)
 
 
@@ -92,8 +96,8 @@ def _add_wall(session):
     session.set_bbox("wall", (2, 2, 0), (3, 3, 270))
 
 
-def _apply(session, catalog):
-    ident = apply_identity(session, catalog=catalog, guarded=False)
+def _apply(session, catalog, environ=None):
+    ident = apply_identity(session, catalog=catalog, environ=environ, guarded=False)
     if not ident.ok:
         raise AssertionError(ident.message)
     placed = apply_placement(session, catalog=catalog, guarded=False)
@@ -135,13 +139,14 @@ class PublishHandoffTests(unittest.TestCase):
         _add_space(session)
         _add_wall(session)
         catalog = _catalog(_row())
-        _apply(session, catalog)
-        popups = []
         with tempfile.TemporaryDirectory(prefix="loopflow-nx07-") as raw:
+            environ = {"LOOPFLOW_WORKFILES_ROOT": raw}
             _write_dictionary(Path(raw))
+            _apply(session, catalog, environ)
+            popups = []
             result = open_console(
                 session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
+                environ=environ,
                 step="publish_registry",
                 show_message=popups.append,
             )
@@ -175,9 +180,9 @@ class PublishHandoffTests(unittest.TestCase):
         _add_space(session)
         _add_wall(session)
         catalog = _catalog(_row())
-        _apply(session, catalog)
         with tempfile.TemporaryDirectory(prefix="loopflow-nx07-") as raw:
             environ = {"LOOPFLOW_WORKFILES_ROOT": raw}
+            _apply(session, catalog, environ)
             first = publish_from_session(
                 session,
                 environ=environ,

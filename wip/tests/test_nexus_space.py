@@ -19,7 +19,7 @@ from loopflow.features.model_data.space import (
     LEVEL_FFL_LAYER,
     LEVEL_ID_KEY,
     SPACE_BOUNDARY_LAYER,
-    SPACE_DISPLAY_KEY,
+    SPACE_FRAME_DISPLAY_KEY,
     SPACE_ID_KEY,
     UUID_V4_RE,
     SpaceDraft,
@@ -147,7 +147,7 @@ class SpaceBoundaryTests(unittest.TestCase):
                     self.assertEqual(session.get_object_user_text(object_id, SPACE_ID_KEY), space["space_id"])
                     self.assertEqual(session.get_object_user_text(object_id, LEVEL_ID_KEY), space["level_id"])
                     self.assertEqual(
-                        session.get_object_user_text(object_id, SPACE_DISPLAY_KEY),
+                        session.get_object_user_text(object_id, SPACE_FRAME_DISPLAY_KEY),
                         space["space_display"],
                     )
                 self.assertIsNone(session.get_object_user_text("wall", SPACE_ID_KEY))
@@ -282,7 +282,7 @@ class SpaceBoundaryTests(unittest.TestCase):
         )
         result = register_space_boundaries(session, drafts)
         self.assertEqual(result.blocking, ("duplicate_space_id",))
-        self.assertIsNone(session.get_object_user_text("curve-0", SPACE_DISPLAY_KEY))
+        self.assertIsNone(session.get_object_user_text("curve-0", SPACE_FRAME_DISPLAY_KEY))
 
     def test_cancel_restores_view_and_does_not_write(self):
         session = _session()
@@ -361,7 +361,7 @@ class SpaceBoundaryTests(unittest.TestCase):
             )
         self.assertTrue(result.ok, result.message)
         self.assertTrue(UUID_V4_RE.match(session.get_object_user_text("curve-0", SPACE_ID_KEY)))
-        self.assertEqual(session.get_object_user_text("curve-0", SPACE_DISPLAY_KEY), "客廳")
+        self.assertEqual(session.get_object_user_text("curve-0", SPACE_FRAME_DISPLAY_KEY), "客廳")
 
     def test_matches_level_frame_within_z_tolerance(self):
         session = _session()
@@ -373,7 +373,7 @@ class SpaceBoundaryTests(unittest.TestCase):
         level_id = session.get_object_user_text("ffl-1", LEVEL_ID_KEY)
         self.assertTrue(UUID_V4_RE.match(level_id))
         self.assertEqual(session.get_object_user_text("room", LEVEL_ID_KEY), level_id)
-        self.assertEqual(session.get_object_user_text("room", SPACE_DISPLAY_KEY), "廊道")
+        self.assertEqual(session.get_object_user_text("room", SPACE_FRAME_DISPLAY_KEY), "廊道")
         self.assertEqual(session.object_name("ffl-1"), "0")
 
     def test_level_datum_falls_back_to_object_name(self):
@@ -554,8 +554,8 @@ class SpaceBoundaryTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(session.object_name("a") or "", "")
         self.assertEqual(session.object_name("b") or "", "")
-        self.assertEqual(session.get_object_user_text("a", SPACE_DISPLAY_KEY), "廊道")
-        self.assertEqual(session.get_object_user_text("b", SPACE_DISPLAY_KEY), "廊道")
+        self.assertEqual(session.get_object_user_text("a", SPACE_FRAME_DISPLAY_KEY), "廊道")
+        self.assertEqual(session.get_object_user_text("b", SPACE_FRAME_DISPLAY_KEY), "廊道")
         self.assertEqual(
             session.get_object_user_text("a", LEVEL_ID_KEY),
             session.get_object_user_text("ffl-1", LEVEL_ID_KEY),

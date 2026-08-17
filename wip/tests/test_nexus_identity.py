@@ -130,7 +130,12 @@ class IdentityScanApplyTests(unittest.TestCase):
         session.set_object_user_text("keep", OBJECT_ID_KEY, VALID_ID)
         session.set_object_user_text("keep", SPACE_ID_KEY, "EXT")
         session.set_object_user_text("keep", REMARKS_KEY, "人工備註")
-        applied = apply_identity(session, catalog=_catalog(_row()))
+        with tempfile.TemporaryDirectory(prefix="loopflow-id-") as raw:
+            applied = apply_identity(
+                session,
+                catalog=_catalog(_row()),
+                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
+            )
         self.assertTrue(applied.ok, applied.message)
         created = session.get_object_user_text("new", OBJECT_ID_KEY)
         self.assertTrue(UUID_V4_RE.match(created))

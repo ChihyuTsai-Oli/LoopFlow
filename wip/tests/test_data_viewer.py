@@ -29,6 +29,7 @@ from loopflow.foundation.usertext import (
     OBJECT_ID_KEY,
     REMARKS_KEY,
     SPACE_DISPLAY_KEY,
+    SPACE_FRAME_DISPLAY_KEY,
     TYPE_ID_KEY,
 )
 from loopflow.platform.rhino.memory import MemorySession
@@ -112,7 +113,8 @@ class InspectTests(unittest.TestCase):
         self.assertIn("_08_備註*", report.missing_keys)
         self.assertIn("_02_建構狀態*", text)
         self.assertIn("_08_備註*", text)
-        self.assertIn("_01_空間名稱*", text)
+        self.assertIn("_01_空間名稱", text)
+        self.assertNotIn("_01_空間名稱*", text)
         self.assertNotIn("_02_建構狀態**", text)
         self.assertNotIn("_14_資料版次*", text)
         self.assertIn("字典名稱：鋼筋混凝土", text)
@@ -179,9 +181,12 @@ class InspectTests(unittest.TestCase):
             name="廊道",
             layer="M3D::_Data::Space_Boundaries",
         )
-        session.set_object_user_text("room", SPACE_DISPLAY_KEY, "廊道")
-        text = format_report(inspect_object(session, "room"))
-        self.assertIn("_01_空間名稱*", text)
+        session.set_object_user_text("room", SPACE_FRAME_DISPLAY_KEY, "廊道")
+        report = inspect_object(session, "room")
+        keys = tuple(field.key for field in report.fields)
+        self.assertIn(SPACE_FRAME_DISPLAY_KEY, keys)
+        self.assertNotIn(SPACE_DISPLAY_KEY, keys)
+        self.assertIn("_01_空間名稱*", format_report(report))
 
 
 class ViewerCommandTests(unittest.TestCase):

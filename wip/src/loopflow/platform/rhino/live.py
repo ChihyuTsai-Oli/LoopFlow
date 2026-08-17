@@ -297,7 +297,7 @@ class LiveSession:
                 material = self._sc.doc.Materials[mat_idx]
                 if legacy_name and material.Name != material_name:
                     material.Name = material_name
-                self._apply_material_color(material, mat_idx, sys_color, color)
+                    self._sc.doc.Materials.Modify(material, mat_idx, True)
             except Exception:
                 pass
         if mat_idx == -1:

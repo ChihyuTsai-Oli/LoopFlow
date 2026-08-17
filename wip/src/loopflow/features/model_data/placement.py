@@ -9,6 +9,7 @@ from loopflow.features.dictionary.loader import TypeCatalog, load_from_workfiles
 from loopflow.features.model_data.identity import iter_scan_targets
 from loopflow.features.model_data.space import (
     SPACE_DISPLAY_KEY,
+    SPACE_FRAME_DISPLAY_KEY,
     SPACE_ID_KEY,
     UUID_V4_RE,
     collect_level_frames,
@@ -67,7 +68,7 @@ def collect_spaces(session: RhinoSession) -> Tuple[Optional[str], Tuple[dict, ..
             {
                 "object_id": object_id,
                 "space_id": space_id,
-                "space_display": read_text(session, object_id, SPACE_DISPLAY_KEY)
+                "space_display": read_text(session, object_id, SPACE_FRAME_DISPLAY_KEY)
                 or session.object_name(object_id)
                 or space_id,
                 "level_id": read_text(session, object_id, LEVEL_ID_KEY) or "",

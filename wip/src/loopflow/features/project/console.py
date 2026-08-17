@@ -396,7 +396,7 @@ def open_console(
                     selected_only=selected_only,
                     guarded=False,
                     command_id=command_id,
-                    show_message=show_message,
+                    show_popup=False,
                 )
             if action_name == "rollback_identity" or action_name == "rollback":
                 return rollback_identity(
@@ -420,6 +420,19 @@ def open_console(
     if session is None:
         return _open_check(None, environ=environ, cancel=cancel)
     outcome = run_guarded(session, action, command_id=command_id)
+    if identity_action in ("verify", "verify_identity") and step in (
+        "scan_apply_verify",
+        "verify_identity",
+    ):
+        from loopflow.features.model_data.verify import format_verify_popup
+
+        popup = format_verify_popup(outcome)
+        if callable(show_message):
+            show_message(popup)
+        elif outcome.ok:
+            from loopflow.platform.rhino.prompts import show_message as live_popup
+
+            live_popup(popup)
     mismatch_ids = (outcome.details or {}).get("mismatch_object_ids")
     if mismatch_ids:
         select_only(session, mismatch_ids)

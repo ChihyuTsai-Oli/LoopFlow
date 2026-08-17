@@ -19,6 +19,7 @@ from loopflow.foundation.usertext import (
     OBJECT_ID_KEY,
     REMARKS_KEY,
     SPACE_DISPLAY_KEY,
+    SPACE_FRAME_DISPLAY_KEY,
     SPACE_ID_KEY,
     STALE_OBJECT_KEYS,
     TYPE_CATEGORY_KEY,
@@ -36,9 +37,11 @@ SCHEMA_VERSION_KEY = "lf_schema_version"
 PROJECT_SCHEMA_ID = "loopflow.project"
 MISSING_MARK = "（缺）"
 LEVEL_LAYER_MARK = "Level_Boundaries"
+SPACE_LAYER_MARK = "Space_Boundaries"
 
 CANONICAL_KEYS = (
     SPACE_DISPLAY_KEY,
+    SPACE_FRAME_DISPLAY_KEY,
     CONSTRUCTION_KEY,
     TYPE_ID_KEY,
     ELEVATION_BASIS_KEY,
@@ -204,6 +207,10 @@ def _override_notes(field: FieldView, catalog: Optional[TypeCatalog], type_id: O
 
 
 def _should_show(field: FieldView, layer: Optional[str]) -> bool:
+    if field.key == SPACE_FRAME_DISPLAY_KEY:
+        return SPACE_LAYER_MARK in (layer or "")
+    if field.key == SPACE_DISPLAY_KEY:
+        return SPACE_LAYER_MARK not in (layer or "")
     if field.key != LEVEL_DATUM_KEY:
         return True
     if not field.missing:

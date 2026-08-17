@@ -2,7 +2,8 @@
 """Rhino 物件 UserText：編號中文 key（面板依編號排序），JSON 仍用英文。
 
 `_01`～`_08` 對齊 Dictionary 圖面欄，一個編號只給一個 key。
-可手動欄的物件鍵名帶 `*`（`_01`／`_02`／`_08`／`_15`）；Dictionary Excel 欄名不加 `*`。
+可手動欄的鍵名帶 `*`：物件上是 `_02`／`_08`，空間框是 `_01*`，高程框是 `_15*`。
+物件 `_01_空間名稱` 由 Apply 寫入，不加 `*`。Dictionary Excel 欄名不加 `*`。
 `Q_01`～`Q_06` 是數量欄，留在 Dictionary 給後續 GH 使用，2.0 不寫進物件。
 Dictionary 沒有的內部欄位從 `_09` 起。
 """
@@ -10,7 +11,8 @@ from __future__ import annotations
 
 from typing import Optional, Tuple
 
-SPACE_DISPLAY_KEY = "_01_空間名稱*"
+SPACE_DISPLAY_KEY = "_01_空間名稱"
+SPACE_FRAME_DISPLAY_KEY = "_01_空間名稱*"
 CONSTRUCTION_KEY = "_02_建構狀態*"
 TYPE_ID_KEY = "_03_ID編號"
 ELEVATION_BASIS_KEY = "_05_高程基準"
@@ -28,7 +30,8 @@ LEVEL_DATUM_KEY = "_15_樓層高程*"
 
 # 讀得到、寫入時清掉的舊 key：1.x 的 `lf_*`，以及 2.0 開發期改過編號的過渡 key。
 LEGACY_KEYS = {
-    SPACE_DISPLAY_KEY: ("_01_空間名稱", "lf_space_display"),
+    SPACE_DISPLAY_KEY: (SPACE_FRAME_DISPLAY_KEY, "lf_space_display"),
+    SPACE_FRAME_DISPLAY_KEY: (SPACE_DISPLAY_KEY, "lf_space_display"),
     CONSTRUCTION_KEY: ("_02_建構狀態", "lf_construction_status"),
     TYPE_ID_KEY: ("lf_type_id",),
     ELEVATION_BASIS_KEY: ("_10_高程基準", "lf_elevation_basis"),

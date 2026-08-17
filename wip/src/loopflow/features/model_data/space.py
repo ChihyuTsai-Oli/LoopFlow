@@ -18,6 +18,7 @@ from loopflow.foundation.usertext import (
     LEVEL_DATUM_KEY,
     LEVEL_ID_KEY,
     SPACE_DISPLAY_KEY,
+    SPACE_FRAME_DISPLAY_KEY,
     SPACE_ID_KEY,
     read_text,
     write_text,
@@ -245,7 +246,7 @@ def drafts_from_selection(session: RhinoSession) -> Tuple[SpaceDraft, ...]:
             continue
         if session.object_layer(object_id) in system_layers(read_layer_prefix(session))[1:3]:
             continue
-        display = read_text(session, object_id, SPACE_DISPLAY_KEY) or session.object_name(
+        display = read_text(session, object_id, SPACE_FRAME_DISPLAY_KEY) or session.object_name(
             object_id
         ) or ""
         level_id = read_text(session, object_id, LEVEL_ID_KEY) or ""
@@ -672,7 +673,7 @@ def register_space_boundaries(
             oid = item["object_id"]
             write_text(current, oid, SPACE_ID_KEY, item["space_id"])
             write_text(current, oid, LEVEL_ID_KEY, item["level_id"])
-            write_text(current, oid, SPACE_DISPLAY_KEY, item["space_display"])
+            write_text(current, oid, SPACE_FRAME_DISPLAY_KEY, item["space_display"])
             space_layer = system_layers(read_layer_prefix(current))[0]
             if current.object_layer(oid) != space_layer:
                 current.ensure_layer(space_layer)

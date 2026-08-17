@@ -196,7 +196,13 @@ class UserTextKeyTests(unittest.TestCase):
             if name.endswith("_KEY") and isinstance(value, str)
         ]
         numbers = [key.split("_")[1] for key in keys]
-        self.assertEqual(sorted(numbers), sorted(set(numbers)))
+        from collections import Counter
+
+        counts = Counter(numbers)
+        self.assertEqual(counts["01"], 2)
+        for number, count in counts.items():
+            if number != "01":
+                self.assertEqual(count, 1, number)
         for key in keys:
             self.assertFalse(key.startswith("Q_"))
             number = int(key.split("_")[1])
