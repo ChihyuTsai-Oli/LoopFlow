@@ -113,8 +113,6 @@ class ConsoleOpenCheckTests(unittest.TestCase):
                     "level_boundary",
                     "space_boundary",
                     "scan_apply_verify",
-                    "export_dictionary",
-                    "publish_registry",
                 ),
             )
             step_ids = [step["id"] for step in result.details["steps"]]
@@ -126,16 +124,8 @@ class ConsoleOpenCheckTests(unittest.TestCase):
                     "level_boundary",
                     "space_boundary",
                     "scan_apply_verify",
-                    "export_dictionary",
-                    "publish_registry",
                 ],
             )
-            self.assertEqual(result.details["steps"][1]["status"], "available")
-            self.assertEqual(result.details["steps"][2]["status"], "available")
-            self.assertEqual(result.details["steps"][3]["status"], "available")
-            self.assertEqual(result.details["steps"][4]["status"], "available")
-            self.assertEqual(result.details["steps"][5]["status"], "available")
-            self.assertEqual(result.details["steps"][6]["status"], "available")
             self.assertTrue(all(step["status"] == "available" for step in result.details["steps"]))
             self.assertFalse((root / "exchange").exists())
             self.assertFalse((root / "logs").exists())
@@ -223,8 +213,8 @@ class ConsoleMenuTests(unittest.TestCase):
         self.assertEqual(parse_menu_choice("5  寫入模型 Metadata"), ("scan_apply_verify", "apply"))
         self.assertEqual(parse_menu_choice("6"), ("scan_apply_verify", "verify"))
         self.assertEqual(parse_menu_choice("6  檢核模型 Metadata（不寫入）"), ("scan_apply_verify", "verify"))
-        self.assertEqual(parse_menu_choice("7"), ("export_dictionary", "scan"))
-        self.assertEqual(parse_menu_choice("8"), ("publish_registry", "scan"))
+        self.assertIsNone(parse_menu_choice("7"))
+        self.assertIsNone(parse_menu_choice("8"))
         self.assertIsNone(parse_menu_choice("9"))
         self.assertEqual(parse_menu_choice("3"), ("level_boundary", "scan"))
         self.assertEqual(parse_menu_choice("3  登記高程框（封閉曲線）"), ("level_boundary", "scan"))

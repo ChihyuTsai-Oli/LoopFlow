@@ -299,7 +299,7 @@ class CatalogAndEntrypointTests(unittest.TestCase):
         from loopflow.command_catalog import get_command
 
         spec = get_command("LF_Data_Viewer")
-        self.assertEqual(spec["status"], "console")
+        self.assertEqual(spec["status"], "ready")
         self.assertEqual(spec["task"], "C04")
         self.assertEqual(spec["entrypoint"], "LF_Data_Viewer.py")
 

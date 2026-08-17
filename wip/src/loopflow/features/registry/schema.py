@@ -56,4 +56,4 @@ FORBIDDEN_OBJECT_KEYS = (
     "local_frame",
 )
 RESERVED_SPACE_ID = "EXT"
-COMMAND_ID = "LF_Push_3D_to_JSON"
+COMMAND_ID = "LF_Publish_Exchange"

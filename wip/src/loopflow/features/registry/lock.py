@@ -11,7 +11,7 @@ from typing import Callable, Optional
 
 from loopflow.foundation import results
 
-COMMAND_ID = "LF_Push_3D_to_JSON"
+COMMAND_ID = "LF_Publish_Exchange"
 STALE_LOCK_SECONDS = 30.0
 
 

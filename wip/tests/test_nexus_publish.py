@@ -22,8 +22,8 @@ from loopflow.features.model_data.space import (
     SPACE_FRAME_DISPLAY_KEY,
     SPACE_ID_KEY,
 )
-from loopflow.features.project.console import PROJECT_ID_KEY, SCHEMA_ID_KEY, SCHEMA_VERSION_KEY, open_console
-from loopflow.features.registry.handoff import publish_from_session
+from loopflow.features.project.console import PROJECT_ID_KEY, SCHEMA_ID_KEY, SCHEMA_VERSION_KEY
+from loopflow.features.registry.handoff import publish_from_session, run_publish_exchange
 from loopflow.features.registry.lock import acquire_lock, release_lock
 from loopflow.foundation.atomic_io import read_json
 from loopflow.foundation.usertext import DATA_REVISION_KEY, LEVEL_ID_KEY, OBJECT_ID_KEY
@@ -144,13 +144,13 @@ class PublishHandoffTests(unittest.TestCase):
             _write_dictionary(Path(raw))
             _apply(session, catalog, environ)
             popups = []
-            result = open_console(
+            result = run_publish_exchange(
                 session,
                 environ=environ,
-                step="publish_registry",
                 show_message=popups.append,
             )
             self.assertTrue(result.ok, result.message)
+            self.assertEqual(result.command_id, "LF_Publish_Exchange")
             self.assertTrue(result.details["publish_ready"])
             self.assertTrue(popups)
             official = Path(raw) / "exchange" / PROJECT_ID / "Project_Registry.json"

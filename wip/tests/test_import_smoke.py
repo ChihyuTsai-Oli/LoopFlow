@@ -33,7 +33,7 @@ class ImportSmokeTests(unittest.TestCase):
 
         self.assertIn("LF_Nexus", CORE_COMMANDS)
         spec = get_command("LF_Nexus")
-        self.assertEqual(spec["status"], "console")
+        self.assertEqual(spec["status"], "ready")
         self.assertEqual(spec["entrypoint"], "LF_Nexus.py")
         self.assertEqual(spec["task"], "C02/menu")
 
@@ -41,9 +41,41 @@ class ImportSmokeTests(unittest.TestCase):
         from loopflow.command_catalog import get_command
 
         spec = get_command("LF_Data_Viewer")
-        self.assertEqual(spec["status"], "console")
+        self.assertEqual(spec["status"], "ready")
         self.assertEqual(spec["entrypoint"], "LF_Data_Viewer.py")
         self.assertEqual(spec["task"], "C04")
+
+    def test_catalog_replaces_retired_command_ids(self):
+        from loopflow.command_catalog import CORE_COMMANDS, get_command
+
+        for retired in ("LF_Push_3D_to_JSON", "LF_Dictionary_Editor"):
+            self.assertNotIn(retired, CORE_COMMANDS)
+            self.assertIsNone(get_command(retired))
+        for current in (
+            "LF_Open_Dictionary",
+            "LF_Open_Dictionary_Export",
+            "LF_Export_Type_Layers",
+            "LF_Publish_Exchange",
+        ):
+            self.assertIn(current, CORE_COMMANDS)
+            self.assertEqual(get_command(current)["status"], "ready")
+
+    def test_every_ready_command_has_runner_and_entrypoint(self):
+        from loopflow.command_catalog import ready_command_ids
+        from loopflow.runners import RUNNERS
+
+        ready = ready_command_ids()
+        self.assertEqual(sorted(ready), sorted(RUNNERS))
+        for command_id in ready:
+            self.assertTrue((SRC / "entrypoints" / ("%s.py" % command_id)).is_file(), command_id)
+
+    def test_unimplemented_command_reports_not_implemented(self):
+        from loopflow.bootstrap import run_command
+
+        with redirect_stdout(io.StringIO()):
+            result = run_command("LF_Tagger_Grab")
+        self.assertFalse(result.ok)
+        self.assertEqual(result.status, "not_implemented")
 
     def test_run_command_does_not_claim_scan_success(self):
         from loopflow.bootstrap import run_command

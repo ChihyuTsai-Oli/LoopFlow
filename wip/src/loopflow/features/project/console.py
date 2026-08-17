@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Nexus Project Console。開案檢查、同步 Type Layers、高程／空間框、寫入／檢核 Metadata、匯出字典與發布。"""
+"""Nexus Project Console。開案檢查、同步 Type Layers、高程／空間框、寫入／檢核 Metadata。"""
 from __future__ import annotations
 
 import re
@@ -47,18 +47,6 @@ CONSOLE_STEPS: Tuple[dict, ...] = (
         "status": "available",
         "task": "NX-04～05",
     },
-    {
-        "id": "export_dictionary",
-        "title": "匯出 Type Layers 為字典",
-        "status": "available",
-        "task": "NX-02",
-    },
-    {
-        "id": "publish_registry",
-        "title": "發布串接資料",
-        "status": "available",
-        "task": "NX-07",
-    },
 )
 
 
@@ -92,17 +80,18 @@ def compose_scan_apply_message(mode: str, identity, placement) -> str:
     return message + " 不可發布。"
 
 
-def _open_check(
+def run_open_check(
     session: Optional[RhinoSession],
     *,
-    environ: Optional[Mapping[str, str]],
-    cancel: bool,
+    environ: Optional[Mapping[str, str]] = None,
+    cancel: bool = False,
+    command_id: str = COMMAND_ID,
 ) -> results.Result:
     if cancel:
         return results.cancelled(
             "open_check",
             "使用者取消開案檢查。",
-            command_id=COMMAND_ID,
+            command_id=command_id,
         )
     workfiles = resolve_workfiles(environ=environ)
     if not workfiles.ok:
@@ -130,7 +119,7 @@ def _open_check(
         return results.failed(
             "rhino_session",
             "目前不在 Rhino 內，無法讀取 project_id 與文件單位。不修改檔案。",
-            command_id=COMMAND_ID,
+            command_id=command_id,
         )
     project_id = session.document_user_text(PROJECT_ID_KEY)
     if not project_id:
@@ -138,14 +127,14 @@ def _open_check(
             "open_check",
             "尚未有 project_id。請先建立專案身分，不從檔名猜測，也不建立檔案。",
             blocking=("missing_project_id",),
-            command_id=COMMAND_ID,
+            command_id=command_id,
         )
     if not UUID_V4_RE.match(project_id):
         return results.blocked(
             "open_check",
             "project_id 必須是小寫 UUID v4，已停止。不自動改寫。",
             blocking=("invalid_project_id",),
-            command_id=COMMAND_ID,
+            command_id=command_id,
             details={"project_id": project_id},
         )
     schema_id = session.document_user_text(SCHEMA_ID_KEY)
@@ -155,7 +144,7 @@ def _open_check(
             "open_check",
             "文件缺少 loopflow.project 的 schema_id／schema_version。已停止，不猜測。",
             blocking=("missing_project_schema",),
-            command_id=COMMAND_ID,
+            command_id=command_id,
         )
     try:
         schema_version = int(raw_version)
@@ -163,7 +152,7 @@ def _open_check(
         return results.failed(
             "check_schema",
             "未知 schema_version：%s。已停止，不猜測解析。" % raw_version,
-            command_id=COMMAND_ID,
+            command_id=command_id,
         )
     version = check_schema(schema_id, schema_version)
     if not version.ok:
@@ -196,20 +185,21 @@ def _open_check(
             "level_boundary",
             "space_boundary",
             "scan_apply_verify",
-            "export_dictionary",
-            "publish_registry",
         ),
     }
-    message = "開案檢查完成。可執行 Type Layers、高程／空間框、寫入／檢核 Metadata、匯出字典與發布。"
+    message = (
+        "開案檢查完成。可執行 Type Layers、高程／空間框、寫入／檢核 Metadata。"
+        "匯出字典與發布請用獨立指令。"
+    )
     if warnings:
         return results.ok_with_warnings(
             "open_check",
             message,
             tuple(warnings),
-            command_id=COMMAND_ID,
+            command_id=command_id,
             details=payload,
         )
-    return results.ok("open_check", message, command_id=COMMAND_ID, details=payload)
+    return results.ok("open_check", message, command_id=command_id, details=payload)
 
 
 def open_console(
@@ -239,7 +229,7 @@ def open_console(
     ask_dictionary=None,
 ) -> results.Result:
     """開案檢查並列出 Console 步驟。step 指定時才執行該步。"""
-    from loopflow.features.dictionary.sync import export_dictionary, sync_type_layers
+    from loopflow.features.dictionary.sync import sync_type_layers
     from loopflow.features.model_data.identity import (
         apply_identity,
         rollback_identity,
@@ -259,10 +249,11 @@ def open_console(
     from loopflow.features.model_data.verify import select_only, verify_model_data
 
     def action(current: RhinoSession) -> results.Result:
-        checked = _open_check(
+        checked = run_open_check(
             current,
             environ=environ,
             cancel=cancel,
+            command_id=command_id,
         )
         if not checked.ok or step in (None, "open_check"):
             return checked
@@ -277,27 +268,6 @@ def open_console(
                 layer_prefix=layer_prefix,
                 ask_prefix=ask_prefix,
                 ask_dictionary=ask_dictionary,
-            )
-        if step == "export_dictionary":
-            return export_dictionary(
-                current,
-                environ=environ,
-                export_path=export_path,
-                guarded=False,
-                command_id=command_id,
-                show_message=show_message,
-            )
-        if step == "publish_registry":
-            from loopflow.features.registry.handoff import publish_from_session
-
-            return publish_from_session(
-                current,
-                environ=environ,
-                selected_only=selected_only,
-                cancel=False,
-                guarded=False,
-                command_id=command_id,
-                show_message=show_message,
             )
         if step == "level_boundary":
             return register_level_boundaries_interactive(
@@ -439,7 +409,7 @@ def open_console(
         )
 
     if session is None:
-        return _open_check(None, environ=environ, cancel=cancel)
+        return run_open_check(None, environ=environ, cancel=cancel, command_id=command_id)
     outcome = run_guarded(session, action, command_id=command_id)
     if identity_action in ("verify", "verify_identity") and step in (
         "scan_apply_verify",

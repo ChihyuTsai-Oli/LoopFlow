@@ -23,7 +23,7 @@ Nexus 在 2.0 只做 **Project Console**：讓使用者查看開案狀態，並�
 - Registry lock／pending／atomic replace 本體（C03）
 - 尺寸／數量計算（不屬 2.0；數量欄留在 Dictionary 給 GH）
 
-`LF_Nexus.py` 入口只轉交 command catalog，不保存第二份業務邏輯。`LF_Push_3D_to_JSON` 可保留按鈕，但必須呼叫與 Console「發布串接資料」相同的 command。
+`LF_Nexus.py` 入口只轉交 command catalog，不保存第二份業務邏輯。發布串接資料已改為獨立指令 `LF_Publish_Exchange`，匯出字典為 `LF_Export_Type_Layers`；兩者不再是 Console 步驟，但共用 `run_open_check` 與同一套 feature，不複製業務邏輯。
 
 ## 1.x 對照（只作拆分依據）
 

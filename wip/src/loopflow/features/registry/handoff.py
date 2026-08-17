@@ -11,7 +11,7 @@ from loopflow.features.registry.publisher import publish_registry
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
-COMMAND_ID = "LF_Nexus"
+COMMAND_ID = "LF_Publish_Exchange"
 PROJECT_ID_KEY = "lf_project_id"
 
 
@@ -116,3 +116,31 @@ def publish_from_session(
     if not guarded:
         return action(session)
     return run_guarded(session, action, command_id=command_id)
+
+
+def run_publish_exchange(
+    session: RhinoSession,
+    *,
+    environ: Optional[Mapping[str, str]] = None,
+    catalog=None,
+    selected_only: bool = False,
+    show_message: Optional[Callable[[str], None]] = None,
+    command_id: str = COMMAND_ID,
+) -> results.Result:
+    """獨立發布指令：先開案檢查，再走既有發布。"""
+    from loopflow.features.project.console import run_open_check
+
+    checked = run_open_check(session, environ=environ, command_id=command_id)
+    if not checked.ok:
+        return checked
+    return publish_from_session(
+        session,
+        environ=environ,
+        catalog=catalog,
+        selected_only=selected_only,
+        cancel=False,
+        guarded=False,
+        command_id=command_id,
+        show_message=show_message,
+    )
+
