@@ -422,8 +422,8 @@ def check_view() -> None:
     spec = load(SCHEMA / "view.json")
     if spec["schema_id"] != "loopflow.view" or spec["schema_version"] != 1:
         fail("view schema 身分錯誤")
-    if spec["layer"] != "M2D::Anchor_Frame":
-        fail("view 圖層必須是 M2D::Anchor_Frame")
+    if spec["layer"] != "LoopFlow::Anchor_Frame":
+        fail("view 圖層必須是 LoopFlow::Anchor_Frame")
     required = {
         "view_id": "lf_view_id",
         "schema_id": "lf_schema_id",

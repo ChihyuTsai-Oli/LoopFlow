@@ -1,7 +1,7 @@
 {
   "schema_id": "loopflow.view",
   "schema_version": 1,
-  "layer": "M2D::Anchor_Frame",
+  "layer": "LoopFlow::Anchor_Frame",
   "usertext_keys": {
     "view_id": "lf_view_id",
     "schema_id": "lf_schema_id",

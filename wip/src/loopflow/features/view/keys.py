@@ -18,7 +18,7 @@ LEGACY_ROLE_KEY = "Role"
 LEGACY_TARGET_CP_KEY = "Target_CP"
 LEGACY_ROLE_VALUE = "Anchor_Frame"
 
-ANCHOR_LAYER = "M2D::Anchor_Frame"
+ANCHOR_LAYER = "LoopFlow::Anchor_Frame"
 ANCHOR_COLOR = (155, 140, 205)
 DEFAULT_OFFSET = 50.0
 INVERT_Y = True
