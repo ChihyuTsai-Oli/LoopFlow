@@ -355,6 +355,41 @@ class LayerSyncTests(unittest.TestCase):
             self.assertFalse((root / EXPORT_FILENAME).exists())
             self.assertTrue(custom.exists())
 
+    def test_remembered_dictionary_skips_picker_until_file_missing(self):
+        session = _session()
+        catalog = _catalog(_row())
+        session.set_document_user_text(DICTIONARY_FILENAME_KEY, "TeamA.xlsx")
+        seen = []
+
+        def _ask(default):
+            seen.append(default)
+            return "TeamB.xlsx"
+
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
+            root = Path(raw)
+            write_table(root / "TeamA.xlsx", schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_row()])
+            first = sync_type_layers(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
+                catalog=catalog,
+                ask_dictionary=_ask,
+            )
+            self.assertTrue(first.ok, first.message)
+            self.assertEqual(seen, [])
+            self.assertEqual(session.document_user_text(DICTIONARY_FILENAME_KEY), "TeamA.xlsx")
+
+            (root / "TeamA.xlsx").unlink()
+            write_table(root / "TeamB.xlsx", schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_row()])
+            second = sync_type_layers(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
+                catalog=catalog,
+                ask_dictionary=_ask,
+            )
+            self.assertTrue(second.ok, second.message)
+            self.assertEqual(seen, ["TeamA.xlsx"])
+            self.assertEqual(session.document_user_text(DICTIONARY_FILENAME_KEY), "TeamB.xlsx")
+
     def test_invalid_prefix_blocks(self):
         session = _session()
         catalog = _catalog(_row())

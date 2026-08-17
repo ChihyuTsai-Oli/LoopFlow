@@ -168,6 +168,15 @@ def _sync_body(
     return results.ok("sync_type_layers", message, command_id=COMMAND_ID, details=payload)
 
 
+def _should_ask_dictionary(session: RhinoSession, root: Path) -> bool:
+    """第一次尚未記住檔名，或已記住的檔找不到（例如改名）時才問。"""
+    stored = (session.document_user_text(DICTIONARY_FILENAME_KEY) or "").strip()
+    if not stored:
+        return True
+    filename = dictionary_filename_from_session(session)
+    return not (root / filename).is_file()
+
+
 def sync_type_layers(
     session: RhinoSession,
     *,
@@ -212,7 +221,7 @@ def sync_type_layers(
             return workfiles
         root = workfiles.details["paths"].root
         chosen_dict = dictionary_filename
-        if chosen_dict is None and callable(ask_dictionary):
+        if chosen_dict is None and callable(ask_dictionary) and _should_ask_dictionary(current, root):
             chosen_dict = ask_dictionary(dictionary_filename_from_session(current))
             if chosen_dict is None:
                 return results.cancelled(
