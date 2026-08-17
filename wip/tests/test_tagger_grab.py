@@ -75,6 +75,7 @@ class TemplateLoadTests(unittest.TestCase):
         catalog = _catalog()
         self.assertEqual(len(catalog.templates), 10)
         self.assertEqual(catalog.by_block_name("TAG_HEIGHT_GRAB").template_id, "TAG_HEIGHT_GRAB")
+        self.assertEqual(catalog.by_block_name("Tag_Height_Grab").template_id, "TAG_HEIGHT_GRAB")
         self.assertEqual(catalog.by_block_name("TAG_ELEV_3").template_id, "TAG_ELEV")
         self.assertIsNone(catalog.by_block_name("UNKNOWN_BLOCK"))
 
@@ -91,6 +92,14 @@ class BindTests(unittest.TestCase):
         self.assertTrue(session.get_object_user_text("tag", TAG_ID_KEY))
         self.assertIsNone(session.get_object_user_text("tag", SOURCE_BLOCK_NAME_KEY))
         self.assertEqual(session._object_meta["wall"]["user_text"], before_wall)
+
+    def test_title_case_block_name_binds_and_keeps_actual_name(self):
+        session = _session()
+        session.set_block("tag", (0, 0, 0), name="Tag_Height_Grab")
+        result = bind_tag(session, "tag", "wall", _catalog())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY), OBJECT_ID)
+        self.assertEqual(session.get_object_user_text("tag", TEMPLATE_ID_KEY), "Tag_Height_Grab")
 
     def test_item_writes_block_name_not_object_uuid(self):
         session = _session()
@@ -153,7 +162,7 @@ class BindTests(unittest.TestCase):
     def test_laser_and_index_refused(self):
         session = _session()
         session.add_object("laser", name="LaserTag", layer="M2D::Tags")
-        session.set_block("laser", (0, 0, 0), name="TAG_HEIGHT_LASER")
+        session.set_block("laser", (0, 0, 0), name="Tag_Height_Laser")
         session.add_object("idx", name="IndexTag", layer="M2D::Tags")
         session.set_block("idx", (0, 0, 0), name="TAG_ELEV_1")
         laser = bind_tag(session, "laser", "wall", _catalog())

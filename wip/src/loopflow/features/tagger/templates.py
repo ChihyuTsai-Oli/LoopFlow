@@ -34,12 +34,15 @@ class TagTemplateSet:
     templates: Tuple[TagTemplate, ...]
 
     def by_block_name(self, block_name: str) -> Optional[TagTemplate]:
+        """以 Block 定義名查找。不分大小寫，以對齊現行 Tag_Blocks.3dm（Tag_Height_Grab）。"""
         name = (block_name or "").strip()
         if not name:
             return None
+        folded = name.casefold()
         for template in self.templates:
-            if name in template.block_names:
-                return template
+            for known in template.block_names:
+                if known.casefold() == folded:
+                    return template
         return None
 
 
