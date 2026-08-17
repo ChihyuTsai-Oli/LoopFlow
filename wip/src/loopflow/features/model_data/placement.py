@@ -163,14 +163,19 @@ def _frames_by_level_id(session: RhinoSession) -> dict:
     return mapping
 
 
-def _datum_for_space(space: Optional[dict], frames_by_id: Mapping[str, object]):
+def _composed_elevation(sample_z, frame) -> Optional[float]:
+    if sample_z is None:
+        return None
+    if frame is None:
+        return float(sample_z)
+    return float(frame.datum) + (float(sample_z) - float(frame.curve_z))
+
+
+def _frame_for_space(space: Optional[dict], frames_by_id: Mapping[str, object]):
     if not space:
         return None
     level_id = space.get("level_id") or ""
-    frame = frames_by_id.get(level_id)
-    if frame is None:
-        return None
-    return float(frame.datum)
+    return frames_by_id.get(level_id)
 
 
 def _space_ref(space: dict) -> dict:
@@ -275,9 +280,8 @@ def scan_placement(
                 ext_items.append({"rhino_id": object_id, "reason": ext_reason})
             basis = _resolve_basis(current, object_id, type_catalog)
             value, elev_issue = _elevation(current, object_id, basis, bbox)
-            datum = _datum_for_space(hit, frames_by_id)
-            if datum is not None:
-                value = datum
+            if hit is not None:
+                value = _composed_elevation(value, _frame_for_space(hit, frames_by_id))
             if elev_issue:
                 issues.append(elev_issue)
             items.append(
@@ -362,10 +366,9 @@ def _ask_space_name(
 ) -> Optional[str]:
     if ask_space is not None:
         return ask_space(object_id, names)
-    from loopflow.platform.rhino.prompts import ask_popup_string
+    from loopflow.platform.rhino.prompts import ask_popup_choice
 
-    message = "此物件同時落在多個空間。請輸入所屬空間名稱：\n%s" % "、".join(names)
-    return ask_popup_string(message, "", "LoopFlow")
+    return ask_popup_choice("此物件同時落在多個空間。請選擇所屬空間：", names)
 
 
 def _pick_candidate(candidates: Sequence[dict], typed: Optional[str]) -> Optional[dict]:
@@ -445,9 +448,10 @@ def apply_placement(
                 item = dict(item)
                 item["space_id"] = chosen["space_id"]
                 item["space_display"] = chosen["space_display"]
-                datum = _datum_for_space(chosen, frames_by_id)
-                if datum is not None:
-                    item["elevation_value"] = datum
+                item["elevation_value"] = _composed_elevation(
+                    item.get("elevation_value"),
+                    _frame_for_space(chosen, frames_by_id),
+                )
             if item["space_id"]:
                 write_text(current, rhino_id, SPACE_ID_KEY, item["space_id"])
                 write_text(current, rhino_id, SPACE_DISPLAY_KEY, item["space_display"])

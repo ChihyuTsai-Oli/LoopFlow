@@ -65,7 +65,12 @@ def run_nexus_console(
     **kwargs
 ) -> results.Result:
     """先開案檢查；interactive 時再選步驟。測試可注入 chooser。"""
+    presenter = kwargs.get("show_message")
     first = open_console(session, environ=environ, step="open_check", **kwargs)
+    if not first.ok:
+        from loopflow.platform.rhino.prompts import show_failure_popup
+
+        show_failure_popup(first, presenter)
     if not first.ok or not interactive:
         return first
     picked = prompt_nexus_menu(chooser)
@@ -96,9 +101,8 @@ def run_nexus_console(
         identity_action=identity_action,
         **extra
     )
-    mismatch_ids = (result.details or {}).get("mismatch_object_ids")
-    if mismatch_ids and session is not None:
-        from loopflow.features.model_data.verify import select_only
+    if not result.ok:
+        from loopflow.platform.rhino.prompts import show_failure_popup
 
-        select_only(session, mismatch_ids)
+        show_failure_popup(result, extra.get("show_message"))
     return result

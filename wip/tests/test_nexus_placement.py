@@ -245,6 +245,15 @@ class PlacementTests(unittest.TestCase):
         applied = apply_placement(session, catalog=_catalog(_row(elevation_basis="BH")))
         self.assertEqual(session.get_object_user_text("slab", ELEVATION_VALUE_KEY), "80")
 
+    def test_level_datum_plus_relative_height(self):
+        session = _session()
+        _add_level(session, "lv", [[-1, -1], [20, -1], [20, 20], [-1, 20]], LEVEL_1, "50")
+        _add_space(session, "s1", [[0, 0], [10, 0], [10, 8], [0, 8]], SPACE_A, "客廳")
+        _add_model(session, "sill", bbox=((2, 2, 100), (3, 3, 120)))
+        applied = apply_placement(session, catalog=_catalog(_row(elevation_basis="BH")))
+        self.assertTrue(applied.ok, applied.message)
+        self.assertEqual(session.get_object_user_text("sill", ELEVATION_VALUE_KEY), "150")
+
     def test_ambiguous_prompt_zooms_and_writes_chosen_space(self):
         session = _session()
         _add_space(session, "s1", [[0, 0], [10, 0], [10, 8], [0, 8]], SPACE_A, "客廳", LEVEL_1)

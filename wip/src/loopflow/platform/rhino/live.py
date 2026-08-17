@@ -155,6 +155,35 @@ class LiveSession:
         if state.locked:
             rs.LockObject(object_id)
 
+    def set_redraw_enabled(self, enabled: bool) -> None:
+        try:
+            self._rs.EnableRedraw(bool(enabled))
+        except Exception:
+            pass
+
+    def select_objects(self, object_ids) -> None:
+        rs = self._rs
+        ids = [str(item) for item in object_ids]
+        self.set_redraw_enabled(False)
+        try:
+            rs.UnselectAllObjects()
+            if not ids:
+                return
+            selected = False
+            try:
+                selected = bool(rs.SelectObjects(ids))
+            except Exception:
+                selected = False
+            if not selected:
+                for object_id in ids:
+                    try:
+                        rs.SelectObject(object_id)
+                    except Exception:
+                        pass
+        finally:
+            self.set_redraw_enabled(True)
+            self._redraw_views()
+
     def document_modified(self) -> bool:
         return bool(self._sc.doc.Modified)
 
@@ -247,8 +276,7 @@ class LiveSession:
                 material = self._sc.doc.Materials[mat_idx]
                 if legacy_name and material.Name != material_name:
                     material.Name = material_name
-                material.DiffuseColor = sys_color
-                self._sc.doc.Materials.Modify(material, mat_idx, True)
+                self._apply_material_color(material, mat_idx, sys_color, color)
             except Exception:
                 pass
         if mat_idx == -1:
@@ -262,13 +290,53 @@ class LiveSession:
             if mat_idx >= 0:
                 try:
                     material = self._sc.doc.Materials[mat_idx]
-                    material.DiffuseColor = sys_color
-                    self._sc.doc.Materials.Modify(material, mat_idx, True)
+                    self._apply_material_color(material, mat_idx, sys_color, color)
                 except Exception:
                     pass
         layer.RenderMaterialIndex = mat_idx
         layer.CommitChanges()
         self._redraw_views()
+
+    def _apply_material_color(self, material, mat_idx, sys_color, color) -> None:
+        try:
+            material.DiffuseColor = sys_color
+        except Exception:
+            pass
+        try:
+            pbr = getattr(material, "PhysicallyBased", None)
+            if pbr is not None:
+                color4f = self._color4f(color)
+                if color4f is not None:
+                    pbr.BaseColor = color4f
+        except Exception:
+            pass
+        try:
+            render_mat = getattr(material, "RenderMaterial", None)
+            if render_mat is not None:
+                change = getattr(getattr(self._rhino, "Render", None), "RenderContent", None)
+                contexts = getattr(change, "ChangeContexts", None) if change is not None else None
+                context = getattr(contexts, "Program", None)
+                if context is not None and hasattr(render_mat, "BeginChange"):
+                    render_mat.BeginChange(context)
+                    try:
+                        color4f = self._color4f(color)
+                        if color4f is not None and hasattr(render_mat, "SetParameter"):
+                            render_mat.SetParameter("pbr-base-color", color4f)
+                    finally:
+                        render_mat.EndChange()
+        except Exception:
+            pass
+        self._sc.doc.Materials.Modify(material, mat_idx, True)
+
+    def _color4f(self, color):
+        try:
+            display = getattr(self._rhino, "Display", None)
+            color4f = getattr(display, "Color4f", None)
+            if color4f is None:
+                return None
+            return color4f(color[0] / 255.0, color[1] / 255.0, color[2] / 255.0, 1.0)
+        except Exception:
+            return None
 
     def _redraw_views(self) -> None:
         try:

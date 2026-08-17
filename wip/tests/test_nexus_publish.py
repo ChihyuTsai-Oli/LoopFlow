@@ -22,7 +22,7 @@ from loopflow.features.project.console import PROJECT_ID_KEY, SCHEMA_ID_KEY, SCH
 from loopflow.features.registry.handoff import publish_from_session
 from loopflow.features.registry.lock import acquire_lock, release_lock
 from loopflow.foundation.atomic_io import read_json
-from loopflow.foundation.usertext import LEVEL_ID_KEY, OBJECT_ID_KEY
+from loopflow.foundation.usertext import DATA_REVISION_KEY, LEVEL_ID_KEY, OBJECT_ID_KEY
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.memory import MemorySession
 
@@ -168,6 +168,7 @@ class PublishHandoffTests(unittest.TestCase):
             space_ids = [item["space_id"] for item in payload["spaces"]]
             self.assertIn("EXT", space_ids)
             self.assertIn(SPACE_A, space_ids)
+            self.assertEqual(session.get_object_user_text("wall", DATA_REVISION_KEY), "1")
 
     def test_c03_lock_failure_keeps_last_good(self):
         session = _session()

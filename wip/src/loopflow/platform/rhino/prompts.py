@@ -36,6 +36,42 @@ def ask_popup_string(
     return str(value)
 
 
+def ask_popup_choice(
+    message: str,
+    items: Sequence[str],
+    title: str = "LoopFlow",
+) -> Optional[str]:
+    try:
+        import rhinoscriptsyntax as rs  # type: ignore
+    except ImportError:
+        return None
+    value = rs.ListBox(list(items), message, title)
+    if value is None:
+        return None
+    return str(value)
+
+
+def format_result_popup(result) -> str:
+    """失敗／阻擋時列出訊息與 Dictionary issues 全文。"""
+    lines = [getattr(result, "message", "") or ""]
+    details = getattr(result, "details", None) or {}
+    for issue in details.get("issues") or ():
+        text = str(issue).strip()
+        if text and text not in lines:
+            lines.append(text)
+    return "\n".join(item for item in lines if item)
+
+
+def show_failure_popup(result, presenter=None, title: str = "LoopFlow") -> None:
+    if getattr(result, "ok", False) or getattr(result, "status", "") == "cancelled":
+        return
+    text = format_result_popup(result)
+    if callable(presenter):
+        presenter(text)
+        return
+    show_message(text, title)
+
+
 def show_message(message: str, title: str = "LoopFlow") -> None:
     try:
         import rhinoscriptsyntax as rs  # type: ignore

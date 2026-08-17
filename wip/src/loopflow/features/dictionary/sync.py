@@ -31,6 +31,10 @@ from loopflow.platform.rhino.session import RhinoSession, run_guarded
 COMMAND_ID = "LF_Nexus"
 EXPORT_FILENAME = "LoopFlow_Dictionary_Export.xlsx"
 EXPORT_HEADERS = schema.DISPLAY_COLUMNS + ("diff_status",)
+EXPORT_HINT = (
+    "此檔只供核對，不能當正式字典開啟，也不可覆寫 LoopFlow_Dictionary.xlsx。"
+    "藍字 added_in_rhino 合併時必須給新的 _03_ID編號，不可沿用舊圖層編號。"
+)
 DIFF_HEADERS = (
     "__Rhino Layer",
     "type_id",
@@ -388,7 +392,14 @@ def export_dictionary(
                 command_id=command_id,
             )
         rows = _dictionary_export_rows(current, catalog, prefix)
-        written = write_table(target, schema.TITLE_ROW, EXPORT_HEADERS, rows, profile="dictionary")
+        written = write_table(
+            target,
+            schema.TITLE_ROW,
+            EXPORT_HEADERS,
+            rows,
+            profile="dictionary",
+            hint=EXPORT_HINT,
+        )
         if not written.ok:
             return written
         message = "已在字典目錄匯出 %s，未改正式 Dictionary。" % target.name

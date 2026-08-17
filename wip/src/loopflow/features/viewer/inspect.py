@@ -36,8 +36,6 @@ SCHEMA_VERSION_KEY = "lf_schema_version"
 PROJECT_SCHEMA_ID = "loopflow.project"
 MISSING_MARK = "（缺）"
 LEVEL_LAYER_MARK = "Level_Boundaries"
-SPACE_LAYER_MARK = "Space_Boundaries"
-OBJECT_MANUAL_KEYS = (CONSTRUCTION_KEY, REMARKS_KEY)
 
 CANONICAL_KEYS = (
     SPACE_DISPLAY_KEY,
@@ -277,23 +275,6 @@ def inspect_object(
     )
 
 
-def _is_manual_hint(key: str, layer: Optional[str]) -> bool:
-    if key in OBJECT_MANUAL_KEYS:
-        return True
-    path = layer or ""
-    if key == SPACE_DISPLAY_KEY and SPACE_LAYER_MARK in path:
-        return True
-    if key == LEVEL_DATUM_KEY and LEVEL_LAYER_MARK in path:
-        return True
-    return False
-
-
-def _report_key(field: FieldView, layer: Optional[str]) -> str:
-    if _is_manual_hint(field.key, layer):
-        return field.key + "*"
-    return field.key
-
-
 def format_report(report: ObjectReport) -> str:
     lines = [
         "圖層：%s" % (report.layer or MISSING_MARK),
@@ -314,7 +295,7 @@ def format_report(report: ObjectReport) -> str:
     lines.append("-" * 48)
 
     visible = report.fields
-    labels = [_report_key(field, report.layer) for field in visible]
+    labels = [field.key for field in visible]
     key_width = max([_display_width(label) for label in labels] + [12])
     for field, label in zip(visible, labels):
         value = field.value if field.value is not None else MISSING_MARK

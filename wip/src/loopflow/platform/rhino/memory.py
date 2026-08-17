@@ -83,6 +83,24 @@ class MemorySession:
             raise KeyError("未知物件：%s" % state.object_id)
         self._objects[state.object_id] = state
 
+    def set_redraw_enabled(self, enabled: bool) -> None:
+        return None
+
+    def select_objects(self, object_ids) -> None:
+        wanted = set(str(item) for item in object_ids)
+        for object_id, state in list(self._objects.items()):
+            selected = object_id in wanted
+            if state.selected == selected:
+                continue
+            self._objects[object_id] = ObjectViewState(
+                object_id=object_id,
+                selected=selected,
+                locked=state.locked,
+                hidden=state.hidden,
+                color=state.color,
+                color_by_layer=state.color_by_layer,
+            )
+
     def document_modified(self) -> bool:
         return self._modified
 

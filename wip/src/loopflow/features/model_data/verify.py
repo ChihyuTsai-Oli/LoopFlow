@@ -233,6 +233,10 @@ def compare_apply_usertext(
 
 
 def select_only(session: RhinoSession, object_ids: Sequence[str]) -> None:
+    selector = getattr(session, "select_objects", None)
+    if callable(selector):
+        selector(tuple(object_ids))
+        return
     wanted = set(object_ids)
     for object_id in session.iter_object_ids(include_hidden=True, include_locked=True):
         state = session.get_view_state(object_id)
@@ -298,7 +302,6 @@ def verify_model_data(
 
     compared = action(session) if not guarded else run_guarded(session, action, command_id=command_id)
     if compared.ok:
-        select_only(session, compared.details.get("mismatch_object_ids") or ())
         popup = format_verify_popup(compared)
         if callable(show_message):
             show_message(popup)
@@ -306,4 +309,6 @@ def verify_model_data(
             from loopflow.platform.rhino.prompts import show_message as live_popup
 
             live_popup(popup)
+        if guarded:
+            select_only(session, compared.details.get("mismatch_object_ids") or ())
     return compared

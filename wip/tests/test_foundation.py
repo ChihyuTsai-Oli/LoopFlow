@@ -200,10 +200,11 @@ class UserTextKeyTests(unittest.TestCase):
         for key in keys:
             self.assertFalse(key.startswith("Q_"))
             number = int(key.split("_")[1])
+            display_key = key.rstrip("*")
             if number <= 8:
-                self.assertIn(key, DISPLAY_COLUMNS)
+                self.assertIn(display_key, DISPLAY_COLUMNS)
             else:
-                self.assertNotIn(key, DISPLAY_COLUMNS)
+                self.assertNotIn(display_key, DISPLAY_COLUMNS)
 
     def test_write_clears_legacy_and_read_falls_back(self):
         from loopflow.foundation.usertext import OBJECT_ID_KEY, read_text, write_text

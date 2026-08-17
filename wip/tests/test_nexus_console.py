@@ -199,6 +199,33 @@ class ConsoleMenuTests(unittest.TestCase):
         self.assertIsNone(parse_menu_choice(None))
         self.assertIsNone(parse_menu_choice("取消"))
 
+    def test_dictionary_duplicate_id_popup_lists_row(self):
+        extra = _valid_row()
+        extra[schema.MACHINE_KEYS.index("layer_path")] = "02_Wall_牆面::Timber.木紋_new"
+        popups = []
+        with tempfile.TemporaryDirectory(prefix="loopflow-dict-dup-") as raw:
+            root = Path(raw)
+            written = write_table(
+                root / "LoopFlow_Dictionary.xlsx",
+                schema.TITLE_ROW,
+                schema.DISPLAY_COLUMNS,
+                [_valid_row(), extra],
+            )
+            self.assertTrue(written.ok, written.message)
+            session = _session()
+            result = run_nexus_console(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
+                interactive=False,
+                show_message=popups.append,
+            )
+            self.assertFalse(result.ok)
+            self.assertIn("duplicate_type_id", result.blocking)
+            self.assertTrue(popups)
+            self.assertIn("重複", popups[0])
+            self.assertIn("EX-01", popups[0])
+            self.assertIn("第 4 列", popups[0])
+
     def test_interactive_cancel_keeps_open_check(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-menu-") as raw:
             root = Path(raw)
@@ -256,6 +283,30 @@ class ConsoleMenuTests(unittest.TestCase):
             self.assertEqual(applied.blocking, ("missing_level_or_space_boundary",))
             self.assertIsNone(session.get_object_user_text("beam", OBJECT_ID_KEY))
             self.assertIn("高程框", applied.message)
+
+    def test_apply_without_boundaries_popup(self):
+        from loopflow.features.dictionary.layer_paths import to_full_path
+
+        full = to_full_path("00_STR_結構::Beam.樑")
+        popups = []
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx05-popup-") as raw:
+            root = Path(raw)
+            _write_dictionary(root)
+            session = _session()
+            session.ensure_layer(full)
+            session.set_layer_user_text(full, "lf_type_id", "EX-01")
+            session.add_object("beam", layer=full)
+            session.set_bbox("beam", (0, 0, 0), (90, 40, 210))
+            applied = run_nexus_console(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
+                interactive=True,
+                chooser=lambda _labels: "5",
+                show_message=popups.append,
+            )
+            self.assertFalse(applied.ok)
+            self.assertEqual(applied.blocking, ("missing_level_or_space_boundary",))
+            self.assertTrue(any("高程框" in msg for msg in popups))
 
     def test_apply_writes_id_space_not_dimensions(self):
         from loopflow.features.dictionary.layer_paths import to_full_path

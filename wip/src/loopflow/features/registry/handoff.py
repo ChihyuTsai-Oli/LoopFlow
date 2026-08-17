@@ -91,6 +91,14 @@ def publish_from_session(
                 blocking=written.blocking,
                 details=details,
             )
+        from loopflow.features.model_data.identity import iter_scan_targets
+        from loopflow.foundation.usertext import DATA_REVISION_KEY, write_text
+
+        revision = details.get("registry_revision")
+        if revision is not None:
+            revision_text = str(revision)
+            for object_id in iter_scan_targets(current, selected_only=False):
+                write_text(current, object_id, DATA_REVISION_KEY, revision_text)
         message = written.message
         if callable(show_message):
             show_message(message)

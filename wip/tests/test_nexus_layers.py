@@ -25,10 +25,17 @@ from loopflow.features.dictionary.layer_paths import (
     to_full_path,
 )
 from loopflow.features.dictionary.loader import load_from_table
-from loopflow.features.dictionary.sync import EXPORT_FILENAME, export_dictionary, export_layer_diff, sync_type_layers
+from loopflow.features.dictionary.sync import (
+    EXPORT_FILENAME,
+    EXPORT_HINT,
+    export_dictionary,
+    export_layer_diff,
+    sync_type_layers,
+)
 from loopflow.platform.excel import (
     DICTIONARY_FONT_NAME,
     DICTIONARY_FONT_SIZE,
+    DICTIONARY_HINT_FONT_SIZE,
     STATUS_FONT_COLORS,
     read_font_table,
     read_status_cell_colors,
@@ -225,13 +232,23 @@ class LayerSyncTests(unittest.TestCase):
             self.assertTrue(popups)
             table = read_table(exported)
             self.assertTrue(table.ok, table.message)
+            self.assertEqual(table.details["title"], schema.TITLE_ROW)
+            self.assertEqual(table.details["header_row"], 3)
             self.assertIn("diff_status", table.details["headers"])
             statuses = [row[-1] for row in table.details["rows"]]
             self.assertEqual(set(statuses), {"modified", "missing_in_rhino", "added_in_rhino"})
             fonts = read_font_table(exported)
             self.assertTrue(fonts)
             self.assertTrue(all(item["name"] == DICTIONARY_FONT_NAME for item in fonts))
-            self.assertTrue(all(item["size"] == DICTIONARY_FONT_SIZE for item in fonts))
+            sizes = {item["size"] for item in fonts}
+            self.assertIn(DICTIONARY_FONT_SIZE, sizes)
+            self.assertIn(DICTIONARY_HINT_FONT_SIZE, sizes)
+            self.assertTrue(any(item["color_rgb"] == "FFFF0000" for item in fonts))
+            from zipfile import ZipFile
+
+            with ZipFile(exported) as zf:
+                shared = zf.read("xl/sharedStrings.xml").decode("utf-8")
+            self.assertIn(EXPORT_HINT, shared)
             colors = read_status_cell_colors(exported)
             self.assertEqual(colors["missing_in_rhino"], STATUS_FONT_COLORS["missing_in_rhino"])
             self.assertEqual(colors["added_in_rhino"], STATUS_FONT_COLORS["added_in_rhino"])

@@ -149,14 +149,21 @@ def restore_snapshot(
     *,
     restore_document_modified: bool,
 ) -> results.Result:
-    missing = []
-    for state in snapshot.objects:
-        if session.get_view_state(state.object_id) is None:
-            missing.append(state.object_id)
-            continue
-        session.set_view_state(state)
-    if restore_document_modified:
-        session.set_document_modified(snapshot.document_modified)
+    redraw = getattr(session, "set_redraw_enabled", None)
+    if callable(redraw):
+        redraw(False)
+    try:
+        missing = []
+        for state in snapshot.objects:
+            if session.get_view_state(state.object_id) is None:
+                missing.append(state.object_id)
+                continue
+            session.set_view_state(state)
+        if restore_document_modified:
+            session.set_document_modified(snapshot.document_modified)
+    finally:
+        if callable(redraw):
+            redraw(True)
     if missing:
         return results.failed(
             "restore",
