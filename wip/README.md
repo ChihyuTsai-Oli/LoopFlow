@@ -5,7 +5,7 @@
 ```text
 wip/
   docs/             # 實作階段的有效規格與進度
-    src/              # 2.0 原始碼（骨架、foundation、Rhino platform、Dictionary、Nexus Console）
+  src/              # 2.0 原始碼（骨架、foundation、Rhino platform、Dictionary、Nexus、Registry、Viewer）
   tests/            # 自動測試
   fixtures/         # 可提交、不含私人資料的測試資料與 legacy 證據
   tools/            # 文件產生器、契約檢查器與開發輔助工具
@@ -32,6 +32,7 @@ AI 或開發者依序閱讀：
 | `docs/開發任務與路徑.md` | 任務 ID、依賴、工作波次與驗收條件 |
 | `docs/系統設定.md` | repo、runtime、路徑、entrypoint、build／installer 等技術設定 |
 | `docs/重構進度.md` | 已完成工作、驗證、限制與唯一下一步 |
+| `docs/rhino指令.md` | 開發期目前可跑的 Rhino 指令、按鈕巨集與左右鍵配置；要改指令名稱先改這份 |
 | `docs/Nexus拆分計畫.md` | C02 專用工作包、依賴與分段驗收；不是每次開工作業的必讀 |
 
 `docs/工作流程.html` 是由 `docs/工作流程.md` 產生的閱讀版，不是第二份規格；修改 Markdown 後執行 `wip/tools/build_workflow_html.py` 更新。
