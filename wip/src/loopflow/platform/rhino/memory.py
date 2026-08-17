@@ -22,6 +22,10 @@ class MemorySession:
         self._text_dots: Dict[str, dict] = {}
         self._clipping_planes: Dict[str, dict] = {}
         self._ray_hits: list = []
+        self._layout_active = True
+        self._layout_details: list = []
+        self._detail_model_points: Dict[str, tuple] = {}
+        self.zoomed_layout_details: List[dict] = []
         self._modified = False
         self._model_unit = model_unit
         self._document_text = dict(document_text or {})
@@ -409,6 +413,32 @@ class MemorySession:
 
     def zoom_to_object(self, object_id: str) -> None:
         self.zoomed_object_ids.append(object_id)
+
+    def set_layout_active(self, value: bool) -> None:
+        self._layout_active = bool(value)
+
+    def is_layout_active(self) -> bool:
+        return bool(self._layout_active)
+
+    def set_layout_details(self, items) -> None:
+        self._layout_details = [dict(item) for item in items]
+
+    def listed_layout_details(self):
+        return tuple(dict(item) for item in self._layout_details)
+
+    def set_detail_model_point(self, detail_id: str, point) -> None:
+        self._detail_model_points[str(detail_id)] = tuple(float(v) for v in point)
+
+    def detail_model_point(self, detail_id: str):
+        point = self._detail_model_points.get(str(detail_id))
+        if not point:
+            return None
+        return tuple(point)
+
+    def zoom_to_layout_detail(self, layout: str, detail_id: str) -> None:
+        self.zoomed_layout_details.append(
+            {"layout": str(layout or ""), "detail_id": str(detail_id or "")}
+        )
 
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)

@@ -66,6 +66,135 @@ def ask_popup_choice(
     return str(value)
 
 
+def _restore_page_view(original_view) -> None:
+    if original_view is None:
+        return
+    try:
+        import Rhino  # type: ignore
+        import rhinoscriptsyntax as rs  # type: ignore
+        import scriptcontext as sc  # type: ignore
+    except ImportError:
+        return
+    try:
+        sc.doc.Views.ActiveView = original_view
+        if isinstance(original_view, Rhino.Display.RhinoPageView):
+            original_view.SetPageAsActive()
+        rs.UnselectAllObjects()
+        sc.doc.Views.Redraw()
+    except Exception:
+        pass
+
+
+def ask_layout_detail_choice(
+    items: Sequence[dict],
+    on_select=None,
+    title: str = "Index 綁定",
+) -> Optional[dict]:
+    """可搜尋的 Layout Detail 清單；選取變更時可 zoom。取消回傳 None。"""
+    if not items:
+        return None
+    try:
+        import Eto.Drawing as drawing  # type: ignore
+        import Eto.Forms as forms  # type: ignore
+        import Rhino  # type: ignore
+        import Rhino.UI  # type: ignore
+        import scriptcontext as sc  # type: ignore
+    except ImportError:
+        return None
+
+    original_view = sc.doc.Views.ActiveView
+
+    class _DetailSelectDialog(forms.Dialog[bool]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.Title = title
+            self.Padding = drawing.Padding(10)
+            self.Resizable = True
+            self.Width = 450
+            self.Height = 500
+            self.selected_item = None
+            self.all_data = list(items)
+            self.filtered_data = list(items)
+
+            layout = forms.DynamicLayout()
+            layout.Spacing = drawing.Size(5, 5)
+
+            self.search_box = forms.TextBox()
+            self.search_box.PlaceholderText = "輸入圖名或圖號搜尋"
+            self.search_box.TextChanged += self._on_search_changed
+            layout.AddRow(self.search_box)
+
+            self.listbox = forms.ListBox()
+            self.listbox.Height = 350
+            self._update_listbox()
+            self.listbox.SelectedIndexChanged += self._on_selection_changed
+            self.listbox.MouseDoubleClick += self._on_ok
+            layout.AddRow(self.listbox)
+            layout.Add(None)
+
+            btn_ok = forms.Button()
+            btn_ok.Text = "綁定（Enter）"
+            btn_ok.Click += self._on_ok
+            btn_cancel = forms.Button()
+            btn_cancel.Text = "取消（Esc）"
+            btn_cancel.Click += self._on_cancel
+            btn_layout = forms.DynamicLayout()
+            btn_layout.DefaultSpacing = drawing.Size(10, 0)
+            btn_layout.AddRow(None, btn_cancel, btn_ok)
+            layout.AddRow(btn_layout)
+
+            self.Content = layout
+            self.AbortButton = btn_cancel
+            self.DefaultButton = btn_ok
+
+        def _label(self, item: dict) -> str:
+            return str(item.get("label") or "")
+
+        def _update_listbox(self) -> None:
+            self.listbox.DataStore = [self._label(item) for item in self.filtered_data]
+
+        def _on_search_changed(self, sender, e) -> None:
+            term = (self.search_box.Text or "").casefold()
+            if not term:
+                self.filtered_data = list(self.all_data)
+            else:
+                self.filtered_data = [
+                    item
+                    for item in self.all_data
+                    if term in str(item.get("layout") or "").casefold()
+                    or term in str(item.get("dv_name") or "").casefold()
+                    or term in self._label(item).casefold()
+                ]
+            self._update_listbox()
+
+        def _on_selection_changed(self, sender, e) -> None:
+            idx = self.listbox.SelectedIndex
+            if idx < 0 or idx >= len(self.filtered_data):
+                return
+            item = self.filtered_data[idx]
+            if callable(on_select):
+                on_select(item)
+
+        def _on_ok(self, sender, e) -> None:
+            idx = self.listbox.SelectedIndex
+            if idx < 0 or idx >= len(self.filtered_data):
+                show_message("請先選一個 Detail。", title)
+                return
+            self.selected_item = self.filtered_data[idx]
+            self.Close(True)
+
+        def _on_cancel(self, sender, e) -> None:
+            _restore_page_view(original_view)
+            self.Close(False)
+
+    dialog = _DetailSelectDialog()
+    result = dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
+    _restore_page_view(original_view)
+    if result and dialog.selected_item:
+        return dialog.selected_item
+    return None
+
+
 def format_result_popup(result) -> str:
     """失敗／阻擋時列出訊息與 Dictionary issues 全文。"""
     lines = [getattr(result, "message", "") or ""]

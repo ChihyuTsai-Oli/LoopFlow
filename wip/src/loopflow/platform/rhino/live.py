@@ -814,6 +814,81 @@ class LiveSession:
             )
         return tuple(hits)
 
+    def is_layout_active(self) -> bool:
+        rhino = self._rhino
+        if rhino is None:
+            return False
+        view = self._sc.doc.Views.ActiveView
+        return isinstance(view, rhino.Display.RhinoPageView)
+
+    def listed_layout_details(self):
+        rhino = self._rhino
+        if rhino is None:
+            return ()
+        items = []
+        pages = self._sc.doc.Views.GetPageViews() or ()
+        ordered = sorted(pages, key=lambda page: int(getattr(page, "PageNumber", 0) or 0))
+        for page in ordered:
+            details = page.GetDetailViews() or ()
+            for detail in details:
+                name = getattr(detail, "Name", None)
+                items.append(
+                    {
+                        "layout": str(getattr(page, "PageName", None) or ""),
+                        "page_number": int(getattr(page, "PageNumber", 0) or 0),
+                        "detail_id": str(detail.Id),
+                        "dv_name": str(name or ""),
+                    }
+                )
+        return tuple(items)
+
+    def detail_model_point(self, detail_id: str):
+        obj = self._rhino_object(detail_id)
+        if obj is None:
+            return None
+        geom = getattr(obj, "Geometry", None)
+        try:
+            box = geom.GetBoundingBox(True) if geom is not None else None
+        except Exception:
+            box = None
+        if box is not None:
+            try:
+                center = box.Center
+                xform = getattr(obj, "PageToWorldTransform", None)
+                if xform is not None:
+                    center.Transform(xform)
+                return (float(center.X), float(center.Y), float(center.Z))
+            except Exception:
+                pass
+        viewport = getattr(obj, "Viewport", None)
+        target = getattr(viewport, "CameraTarget", None) if viewport is not None else None
+        if target is None:
+            return None
+        try:
+            return (float(target.X), float(target.Y), float(target.Z))
+        except Exception:
+            return None
+
+    def zoom_to_layout_detail(self, layout: str, detail_id: str) -> None:
+        rhino = self._rhino
+        if rhino is None or not detail_id:
+            return
+        page_name = str(layout or "")
+        for page in self._sc.doc.Views.GetPageViews() or ():
+            if str(getattr(page, "PageName", "") or "") != page_name:
+                continue
+            self._sc.doc.Views.ActiveView = page
+            page.SetPageAsActive()
+            try:
+                self._rs.UnselectAllObjects()
+                self._rs.SelectObject(detail_id)
+                page.MainViewport.ZoomExtentsSelected()
+                page.MainViewport.Magnify(0.8, False)
+            except Exception:
+                pass
+            self._redraw_views()
+            return
+
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)
 

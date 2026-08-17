@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""D03 Tagger Index：選已登記 View，只寫 lf_target_view_id。"""
+"""D03 Tagger Index：選 Layout Detail，只寫唯一對到的 lf_target_view_id。"""
 from __future__ import annotations
 
 import copy
@@ -17,7 +17,11 @@ if str(SRC) not in sys.path:
 
 from loopflow.features.tagger.index import (
     bind_index_view,
+    detail_choice_label,
+    detail_choice_labels,
+    listed_details,
     listed_views,
+    preview_detail,
     run_tagger_index,
     view_choice_label,
     view_choice_labels,
@@ -39,9 +43,22 @@ from loopflow.platform.rhino.state import ObjectViewState
 
 PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 VIEW_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
+VIEW_ID_B = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"
 SHEET_CODE_KEY = "lf_sheet_code"
 SHEET_REF_KEY = "lf_sheet_ref"
 DETAIL_NO_KEY = "lf_detail_no"
+DETAIL_A = {
+    "layout": "A1__Plan",
+    "page_number": 1,
+    "detail_id": "dv-1",
+    "dv_name": "LF_平面",
+}
+DETAIL_B = {
+    "layout": "A2__Section",
+    "page_number": 2,
+    "detail_id": "dv-2",
+    "dv_name": "A-A",
+}
 
 
 def _session() -> MemorySession:
@@ -57,6 +74,10 @@ def _session() -> MemorySession:
     session.add_object("frame", name="A-A", layer="LoopFlow::Anchor_Frame")
     session.set_object_user_text("frame", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
     session.set_object_user_text("frame", VIEW_ID_KEY, VIEW_ID)
+    session.set_bbox("frame", (0, 0, 0), (100, 100, 0))
+    session.set_layout_details((DETAIL_A, DETAIL_B))
+    session.set_detail_model_point("dv-1", (50, 50, 0))
+    session.set_detail_model_point("dv-2", (50, 50, 0))
     session.set_document_modified(False)
     return session
 
@@ -80,7 +101,7 @@ def _snapshot(session: MemorySession) -> dict:
 def _run(session, **kwargs):
     params = {
         "pick_tag": lambda _s: "tag",
-        "choose_view": lambda views: views[0],
+        "choose_detail": lambda details: details[0],
         "catalog": _catalog(),
     }
     params.update(kwargs)
@@ -104,6 +125,16 @@ class LabelTests(unittest.TestCase):
         )
         self.assertEqual(labels, ("A-A（1）", "A-A（2）", "B-B"))
         self.assertNotIn("one", "".join(labels))
+
+    def test_detail_label_uses_page_and_name_not_guid(self):
+        label = detail_choice_label(DETAIL_A)
+        self.assertEqual(label, "A1__Plan    LF_平面")
+        self.assertNotIn("dv-1", label)
+        self.assertEqual(detail_choice_label({"layout": "", "dv_name": ""}), "（未命名頁）    （未命名 Detail）")
+        labels = detail_choice_labels((DETAIL_A, DETAIL_A, DETAIL_B))
+        self.assertEqual(labels, ("A1__Plan    LF_平面（1）", "A1__Plan    LF_平面（2）", "A2__Section    A-A"))
+        self.assertNotIn("dv-1", "".join(labels))
+        self.assertNotIn(VIEW_ID, "".join(labels))
 
 
 class BindTests(unittest.TestCase):
@@ -169,6 +200,25 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("tag", TARGET_VIEW_ID_KEY), VIEW_ID)
         self.assertTrue(session.get_view_state("tag").selected)
         self.assertEqual(listed_views(session)[0]["view_id"], VIEW_ID)
+        self.assertIsNone(session.get_object_user_text("tag", SHEET_CODE_KEY))
+
+    def test_lists_details_from_all_layouts(self):
+        session = _session()
+        captured = []
+        result = _run(session, choose_detail=lambda details: captured.append(details) or details[1])
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual([item["layout"] for item in captured[0]], ["A1__Plan", "A2__Section"])
+        self.assertEqual([item["dv_name"] for item in captured[0]], ["LF_平面", "A-A"])
+        self.assertEqual(listed_details(session)[1]["detail_id"], "dv-2")
+        self.assertNotIn(VIEW_ID, "".join(item["dv_name"] for item in captured[0]))
+
+    def test_preview_zooms_to_detail(self):
+        session = _session()
+        preview_detail(session, DETAIL_B)
+        self.assertEqual(
+            session.zoomed_layout_details,
+            [{"layout": "A2__Section", "detail_id": "dv-2"}],
+        )
 
     def test_cancel_first_pick_does_not_write(self):
         session = _session()
@@ -178,33 +228,67 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(_snapshot(session)["objects"], before["objects"])
         self.assertTrue(session.get_view_state("tag").selected)
 
-    def test_cancel_view_choice_does_not_write(self):
+    def test_cancel_detail_choice_does_not_write(self):
         session = _session()
 
-        def choose(views):
+        def choose(details):
             session.set_view_state(ObjectViewState("tag", False, False, False, (0, 0, 0), True))
-            self.assertEqual(len(views), 1)
+            self.assertEqual(len(details), 2)
             return None
 
-        result = _run(session, choose_view=choose)
+        result = _run(session, choose_detail=choose)
         self.assertEqual(result.status, "cancelled")
         self.assertIsNone(session.get_object_user_text("tag", TARGET_VIEW_ID_KEY))
         self.assertTrue(session.get_view_state("tag").selected)
+
+    def test_not_layout_stops_without_picking(self):
+        session = _session()
+        session.set_layout_active(False)
+        picked = []
+        chosen = []
+        result = _run(
+            session,
+            pick_tag=lambda _s: picked.append("tag") or "tag",
+            choose_detail=lambda details: chosen.append(details) or details[0],
+        )
+        self.assertEqual(result.blocking, ("not_layout",))
+        self.assertEqual(picked, [])
+        self.assertEqual(chosen, [])
+        self.assertIsNone(session.get_object_user_text("tag", TARGET_VIEW_ID_KEY))
+
+    def test_no_details_zero_write(self):
+        session = _session()
+        session.set_layout_details(())
+        chosen = []
+        result = _run(session, choose_detail=lambda details: chosen.append(details) or details[0])
+        self.assertEqual(result.blocking, ("missing_detail",))
+        self.assertEqual(chosen, [])
+        self.assertIsNone(session.get_object_user_text("tag", TARGET_VIEW_ID_KEY))
 
     def test_no_registered_view_zero_write(self):
         session = _session()
         session.delete_object("frame")
         chosen = []
-        result = _run(session, choose_view=lambda views: chosen.append(views) or views[0])
+        result = _run(session, choose_detail=lambda details: chosen.append(details) or details[0])
         self.assertEqual(result.blocking, ("missing_view",))
-        self.assertEqual(chosen, [])
+        self.assertEqual(len(chosen), 1)
+        self.assertIsNone(session.get_object_user_text("tag", TARGET_VIEW_ID_KEY))
+
+    def test_ambiguous_view_zero_write(self):
+        session = _session()
+        session.add_object("frame2", name="B-B", layer="LoopFlow::Anchor_Frame")
+        session.set_object_user_text("frame2", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
+        session.set_object_user_text("frame2", VIEW_ID_KEY, VIEW_ID_B)
+        session.set_bbox("frame2", (0, 0, 0), (100, 100, 0))
+        result = _run(session)
+        self.assertEqual(result.blocking, ("ambiguous_view",))
         self.assertIsNone(session.get_object_user_text("tag", TARGET_VIEW_ID_KEY))
 
     def test_grab_tag_refused_before_choose(self):
         session = _session()
         session.set_block("tag", (0, 0, 0), name="TAG_HEIGHT_GRAB")
         chosen = []
-        result = _run(session, choose_view=lambda views: chosen.append(True) or views[0])
+        result = _run(session, choose_detail=lambda details: chosen.append(True) or details[0])
         self.assertEqual(result.blocking, ("unsupported_template",))
         self.assertEqual(chosen, [])
         self.assertIsNone(session.get_object_user_text("tag", TARGET_VIEW_ID_KEY))
@@ -217,7 +301,7 @@ class CommandTests(unittest.TestCase):
         result = run_tagger_index(
             session,
             pick_tag=lambda _s: picked.append("tag") or "tag",
-            choose_view=lambda views: views[0],
+            choose_detail=lambda details: details[0],
             catalog=_catalog(),
         )
         self.assertFalse(result.ok)
