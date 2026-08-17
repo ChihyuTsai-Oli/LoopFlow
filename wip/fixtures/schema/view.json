@@ -1,0 +1,36 @@
+{
+  "schema_id": "loopflow.view",
+  "schema_version": 1,
+  "layer": "M2D::Anchor_Frame",
+  "usertext_keys": {
+    "view_id": "lf_view_id",
+    "schema_id": "lf_schema_id",
+    "schema_version": "lf_schema_version",
+    "clipping_plane_id": "lf_clipping_plane_id",
+    "view_transform": "lf_view_transform",
+    "detail_id": "lf_detail_id"
+  },
+  "transform_schema_id": "loopflow.view_transform",
+  "transform_schema_version": 1,
+  "transform_keys": [
+    "schema_id",
+    "schema_version",
+    "origin_2d",
+    "origin_3d_local",
+    "scale_x",
+    "scale_y",
+    "cp_origin",
+    "cp_x_axis",
+    "cp_y_axis",
+    "cp_z_axis"
+  ],
+  "legacy_keys": ["Role", "Target_CP"],
+  "notes": [
+    "View 不進 Registry。",
+    "不以名稱或可變 bbox 作正式定位身分。",
+    "Text Dot／Clipping Plane 名稱只當唯一命中時的提示；0 或 ≥2 個命中即停。",
+    "1.x Role／Target_CP 只供診斷與 migration；日常不雙寫、不刪既有值。",
+    "lf_detail_id 可缺；本批不要求 Layout 上已有 Detail。",
+    "固定 transform 在登記當下寫入；Clipping Plane 移動後須重新登記。"
+  ]
+}

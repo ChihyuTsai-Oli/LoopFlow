@@ -23,8 +23,9 @@ python wip/tools/check_contract_fixtures.py
 | `tag/cases.json` | 未知 Block 零寫入、`title_frame` 才寫圖號、`TAG_DW` 全手動、Duplicate 清除／保留、家具 Block 名 |
 | `registry/cases.json` | 最小合法、未知版本、未知核心欄、缺 EXT |
 | `quantity/cases.json` | COUNT＝1；才＝cm²÷918.09；坪＝m²×0.3025 |
+| `view/cases.json` | 唯一 CP 通過、缺 Text Dot／幾何／CP、CP 歧義、取消、1.x 升級、非法 transform |
 
-`schema/` 的 `registry.json` 與 `tag_templates.json` 由檢查器一併核對：10 份 manifest、恰好一個 `title_frame`、24 個 legacy key 與畫面擷取一致。
+`schema/` 的 `registry.json`、`tag_templates.json` 與 `view.json` 由檢查器一併核對：10 份 manifest、恰好一個 `title_frame`、24 個 legacy key 與畫面擷取一致；View 圖層為 `M2D::Anchor_Frame`。
 
 `local_frame/` 與 `quantity/` 是後續 GH 數量計算的材料，2.0 不從模型求值；檢查器仍核對常數與案例，以免契約腐壞。
 

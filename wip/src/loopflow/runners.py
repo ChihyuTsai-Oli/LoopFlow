@@ -84,6 +84,15 @@ def run_tagger_grab() -> Result:
     return _present_failure(run_grab(opened.details["session"]))
 
 
+def run_anchor_frame() -> Result:
+    from loopflow.features.view.register import run_anchor_frame as run_register
+
+    opened = _open_live_session()
+    if not opened.ok:
+        return opened
+    return _present_failure(run_register(opened.details["session"]))
+
+
 RUNNERS: Dict[str, Runner] = {
     "LF_Nexus": run_nexus,
     "LF_Open_Dictionary": run_open_dictionary,
@@ -92,6 +101,7 @@ RUNNERS: Dict[str, Runner] = {
     "LF_Publish_Exchange": run_publish_exchange,
     "LF_Data_Viewer": run_data_viewer,
     "LF_Tagger_Grab": run_tagger_grab,
+    "LF_Anchor_Frame": run_anchor_frame,
 }
 
 

@@ -199,7 +199,10 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <p><strong>輸出</strong>：新的不可人工編輯 Registry revision，只包含 canonical schema 與明確 extension。</p>
 <p><strong>失敗</strong>：保留 last-good；顯示失敗階段，不先刪正式 JSON。</p>
 <h2 id="7-建立-Section-並註冊-View">7. 建立 Section 並註冊 View</h2>
-<p>使用 Rhino 8 內建 Clipping／Section 指令建立剖面、立面或平面。LoopFlow 將 Section、Detail 與固定 2D↔3D transform 註冊為 <code>view_id</code>。</p>
+<p>使用 Rhino 8 內建 Clipping／Section 指令建立剖面、立面或平面。獨立指令 <code>LF_Anchor_Frame</code>（按鈕可顯示「註冊 View」）把 Section、固定 2D↔3D transform 登記為 <code>view_id</code>。不進 Nexus 選單。</p>
+<p><strong>動作</strong>（在 <strong>2D 模型空間</strong>，不要在 Layout）：</p>
+<ol><li>框選該剖面的 2D 線／圖塊／填充，以及恰好一個 Text Dot（文字須能唯一對到 Clipping Plane 名稱）。</li><li>輸入框線外擴距離（預設 50）。Esc 取消不寫入。</li><li>系統以 Text Dot 文字唯一命中 Clipping Plane，計算並寫入固定 transform。找不到、或找到兩個以上，都停止、不猜測。</li><li>新框畫在 <code>M2D::Anchor_Frame</code>。若選取含既有 1.x <code>Role=Anchor_Frame</code> 框，則升級該框、不另畫一條、不刪舊 <code>Role</code>／<code>Target_CP</code>。</li></ol>
+<p>3D 模型（含 worksession 連結檔）須能與該 Clipping Plane 相交，否則無法寫入固定 transform。本批不要求 Layout 上已有 Detail，也不射線。Clipping Plane 之後若移動，須重新登記。</p>
 <p>View 不依名稱或可變 bbox 重新猜測。Section linked output 可以先保留、更新與檢查，不必立即 Materialize 或 Tag。</p>
 <h2 id="8-Materialize-可編輯-Drawing">8. Materialize 可編輯 Drawing</h2>
 <p>使用者需要獨立整理線稿時，將 Section 結果轉為 <code>drawing_id</code>：</p>

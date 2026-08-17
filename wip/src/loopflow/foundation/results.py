@@ -51,6 +51,7 @@ STAGES = (
     "publish_registry",
     "inspect_object",
     "bind_tag",
+    "register_view",
 )
 
 

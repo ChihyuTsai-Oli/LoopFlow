@@ -373,6 +373,75 @@ def check_quantity() -> None:
             fail("quantity %s 期望 %s 得到 %s" % (case["id"], case["expect_quantity"], q))
 
 
+def view_transform_ok(payload: dict) -> bool:
+    spec = load(SCHEMA / "view.json")
+    if payload.get("schema_id") != spec["transform_schema_id"]:
+        return False
+    if payload.get("schema_version") != spec["transform_schema_version"]:
+        return False
+    if set(payload) != set(spec["transform_keys"]):
+        return False
+    if abs(abs(float(payload["scale_x"])) - 1.0) > 1e-9:
+        return False
+    if abs(abs(float(payload["scale_y"])) - 1.0) > 1e-9:
+        return False
+    if len(payload.get("origin_2d") or ()) != 3:
+        return False
+    if len(payload.get("origin_3d_local") or ()) != 2:
+        return False
+    axes = [payload["cp_x_axis"], payload["cp_y_axis"], payload["cp_z_axis"]]
+    if not all(len(v) == 3 and nearly_unit(v) for v in axes):
+        return False
+    return nearly_ortho(axes[0], axes[1]) and nearly_ortho(axes[0], axes[2]) and nearly_ortho(axes[1], axes[2])
+
+
+def classify_view_case(case: dict) -> str:
+    if case.get("cancelled"):
+        return "cancel"
+    text = case.get("text_dot")
+    if not text:
+        return "block"
+    if not case.get("has_geometry") and not case.get("upgrade_host"):
+        return "block"
+    needle = str(text).upper()
+    hits = [
+        name for name in (case.get("clipping_planes") or [])
+        if needle in str(name).upper()
+    ]
+    if len(hits) != 1:
+        return "block"
+    payload = case.get("transform")
+    if payload is not None and not view_transform_ok(payload):
+        return "block"
+    if case.get("upgrade_host"):
+        return "upgrade"
+    return "pass"
+
+
+def check_view() -> None:
+    spec = load(SCHEMA / "view.json")
+    if spec["schema_id"] != "loopflow.view" or spec["schema_version"] != 1:
+        fail("view schema 身分錯誤")
+    if spec["layer"] != "M2D::Anchor_Frame":
+        fail("view 圖層必須是 M2D::Anchor_Frame")
+    required = {
+        "view_id": "lf_view_id",
+        "schema_id": "lf_schema_id",
+        "schema_version": "lf_schema_version",
+        "clipping_plane_id": "lf_clipping_plane_id",
+        "view_transform": "lf_view_transform",
+    }
+    for key, usertext in required.items():
+        if spec["usertext_keys"].get(key) != usertext:
+            fail("view UserText %s 應為 %s" % (key, usertext))
+    if "Role" not in spec["legacy_keys"] or "Target_CP" not in spec["legacy_keys"]:
+        fail("view 必須列出 1.x Role／Target_CP 供 migration")
+    for case in load(CONTRACT / "view" / "cases.json")["cases"]:
+        got = classify_view_case(case)
+        if got != case["expect"]:
+            fail("view %s 期望 %s 得到 %s" % (case["id"], case["expect"], got))
+
+
 def main() -> int:
     check_measurement_baseline()
     check_dictionary_cases()
@@ -384,12 +453,13 @@ def main() -> int:
     check_tags()
     check_registry()
     check_quantity()
+    check_view()
     if FAILS:
         print("契約 fixtures 失敗 %s 項：" % len(FAILS))
         for msg in FAILS:
             print(" -", msg)
         return 1
-    print("契約 fixtures 通過：92 筆量綱、15 欄、24 個 Tag key、Space／Registry／Duplicate 案例；quantity／frame 常數保留給 GH。")
+    print("契約 fixtures 通過：92 筆量綱、15 欄、24 個 Tag key、Space／Registry／Duplicate／View 案例；quantity／frame 常數保留給 GH。")
     return 0
 
 

@@ -102,6 +102,7 @@ FILTER_SURFACE = 8
 FILTER_POLYSURFACE = 16
 FILTER_MESH = 32
 FILTER_INSTANCE = 4096
+FILTER_TEXTDOT = 8192
 FILTER_HATCH = 65536
 FILTER_SUBD = 262144
 FILTER_EXTRUSION = 1073741824
@@ -194,6 +195,36 @@ def pick_source_through_detail(
     if not object_id:
         return None
     return str(object_id)
+
+
+def pick_anchor_selection(
+    message: str = "框選剖面物件與對應的 Text Dot（Esc 取消）",
+) -> Optional[Tuple[str, ...]]:
+    """2D 模型空間框選。第三參數是 group，不可把 True 當 filter。"""
+    try:
+        import rhinoscriptsyntax as rs  # type: ignore
+    except ImportError:
+        return None
+    filter_code = FILTER_CURVE | FILTER_INSTANCE | FILTER_HATCH | FILTER_TEXTDOT
+    ids = rs.GetObjects(message, filter_code, preselect=True)
+    if not ids:
+        return None
+    return tuple(str(item) for item in ids)
+
+
+def ask_real(
+    message: str,
+    default: float = 50.0,
+    minimum: float = 0.0,
+) -> Optional[float]:
+    try:
+        import rhinoscriptsyntax as rs  # type: ignore
+    except ImportError:
+        return None
+    value = rs.GetReal(message, default, minimum)
+    if value is None:
+        return None
+    return float(value)
 
 
 def show_readonly_text(message: str, title: str = "LF Data Viewer") -> None:

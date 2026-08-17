@@ -532,6 +532,197 @@ class LiveSession:
             return None
         return (float(point.X), float(point.Y), float(point.Z))
 
+    def _rhino_object(self, object_id: str):
+        rhino = self._rhino
+        if rhino is None:
+            return None
+        try:
+            guid = self._rs.coerceguid(object_id)
+        except Exception:
+            return None
+        try:
+            return self._sc.doc.Objects.FindId(guid)
+        except Exception:
+            return None
+
+    def _iter_rhino_objects(self, *, include_linked: bool = True):
+        rhino = self._rhino
+        if rhino is None:
+            return ()
+        settings = rhino.DocObjects.ObjectEnumeratorSettings()
+        settings.NormalObjects = True
+        settings.LockedObjects = True
+        settings.HiddenObjects = True
+        settings.ReferenceObjects = bool(include_linked)
+        try:
+            return tuple(self._sc.doc.Objects.GetObjectList(settings))
+        except Exception:
+            return ()
+
+    def is_text_dot(self, object_id: str) -> bool:
+        try:
+            return bool(self._rs.IsTextDot(object_id))
+        except Exception:
+            return False
+
+    def text_dot_text(self, object_id: str) -> Optional[str]:
+        if not self.is_text_dot(object_id):
+            return None
+        try:
+            value = self._rs.TextDotText(object_id)
+        except Exception:
+            return None
+        if value in (None, ""):
+            return None
+        text = str(value).strip()
+        return text or None
+
+    def is_clipping_plane(self, object_id: str) -> bool:
+        rhino = self._rhino
+        obj = self._rhino_object(object_id)
+        if rhino is None or obj is None:
+            return False
+        return isinstance(obj.Geometry, rhino.Geometry.ClippingPlaneSurface)
+
+    def iter_clipping_plane_ids(self):
+        rhino = self._rhino
+        if rhino is None:
+            return ()
+        ids = []
+        for obj in self._iter_rhino_objects(include_linked=True):
+            if isinstance(getattr(obj, "Geometry", None), rhino.Geometry.ClippingPlaneSurface):
+                ids.append(str(obj.Id))
+        return tuple(ids)
+
+    def clipping_plane_plane(self, object_id: str):
+        obj = self._rhino_object(object_id)
+        geom = getattr(obj, "Geometry", None) if obj is not None else None
+        plane = getattr(geom, "Plane", None)
+        if plane is None:
+            return None
+        origin = plane.Origin
+        x_axis = plane.XAxis
+        y_axis = plane.YAxis
+        z_axis = plane.ZAxis
+        return {
+            "origin": (float(origin.X), float(origin.Y), float(origin.Z)),
+            "x_axis": (float(x_axis.X), float(x_axis.Y), float(x_axis.Z)),
+            "y_axis": (float(y_axis.X), float(y_axis.Y), float(y_axis.Z)),
+            "z_axis": (float(z_axis.X), float(z_axis.Y), float(z_axis.Z)),
+        }
+
+    def _breps_from_obj(self, obj, xform=None):
+        rhino = self._rhino
+        if rhino is None or obj is None:
+            return []
+        if xform is None:
+            xform = rhino.Geometry.Transform.Identity
+        breps = []
+        geom = obj.Geometry if hasattr(obj, "Geometry") else obj
+        if isinstance(geom, rhino.Geometry.Brep):
+            brep = geom.Duplicate()
+            brep.Transform(xform)
+            breps.append(brep)
+        elif isinstance(geom, rhino.Geometry.Extrusion):
+            brep = geom.ToBrep(False)
+            if brep:
+                brep.Transform(xform)
+                breps.append(brep)
+        elif isinstance(obj, rhino.DocObjects.InstanceObject):
+            definition = obj.InstanceDefinition
+            if definition:
+                nested = xform * obj.InstanceXform
+                for child in definition.GetObjects():
+                    breps.extend(self._breps_from_obj(child, nested))
+        return breps
+
+    def clipping_plane_section_bbox_local(self, object_id: str):
+        """把 3D 模型與 CP 的交線轉到 CP 局部座標，回傳 2D bbox。"""
+        rhino = self._rhino
+        obj = self._rhino_object(object_id)
+        geom = getattr(obj, "Geometry", None) if obj is not None else None
+        if rhino is None or not isinstance(geom, rhino.Geometry.ClippingPlaneSurface):
+            return None
+        cp_plane = geom.Plane
+        to_local = rhino.Geometry.Transform.ChangeBasis(rhino.Geometry.Plane.WorldXY, cp_plane)
+        box = rhino.Geometry.BoundingBox.Empty
+        tol = self._sc.doc.ModelAbsoluteTolerance
+        for item in self._iter_rhino_objects(include_linked=True):
+            if getattr(item, "IsHidden", False):
+                continue
+            layer_index = getattr(item.Attributes, "LayerIndex", -1)
+            if layer_index >= 0 and not self._sc.doc.Layers[layer_index].IsVisible:
+                continue
+            for brep in self._breps_from_obj(item):
+                try:
+                    success, curves, _pts = rhino.Geometry.Intersect.Intersection.BrepPlane(
+                        brep, cp_plane, tol
+                    )
+                except Exception:
+                    continue
+                if not success or not curves:
+                    continue
+                for curve in curves:
+                    curve.Transform(to_local)
+                    box.Union(curve.GetBoundingBox(True))
+        if not box.IsValid:
+            return None
+        return (
+            float(box.Min.X),
+            float(box.Min.Y),
+            float(box.Max.X),
+            float(box.Max.Y),
+            float(box.Min.Z),
+            float(box.Max.Z),
+        )
+
+    def objects_bbox(self, object_ids):
+        ids = [item for item in object_ids if item]
+        if not ids:
+            return None
+        try:
+            box = self._rs.BoundingBox(list(ids))
+        except Exception:
+            box = None
+        if not box:
+            boxes = []
+            for object_id in ids:
+                item = self.object_bbox(object_id)
+                if item:
+                    boxes.append(item)
+            if not boxes:
+                return None
+            return (
+                min(item[0] for item in boxes),
+                min(item[1] for item in boxes),
+                min(item[2] for item in boxes),
+                max(item[3] for item in boxes),
+                max(item[4] for item in boxes),
+                max(item[5] for item in boxes),
+            )
+        xs = [float(pt.X) for pt in box]
+        ys = [float(pt.Y) for pt in box]
+        zs = [float(pt.Z) for pt in box]
+        return (min(xs), min(ys), min(zs), max(xs), max(ys), max(zs))
+
+    def add_closed_polyline(self, points, *, layer: str, name: str) -> str:
+        pts = [tuple(pt) for pt in points]
+        if len(pts) < 3:
+            raise ValueError("封閉框至少需要 3 點")
+        if pts[0] != pts[-1]:
+            pts = pts + [pts[0]]
+        object_id = str(self._rs.AddPolyline(pts))
+        self.ensure_layer(layer)
+        self._rs.ObjectLayer(object_id, layer)
+        self._rs.ObjectName(object_id, name)
+        self._rs.ObjectColorSource(object_id, COLOR_SOURCE_BY_LAYER)
+        try:
+            self._rs.ObjectPrintWidthSource(object_id, 0)
+            self._rs.ObjectPrintColorSource(object_id, 0)
+        except Exception:
+            pass
+        return object_id
+
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)
 
