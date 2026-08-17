@@ -221,6 +221,7 @@ class LiveSession:
         color = rgb_tuple(rgb)
         self._rs.LayerColor(path, color)
         if not material_name or self._rhino is None:
+            self._redraw_views()
             return
         layer = self._layer_obj(path)
         if layer is None:
@@ -241,12 +242,13 @@ class LiveSession:
                 break
             if legacy_name and material.Name == legacy_name and mat_idx == -1:
                 mat_idx = material.Index
-        if mat_idx >= 0 and legacy_name:
+        if mat_idx >= 0:
             try:
                 material = self._sc.doc.Materials[mat_idx]
-                if material.Name != material_name:
+                if legacy_name and material.Name != material_name:
                     material.Name = material_name
-                    self._sc.doc.Materials.Modify(material, mat_idx, True)
+                material.DiffuseColor = sys_color
+                self._sc.doc.Materials.Modify(material, mat_idx, True)
             except Exception:
                 pass
         if mat_idx == -1:
@@ -254,13 +256,45 @@ class LiveSession:
             new_mat.Name = material_name
             try:
                 new_mat.DiffuseColor = sys_color
-                new_mat.ToPhysicallyBased()
-                new_mat.PhysicallyBased.BaseColor = self._rhino.Display.Color4f(sys_color)
             except Exception:
                 pass
             mat_idx = self._sc.doc.Materials.Add(new_mat)
+            if mat_idx >= 0:
+                try:
+                    material = self._sc.doc.Materials[mat_idx]
+                    material.DiffuseColor = sys_color
+                    self._sc.doc.Materials.Modify(material, mat_idx, True)
+                except Exception:
+                    pass
         layer.RenderMaterialIndex = mat_idx
         layer.CommitChanges()
+        self._redraw_views()
+
+    def _redraw_views(self) -> None:
+        try:
+            self._sc.doc.Views.Redraw()
+        except Exception:
+            try:
+                self._rs.Redraw()
+            except Exception:
+                pass
+
+    def zoom_to_object(self, object_id: str) -> None:
+        box = self.object_bbox(object_id)
+        if not box:
+            return
+        pad_x = max((box[3] - box[0]) * 0.2, 1.0)
+        pad_y = max((box[4] - box[1]) * 0.2, 1.0)
+        pad_z = max((box[5] - box[2]) * 0.2, 1.0)
+        corners = (
+            (box[0] - pad_x, box[1] - pad_y, box[2] - pad_z),
+            (box[3] + pad_x, box[4] + pad_y, box[5] + pad_z),
+        )
+        try:
+            self._rs.ZoomBoundingBox(corners, None, False)
+        except Exception:
+            pass
+        self._redraw_views()
 
     def object_name(self, object_id: str) -> Optional[str]:
         value = self._rs.ObjectName(object_id)

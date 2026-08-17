@@ -110,6 +110,10 @@ class InspectTests(unittest.TestCase):
         self.assertIn(OBJECT_ID, text)
         self.assertIn(MISSING_MARK, text)
         self.assertIn("_08_備註", report.missing_keys)
+        self.assertIn("_02_建構狀態*", text)
+        self.assertIn("_08_備註*", text)
+        self.assertNotIn("_01_空間名稱*", text)
+        self.assertNotIn("_14_資料版次*", text)
         self.assertIn("字典名稱：鋼筋混凝土", text)
         self.assertNotIn("Q_01", text)
 
@@ -165,6 +169,18 @@ class InspectTests(unittest.TestCase):
         field = next(item for item in report.fields if item.key == "_15_樓層高程")
         self.assertEqual(field.value, "320")
         self.assertEqual(field.source, "object_name")
+        self.assertIn("_15_樓層高程*", format_report(report))
+
+    def test_space_frame_marks_display_name_manual(self):
+        session = _session()
+        session.add_object(
+            "room",
+            name="廊道",
+            layer="M3D::_Data::Space_Boundaries",
+        )
+        session.set_object_user_text("room", SPACE_DISPLAY_KEY, "廊道")
+        text = format_report(inspect_object(session, "room"))
+        self.assertIn("_01_空間名稱*", text)
 
 
 class ViewerCommandTests(unittest.TestCase):

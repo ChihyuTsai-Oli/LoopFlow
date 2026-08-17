@@ -31,7 +31,7 @@ CONSOLE_STEPS: Tuple[dict, ...] = (
     },
     {
         "id": "level_boundary",
-        "title": "登記樓層框",
+        "title": "登記高程框",
         "status": "available",
         "task": "NX-03",
     },
@@ -185,7 +185,7 @@ def _open_check(
             "publish_registry",
         ),
     }
-    message = "開案檢查完成。可執行 Type layer、樓層／空間框、Apply／Verify、寫回字典與發布。"
+    message = "開案檢查完成。可執行 Type layer、高程／空間框、Apply／Verify、寫回字典與發布。"
     if warnings:
         return results.ok_with_warnings(
             "open_check",
@@ -220,6 +220,7 @@ def open_console(
     level_kind=None,
     isolate: bool = True,
     show_message=None,
+    ask_space=None,
 ) -> results.Result:
     """開案檢查並列出 Console 步驟。step 指定時才執行該步。"""
     from loopflow.features.dictionary.sync import export_dictionary, sync_type_layers
@@ -228,7 +229,11 @@ def open_console(
         rollback_identity,
         scan_identity,
     )
-    from loopflow.features.model_data.placement import apply_placement, scan_placement
+    from loopflow.features.model_data.placement import (
+        apply_placement,
+        has_registered_boundaries,
+        scan_placement,
+    )
     from loopflow.features.model_data.space import (
         drafts_from_selection,
         register_level_boundaries_interactive,
@@ -356,10 +361,18 @@ def open_console(
                 )
 
             def apply_all():
+                if not has_registered_boundaries(current):
+                    return results.blocked(
+                        "apply_identity",
+                        "請先登記高程框（3）與空間框（4）。",
+                        blocking=("missing_level_or_space_boundary",),
+                        command_id=command_id,
+                        details={"publish_ready": False},
+                    )
                 identity = apply_identity(current, mappings=mappings, **kwargs)
                 if not identity.ok:
                     return identity
-                placement = apply_placement(current, **kwargs)
+                placement = apply_placement(current, ask_space=ask_space, **kwargs)
                 return _merge(
                     "apply_identity",
                     "apply",

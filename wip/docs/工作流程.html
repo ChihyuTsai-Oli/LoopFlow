@@ -130,7 +130,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <a class="l2 intro" href="#1-開案檢查">1. 開案檢查</a>
 <a class="l2 intro" href="#2-驗證-Dictionary-並同步-Type-Layers">2. 驗證 Dictionary 並同步 Type Layers</a>
 <a class="l2 intro" href="#3-建立與修改-3D-模型">3. 建立與修改 3D 模型</a>
-<a class="l2 intro" href="#4-建立或維護樓層框與空間框">4. 建立或維護樓層框與空間框</a>
+<a class="l2 intro" href="#4-建立或維護高程框與空間框">4. 建立或維護高程框與空間框</a>
 <a class="l2 intro" href="#5-資料化-Apply-Verify">5. 資料化：Apply → Verify</a>
 <a class="l2 intro" href="#6-發布-Registry">6. 發布 Registry</a>
 <a class="l2 intro" href="#7-建立-Section-並註冊-View">7. 建立 Section 並註冊 View</a>
@@ -149,7 +149,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <pre class="code" data-lang="text"><code>開案檢查
 → 驗證 Dictionary／同步 Type Layers
 → 建立 3D 模型
-→ 登記樓層框與空間框
+→ 登記高程框與空間框
 → 使用者確認後 Apply
 → Verify 核對 UserText
 → 選用：寫回字典（匯出獨立檔）
@@ -174,21 +174,23 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <h2 id="3-建立與修改-3D-模型">3. 建立與修改 3D 模型</h2>
 <p>使用者以 Rhino 一般工具建模。LoopFlow 不在背景自動注入資料。</p>
 <p><code>LF_Cabinet_Suite</code>／BOM 不屬 2.0；櫃體幾何與其他物件一樣使用一般 Type、Space、高程與 ID 規則。三個 2D Generator 是獨立工具，不阻擋主鏈。</p>
-<h2 id="4-建立或維護樓層框與空間框">4. 建立或維護樓層框與空間框</h2>
-<p>先登記樓層框，再登記空間框。選線期間鎖住場景中非封閉曲線，結束後還原。Esc 取消。</p>
-<ul><li>樓層框：指令列選 FFL 或 FL，選封閉曲線後按 Enter，再彈出視窗輸入數字高程（<code>0</code>、<code>320</code>）。高程寫入 <code>_15_樓層高程</code>，不寫物件名稱。</li><li>空間框：可一次選多條，彈出視窗輸入同一個空間名稱。名稱寫入 <code>_01_空間名稱</code>，不寫物件名稱。</li><li>空間框須與樓層框高程差在 ±20 模型單位內，且整圈在樓層框裡面（共邊可）。</li><li>相鄰空間可以共邊，內部不可重疊。</li><li>面積重疊只檢查同一 <code>level_id</code>；不同樓層允許平面投影重疊，但會警告。</li><li>同樓層的房間會對到同一個樓層框，因而共用同一個 <code>level_id</code>。不必手填樓層 UUID。</li><li>重疊時停止並列出全部衝突 Space，不用 priority 自動選擇。</li><li>平面、boundary 或樓層變更後回到此階段，再重新資料化。</li></ul>
+<h2 id="4-建立或維護高程框與空間框">4. 建立或維護高程框與空間框</h2>
+<p>選單 <strong>3 登記高程框</strong>，再 <strong>4 登記空間框</strong>。選線期間鎖住場景中非封閉曲線，結束後還原。Esc 取消。</p>
+<ul><li>高程框：指令列選 FFL 或 FL，選封閉曲線後按 Enter，再彈出視窗輸入數字高程（<code>0</code>、<code>320</code>）。高程寫入 <code>_15_樓層高程</code>，不寫物件名稱。此數字就是該層物件的 <code>_06_高程計算</code>，與框線或模型畫在哪個 Z 無關。</li><li>空間框：可一次選多條，彈出視窗輸入同一個空間名稱。名稱寫入 <code>_01_空間名稱</code>，不寫物件名稱。空間框上的 <code>_01</code> 可之後手動改名（Data Viewer 標 <code>*</code>）；再 Apply 才會同步到框內物件。</li><li>空間框須與高程框高程差在 ±20 模型單位內，且整圈在高程框裡面（共邊可）。這只用來配對「這條空間線屬於哪個高程框」，不算物件高程。</li><li>相鄰空間可以共邊，內部不可重疊。</li><li>面積重疊只檢查同一 <code>level_id</code>；不同樓層允許平面投影重疊，但會警告。</li><li>同層房間會對到同一個高程框，因而共用同一個 <code>level_id</code>。不必手填樓層 UUID。</li><li>重疊時停止並列出全部衝突 Space，不用 priority 自動選擇。</li><li>門檻、墩座等跨兩個空間的物件：把空間框畫成只包到所屬空間。若仍同時命中兩個框，Apply 會一件一件選取、zoom 到畫面中央，請輸入所屬空間名稱（必須等於其中一個 <code>_01</code>）。指定過就記住，下次 Apply 不再問。</li><li>平面、boundary 或樓層變更後回到此階段，再重新資料化。</li></ul>
 <p><strong>安全停點</strong>：Boundary 完成可直接存檔；既有物件資料不會在背景改變。</p>
 <h2 id="5-資料化-Apply-Verify">5. 資料化：Apply → Verify</h2>
 <p>目前 Nexus 選單是 <strong>5 Apply → 6 Verify → 7 寫回字典 → 8 發布</strong>。查看單一物件資料用獨立指令 <code>LF_Data_Viewer</code>，不是選單步驟。</p>
 <h3 id="Apply">Apply</h3>
-<p>使用者確認後才寫入：Object ID、Type reference、Space、高程、remarks 與 revision。ID 變更必須保存 <code>old_id → new_id</code> mapping。不寫寬深高、數量或座標框。</p>
+<p>尚未登記高程框（3）與空間框（4）時，Apply 會停止且不寫入。</p>
+<p>使用者確認後才寫入：Object ID、Type reference、Space、高程、remarks 與 revision。物件 <code>_06</code>／<code>_13</code> 抄所屬高程框的 <code>_15</code>。ID 變更必須保存 <code>old_id → new_id</code> mapping。不寫寬深高、數量或座標框。</p>
+<p>同時落在複數空間框的物件會依序 zoom 並請輸入所屬空間名稱。</p>
 <h3 id="Verify">Verify</h3>
 <p>在記憶體算出再跑一次 Apply 會寫的 UserText，與物件現值比對，<strong>不寫入</strong>。相符彈出視窗說明符合；不符彈出視窗列出差異，並保持那些物件被選取。</p>
 <p><strong>中斷</strong>：保留已完成且可驗證的寫入與 mapping；重跑 Verify 顯示剩餘差異，不假裝全案完成。</p>
 <h3 id="寫回字典">寫回字典</h3>
 <p>在字典目錄新增 <code>LoopFlow_Dictionary_Export.xlsx</code>，供人工核對後合併進正式 Dictionary。字體、字高與正式字典相同；<code>diff_status</code> 有變動時只改該格文字顏色。不得覆寫 <code>LoopFlow_Dictionary.xlsx</code>。</p>
 <h3 id="資料檢視-獨立指令">資料檢視（獨立指令）</h3>
-<p><code>LF_Data_Viewer</code> 點選物件後只讀顯示 canonical UserText（<code>_01</code>～<code>_14</code>，樓層框另含 <code>_15</code>）。缺值標為 <code>（缺）</code>；若值是從舊 <code>lf_*</code> 讀到，會標出來源。殘留的尺寸／數量欄另外列出，不當正式資料。不寫入、不改物件名稱。文件 <code>schema_id</code>／<code>schema_version</code> 未知或不完整時停止並說明，不猜測解析。Esc 或 Enter 結束。</p>
+<p><code>LF_Data_Viewer</code> 點選物件後只讀顯示 canonical UserText（<code>_01</code>～<code>_14</code>，高程框另含 <code>_15</code>）。帶 <code>*</code> 的欄可手動：物件的 <code>_02_建構狀態</code>、<code>_08_備註</code>；空間框的 <code>_01_空間名稱</code>；高程框的 <code>_15_樓層高程</code>。<code>_14_資料版次</code> 是系統欄，不加 <code>*</code>。缺值標為 <code>（缺）</code>；若值是從舊 <code>lf_*</code> 讀到，會標出來源。殘留的尺寸／數量欄另外列出，不當正式資料。不寫入、不改物件名稱。文件 <code>schema_id</code>／<code>schema_version</code> 未知或不完整時停止並說明，不猜測解析。Esc 或 Enter 結束。</p>
 <h2 id="6-發布-Registry">6. 發布 Registry</h2>
 <p><strong>前置</strong>：全案 Verify 通過。Nexus 組 payload 後呼叫 C03；C03 才寫檔。局部選取不得發布。</p>
 <p><strong>動作</strong>：取得 exclusive lock（PID、主機、時間）、重新讀取現況並遞增 <code>registry_revision</code>、寫 pending、驗證完整 payload，再 atomic replace 正式 Registry。</p>

@@ -54,6 +54,7 @@ class LevelFrame:
     datum: float
     layer: str
     prefer_ffl: bool
+    level_id: Optional[str] = None
 
 
 def _xy(point) -> Tuple[float, float]:
@@ -163,6 +164,9 @@ def collect_level_frames(session: RhinoSession) -> Tuple[LevelFrame, ...]:
             datum = parse_level_datum(raw)
             if datum is None:
                 continue
+            level_id = read_text(session, object_id, LEVEL_ID_KEY)
+            if not UUID_V4_RE.match(level_id or ""):
+                level_id = None
             frames.append(
                 LevelFrame(
                     object_id=object_id,
@@ -171,6 +175,7 @@ def collect_level_frames(session: RhinoSession) -> Tuple[LevelFrame, ...]:
                     datum=datum,
                     layer=layer,
                     prefer_ffl=layer == ffl_layer,
+                    level_id=level_id,
                 )
             )
     return tuple(frames)
@@ -304,20 +309,20 @@ def register_level_boundaries(
     guarded: bool = True,
     command_id: str = COMMAND_ID,
 ) -> results.Result:
-    """把封閉曲線登記為樓層框。高程寫入 `_15_樓層高程`，曲線搬到 FFL 或 FL。"""
+    """把封閉曲線登記為高程框。高程寫入 `_15_樓層高程`，曲線搬到 FFL 或 FL。"""
 
     def action(current: RhinoSession) -> results.Result:
         if cancel:
             return results.cancelled(
                 "register_levels",
-                "使用者取消樓層框。",
+                "使用者取消高程框。",
                 command_id=command_id,
             )
         chosen = (kind or "").strip().upper()
         if chosen not in ("FFL", "FL"):
             return results.blocked(
                 "register_levels",
-                "樓層框請選 FFL 或 FL。",
+                "高程框請選 FFL 或 FL。",
                 blocking=("invalid_level_kind",),
                 command_id=command_id,
             )
@@ -333,7 +338,7 @@ def register_level_boundaries(
         if not ids:
             return results.blocked(
                 "register_levels",
-                "沒有選取樓層框。請選取封閉曲線後按 Enter。",
+                "沒有選取高程框。請選取封閉曲線後按 Enter。",
                 blocking=("missing_level_selection",),
                 command_id=command_id,
             )
@@ -371,7 +376,7 @@ def register_level_boundaries(
             written.append(level_id)
         return results.ok(
             "register_levels",
-            "已登記 %s 個 %s 樓層框（高程 %s）。" % (len(written), chosen, display),
+            "已登記 %s 個 %s 高程框（高程 %s）。" % (len(written), chosen, display),
             command_id=command_id,
             details={
                 "count": len(written),
@@ -413,13 +418,13 @@ def register_level_boundaries_interactive(
         chosen = kind
         if chosen is None:
             if ask_kind is not None:
-                chosen = ask_kind("樓層框類型", ("FFL", "FL"), "FFL")
+                chosen = ask_kind("高程框類型", ("FFL", "FL"), "FFL")
             else:
-                chosen = _ask_or_live(None, "ask_command_string", "樓層框類型", "FFL", ("FFL", "FL"))
+                chosen = _ask_or_live(None, "ask_command_string", "高程框類型", "FFL", ("FFL", "FL"))
             if chosen is None:
                 return results.cancelled(
                     "register_levels",
-                    "使用者取消樓層框類型。",
+                    "使用者取消高程框類型。",
                     command_id=command_id,
                 )
         if isolate:
@@ -433,7 +438,7 @@ def register_level_boundaries_interactive(
             if not ids:
                 return results.cancelled(
                     "register_levels",
-                    "使用者取消選取樓層框。",
+                    "使用者取消選取高程框。",
                     command_id=command_id,
                 )
         text = datum

@@ -14,7 +14,7 @@ Chooser = Callable[[Sequence[str]], Optional[str]]
 MENU_ITEMS: Tuple[Tuple[str, str, str], ...] = (
     ("open_check", "scan", "1  開案檢查（只看狀態，不寫入）"),
     ("sync_type_layers", "scan", "2  同步 Type Layers"),
-    ("level_boundary", "scan", "3  登記樓層框"),
+    ("level_boundary", "scan", "3  登記高程框"),
     ("space_boundary", "scan", "4  登記空間框"),
     ("scan_apply_verify", "apply", "5  Apply（寫入 ID／Type／空間／高程）"),
     ("scan_apply_verify", "verify", "6  Verify（核對 UserText，不寫入）"),

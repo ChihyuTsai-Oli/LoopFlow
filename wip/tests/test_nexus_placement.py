@@ -12,8 +12,9 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from loopflow.features.dictionary import schema
-from loopflow.features.dictionary.layer_paths import to_full_path
+from loopflow.features.dictionary.layer_paths import SYSTEM_LAYERS, to_full_path
 from loopflow.features.dictionary.loader import TypeCatalog, TypeRecord, load_from_table
+from loopflow.features.model_data.identity import apply_identity
 from loopflow.features.model_data.placement import (
     ELEVATION_BASIS_KEY,
     ELEVATION_VALUE_KEY,
@@ -21,6 +22,8 @@ from loopflow.features.model_data.placement import (
     scan_placement,
 )
 from loopflow.features.model_data.space import SPACE_BOUNDARY_LAYER, SPACE_DISPLAY_KEY, SPACE_ID_KEY
+from loopflow.features.model_data.verify import verify_model_data
+from loopflow.foundation.usertext import LEVEL_DATUM_KEY, LEVEL_ID_KEY
 from loopflow.platform.rhino.memory import MemorySession
 
 LAYER = "00_STR_結構::Beam.樑"
@@ -68,7 +71,16 @@ def _add_space(session, object_id, polygon, space_id, display, level_id=LEVEL_1)
     session.set_curve(object_id, polygon, closed=True)
     session.set_object_user_text(object_id, SPACE_ID_KEY, space_id)
     session.set_object_user_text(object_id, SPACE_DISPLAY_KEY, display)
-    session.set_object_user_text(object_id, "lf_level_id", level_id)
+    session.set_object_user_text(object_id, LEVEL_ID_KEY, level_id)
+
+
+def _add_level(session, object_id, polygon, level_id, datum="0"):
+    layer = SYSTEM_LAYERS[1]
+    session.ensure_layer(layer)
+    session.add_object(object_id, name=str(datum), layer=layer)
+    session.set_curve(object_id, polygon, closed=True)
+    session.set_object_user_text(object_id, LEVEL_ID_KEY, level_id)
+    session.set_object_user_text(object_id, LEVEL_DATUM_KEY, str(datum))
 
 
 def _add_model(session, object_id, *, bbox=None, block=None):
@@ -220,6 +232,66 @@ class PlacementTests(unittest.TestCase):
         applied = apply_placement(session, catalog=_catalog(_row()))
         self.assertTrue(applied.ok, applied.message)
         self.assertEqual(session.get_object_user_text("wall", SPACE_DISPLAY_KEY), "衛浴")
+
+    def test_level_datum_overrides_world_z(self):
+        session = _session()
+        _add_level(session, "lv", [[-1, -1], [20, -1], [20, 20], [-1, 20]], LEVEL_1, "50")
+        _add_space(session, "s1", [[0, 0], [10, 0], [10, 8], [0, 8]], SPACE_A, "客廳")
+        _add_model(session, "slab", bbox=((2, 2, 0), (3, 3, 20)))
+        applied = apply_placement(session, catalog=_catalog(_row(elevation_basis="BH")))
+        self.assertTrue(applied.ok, applied.message)
+        self.assertEqual(session.get_object_user_text("slab", ELEVATION_VALUE_KEY), "50")
+        session.set_object_user_text("lv", LEVEL_DATUM_KEY, "80")
+        applied = apply_placement(session, catalog=_catalog(_row(elevation_basis="BH")))
+        self.assertEqual(session.get_object_user_text("slab", ELEVATION_VALUE_KEY), "80")
+
+    def test_ambiguous_prompt_zooms_and_writes_chosen_space(self):
+        session = _session()
+        _add_space(session, "s1", [[0, 0], [10, 0], [10, 8], [0, 8]], SPACE_A, "客廳", LEVEL_1)
+        _add_space(session, "s2", [[0, 0], [10, 0], [10, 8], [0, 8]], SPACE_B, "廊道", LEVEL_2)
+        _add_model(session, "a", bbox=((2, 2, 0), (3, 3, 3)))
+        _add_model(session, "b", bbox=((4, 4, 0), (5, 5, 3)))
+        asked = []
+
+        def ask(object_id, names):
+            asked.append((object_id, tuple(names)))
+            return "客廳"
+
+        applied = apply_placement(session, catalog=_catalog(_row()), ask_space=ask)
+        self.assertTrue(applied.ok, applied.message)
+        self.assertEqual([item[0] for item in asked], ["a", "b"])
+        self.assertEqual(session.zoomed_object_ids, ["a", "b"])
+        self.assertEqual(session.get_object_user_text("a", SPACE_ID_KEY), SPACE_A)
+        self.assertEqual(session.get_object_user_text("b", SPACE_DISPLAY_KEY), "客廳")
+        asked.clear()
+        session.zoomed_object_ids = []
+        session.set_layer_user_text(FULL, "lf_type_id", "EX-01")
+        apply_identity(session, catalog=_catalog(_row()))
+        again = apply_placement(session, catalog=_catalog(_row()), ask_space=ask)
+        self.assertTrue(again.ok, again.message)
+        self.assertEqual(asked, [])
+        self.assertEqual(session.zoomed_object_ids, [])
+        popups = []
+        verified = verify_model_data(
+            session,
+            catalog=_catalog(_row()),
+            show_message=popups.append,
+        )
+        self.assertTrue(verified.ok, verified.message)
+        self.assertEqual(verified.details["mismatch_count"], 0)
+
+    def test_ambiguous_wrong_name_skips_object(self):
+        session = _session()
+        _add_space(session, "s1", [[0, 0], [10, 0], [10, 8], [0, 8]], SPACE_A, "客廳")
+        _add_space(session, "s2", [[0, 0], [10, 0], [10, 8], [0, 8]], SPACE_B, "廊道")
+        _add_model(session, "wall", bbox=((2, 2, 0), (3, 3, 3)))
+        applied = apply_placement(
+            session,
+            catalog=_catalog(_row()),
+            ask_space=lambda _oid, _names: "書房",
+        )
+        self.assertIsNone(session.get_object_user_text("wall", SPACE_ID_KEY))
+        self.assertIn("wall", applied.details["remaining"])
 
 
 if __name__ == "__main__":

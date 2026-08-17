@@ -13,6 +13,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from loopflow.features.dictionary import schema
+from loopflow.features.dictionary.layer_paths import SYSTEM_LAYERS
 from loopflow.features.project.console import (
     PROJECT_ID_KEY,
     SCHEMA_ID_KEY,
@@ -20,7 +21,7 @@ from loopflow.features.project.console import (
     open_console,
 )
 from loopflow.features.project.menu import parse_menu_choice, run_nexus_console
-from loopflow.foundation.usertext import SPACE_ID_KEY
+from loopflow.foundation.usertext import LEVEL_DATUM_KEY, LEVEL_ID_KEY, OBJECT_ID_KEY, SPACE_ID_KEY
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
@@ -192,6 +193,7 @@ class ConsoleMenuTests(unittest.TestCase):
         self.assertEqual(parse_menu_choice("8"), ("publish_registry", "scan"))
         self.assertIsNone(parse_menu_choice("9"))
         self.assertEqual(parse_menu_choice("3"), ("level_boundary", "scan"))
+        self.assertEqual(parse_menu_choice("3  登記高程框"), ("level_boundary", "scan"))
         self.assertEqual(parse_menu_choice("4"), ("space_boundary", "scan"))
         self.assertEqual(parse_menu_choice("2"), ("sync_type_layers", "scan"))
         self.assertIsNone(parse_menu_choice(None))
@@ -232,9 +234,8 @@ class ConsoleMenuTests(unittest.TestCase):
             self.assertNotIn("已 Apply", result.message)
             self.assertTrue(popups)
 
-    def test_apply_writes_id_space_not_dimensions(self):
+    def test_apply_without_boundaries_blocks(self):
         from loopflow.features.dictionary.layer_paths import to_full_path
-        from loopflow.foundation.usertext import OBJECT_ID_KEY
 
         full = to_full_path("00_STR_結構::Beam.樑")
         with tempfile.TemporaryDirectory(prefix="loopflow-nx05-") as raw:
@@ -245,6 +246,44 @@ class ConsoleMenuTests(unittest.TestCase):
             session.set_layer_user_text(full, "lf_type_id", "EX-01")
             session.add_object("beam", layer=full)
             session.set_bbox("beam", (0, 0, 0), (90, 40, 210))
+            applied = open_console(
+                session,
+                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
+                step="scan_apply_verify",
+                identity_action="apply",
+            )
+            self.assertFalse(applied.ok)
+            self.assertEqual(applied.blocking, ("missing_level_or_space_boundary",))
+            self.assertIsNone(session.get_object_user_text("beam", OBJECT_ID_KEY))
+            self.assertIn("高程框", applied.message)
+
+    def test_apply_writes_id_space_not_dimensions(self):
+        from loopflow.features.dictionary.layer_paths import to_full_path
+
+        full = to_full_path("00_STR_結構::Beam.樑")
+        space_layer = SYSTEM_LAYERS[0]
+        ffl_layer = SYSTEM_LAYERS[1]
+        space_id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+        level_id = "11111111-1111-4111-8111-111111111111"
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx05-") as raw:
+            root = Path(raw)
+            _write_dictionary(root)
+            session = _session()
+            session.ensure_layer(full)
+            session.set_layer_user_text(full, "lf_type_id", "EX-01")
+            session.ensure_layer(ffl_layer)
+            session.add_object("level", layer=ffl_layer)
+            session.set_curve("level", [[-1, -1], [20, -1], [20, 20], [-1, 20]], closed=True)
+            session.set_object_user_text("level", LEVEL_ID_KEY, level_id)
+            session.set_object_user_text("level", LEVEL_DATUM_KEY, "50")
+            session.ensure_layer(space_layer)
+            session.add_object("space", layer=space_layer)
+            session.set_curve("space", [[0, 0], [10, 0], [10, 8], [0, 8]], closed=True)
+            session.set_object_user_text("space", SPACE_ID_KEY, space_id)
+            session.set_object_user_text("space", "_01_空間名稱", "客廳")
+            session.set_object_user_text("space", LEVEL_ID_KEY, level_id)
+            session.add_object("beam", layer=full)
+            session.set_bbox("beam", (2, 2, 0), (3, 3, 210))
             session.set_object_user_text("beam", "_05_寬度W", "90")
             applied = open_console(
                 session,
@@ -258,7 +297,8 @@ class ConsoleMenuTests(unittest.TestCase):
             self.assertIn("空間／高程", applied.message)
             self.assertNotIn("尺寸", applied.message)
             self.assertIsNotNone(session.get_object_user_text("beam", OBJECT_ID_KEY))
-            self.assertEqual(session.get_object_user_text("beam", SPACE_ID_KEY), "EXT")
+            self.assertEqual(session.get_object_user_text("beam", SPACE_ID_KEY), space_id)
+            self.assertEqual(session.get_object_user_text("beam", "_06_高程計算"), "50")
             self.assertIsNone(session.get_object_user_text("beam", "_05_寬度W"))
             self.assertIsNone(session.get_object_user_text("beam", "Q_01_寬度W"))
 

@@ -23,6 +23,7 @@ class MemorySession:
         self._model_unit = model_unit
         self._document_text = dict(document_text or {})
         self._next_id = 1
+        self.zoomed_object_ids: List[str] = []
 
     def add_object(
         self,
@@ -265,6 +266,9 @@ class MemorySession:
         if not point:
             return None
         return tuple(float(v) for v in point)
+
+    def zoom_to_object(self, object_id: str) -> None:
+        self.zoomed_object_ids.append(object_id)
 
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)

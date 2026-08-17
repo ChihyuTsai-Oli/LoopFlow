@@ -116,6 +116,9 @@ class RhinoSession(Protocol):
     def insertion_point(self, object_id: str) -> Optional[Sequence[float]]:
         ...
 
+    def zoom_to_object(self, object_id: str) -> None:
+        ...
+
     def snapshot(self) -> DocumentSnapshot:
         ...
 

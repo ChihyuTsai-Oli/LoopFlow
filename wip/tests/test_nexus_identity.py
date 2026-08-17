@@ -237,9 +237,9 @@ class IdentityScanApplyTests(unittest.TestCase):
                 step="scan_apply_verify",
                 identity_action="apply",
             )
-        self.assertTrue(applied.ok, applied.message)
-        self.assertTrue(UUID_V4_RE.match(session.get_object_user_text("wall", OBJECT_ID_KEY)))
-        self.assertFalse(applied.details["publish_ready"])
+        self.assertFalse(applied.ok)
+        self.assertEqual(applied.blocking, ("missing_level_or_space_boundary",))
+        self.assertIsNone(session.get_object_user_text("wall", OBJECT_ID_KEY))
 
 
 if __name__ == "__main__":
