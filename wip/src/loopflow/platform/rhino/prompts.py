@@ -36,6 +36,21 @@ def ask_popup_string(
     return str(value)
 
 
+def ask_open_filename(
+    message: str,
+    file_filter: str,
+    folder: Optional[str] = None,
+    filename: Optional[str] = None,
+) -> Optional[str]:
+    """選檔；沒有 Rhino 時丟 ImportError，取消時回傳 None。"""
+    import rhinoscriptsyntax as rs  # type: ignore
+
+    value = rs.OpenFileName(message, file_filter, folder, filename)
+    if not value:
+        return None
+    return str(value)
+
+
 def ask_popup_choice(
     message: str,
     items: Sequence[str],
@@ -116,11 +131,14 @@ def show_message_with_red_hint(message: str, hint: str, title: str = "LoopFlow")
             body_area.ReadOnly = True
             body_area.Text = body
             body_area.Wrap = True
-            hint_label = forms.Label()
-            hint_label.Text = hint_text
-            hint_label.TextColor = drawing.Color.FromArgb(196, 32, 32)
+            hint_area = forms.TextArea()
+            hint_area.ReadOnly = True
+            hint_area.Text = hint_text
+            hint_area.Wrap = True
+            hint_area.BackgroundColor = drawing.Colors.White
+            hint_area.TextColor = drawing.Color.FromArgb(196, 32, 32)
             try:
-                hint_label.Wrap = forms.WrapMode.Word
+                hint_area.Font = drawing.Font(body_area.Font.FamilyName, 11)
             except Exception:
                 pass
             ok = forms.Button()
@@ -131,7 +149,11 @@ def show_message_with_red_hint(message: str, hint: str, title: str = "LoopFlow")
             layout = forms.DynamicLayout()
             layout.Spacing = drawing.Size(0, 10)
             layout.Add(body_area, xscale=True, yscale=True)
-            layout.Add(hint_label, xscale=True)
+            layout.Add(hint_area, xscale=True)
+            try:
+                hint_area.Height = 56
+            except Exception:
+                pass
             layout.AddRow(None, ok)
             self.Content = layout
 
