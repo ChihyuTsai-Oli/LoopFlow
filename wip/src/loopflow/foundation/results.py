@@ -52,6 +52,7 @@ STAGES = (
     "inspect_object",
     "bind_tag",
     "register_view",
+    "probe_view",
 )
 
 

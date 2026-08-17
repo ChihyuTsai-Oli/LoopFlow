@@ -140,3 +140,19 @@ def map_2d_to_cp_local(payload: Mapping, point_2d: Sequence[float]) -> Tuple[flo
     dx = (float(point_2d[0]) - float(origin[0])) * float(payload["scale_x"])
     dy = (float(point_2d[1]) - float(origin[1])) * float(payload["scale_y"])
     return (float(local[0]) + dx, float(local[1]) + dy)
+
+
+def ray_from_transform(payload: Mapping, point_2d: Sequence[float]):
+    """固定 transform：2D 點 → 射線原點與 CP 法線。"""
+    local_x, local_y = map_2d_to_cp_local(payload, point_2d)
+    origin = payload["cp_origin"]
+    x_axis = payload["cp_x_axis"]
+    y_axis = payload["cp_y_axis"]
+    z_axis = payload["cp_z_axis"]
+    world = (
+        float(origin[0]) + local_x * float(x_axis[0]) + local_y * float(y_axis[0]),
+        float(origin[1]) + local_x * float(x_axis[1]) + local_y * float(y_axis[1]),
+        float(origin[2]) + local_x * float(x_axis[2]) + local_y * float(y_axis[2]),
+    )
+    direction = (float(z_axis[0]), float(z_axis[1]), float(z_axis[2]))
+    return world, direction

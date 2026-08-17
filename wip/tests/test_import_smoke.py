@@ -73,7 +73,7 @@ class ImportSmokeTests(unittest.TestCase):
         from loopflow.bootstrap import run_command
 
         with redirect_stdout(io.StringIO()):
-            result = run_command("LF_Tagger_Laser")
+            result = run_command("LF_Tagger_Index")
         self.assertFalse(result.ok)
         self.assertEqual(result.status, "not_implemented")
 

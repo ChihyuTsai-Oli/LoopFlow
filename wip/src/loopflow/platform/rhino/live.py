@@ -723,6 +723,97 @@ class LiveSession:
             pass
         return object_id
 
+    def _hit_normal(self, breps, hit_pt):
+        rhino = self._rhino
+        closest = float("inf")
+        best = None
+        if rhino is None:
+            return None
+        for brep in breps:
+            try:
+                for face in brep.Faces:
+                    success, u, v = face.ClosestPoint(hit_pt)
+                    if not success:
+                        continue
+                    closest_pt = face.PointAt(u, v)
+                    dist = closest_pt.DistanceTo(hit_pt)
+                    if dist < closest:
+                        closest = dist
+                        best = face.NormalAt(u, v)
+            except Exception:
+                continue
+        return best
+
+    def shoot_ray_hits(self, origin, direction):
+        """沿方向射線，回傳帶 UUID 的命中（含 worksession 連結檔）。"""
+        rhino = self._rhino
+        if rhino is None:
+            return ()
+        ray = rhino.Geometry.Ray3d(
+            rhino.Geometry.Point3d(float(origin[0]), float(origin[1]), float(origin[2])),
+            rhino.Geometry.Vector3d(float(direction[0]), float(direction[1]), float(direction[2])),
+        )
+        hits = []
+        for obj in self._iter_rhino_objects(include_linked=True):
+            if getattr(obj, "IsHidden", False):
+                continue
+            layer_index = getattr(obj.Attributes, "LayerIndex", -1)
+            if layer_index >= 0 and not self._sc.doc.Layers[layer_index].IsVisible:
+                continue
+            object_id = str(obj.Id)
+            uuid_value = (
+                obj.Attributes.GetUserString("_07_UUID")
+                or obj.Attributes.GetUserString("_12_UUID")
+                or obj.Attributes.GetUserString("lf_object_id")
+            )
+            if not uuid_value or not str(uuid_value).strip():
+                continue
+            breps = self._breps_from_obj(obj)
+            if not breps:
+                continue
+            try:
+                shot = rhino.Geometry.Intersect.Intersection.RayShoot(ray, breps, 1)
+            except Exception:
+                continue
+            if not shot:
+                continue
+            hit_pt = shot[0]
+            dist = rhino.Geometry.Point3d(
+                float(origin[0]), float(origin[1]), float(origin[2])
+            ).DistanceTo(hit_pt)
+            normal = self._hit_normal(breps, hit_pt)
+            hit_type = "GRAZING"
+            if normal is not None:
+                try:
+                    dot_val = ray.Direction * normal
+                except Exception:
+                    dot_val = 0.0
+                if dot_val < -0.5:
+                    hit_type = "FRONTAL"
+                elif dot_val > 0.5:
+                    hit_type = "BACKFACE"
+            layer = ""
+            if layer_index >= 0:
+                try:
+                    layer = str(self._sc.doc.Layers[layer_index].FullPath or self._sc.doc.Layers[layer_index].Name)
+                except Exception:
+                    layer = ""
+            name = ""
+            try:
+                name = str(obj.Attributes.Name or "")
+            except Exception:
+                name = ""
+            hits.append(
+                {
+                    "object_id": object_id,
+                    "dist": float(dist),
+                    "hit_type": hit_type,
+                    "layer": layer,
+                    "name": name,
+                }
+            )
+        return tuple(hits)
+
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)
 

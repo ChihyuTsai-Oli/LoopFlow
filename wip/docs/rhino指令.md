@@ -33,6 +33,9 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Data_Viewer.py"
 LF_Tagger_Grab
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Tagger_Grab.py"
 
+LF_Tagger_Laser
+_-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Tagger_Laser.py"
+
 LF_Anchor_Frame
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Anchor_Frame.py"
 ```
@@ -47,9 +50,12 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Anchor_Frame.py"
 | 發布 | `LF_Publish_Exchange` | — |
 | 檢視 | `LF_Data_Viewer` | — |
 | Grab | `LF_Tagger_Grab` | — |
+| Laser | `LF_Tagger_Laser` | — |
 | 註冊 View | `LF_Anchor_Frame` | — |
 
 Grab：在 **Layout** 先選 Tag 圖塊，再在目標 Detail 內點一下進入模型空間，然後選來源（剖面 2D 線、3D 物件或家具圖塊）。Height／Finish 綁物件 `_07_UUID`；家具 Item 綁 Block 名稱（`FF-01__Chair-1`）。Esc、點在 Detail 外、鎖定、`TAG_DW`、Laser／Index／圖框圖塊都不寫入。結束後回到 Layout。不填 Infuser 顯示欄。來源沒有 UUID 時不猜測對應的 3D 物件。
+
+Laser：在 **Layout** 先選 Height／Finish 的 Laser Tag，再在目標 Detail 內點一下剖面位置。用該點所在 View 框上已寫死的 `lf_view_transform` 射出 3D 射線，打到帶 `_07_UUID` 的物件後寫 `lf_source_object_id`。不靠名稱／bbox 重算。Esc、點在 Detail 外、鎖定、Grab／Item／`TAG_DW`／Index／圖框、0 或 ≥2 個重疊 View、沒打到、來源無 UUID，都不寫入。多個近距離命中時讓使用者選一個。圖塊名不分大小寫。不填 Infuser 顯示欄。本批不接 Extract 來源索引。
 
 註冊 View：在 **2D 模型空間**框選剖面物件與恰好一個 Text Dot，再輸入外擴距離（預設 50）。框畫在 `LoopFlow::Anchor_Frame`。寫入 `lf_view_id`、Clipping Plane 物件 ID 與固定 2D↔3D transform。名稱對不到或對到兩個以上 Clipping Plane、沒有 Text Dot、沒有幾何、Esc，都不寫入。不進 Nexus。本批不射線。
 

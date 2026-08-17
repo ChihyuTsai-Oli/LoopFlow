@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""載入 Tag template manifest。Laser／Index 共用此查找，不在此實作那些指令。"""
+"""載入 Tag template manifest。Grab／Laser／Index 共用此查找。"""
 from __future__ import annotations
 
 import json

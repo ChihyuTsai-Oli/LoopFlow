@@ -3,19 +3,17 @@
 from __future__ import annotations
 
 import re
-import uuid
 from typing import Callable, Optional
 
+from loopflow.features.tagger.binding import (
+    UUID_V4_RE,
+    write_block_binding,
+    write_object_binding,
+)
 from loopflow.features.tagger.keys import (
-    BINDING_MODE_KEY,
     GRAB_BLOCK_TEMPLATE_IDS,
     GRAB_OBJECT_TEMPLATE_IDS,
     LOCK_STATE_KEY,
-    SOURCE_BLOCK_NAME_KEY,
-    SOURCE_OBJECT_ID_KEY,
-    TAG_ID_KEY,
-    TEMPLATE_ID_KEY,
-    TEMPLATE_VERSION_KEY,
     is_lock_true,
 )
 from loopflow.features.tagger.templates import TagTemplate, TagTemplateSet, load_tag_templates
@@ -25,21 +23,7 @@ from loopflow.foundation.usertext import OBJECT_ID_KEY, read_text
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Tagger_Grab"
-UUID_V4_RE = re.compile(
-    r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
-)
 Pick = Callable[[RhinoSession], Optional[str]]
-
-
-def _text(value) -> Optional[str]:
-    if value in (None, ""):
-        return None
-    text = str(value).strip()
-    return text or None
-
-
-def _new_id() -> str:
-    return str(uuid.uuid4())
 
 
 def _refuse_reason(template: TagTemplate) -> str:
@@ -52,27 +36,6 @@ def _refuse_reason(template: TagTemplate) -> str:
     if template.role == "title_frame" or "none" in template.binding_modes:
         return "「%s」不綁模型來源，Grab 不寫入。" % template.template_id
     return "「%s」不是 Grab 可用的標籤，已停止，不寫入。" % template.template_id
-
-
-def _ensure_identity(session: RhinoSession, tag_id: str, template: TagTemplate, binding_mode: str) -> None:
-    block_name = session.block_definition_name(tag_id) or template.template_id
-    if _text(session.get_object_user_text(tag_id, TAG_ID_KEY)) is None:
-        session.set_object_user_text(tag_id, TAG_ID_KEY, _new_id())
-    session.set_object_user_text(tag_id, TEMPLATE_ID_KEY, block_name)
-    session.set_object_user_text(tag_id, TEMPLATE_VERSION_KEY, "1")
-    session.set_object_user_text(tag_id, BINDING_MODE_KEY, binding_mode)
-
-
-def _write_object_binding(session: RhinoSession, tag_id: str, template: TagTemplate, object_uuid: str) -> None:
-    _ensure_identity(session, tag_id, template, "object")
-    session.set_object_user_text(tag_id, SOURCE_OBJECT_ID_KEY, object_uuid)
-    session.set_object_user_text(tag_id, SOURCE_BLOCK_NAME_KEY, "")
-
-
-def _write_block_binding(session: RhinoSession, tag_id: str, template: TagTemplate, block_name: str) -> None:
-    _ensure_identity(session, tag_id, template, "block_name")
-    session.set_object_user_text(tag_id, SOURCE_BLOCK_NAME_KEY, block_name)
-    session.set_object_user_text(tag_id, SOURCE_OBJECT_ID_KEY, "")
 
 
 def _default_pick_tag(_session: RhinoSession) -> Optional[str]:
@@ -133,7 +96,7 @@ def bind_tag(
                 ("missing_object_id",),
                 command_id=COMMAND_ID,
             )
-        _write_object_binding(session, tag_id, template, object_uuid)
+        write_object_binding(session, tag_id, template, object_uuid)
         return results.ok(
             "bind_tag",
             "已綁定來源 UUID。",
@@ -163,7 +126,7 @@ def bind_tag(
                 command_id=COMMAND_ID,
                 details={"source_block_name": source_name},
             )
-        _write_block_binding(session, tag_id, template, source_name)
+        write_block_binding(session, tag_id, template, source_name)
         return results.ok(
             "bind_tag",
             "已綁定家具圖塊名稱。",

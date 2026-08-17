@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tag 共通身分欄。顯示欄由 Infuser 寫，Grab 不碰。"""
+"""Tag 共通身分欄。顯示欄由 Infuser 寫，Grab／Laser 不碰。"""
 from __future__ import annotations
 
 TAG_ID_KEY = "lf_tag_id"
@@ -15,6 +15,7 @@ LOCK_STATE_KEY = "lf_lock_state"
 GRAB_OBJECT_TEMPLATE_IDS = frozenset(("TAG_HEIGHT_GRAB", "TAG_FINISH_GRAB"))
 GRAB_BLOCK_TEMPLATE_IDS = frozenset(("TAG_ITEM",))
 GRAB_TEMPLATE_IDS = GRAB_OBJECT_TEMPLATE_IDS | GRAB_BLOCK_TEMPLATE_IDS
+LASER_OBJECT_TEMPLATE_IDS = frozenset(("TAG_HEIGHT_LASER", "TAG_FINISH_LASER"))
 
 
 def is_lock_true(value) -> bool:

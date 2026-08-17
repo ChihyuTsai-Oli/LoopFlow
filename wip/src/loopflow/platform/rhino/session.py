@@ -116,6 +116,9 @@ class RhinoSession(Protocol):
     def insertion_point(self, object_id: str) -> Optional[Sequence[float]]:
         ...
 
+    def shoot_ray_hits(self, origin, direction):
+        ...
+
     def is_text_dot(self, object_id: str) -> bool:
         ...
 

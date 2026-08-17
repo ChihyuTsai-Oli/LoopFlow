@@ -265,11 +265,11 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(spec["task"], "E01")
         self.assertTrue(ENTRY.is_file())
 
-    def test_laser_still_not_implemented(self):
+    def test_index_still_not_implemented(self):
         from loopflow.bootstrap import run_command
 
         with redirect_stdout(io.StringIO()):
-            result = run_command("LF_Tagger_Laser")
+            result = run_command("LF_Tagger_Index")
         self.assertEqual(result.status, "not_implemented")
 
     def test_run_command_without_rhino_does_not_claim_success(self):

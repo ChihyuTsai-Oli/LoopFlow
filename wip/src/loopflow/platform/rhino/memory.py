@@ -21,6 +21,7 @@ class MemorySession:
         self._points: Dict[str, tuple] = {}
         self._text_dots: Dict[str, dict] = {}
         self._clipping_planes: Dict[str, dict] = {}
+        self._ray_hits: list = []
         self._modified = False
         self._model_unit = model_unit
         self._document_text = dict(document_text or {})
@@ -399,6 +400,12 @@ class MemorySession:
             (max(xs), max(ys), max(zs)),
         )
         return object_id
+
+    def set_ray_hits(self, hits) -> None:
+        self._ray_hits = [dict(item) for item in hits]
+
+    def shoot_ray_hits(self, origin, direction):
+        return tuple(dict(item) for item in self._ray_hits)
 
     def zoom_to_object(self, object_id: str) -> None:
         self.zoomed_object_ids.append(object_id)

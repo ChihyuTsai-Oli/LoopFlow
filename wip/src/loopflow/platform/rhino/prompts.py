@@ -197,6 +197,41 @@ def pick_source_through_detail(
     return str(object_id)
 
 
+def pick_layout_detail_model_point(
+    message: str = "在目標 Detail 內點一下（Esc 取消）",
+):
+    """Layout 點 Detail，回傳 2D 模型空間座標。Esc／點在 Detail 外為 None。"""
+    try:
+        import Rhino  # type: ignore
+        import scriptcontext as sc  # type: ignore
+    except ImportError:
+        return None
+    page_view = sc.doc.Views.ActiveView
+    if not isinstance(page_view, Rhino.Display.RhinoPageView):
+        show_message("請在 Layout 執行 Laser。")
+        return None
+    page_view.SetPageAsActive()
+    sc.doc.Views.Redraw()
+    getter = Rhino.Input.Custom.GetPoint()
+    getter.SetCommandPrompt(message)
+    getter.Get()
+    if getter.CommandResult() != Rhino.Commands.Result.Success:
+        return None
+    point = getter.Point()
+    detail_obj = None
+    for detail in page_view.GetDetailViews():
+        box = detail.Geometry.GetBoundingBox(True)
+        if box.Min.X <= point.X <= box.Max.X and box.Min.Y <= point.Y <= box.Max.Y:
+            detail_obj = detail
+            break
+    if detail_obj is None:
+        show_message("點擊位置不在任何 Detail 內。")
+        return None
+    model_pt = Rhino.Geometry.Point3d(point)
+    model_pt.Transform(detail_obj.PageToWorldTransform)
+    return (float(model_pt.X), float(model_pt.Y), float(model_pt.Z))
+
+
 def pick_anchor_selection(
     message: str = "框選剖面物件與對應的 Text Dot（Esc 取消）",
 ) -> Optional[Tuple[str, ...]]:

@@ -37,6 +37,7 @@ _READY = {
     "LF_Publish_Exchange": "C02/NX-07",
     "LF_Data_Viewer": "C04",
     "LF_Tagger_Grab": "D01",
+    "LF_Tagger_Laser": "D02",
     "LF_Anchor_Frame": "E01",
 }
 
