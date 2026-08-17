@@ -38,6 +38,7 @@ _READY = {
     "LF_Data_Viewer": "C04",
     "LF_Tagger_Grab": "D01",
     "LF_Tagger_Laser": "D02",
+    "LF_Tagger_Index": "D03",
     "LF_Anchor_Frame": "E01",
 }
 

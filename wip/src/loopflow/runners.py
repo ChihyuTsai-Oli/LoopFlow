@@ -93,6 +93,15 @@ def run_tagger_laser() -> Result:
     return _present_failure(run_laser(opened.details["session"]))
 
 
+def run_tagger_index() -> Result:
+    from loopflow.features.tagger.index import run_tagger_index as run_index
+
+    opened = _open_live_session()
+    if not opened.ok:
+        return opened
+    return _present_failure(run_index(opened.details["session"]))
+
+
 def run_anchor_frame() -> Result:
     from loopflow.features.view.register import run_anchor_frame as run_register
 
@@ -111,6 +120,7 @@ RUNNERS: Dict[str, Runner] = {
     "LF_Data_Viewer": run_data_viewer,
     "LF_Tagger_Grab": run_tagger_grab,
     "LF_Tagger_Laser": run_tagger_laser,
+    "LF_Tagger_Index": run_tagger_index,
     "LF_Anchor_Frame": run_anchor_frame,
 }
 

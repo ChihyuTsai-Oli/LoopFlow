@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tag 身分與來源欄寫入。Grab／Laser 共用；不寫 Infuser 顯示欄。"""
+"""Tag 身分與來源欄寫入。Grab／Laser／Index 共用；不寫 Infuser 顯示欄。"""
 from __future__ import annotations
 
 import re
@@ -11,6 +11,8 @@ from loopflow.features.tagger.keys import (
     SOURCE_BLOCK_NAME_KEY,
     SOURCE_OBJECT_ID_KEY,
     TAG_ID_KEY,
+    TARGET_SHEET_ID_KEY,
+    TARGET_VIEW_ID_KEY,
     TEMPLATE_ID_KEY,
     TEMPLATE_VERSION_KEY,
 )
@@ -67,3 +69,16 @@ def write_block_binding(
     ensure_identity(session, tag_id, template, "block_name")
     session.set_object_user_text(tag_id, SOURCE_BLOCK_NAME_KEY, block_name)
     session.set_object_user_text(tag_id, SOURCE_OBJECT_ID_KEY, "")
+
+
+def write_view_binding(
+    session: RhinoSession,
+    tag_id: str,
+    template: TagTemplate,
+    view_id: str,
+) -> None:
+    ensure_identity(session, tag_id, template, "view")
+    session.set_object_user_text(tag_id, TARGET_VIEW_ID_KEY, view_id)
+    session.set_object_user_text(tag_id, TARGET_SHEET_ID_KEY, "")
+    session.set_object_user_text(tag_id, SOURCE_OBJECT_ID_KEY, "")
+    session.set_object_user_text(tag_id, SOURCE_BLOCK_NAME_KEY, "")
