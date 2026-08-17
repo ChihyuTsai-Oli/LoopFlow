@@ -186,16 +186,17 @@ class ConsoleOpenCheckTests(unittest.TestCase):
 class ConsoleMenuTests(unittest.TestCase):
     def test_parse_menu_choice(self):
         self.assertEqual(parse_menu_choice("5"), ("scan_apply_verify", "apply"))
-        self.assertEqual(parse_menu_choice("5  Apply（寫入 ID／Type／空間／高程）"), ("scan_apply_verify", "apply"))
+        self.assertEqual(parse_menu_choice("5  寫入模型 Metadata"), ("scan_apply_verify", "apply"))
         self.assertEqual(parse_menu_choice("6"), ("scan_apply_verify", "verify"))
-        self.assertEqual(parse_menu_choice("6  Verify（核對 UserText，不寫入）"), ("scan_apply_verify", "verify"))
+        self.assertEqual(parse_menu_choice("6  檢核模型 Metadata（不寫入）"), ("scan_apply_verify", "verify"))
         self.assertEqual(parse_menu_choice("7"), ("export_dictionary", "scan"))
         self.assertEqual(parse_menu_choice("8"), ("publish_registry", "scan"))
         self.assertIsNone(parse_menu_choice("9"))
         self.assertEqual(parse_menu_choice("3"), ("level_boundary", "scan"))
-        self.assertEqual(parse_menu_choice("3  登記高程框"), ("level_boundary", "scan"))
+        self.assertEqual(parse_menu_choice("3  登記高程框（封閉曲線）"), ("level_boundary", "scan"))
         self.assertEqual(parse_menu_choice("4"), ("space_boundary", "scan"))
         self.assertEqual(parse_menu_choice("2"), ("sync_type_layers", "scan"))
+        self.assertEqual(parse_menu_choice("2  從字典同步 Type Layers"), ("sync_type_layers", "scan"))
         self.assertIsNone(parse_menu_choice(None))
         self.assertIsNone(parse_menu_choice("取消"))
 

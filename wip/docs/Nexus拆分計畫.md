@@ -8,10 +8,10 @@ Nexus 在 2.0 只做 **Project Console**：讓使用者查看開案狀態，並�
 
 ```text
 開案檢查
-→ 驗證 Dictionary／同步 Type Layers
+→ 從字典同步 Type Layers
 → 建立 Space Boundaries
-→ Apply → Verify → 寫回字典
-→ Publish Registry
+→ 寫入模型 Metadata → 檢核模型 Metadata → 匯出 Type Layers 為字典
+→ 發布串接資料
 ```
 
 不屬於 Nexus、不得塞進 C02：
@@ -23,7 +23,7 @@ Nexus 在 2.0 只做 **Project Console**：讓使用者查看開案狀態，並�
 - Registry lock／pending／atomic replace 本體（C03）
 - 尺寸／數量計算（不屬 2.0；數量欄留在 Dictionary 給 GH）
 
-`LF_Nexus.py` 入口只轉交 command catalog，不保存第二份業務邏輯。`LF_Push_3D_to_JSON` 可保留按鈕，但必須呼叫與 Console「發布」相同的 command。
+`LF_Nexus.py` 入口只轉交 command catalog，不保存第二份業務邏輯。`LF_Push_3D_to_JSON` 可保留按鈕，但必須呼叫與 Console「發布串接資料」相同的 command。
 
 ## 1.x 對照（只作拆分依據）
 
@@ -74,7 +74,7 @@ B01–B03 骨架
 
 **前置**：C01、NX-01。  
 **模組**：`features/dictionary/`（sync／export；reader 已在 C01）。  
-**做**：每一次同步都彈出視窗問專案名稱（第一次不預填 `M3D`，之後預填已記住的 `lf_layer_prefix`）；Dictionary 有、Rhino 無的 layer 建立並帶 `construction_default`；已有同名 layer 保留既有 UserText；依圖層代號前綴套用顯示色；新建材質顏色與圖層相同，已存在的同名材質只掛接不改色；`DNA_REF_` 為原點點物件，依 `type_id` 更新不累積；`20_DW` 排除 child layer；選單「寫回字典」在字典目錄匯出獨立 XLSX，不覆寫正式檔。  
+**做**：每一次同步都彈出視窗問專案名稱（第一次不預填 `M3D`，之後預填已記住的 `lf_layer_prefix`）；Dictionary 有、Rhino 無的 layer 建立並帶 `construction_default`；已有同名 layer 保留既有 UserText；依圖層代號前綴套用顯示色；新建材質顏色與圖層相同，已存在的同名材質只掛接不改色；`DNA_REF_` 為原點點物件，依 `type_id` 更新不累積；`20_DW` 排除 child layer；選單「匯出 Type Layers 為字典」在字典目錄匯出獨立 XLSX，不覆寫正式檔。  
 **不做**：寫物件 instance、覆寫正式 Dictionary、改物件 instance 顏色、ZoomExtents。  
 **fixtures／驗收**：新 layer、既有 layer 保留 UserText、顯示色／材質、DNA_REF 取代、反向匯出不碰 Object UserText；取消／失敗還原 visibility 與 selection。
 

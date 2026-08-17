@@ -68,7 +68,7 @@ def assign_selected_to_random_type_layers(session, rng: Optional[random.Random] 
     if not targets:
         return results.failed(
             STAGE,
-            "沒有可用的 M3D 類型子圖層。請先用 Nexus 選單 2 同步 Type Layers。",
+            "沒有可用的 M3D 類型子圖層。請先用 Nexus 選單 2 從字典同步 Type Layers。",
         )
     chosen = selected_object_ids(session)
     if not chosen:

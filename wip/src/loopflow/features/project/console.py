@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Nexus Project Console。開案檢查、Type layer、Space Boundary、Apply／Verify、寫回字典與發布。"""
+"""Nexus Project Console。開案檢查、同步 Type Layers、高程／空間框、寫入／檢核 Metadata、匯出字典與發布。"""
 from __future__ import annotations
 
 import re
@@ -25,37 +25,37 @@ CONSOLE_STEPS: Tuple[dict, ...] = (
     {"id": "open_check", "title": "開案檢查", "status": "available"},
     {
         "id": "sync_type_layers",
-        "title": "驗證 Dictionary／同步 Type Layers",
+        "title": "從字典同步 Type Layers",
         "status": "available",
         "task": "NX-02",
     },
     {
         "id": "level_boundary",
-        "title": "登記高程框",
+        "title": "登記高程框（封閉曲線）",
         "status": "available",
         "task": "NX-03",
     },
     {
         "id": "space_boundary",
-        "title": "登記空間框",
+        "title": "登記空間框（封閉曲線，須在高程框內）",
         "status": "available",
         "task": "NX-03",
     },
     {
         "id": "scan_apply_verify",
-        "title": "Apply／Verify",
+        "title": "寫入／檢核模型 Metadata",
         "status": "available",
         "task": "NX-04～05",
     },
     {
         "id": "export_dictionary",
-        "title": "寫回字典",
+        "title": "匯出 Type Layers 為字典",
         "status": "available",
         "task": "NX-02",
     },
     {
         "id": "publish_registry",
-        "title": "Publish Registry",
+        "title": "發布串接資料",
         "status": "available",
         "task": "NX-07",
     },
@@ -185,7 +185,7 @@ def _open_check(
             "publish_registry",
         ),
     }
-    message = "開案檢查完成。可執行 Type layer、高程／空間框、Apply／Verify、寫回字典與發布。"
+    message = "開案檢查完成。可執行 Type Layers、高程／空間框、寫入／檢核 Metadata、匯出字典與發布。"
     if warnings:
         return results.ok_with_warnings(
             "open_check",

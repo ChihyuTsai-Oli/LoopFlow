@@ -275,7 +275,7 @@ def format_verify_popup(result: results.Result) -> str:
     extra = len(mismatches) - MAX_POPUP_LINES
     if extra > 0:
         lines.append("…其餘 %s 項。" % extra)
-    lines.append("請執行選單 5 Apply，把正確資料寫回。")
+    lines.append("請執行選單 5 寫入模型 Metadata，把正確資料寫回。")
     return "\n".join(lines)
 
 

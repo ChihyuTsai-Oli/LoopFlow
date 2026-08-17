@@ -381,7 +381,7 @@ def export_dictionary(
         if target.resolve() == Path(dictionary_path).resolve():
             return results.blocked(
                 "export_dictionary",
-                "寫回字典不得覆寫正式 Dictionary。",
+                "匯出 Type Layers 不得覆寫正式 Dictionary。",
                 blocking=("overwrite_dictionary_forbidden",),
                 command_id=command_id,
             )

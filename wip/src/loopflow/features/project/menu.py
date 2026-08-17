@@ -12,14 +12,14 @@ MenuChoice = Tuple[str, str]
 Chooser = Callable[[Sequence[str]], Optional[str]]
 
 MENU_ITEMS: Tuple[Tuple[str, str, str], ...] = (
-    ("open_check", "scan", "1  開案檢查（只看狀態，不寫入）"),
-    ("sync_type_layers", "scan", "2  同步 Type Layers"),
-    ("level_boundary", "scan", "3  登記高程框"),
-    ("space_boundary", "scan", "4  登記空間框"),
-    ("scan_apply_verify", "apply", "5  Apply（寫入 ID／Type／空間／高程）"),
-    ("scan_apply_verify", "verify", "6  Verify（核對 UserText，不寫入）"),
-    ("export_dictionary", "scan", "7  寫回字典（匯出，不覆寫正式檔）"),
-    ("publish_registry", "scan", "8  發布 Registry"),
+    ("open_check", "scan", "1  開案檢查"),
+    ("sync_type_layers", "scan", "2  從字典同步 Type Layers"),
+    ("level_boundary", "scan", "3  登記高程框（封閉曲線）"),
+    ("space_boundary", "scan", "4  登記空間框（封閉曲線，須在高程框內）"),
+    ("scan_apply_verify", "apply", "5  寫入模型 Metadata"),
+    ("scan_apply_verify", "verify", "6  檢核模型 Metadata（不寫入）"),
+    ("export_dictionary", "scan", "7  匯出 Type Layers 為字典（不覆寫正式檔）"),
+    ("publish_registry", "scan", "8  發布串接資料（供 2D Tags）"),
 )
 MENU_LABELS: Tuple[str, ...] = tuple(item[2] for item in MENU_ITEMS)
 
