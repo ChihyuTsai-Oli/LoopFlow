@@ -92,13 +92,6 @@ def run_nexus_console(
 ) -> results.Result:
     """先開案檢查；interactive 時再選步驟。測試可注入 chooser。"""
     extra = dict(kwargs)
-    if extra.get("ask_dictionary") is None:
-        try:
-            import rhinoscriptsyntax  # type: ignore  # noqa: F401
-        except ImportError:
-            pass
-        else:
-            extra["ask_dictionary"] = _live_ask_dictionary(environ)
     presenter = extra.get("show_message")
     first = open_console(session, environ=environ, step="open_check", **extra)
     if not first.ok:
@@ -126,6 +119,13 @@ def run_nexus_console(
             return ask_popup_string("請輸入專案名稱（圖層前綴）", default or "", "LoopFlow")
 
         extra["ask_prefix"] = _ask_prefix
+    if step == "sync_type_layers" and extra.get("ask_dictionary") is None:
+        try:
+            import rhinoscriptsyntax  # type: ignore  # noqa: F401
+        except ImportError:
+            pass
+        else:
+            extra["ask_dictionary"] = _live_ask_dictionary(environ)
     result = open_console(
         session,
         environ=environ,

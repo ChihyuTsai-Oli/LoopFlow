@@ -153,12 +153,9 @@ class ConsoleOpenCheckTests(unittest.TestCase):
             self.assertTrue(result.ok, result.message)
             self.assertEqual(result.details["dictionary_filename"], "TeamA.xlsx")
 
-    def test_open_check_can_pick_missing_custom_filename(self):
+    def test_open_check_missing_dictionary_warns_and_still_enters(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:
             root = Path(raw)
-            custom = root / "TeamA.xlsx"
-            written = write_table(custom, schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_valid_row()])
-            self.assertTrue(written.ok)
             session = _session()
             seen = []
 
@@ -172,9 +169,11 @@ class ConsoleOpenCheckTests(unittest.TestCase):
                 ask_dictionary=_ask,
             )
             self.assertTrue(result.ok, result.message)
-            self.assertEqual(seen, ["LoopFlow_Dictionary.xlsx"])
-            self.assertEqual(session.document_user_text(DICTIONARY_FILENAME_KEY), "TeamA.xlsx")
-            self.assertEqual(result.details["dictionary_filename"], "TeamA.xlsx")
+            self.assertEqual(result.status, "ok_with_warnings")
+            self.assertTrue(any("選單 2" in item for item in result.warnings))
+            self.assertEqual(seen, [])
+            self.assertIsNone(session.document_user_text(DICTIONARY_FILENAME_KEY))
+            self.assertIn("open_check", result.details["executable_steps"])
 
     def test_non_cm_warns_but_still_enters(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:

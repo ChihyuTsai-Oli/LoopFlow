@@ -147,24 +147,5 @@ class ColorHelperTests(unittest.TestCase):
         self.assertEqual(rgb_tuple(_Color()), (1, 2, 3))
 
 
-class RedHintPopupTests(unittest.TestCase):
-    def test_split_hint_message_pulls_out_reminder(self):
-        from loopflow.platform.rhino.prompts import split_hint_message
-
-        body, hint = split_hint_message(
-            "有 1 件不符\n請執行選單 5 寫入模型 Metadata，把正確資料寫回。",
-            "請執行選單 5 寫入模型 Metadata，把正確資料寫回。",
-        )
-        self.assertEqual(body, "有 1 件不符")
-        self.assertEqual(hint, "請執行選單 5 寫入模型 Metadata，把正確資料寫回。")
-
-    def test_split_hint_message_without_hint_keeps_body(self):
-        from loopflow.platform.rhino.prompts import split_hint_message
-
-        body, hint = split_hint_message("全部相符。", "請執行選單 5 寫入模型 Metadata，把正確資料寫回。")
-        self.assertEqual(body, "全部相符。")
-        self.assertIsNone(hint)
-
-
 if __name__ == "__main__":
     unittest.main()

@@ -7,12 +7,7 @@ from typing import Mapping, Optional, Sequence, Tuple
 
 from loopflow.features.dictionary.loader import load_from_workfiles
 from loopflow.foundation import results
-from loopflow.foundation.paths import (
-    DICTIONARY_FILENAME_KEY,
-    dictionary_filename_from_session,
-    normalize_dictionary_filename,
-    resolve_workfiles,
-)
+from loopflow.foundation.paths import dictionary_filename_from_session, resolve_workfiles
 from loopflow.foundation.version import PACKAGE_VERSION, check_schema
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
@@ -102,7 +97,6 @@ def _open_check(
     *,
     environ: Optional[Mapping[str, str]],
     cancel: bool,
-    ask_dictionary=None,
 ) -> results.Result:
     if cancel:
         return results.cancelled(
@@ -115,23 +109,23 @@ def _open_check(
         return workfiles
     filename = dictionary_filename_from_session(session) if session is not None else None
     catalog = load_from_workfiles(environ=environ, dictionary_filename=filename, session=session)
-    if not catalog.ok and catalog.stage == "resolve_dictionary" and session is not None and callable(ask_dictionary):
-        chosen = ask_dictionary(filename or dictionary_filename_from_session(session))
-        if chosen is None:
-            return results.cancelled(
-                "open_check",
-                "使用者取消選擇 Dictionary。",
-                command_id=COMMAND_ID,
-            )
-        normalized = normalize_dictionary_filename(chosen, root=workfiles.details["paths"].root)
-        if not normalized.ok:
-            return normalized
-        filename = str(normalized.details["filename"])
-        session.set_document_user_text(DICTIONARY_FILENAME_KEY, filename)
-        catalog = load_from_workfiles(environ=environ, dictionary_filename=filename)
-    if not catalog.ok:
+    extra_warnings: Sequence[str] = ()
+    catalog_warnings: Sequence[str] = ()
+    type_count = None
+    if not catalog.ok and catalog.stage == "resolve_dictionary":
+        extra_warnings = (
+            "找不到 Dictionary 檔案 %s。請用選單 2 指定工作檔資料夾內的 .xlsx。"
+            % ((catalog.details or {}).get("filename") or filename or "LoopFlow_Dictionary.xlsx"),
+        )
+    elif not catalog.ok:
         return catalog
-    paths = resolve_workfiles(environ=environ, dictionary_filename=filename).details["paths"]
+    else:
+        catalog_warnings = catalog.warnings
+        type_count = catalog.details.get("type_count")
+    paths_result = resolve_workfiles(environ=environ, dictionary_filename=filename)
+    if not paths_result.ok:
+        return paths_result
+    paths = paths_result.details["paths"]
     if session is None:
         return results.failed(
             "rhino_session",
@@ -176,7 +170,7 @@ def _open_check(
         return version
 
     unit = session.model_unit_system()
-    warnings: Sequence[str] = catalog.warnings
+    warnings: Sequence[str] = catalog_warnings
     extra = []
     if not _is_cm(unit):
         extra.append("文件單位為 %s，不是 cm。可繼續，但量綱尚未保證安全，建議切換為 cm。" % unit)
@@ -185,14 +179,14 @@ def _open_check(
 
         if not LIVE_VERIFIED_IN_RHINO:
             extra.append("live_adapter_unverified")
-    warnings = tuple(warnings) + tuple(extra)
+    warnings = tuple(catalog_warnings) + tuple(extra) + tuple(extra_warnings)
     payload = {
         "project_id": project_id,
         "schema_id": schema_id,
         "schema_version": schema_version,
         "model_unit": unit,
         "dictionary_filename": paths.dictionary.name,
-        "type_count": catalog.details.get("type_count"),
+        "type_count": type_count,
         "exchange_exists": paths.exchange_root.exists(),
         "package_version": PACKAGE_VERSION,
         "steps": _copy_steps(),
@@ -269,7 +263,6 @@ def open_console(
             current,
             environ=environ,
             cancel=cancel,
-            ask_dictionary=ask_dictionary,
         )
         if not checked.ok or step in (None, "open_check"):
             return checked

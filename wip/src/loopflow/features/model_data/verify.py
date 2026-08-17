@@ -315,9 +315,9 @@ def verify_model_data(
         if callable(show_message):
             show_message(popup)
         else:
-            from loopflow.platform.rhino.prompts import show_message_with_red_hint
+            from loopflow.platform.rhino.prompts import show_message as live_popup
 
-            show_message_with_red_hint(popup, APPLY_REMINDER)
+            live_popup(popup)
         if guarded:
             select_only(session, compared.details.get("mismatch_object_ids") or ())
     return compared
