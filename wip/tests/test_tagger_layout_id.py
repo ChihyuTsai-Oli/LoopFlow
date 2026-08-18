@@ -181,8 +181,8 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertIn("missing_series_start", result.blocking)
         self.assertNotIn("missing_title_frame", result.blocking)
-        self.assertIn(SERIES_START_HELP, result.message)
-        self.assertIn("IN__101__一樓平面圖", result.message)
+        self.assertEqual(result.message, SERIES_START_HELP)
+        self.assertTrue(result.details["skipped"])
         self.assertIsNone(session.get_object_user_text("frame-1", DRAWING_NO_KEY))
 
     def test_cover_before_series_is_skipped(self):

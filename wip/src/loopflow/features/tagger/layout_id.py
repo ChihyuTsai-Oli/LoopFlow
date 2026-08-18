@@ -53,9 +53,11 @@ SERIES_START_HELP = (
     "**IN__101.01__一樓平面圖\n"
     "**A__101__一樓平面圖\n"
     "---\n"
-    "** 作為自動編號起點，勿刪\n"
-    "** 之間的頁面為同一系列\n"
-    "** 頁面之外的Layout名稱，只需要填寫圖名\n"
+    "1. ** 作為自動編號起點，勿刪\n"
+    "2. ** 之間的頁面為同一系列\n"
+    "3. ** 頁面之外的Layout名稱，只需要填寫圖名\n"
+    "4. 圖號 / 圖名 的編號與命名可以從Layout列表手動調整\n"
+    "　經由自動編號寫入圖框中，不可直接修改圖框內容\n"
     "---\n"
     "Sample\n"
     "**IN__101.01__一樓平面圖\n"
@@ -63,7 +65,7 @@ SERIES_START_HELP = (
     "三樓平面圖\n"
     "**IN__201.01__立面圖1\n"
     "立面圖2\n"
-    "(Layout自動命名如下)\n"
+    "(Layout自動編號如下)\n"
     "**IN__101.01__一樓平面圖\n"
     "IN__101.02__二樓平面圖\n"
     "IN__101.03__三樓平面圖\n"
@@ -120,9 +122,14 @@ def _no_writable_pages_result(
     lines = []
     blocking = []
     if missing_start and not frame_problem:
-        blocking.append("missing_series_start")
-        lines.append(SERIES_START_HELP)
-    elif frame_problem and not missing_start:
+        return results.blocked(
+            STAGE,
+            SERIES_START_HELP,
+            ("missing_series_start",),
+            command_id=COMMAND_ID,
+            details={"skipped": skipped, "unregistered_blocks": unknown},
+        )
+    if frame_problem and not missing_start:
         blocking.append("missing_title_frame")
         lines.append("沒有可寫入的 Layout 頁。請確認每一頁只有一個已登錄的圖框。")
     else:

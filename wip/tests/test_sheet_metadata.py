@@ -30,6 +30,7 @@ from loopflow.features.sheet.naming import (
     NamingRules,
     STATUS_BASELINE,
     assign_sheet_numbers,
+    increment_number,
     parse_page_name,
 )
 from loopflow.features.tagger.templates import load_tag_templates
@@ -116,6 +117,15 @@ class NamingTests(unittest.TestCase):
         self.assertEqual(plans[0].status, STATUS_BASELINE)
         self.assertEqual(plans[0].new_page_name, "**IN__201__立面圖")
         self.assertEqual(plans[0].drawing_no, "IN 201")
+
+    def test_increment_keeps_letter_prefix_and_rolls_single_digit_to_ten(self):
+        self.assertEqual(increment_number("201"), "202")
+        self.assertEqual(increment_number("201.02"), "201.03")
+        self.assertEqual(increment_number("A09"), "A10")
+        self.assertEqual(increment_number("A9"), "A10")
+        self.assertEqual(increment_number("101.1"), "101.2")
+        self.assertEqual(increment_number("101.9"), "101.10")
+        self.assertEqual(increment_number("101.1", 9), "101.10")
 
 
 class SheetApiTests(unittest.TestCase):

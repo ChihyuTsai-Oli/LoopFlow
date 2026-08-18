@@ -61,6 +61,20 @@
       "id": "blank-page-name-skipped",
       "page_name": "   ",
       "expect": "skip"
+    },
+    {
+      "id": "baseline-alphanumeric-number",
+      "page_name": "**IN__A01__平面",
+      "expect": "baseline",
+      "series": "IN",
+      "number": "A01",
+      "drawing_name": "平面"
+    },
+    {
+      "id": "star-without-trailing-digit-inherits",
+      "page_name": "**IN__AB__平面",
+      "expect": "inherit",
+      "drawing_name": "IN__AB__平面"
     }
   ],
   "numbering_cases": [
@@ -106,6 +120,23 @@
       "id": "decimal-tail-increments",
       "pages": ["**A__201.09__詳圖", "下一頁"],
       "expect_drawing_no": ["A 201.09", "A 201.10"]
+    },
+    {
+      "id": "single-digit-tail-rolls-to-two-digits",
+      "pages": ["**IN__101.9__一樓", "下一頁"],
+      "expect_drawing_no": ["IN 101.9", "IN 101.10"],
+      "expect_page_name": ["**IN__101.9__一樓", "IN__101.10__下一頁"]
+    },
+    {
+      "id": "alphanumeric-tail-increments",
+      "pages": ["**IN__A09__平面", "天花"],
+      "expect_drawing_no": ["IN A09", "IN A10"],
+      "expect_page_name": ["**IN__A09__平面", "IN__A10__天花"]
+    },
+    {
+      "id": "alphanumeric-single-digit-rolls-to-two-digits",
+      "pages": ["**IN__A9__平面", "天花"],
+      "expect_drawing_no": ["IN A9", "IN A10"]
     }
   ],
   "identity_cases": [

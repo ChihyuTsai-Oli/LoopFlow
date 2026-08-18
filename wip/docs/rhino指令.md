@@ -67,7 +67,7 @@ Laser：在 **Layout** 先選 Height／Finish 的 Laser Tag，再在目標 Detai
 
 Index：在 **Layout** 選 `TAG_SECTION_DETAIL` 或 `TAG_ELEV_1`～`4`，再從可搜尋清單選全檔任一 Layout 的 Detail（顯示頁名＋Detail 名，不顯示 GUID；點選時跳頁並 zoom）。用該 Detail 模型空間中心對已登記 View 框，恰好一個才寫 `lf_target_view_id`。Esc、鎖定、Grab／Laser／`TAG_ELEV_0`／圖框／`TAG_DW`、模型空間、沒有 Detail、0 或 ≥2 個 View、取消清單，都不寫入。不寫 Detail GUID、不寫圖號顯示欄、不寫 `lf_sheet_id`。圖塊名不分大小寫。不進 Nexus。
 
-Layout ID：跑全檔 Layout。系列第一頁寫 `**圖類別__圖編號__圖名`（例如 `**IN__201__立面圖`），後面的頁只寫圖名。核對清單確認才寫入；取消整批零寫入。Layout 起點頁名保留 `**IN__201__立面圖`，接續頁為 `IN__202__…`；圖框 `lf_drawing_no` 寫空格格式 `IN 201`（不含 `**`），並寫 `lf_drawing_name`、`lf_sheet_id`。不寫 `lf_scale`。在 D08 之前一併寫舊欄 `DWG_NO`／`DWG_NAME`，讓圖框上的字立刻更新。`TAG_ELEV_0` 寫目前頁編號（`201`）。未登錄 Block 勾選真正的圖框（預設全不勾）。只改圖名：改第三欄再跑。要改編號：該頁再加 `**` 再跑。圖框已就緒但缺 `**` 時停止並顯示命名規則與 Sample。一頁沒有圖框或有兩個圖框則跳過。不進 Nexus。**尚未 Rhino 8 實機驗證。**
+Layout ID：跑全檔 Layout。系列第一頁寫 `**圖類別__圖編號__圖名`（例如 `**IN__201__立面圖`、`**IN__A01__平面`），後面的頁只寫圖名。圖號只要尾端是數字就放行；`101.9` 下一頁為 `101.10`。核對清單確認才寫入；取消整批零寫入。Layout 起點頁名保留 `**IN__201__立面圖`，接續頁為 `IN__202__…`；圖框 `lf_drawing_no` 寫空格格式 `IN 201`（不含 `**`），並寫 `lf_drawing_name`、`lf_sheet_id`。不寫 `lf_scale`。在 D08 之前一併寫舊欄 `DWG_NO`／`DWG_NAME`，讓圖框上的字立刻更新。`TAG_ELEV_0` 寫目前頁編號（`201`）。未登錄 Block 勾選真正的圖框（預設全不勾）。只改圖名：改第三欄再跑。要改編號：該頁再加 `**` 再跑。圖框已就緒但缺 `**` 時停止，警告只顯示命名規則與 Sample。一頁沒有圖框或有兩個圖框則跳過。不進 Nexus。**尚未 Rhino 8 實機驗證。**
 
 註冊 View：在 **2D 模型空間**框選剖面物件與恰好一個 Text Dot，再輸入外擴距離（預設 50）。框畫在 `LoopFlow::Anchor_Frame`。寫入 `lf_view_id`、Clipping Plane 物件 ID 與固定 2D↔3D transform。名稱對不到或對到兩個以上 Clipping Plane、沒有 Text Dot、沒有幾何、Esc，都不寫入。不進 Nexus。本批不射線。
 

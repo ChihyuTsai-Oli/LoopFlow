@@ -2,7 +2,7 @@
 """Sheet 圖號命名的純邏輯：頁名解析與依頁序推導圖號。
 
 不碰 Rhino。命名格式來自文件 UserText，缺值用 `keys.NAMING_DEFAULTS`。
-頁名：`**圖類別__圖編號__圖名`（寫入後起點頁保留 `**`）；圖框圖號：`圖類別 圖編號`（空格，不含星號）。
+頁名：`**圖類別__圖編號__圖名`（寫入後起點頁保留 `**`）；圖框圖號：`圖類別 圖編號`（空格，不含星號）。圖編號只要尾端是數字即可。
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ STATUS_DUPLICATE_BASELINE = "duplicate_baseline"
 STATUS_UNNUMBERED = "unnumbered"
 STATUS_SKIPPED = "skipped_blank_name"
 
-NUMBER_RE = re.compile(r"^\d+(?:\.\d+)*$")
+TRAILING_DIGITS_RE = re.compile(r"^(.*?)(\d+)$")
 
 
 @dataclass(frozen=True)
@@ -68,25 +68,25 @@ def load_naming_rules(session) -> NamingRules:
 
 
 def is_number_token(value: str) -> bool:
-    return bool(value) and NUMBER_RE.match(value) is not None
+    """圖號只要尾端是數字就放行，允許前面英數（`201`、`101.1`、`A01`）。"""
+    raw = (value or "").strip()
+    return bool(raw) and TRAILING_DIGITS_RE.match(raw) is not None
 
 
 def increment_number(token: str, steps: int = 1) -> str:
-    """只加編號尾數。`201`→`202`；`201.02`→`201.03`。"""
+    """只加編號尾端數字。`201`→`202`；`A09`→`A10`；`101.1`→`101.2`；`101.9`→`101.10`。"""
     raw = (token or "").strip()
     if steps == 0:
         return raw
-    if "." in raw:
-        head, _, tail = raw.rpartition(".")
-        if tail.isdigit():
-            width = len(tail)
-            return "%s.%0*d" % (head, width, int(tail) + steps)
-    if raw.isdigit():
-        next_value = int(raw) + steps
-        if raw.startswith("0") and len(raw) > 1:
-            return "%0*d" % (len(raw), next_value)
-        return str(next_value)
-    raise ValueError("無法遞增的圖編號：%s" % token)
+    match = TRAILING_DIGITS_RE.match(raw)
+    if match is None:
+        raise ValueError("無法遞增的圖編號：%s" % token)
+    head, tail = match.group(1), match.group(2)
+    next_value = int(tail) + steps
+    width = len(tail)
+    if width == 1:
+        return "%s%s" % (head, next_value)
+    return "%s%0*d" % (head, width, next_value)
 
 
 def split_fields(page_name: str, rules: NamingRules) -> Tuple[str, ...]:
