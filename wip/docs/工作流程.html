@@ -210,27 +210,49 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <ul><li>辨識前次產出，讓使用者選擇取代、新增或略過。</li><li>保存來源 <code>view_id</code>、source revision 與 drawing element provenance。</li><li>回報 indexed／unindexed／ambiguous 覆蓋率。</li><li>復原原有 selection、layer lock 與 visibility。</li><li>使用者補線、刪線或改樣式後標記為 modified；更新不靜默覆寫。</li></ul>
 <p><strong>安全停點</strong>：Drawing 完成即可獨立存檔與人工整理。</p>
 <h2 id="9-建立-Sheet-圖框與-Layout-ID">9. 建立 Sheet、圖框與 Layout ID</h2>
-<p>使用者建立 Layout、Detail、圖框與 Tag Blocks。圖號與圖名的真相是 Sheet metadata，不是頁名字串。指令 <code>LF_Tagger_Layout_ID</code> 負責建立與維持這份 metadata；其他功能（含圖目錄）只讀、不自行解析頁名。</p>
-<h3 id="頁名怎麼寫">頁名怎麼寫</h3>
-<p>格式：<code>**圖類別__圖編號__圖名</code></p>
-<ul><li><code>**</code> 只加在<strong>該系列第一頁</strong>最前面，用來宣告起點；<strong>寫入後起點頁會保留 <code>**</code>，請勿刪。</strong> 圖框圖號不含 <code>**</code>。</li><li>最前面加 <code>//</code> 的頁不參與自動編號，但仍須同一套三欄格式，例如 <code>//S__901__結構平面圖</code>。寫入後保留 <code>//</code>，圖框寫入 <code>S 901</code>／圖名。</li><li><code>__</code> 是分隔，固定三欄。</li><li>圖編號只要<strong>尾端是數字</strong>就放行，前面可以英數（<code>201</code>、<code>101.1</code>、<code>A01</code>）。不需要 <code>.01</code>。後面的頁只把<strong>尾端數字 +1</strong>。</li></ul>
-<div class="tw"><table><thead><tr><th>你寫的起點</th><th>寫入後 Layout 頁名</th><th>圖框上的圖號</th><th>下一頁圖框圖號</th></tr></thead><tbody><tr><td><code>**IN__201__立面圖</code></td><td><code>**IN__201__立面圖</code></td><td><code>IN 201</code></td><td><code>IN 202</code></td></tr><tr><td><code>**A__201.02__立面圖</code></td><td><code>**A__201.02__立面圖</code></td><td><code>A 201.02</code></td><td><code>A 201.03</code></td></tr><tr><td><code>**IN__101.1__一樓平面圖</code></td><td><code>**IN__101.1__一樓平面圖</code></td><td><code>IN 101.1</code></td><td><code>IN 101.2</code>（到 <code>101.9</code> 後是 <code>101.10</code>）</td></tr><tr><td><code>**IN__A01__平面</code></td><td><code>**IN__A01__平面</code></td><td><code>IN A01</code></td><td><code>IN A02</code></td></tr><tr><td><code>//S__901__結構平面圖</code></td><td><code>//S__901__結構平面圖</code></td><td><code>S 901</code></td><td>（不佔號）</td></tr></tbody></table></div>
-<p>尾數規則：<code>201</code> → <code>202</code>；<code>A09</code> → <code>A10</code>；單號進十位不加前導零、改兩位數，<code>101.1</code> → <code>101.2</code> → <code>101.9</code> → <code>101.10</code>。尾端不是數字（例如 <code>AB</code>）不當圖號。</p>
-<p>同一系列後面幾頁<strong>不要</strong>加 <code>**</code>，頁名可只寫圖名（例如 <code>樓下30公分</code>），或維持 Rhino 預設名。寫入後會變成 <code>IN__202__樓下30公分</code>（沒有 <code>**</code>）。封面、<code>Preset</code> 等：還沒碰到任何 <code>**</code> 起點就不編號。<code>//</code> 頁夾在系列中間也不佔號。</p>
-<p>圖框圖號用<strong>空格</strong>（<code>IN 201</code>），Layout 頁名用 <code>__</code>。兩者不同，不要混。</p>
-<p>寫入後頁名會長這樣：</p>
+<p>使用者建立 Layout、Detail、圖框與 Tag Blocks。圖號與圖名的真相是 <strong>Sheet metadata</strong>，不是頁名字串。指令 <code>LF_Tagger_Layout_ID</code> 負責建立與維持這份 metadata；其他功能（含圖目錄）只讀、不自行解析頁名。</p>
+<p>本節是 Layout ID 的操作說明與命名邏輯總覽，日後 GitHub 公開說明可直接沿用；機器可檢查的契約細節以 <code>資料契約.md</code> 的 Sheet 章節為準。</p>
+<h3 id="三欄命名格式">三欄命名格式</h3>
+<p>起點與手動頁都用同一套三欄：</p>
+<pre class="code" data-lang="text"><code>**圖類別__圖號__圖名</code></pre>
+<p>或手動頁：</p>
+<pre class="code" data-lang="text"><code>//圖類別__圖號__圖名</code></pre>
+<p>規則：</p>
+<div class="tw"><table><thead><tr><th>符號</th><th>意思</th></tr></thead><tbody><tr><td><code>**</code></td><td>系列自動編號的<strong>起點</strong>。只加在該系列第一頁最前面。寫入後<strong>會保留</strong>，請勿刪。</td></tr><tr><td><code>//</code></td><td><strong>手動頁</strong>。不參與自動編號、不佔號，但仍須完整三欄。寫入後<strong>會保留</strong>。</td></tr><tr><td><code>__</code></td><td>三欄分隔（圖類別／圖號／圖名）。固定兩條底線。</td></tr><tr><td>圖框上的圖號</td><td>用<strong>空格</strong>：<code>IN 101.01</code>。頁名用 <code>__</code>，兩者不要混。</td></tr><tr><td><code>**</code>／<code>//</code></td><td>只出現在 Layout <strong>頁名</strong>；圖框圖號與圖名<strong>不含</strong>這兩個前綴。</td></tr></tbody></table></div>
+<p>圖號只要<strong>尾端是數字</strong>就放行，前面可英數：<code>201</code>、<code>101.01</code>、<code>101.1</code>、<code>A01</code> 都可以。不強制 <code>.01</code>。</p>
+<h3 id="自動編號怎麼算">自動編號怎麼算</h3>
+<ol><li>從頁序由上往下掃。</li><li>碰到 <code>**圖類別__圖號__圖名</code> → 該系列從此圖號起算，寫入圖框，頁名保留 <code>**</code>。</li><li>之後每一頁（直到下一個 <code>**</code>）繼承同一圖類別，把<strong>尾端數字 +1</strong>，頁名改成三欄（沒有 <code>**</code>）。</li><li>碰到 <code>//…</code> → 照頁名三欄寫入圖框，<strong>尾數不加</strong>，系列接著往下。</li><li>還沒碰到任何 <code>**</code> 之前的頁（封面、<code>Preset</code> 等）不編號。</li><li>檔案裡一個 <code>**</code> 都沒有（也沒有可寫的 <code>//</code>）→ 停止、零寫入，彈出命名說明。</li></ol>
+<p>尾數例子：</p>
+<div class="tw"><table><thead><tr><th>目前</th><th>下一頁</th></tr></thead><tbody><tr><td><code>201</code></td><td><code>202</code></td></tr><tr><td><code>201.02</code></td><td><code>201.03</code></td></tr><tr><td><code>201.09</code></td><td><code>201.10</code></td></tr><tr><td><code>101.1</code></td><td><code>101.2</code></td></tr><tr><td><code>101.9</code></td><td><code>101.10</code>（單號進十位改兩位數，不加前導零）</td></tr><tr><td><code>A09</code></td><td><code>A10</code></td></tr><tr><td><code>A9</code></td><td><code>A10</code></td></tr></tbody></table></div>
+<p>尾端不是數字（例如 <code>AB</code>）不當圖號。</p>
+<h3 id="寫入前-寫入後對照-Sample">寫入前／寫入後對照（Sample）</h3>
+<p>你在 Layout 列表可以這樣排：</p>
+<pre class="code" data-lang="text"><code>**IN__101.01__一樓平面圖
+二樓平面圖
+三樓平面圖
+**IN__201.01__立面圖1
+立面圖2
+//S__901__結構平面圖</code></pre>
+<p>跑完 Layout ID 後：</p>
 <pre class="code" data-lang="text"><code>**IN__101.01__一樓平面圖
 IN__101.02__二樓平面圖
 IN__101.03__三樓平面圖
 **IN__201.01__立面圖1
 IN__201.02__立面圖2
 //S__901__結構平面圖</code></pre>
+<p>對應圖框圖號／圖名：<code>IN 101.01</code>／一樓平面圖 → <code>IN 101.02</code>／二樓平面圖 → …；手動頁 <code>S 901</code>／結構平面圖。</p>
+<p>其他起點例子：</p>
+<div class="tw"><table><thead><tr><th>你寫的起點</th><th>寫入後頁名</th><th>圖框圖號</th><th>下一頁圖號</th></tr></thead><tbody><tr><td><code>**IN__201__立面圖</code></td><td><code>**IN__201__立面圖</code></td><td><code>IN 201</code></td><td><code>IN 202</code></td></tr><tr><td><code>**A__201.02__立面圖</code></td><td><code>**A__201.02__立面圖</code></td><td><code>A 201.02</code></td><td><code>A 201.03</code></td></tr><tr><td><code>**IN__101.1__一樓平面圖</code></td><td><code>**IN__101.1__一樓平面圖</code></td><td><code>IN 101.1</code></td><td><code>IN 101.2</code></td></tr><tr><td><code>**IN__A01__平面</code></td><td><code>**IN__A01__平面</code></td><td><code>IN A01</code></td><td><code>IN A02</code></td></tr><tr><td><code>//S__901__結構平面圖</code></td><td><code>//S__901__結構平面圖</code></td><td><code>S 901</code></td><td>（不佔號）</td></tr></tbody></table></div>
 <h3 id="使用者怎麼跑-Layout-ID">使用者怎麼跑 Layout ID</h3>
-<ol><li>每個系列的第一頁改成 <code>**圖類別__圖編號__圖名</code>。後面的頁只寫圖名即可。</li><li>跑 <code>LF_Tagger_Layout_ID</code>。若跳出圖塊清單，只勾真正的圖框（例如 <code>_Frame_A3_shop_drawing</code>）；<code>tag_*</code> 那些註記不要勾。預設全不勾。若圖框已就緒但還沒有 <code>**</code> 起點（也沒有可寫入的 <code>//</code> 頁），會停止並只顯示命名規則與 Sample，彈窗不列出未編號的頁。改頁名後再跑。</li><li>核對清單會列出每頁的圖號、圖名、是否改頁名。確認才寫入；取消整批零寫入。</li><li>寫入後同一輪會做三件事：Layout 頁名改成三欄（起點頁保留 <code>**</code>）、圖框寫入 <code>lf_drawing_no</code>／<code>lf_drawing_name</code>（並暫時同步舊欄 <code>DWG_NO</code>／<code>DWG_NAME</code>，讓現有圖框上的字立刻更新）、文件寫入 Sheet metadata。比例 <code>lf_scale</code> 人工，指令不碰。</li><li>圖框畫面上的字目前仍讀舊欄 <code>DWG_NO</code>／<code>DWG_NAME</code>，所以 Layout ID 會把同一組圖號／圖名雙寫上去。D08 把 Block 文字欄改指 <code>lf_*</code> 之後，就只留新 key。Infuser 不負責圖框圖號。</li><li>插頁、改頁序後必須再跑一次，圖號才會按尾數重排。沒重跑時圖目錄等 consumer 應回報過期，不得安靜輸出舊值。</li></ol>
-<p>一頁沒有圖框、或有兩個以上圖框，該頁跳過並報告，不改頁名。<code>TAG_ELEV_0</code> 寫目前頁的編號（例如 <code>201</code>）。其餘 Tag 不碰。</p>
+<ol><li>每個系列的第一頁改成 <code>**圖類別__圖號__圖名</code>。同一系列後面的頁只寫圖名即可（或維持 Rhino 預設名）。不參與系列的頁用 <code>//圖類別__圖號__圖名</code>。</li><li>跑 <code>LF_Tagger_Layout_ID</code>。若跳出圖塊清單，<strong>只勾真正的圖框</strong>（例如 <code>_Frame_A3_shop_drawing</code>）；<code>tag_*</code> 註記不要勾。預設全不勾。</li><li>若圖框已就緒但還沒有 <code>**</code> 起點（也沒有可寫入的 <code>//</code>），會停止並<strong>只顯示</strong>命名規則與 Sample，彈窗不列未編號頁。改頁名後再跑。</li><li>核對清單會列出每頁的圖號、圖名、是否改頁名、是否系列起點／手動頁。確認才寫入；取消整批零寫入。</li><li>寫入後同一輪會做三件事：<ul><li>Layout 頁名整理成三欄（起點保留 <code>**</code>，手動頁保留 <code>//</code>）</li><li>圖框寫入 <code>lf_drawing_no</code>／<code>lf_drawing_name</code>（並暫時同步舊欄 <code>DWG_NO</code>／<code>DWG_NAME</code>，讓現有圖框上的字立刻更新）</li><li>文件寫入 Sheet metadata  </li></ul></li></ol>
+<p>比例 <code>lf_scale</code> 由人工維護，指令不碰。</p>
+<ol><li>圖框畫面上的字目前仍讀舊欄 <code>DWG_NO</code>／<code>DWG_NAME</code>，所以 Layout ID 會把同一組值雙寫上去。D08 把 Block 文字欄改指 <code>lf_*</code> 之後，就只留新 key。Infuser 不負責圖框圖號。</li><li>插頁、改頁序後必須再跑一次，圖號才會按尾數重排。沒重跑時圖目錄等 consumer 應回報過期，不得安靜輸出舊值。</li></ol>
+<p>一頁沒有圖框、或有兩個以上圖框，該頁跳過並報告，不改頁名。<code>//</code> 格式不對（不是合法三欄）也跳過該頁，不擋其他頁。<code>TAG_ELEV_0</code> 寫目前頁的編號（例如 <code>201</code>）。其餘 Tag 不碰。</p>
+<h3 id="五條要記住的規則-與警告視窗相同">五條要記住的規則（與警告視窗相同）</h3>
+<ol><li><code>**</code> 作為自動編號起點，勿刪。</li><li><code>**</code> 之間的頁面為同一系列。</li><li><code>**</code> 頁面之外的 Layout 名稱，只需要填寫圖名。</li><li><code>//</code> 頁面不參與自動編號，但仍需使用相同命名格式規範。</li><li>圖號、圖名的編號與命名可以從 Layout 列表手動調整；經由自動編號寫入圖框中，<strong>不可直接修改圖框內容</strong>。</li></ol>
 <h3 id="寫入後要手動改怎麼辦">寫入後要手動改怎麼辦</h3>
-<p>不要直接改圖框 UserText（下次 Layout ID 會依規則重算圖號）。用頁名再跑一次：</p>
-<ul><li><strong>還沒按確認：</strong> 核對清單按取消，改 Layout 頁名，再跑。</li><li><strong>只改圖名：</strong> 把頁名第三欄改掉，例如 <code>**IN__201__立面圖</code> → <code>**IN__201__一樓平面</code>，再跑。圖號仍依系列重算。若把頁名改成沒有 <code>__</code> 的亂名，當成誤改：圖名維持舊的，頁名改回自動組成的名字（起點頁仍帶 <code>**</code>）。</li><li><strong>改編號或從某頁重排：</strong> 在那一頁最前面再加 <code>**</code>，寫成你要的 <code>**圖類別__圖編號__圖名</code>，再跑。該頁變成新起點，後面的頁跟著從這個尾數往後編，直到下一頁也有 <code>**</code>。例如第四頁起要從 <code>301</code> 開始 → 把第四頁改成 <code>**IN__301__新圖名</code> 再跑。</li><li><strong>不要</strong>刪掉起點頁的 <code>**</code>，否則該頁不再當系列起點；檔案裡一個 <code>**</code> 都沒有時會停止、不改圖框。不要指望只改中間一頁、後面完全不動；連續編號就是這樣算的。</li></ul>
+<p>不要直接改圖框 UserText（下次 Layout ID 會依規則重算）。用 Layout 頁名再跑一次：</p>
+<ul><li><strong>還沒按確認：</strong> 核對清單按取消，改頁名，再跑。</li><li><strong>只改圖名：</strong> 改第三欄，例如 <code>**IN__201__立面圖</code> → <code>**IN__201__一樓平面</code>，再跑。圖號仍依系列重算。若把頁名改成沒有 <code>__</code> 的亂名，且前面已有 <code>**</code>：當成誤改，圖名維持舊的，頁名改回自動組成的名字（起點頁仍帶 <code>**</code>）。</li><li><strong>改編號或從某頁重排：</strong> 在那一頁最前面再加 <code>**</code>，寫成你要的 <code>**圖類別__圖號__圖名</code>，再跑。該頁變成新起點，後面跟著從這個尾數往後編，直到下一頁也有 <code>**</code>。例如第四頁起要從 <code>301</code> 開始 → 把第四頁改成 <code>**IN__301__新圖名</code> 再跑。</li><li><strong>手動固定某一頁圖號：</strong> 用 <code>//圖類別__圖號__圖名</code>，不佔系列。</li><li><strong>不要</strong>刪掉所有起點頁的 <code>**</code>；檔案裡一個 <code>**</code> 都沒有時會停止、不改圖框。不要指望只改中間一頁、後面完全不動；連續編號就是這樣算的。</li></ul>
 <h3 id="Duplicate-Sheet">Duplicate Sheet</h3>
 <p>複製後建立新的 <code>sheet_id</code>、<code>drawing_id</code> 與 <code>tag_id</code>；圖目錄定位點的 <code>lf_catalog_id</code> 也必須換新號：</p>
 <ul><li>除 <code>TAG_DW</code> 外，所有 Tag 清除來源綁定、自動欄位與人工補充說明，並恢復 template 預設 lock。</li><li><code>TAG_DW</code> 的人工編號、寬、高與其他內容完整保留。</li><li>使用者重新綁定新頁 Tag。</li><li>不覆蓋系統剪貼簿。</li></ul>
