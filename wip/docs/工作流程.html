@@ -137,8 +137,8 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <a class="l2 intro" href="#8-Materialize-可編輯-Drawing">8. Materialize 可編輯 Drawing</a>
 <a class="l2 intro" href="#9-建立-Sheet-圖框與-Layout-ID">9. 建立 Sheet、圖框與 Layout ID</a>
 <a class="l2 intro" href="#10-建立與綁定-Tag">10. 建立與綁定 Tag</a>
-<a class="l2 intro" href="#11-同步顯示資料">11. 同步顯示資料</a>
-<a class="l2 intro" href="#12-Health-與-Repair">12. Health 與 Repair</a>
+<a class="l2 intro" href="#11-同步顯示資料-Infuser">11. 同步顯示資料（Infuser）</a>
+<a class="l2 intro" href="#12-Health-與-Repair-TAG-O">12. Health 與 Repair（TAG-O）</a>
 <a class="l2 intro" href="#變更循環">變更循環</a>
 <a class="l2 intro" href="#實機驗收重點">實機驗收重點</a></nav>
 <main><h1 class="doctitle" id="LoopFlow-2-0-工作流程">LoopFlow 2.0 — 工作流程</h1>
@@ -159,8 +159,8 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 → 建立 Sheet／圖框／Layout ID
 → 建立並綁定 Tag
 → 選用：建立圖目錄（獨立指令 `LF_Catalog`，須先有 Sheet metadata）
-→ Sync 顯示資料
-→ Health／Repair</code></pre>
+→ Infuser 注入 Tag 顯示資料
+→ TAG-O 確認活著或斷連</code></pre>
 <h2 id="1-開案檢查">1. 開案檢查</h2>
 <p><strong>動作</strong>：解析 <code>LOOPFLOW_WORKFILES_ROOT</code>、Dictionary、<code>exchange/</code>、project identity、schema version 與 Rhino 文件單位。</p>
 <p><strong>使用者介入</strong>：只有設定缺失、專案辨識不明或非 cm 警告時處理。</p>
@@ -262,12 +262,14 @@ IN__201.02__立面圖2
 <h2 id="10-建立與綁定-Tag">10. 建立與綁定 Tag</h2>
 <div class="tw"><table><thead><tr><th>模式</th><th>使用者動作</th><th>結果</th></tr></thead><tbody><tr><td>Grab</td><td>在 Layout 選 Tag，點進 Detail，再選來源</td><td>Height／Finish 寫 <code>lf_source_object_id</code>；家具 Item 寫 <code>lf_source_block_name</code></td></tr><tr><td>Laser</td><td>在 Layout 選 Height／Finish Laser Tag，再在 Detail 內點位置</td><td>用固定 View transform 射線寫 <code>lf_source_object_id</code>；多候選由使用者選，清單只顯示圖層名</td></tr><tr><td>Index</td><td>在 Layout 選 <code>TAG_SECTION_DETAIL</code> 或 <code>TAG_ELEV_1</code>～<code>4</code>，再從清單選全檔任一 Layout 的 Detail（可搜尋，點選時 zoom）</td><td>唯一對到已登記 View 才寫 <code>lf_target_view_id</code>；圖號之後由 Infuser 從目標頁算出</td></tr><tr><td>Furniture Item</td><td>經 Grab 選共用家具 Block</td><td>解析 <code>FF-01__Chair-1</code>；格式錯誤停止並警告</td></tr><tr><td><code>TAG_ELEV_0</code></td><td>使用者直接填方向／編號</td><td>不建立模型 binding</td></tr><tr><td><code>TAG_DW</code></td><td>使用者直接填編號／寬／高</td><td>純手動，不建立 binding</td></tr></tbody></table></div>
 <p>同款家具可共用 Block 名稱；家具 Tag 綁定名稱類型，不具 object-level orphan 偵測。Locked Tag 不允許重新綁定，必須先由使用者解除 lock。在 D08 改 Block 之前，Tag 上 <code>attr_Lock_不更新&gt;寫入x或X</code> 寫 <code>x</code>／<code>X</code> 也算鎖定；空值與提示 <code>x為不更新</code> 不算。指令只讀舊欄，不把 <code>x</code> 寫進 <code>lf_lock_state</code>。</p>
-<h2 id="11-同步顯示資料">11. 同步顯示資料</h2>
-<p>使用者可選同步當前頁或全部頁。Sync 從指定 Registry revision 與 Sheet metadata 計算 render output：</p>
-<ul><li>不覆寫 locked Tag。</li><li>不覆寫 <code>TAG_DW</code>、比例、Detail 編號及其他人工欄位。</li><li>缺來源、過期、歧義與未知 template 回報明確狀態，不以顏色作唯一真相。</li><li>Part 完成就是合法停點，不要求每次全案同步。</li></ul>
-<h2 id="12-Health-與-Repair">12. Health 與 Repair</h2>
-<p>Health 唯讀檢查 identity、binding、revision、template 與覆蓋範圍，包含 locked Tag；<code>TAG_DW</code> 無來源屬正常，不判 unbound。</p>
+<h2 id="11-同步顯示資料-Infuser">11. 同步顯示資料（Infuser）</h2>
+<p>使用者可選同步當前頁（Part）或全部頁（All）。Infuser 從指定 Registry revision 與 Sheet metadata 把資料<strong>注入</strong> Tag Block 顯示欄：</p>
+<ul><li>不覆寫 locked Tag。</li><li>不覆寫 <code>TAG_DW</code>、比例、Detail 編號及其他人工欄位。</li><li>缺來源、過期、歧義與未知 template 回報明確狀態，不以顏色作唯一真相。</li><li>Part 完成就是合法停點，不要求每次全案同步。</li><li>第一輪 Infuser 不必等 TAG-O；TAG-O 做完後，下一輪 Infuser 依其判斷更新、跳過或警告。</li></ul>
+<p>畫面要看得到注入結果，須先完成 D08（Tag 圖塊文字欄改讀 <code>lf_*</code>）。</p>
+<h2 id="12-Health-與-Repair-TAG-O">12. Health 與 Repair（TAG-O）</h2>
+<p>TAG-O 在 Infuser 注入之後，<strong>只讀</strong>檢查 identity、binding、revision、template 與覆蓋範圍：資料還活著，還是斷連（unbound／orphaned／stale）。含 locked Tag；<code>TAG_DW</code> 無來源屬正常，不判 unbound。沒有 Infuser 注入結果則實機測不出東西。</p>
 <p>Repair 是獨立動作：先顯示影響與預覽，使用者確認後才執行。不得偷偷重綁、換 ID、刪 Drawing 或覆寫人工內容。提示顏色必須可還原原始顏色。</p>
+<p>操作來回：Infuser 注入 → TAG-O 確認活著或斷連 → 下一輪 Infuser。</p>
 <h2 id="變更循環">變更循環</h2>
 <h3 id="只改資料">只改資料</h3>
 <p>重新 Scan／Apply／Verify → Publish 新 Registry revision → Sync → Health。若只是人工備註且屬 instance override，不得被 Dictionary 重匯覆寫。</p>
