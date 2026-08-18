@@ -2,7 +2,7 @@
 """Sheet 圖號命名的純邏輯：頁名解析與依頁序推導圖號。
 
 不碰 Rhino。命名格式來自文件 UserText，缺值用 `keys.NAMING_DEFAULTS`。
-頁名：`**圖類別__圖編號__圖名`；圖框圖號：`圖類別 圖編號`（空格）。
+頁名：`**圖類別__圖編號__圖名`（寫入後起點頁保留 `**`）；圖框圖號：`圖類別 圖編號`（空格，不含星號）。
 """
 from __future__ import annotations
 
@@ -169,12 +169,15 @@ def compose_page_name(
     prefix: str,
     number: str,
     drawing_name: Optional[str],
+    *,
+    marked: bool = False,
 ) -> str:
     left = "%s%s%s" % (prefix, rules.separator, number)
     name = (drawing_name or "").strip()
-    if not name:
-        return left
-    return "%s%s%s" % (left, rules.separator, name)
+    body = left if not name else "%s%s%s" % (left, rules.separator, name)
+    if marked and rules.baseline_mark:
+        return "%s%s" % (rules.baseline_mark, body)
+    return body
 
 
 def assign_sheet_numbers(
@@ -188,7 +191,8 @@ def assign_sheet_numbers(
 
     `known_names` 是 `{page_name: drawing_name}`，僅在頁名不是三欄結構時使用
     （誤改頁名則恢復舊圖名）。`known_series` 是 `{page_name: (prefix, number)}`，
-    在尚未碰到 `**` 起點時，讓已有 metadata 的第一頁接續原系列。
+    在尚未碰到 `**` 起點時，讓已有 metadata 的第一頁接續原系列，並把 `**` 加回頁名。
+    圖框圖號不含 `**`。
     """
     lookup = dict(known_names or {})
     series_lookup = dict(known_series or {})
@@ -223,6 +227,8 @@ def assign_sheet_numbers(
             stored = series_lookup.get(page_name)
             if stored and stored[0] and stored[1]:
                 prefix, number = stored[0], stored[1]
+                status = STATUS_BASELINE
+                seen_baselines.add((prefix, number))
             else:
                 plans.append(
                     PagePlan(
@@ -253,7 +259,13 @@ def assign_sheet_numbers(
                 sequence=number,
                 drawing_no=drawing_no,
                 drawing_name=drawing_name,
-                new_page_name=compose_page_name(rules, prefix, number, drawing_name),
+                new_page_name=compose_page_name(
+                    rules,
+                    prefix,
+                    number,
+                    drawing_name,
+                    marked=(status == STATUS_BASELINE),
+                ),
             )
         )
     return tuple(plans)

@@ -32,7 +32,7 @@ from loopflow.features.tagger.keys import (
     TARGET_SHEET_ID_KEY,
     TEMPLATE_ID_KEY,
 )
-from loopflow.features.tagger.layout_id import run_tagger_layout_id
+from loopflow.features.tagger.layout_id import SERIES_START_HELP, run_tagger_layout_id
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
 
@@ -40,7 +40,8 @@ PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 LEGACY_NO = "DWG_NO"
 LEGACY_NAME = "DWG_NAME"
 START_IN = "**IN__101__一樓平面圖"
-PAGE_IN = "IN__101__一樓平面圖"
+PAGE_IN = START_IN
+PAGE_IN_PLAIN = "IN__101__一樓平面圖"
 PAGE_IN_2 = "IN__102__天花詳圖"
 
 
@@ -129,17 +130,28 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertEqual(session.listed_layout_pages()[0]["name"], PAGE_IN)
         self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NAME_KEY), "一樓平面圖")
 
+    def test_stripped_star_restored_on_existing_sheet(self):
+        session = _session([START_IN])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
+        run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(session.rename_layout_page(PAGE_IN, PAGE_IN_PLAIN))
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.listed_layout_pages()[0]["name"], PAGE_IN)
+        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 101")
+        self.assertNotIn("**", session.get_object_user_text("frame-1", DRAWING_NO_KEY))
+
     def test_third_field_updates_drawing_name(self):
         session = _session([START_IN])
         _add_block(session, "frame-1", START_IN, "Sample_Frame")
         run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
-        self.assertTrue(session.rename_layout_page(PAGE_IN, "IN__101__一樓平面"))
+        self.assertTrue(session.rename_layout_page(PAGE_IN, "**IN__101__一樓平面"))
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertTrue(result.ok, result.message)
         self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 101")
         self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NAME_KEY), "一樓平面")
         self.assertEqual(session.get_object_user_text("frame-1", LEGACY_NAME), "一樓平面")
-        self.assertEqual(session.listed_layout_pages()[0]["name"], "IN__101__一樓平面")
+        self.assertEqual(session.listed_layout_pages()[0]["name"], "**IN__101__一樓平面")
 
     def test_star_resets_series_start(self):
         session = _session([START_IN, "天花詳圖"])
@@ -151,7 +163,7 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 101")
         self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NO_KEY), "IN 301")
-        self.assertEqual(session.listed_layout_pages()[1]["name"], "IN__301__新系列")
+        self.assertEqual(session.listed_layout_pages()[1]["name"], "**IN__301__新系列")
 
     def test_blank_layout_inherits_previous_series(self):
         session = _session([START_IN, "Layout 05"])
@@ -169,7 +181,8 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertIn("missing_series_start", result.blocking)
         self.assertNotIn("missing_title_frame", result.blocking)
-        self.assertIn("**IN__201__立面圖", result.message)
+        self.assertIn(SERIES_START_HELP, result.message)
+        self.assertIn("IN__101__一樓平面圖", result.message)
         self.assertIsNone(session.get_object_user_text("frame-1", DRAWING_NO_KEY))
 
     def test_cover_before_series_is_skipped(self):

@@ -228,7 +228,7 @@ def ask_confirm_list(
             self.Resizable = True
             self.Width = 760
             self.Height = 560
-            font = _ui_font(drawing, 11)
+            font = _ui_font(drawing, 10)
 
             layout = forms.DynamicLayout()
             layout.Spacing = drawing.Size(8, 8)
@@ -238,7 +238,7 @@ def ask_confirm_list(
             scroll.Height = 430
             inner = forms.DynamicLayout()
             inner.Padding = drawing.Padding(10, 8, 10, 8)
-            inner.Spacing = drawing.Size(0, 10)
+            inner.Spacing = drawing.Size(0, 4)
             for line in lines:
                 label = forms.Label()
                 label.Text = str(line)

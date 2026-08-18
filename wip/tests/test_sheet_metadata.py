@@ -28,6 +28,7 @@ from loopflow.features.sheet.metadata import (
 )
 from loopflow.features.sheet.naming import (
     NamingRules,
+    STATUS_BASELINE,
     assign_sheet_numbers,
     parse_page_name,
 )
@@ -100,7 +101,21 @@ class NamingTests(unittest.TestCase):
         plans = assign_sheet_numbers(pages, self.rules)
         self.assertEqual(plans[0].drawing_no, "IN 201")
         self.assertEqual(plans[1].drawing_no, "IN 202")
+        self.assertEqual(plans[0].new_page_name, "**IN__201__立面圖")
         self.assertEqual(plans[1].new_page_name, "IN__202__天花詳圖")
+        self.assertNotIn("**", plans[0].drawing_no)
+
+    def test_metadata_restore_puts_star_back_on_start_page(self):
+        pages = [{"name": "IN__201__立面圖", "page_number": 1}]
+        plans = assign_sheet_numbers(
+            pages,
+            self.rules,
+            known_series={"IN__201__立面圖": ("IN", "201")},
+            known_names={"IN__201__立面圖": "立面圖"},
+        )
+        self.assertEqual(plans[0].status, STATUS_BASELINE)
+        self.assertEqual(plans[0].new_page_name, "**IN__201__立面圖")
+        self.assertEqual(plans[0].drawing_no, "IN 201")
 
 
 class SheetApiTests(unittest.TestCase):

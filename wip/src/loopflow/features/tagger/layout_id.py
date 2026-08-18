@@ -46,6 +46,30 @@ from loopflow.platform.rhino.session import RhinoSession, run_guarded
 COMMAND_ID = "LF_Tagger_Layout_ID"
 STAGE = "write_sheet_id"
 PAGE_TAG_TEMPLATE_ID = "TAG_ELEV_0"
+SERIES_START_HELP = (
+    "圖框已就緒，但尚未設定系列起點，因此未執行。\n"
+    "請將每個系列的第一頁按照下列規則命名：\n"
+    "**圖類別__圖號__圖名\n"
+    "**IN__101.01__一樓平面圖\n"
+    "**A__101__一樓平面圖\n"
+    "---\n"
+    "** 作為自動編號起點，勿刪\n"
+    "** 之間的頁面為同一系列\n"
+    "** 頁面之外的Layout名稱，只需要填寫圖名\n"
+    "---\n"
+    "Sample\n"
+    "**IN__101.01__一樓平面圖\n"
+    "二樓平面圖\n"
+    "三樓平面圖\n"
+    "**IN__201.01__立面圖1\n"
+    "立面圖2\n"
+    "(Layout自動命名如下)\n"
+    "**IN__101.01__一樓平面圖\n"
+    "IN__101.02__二樓平面圖\n"
+    "IN__101.03__三樓平面圖\n"
+    "**IN__201.01__立面圖1\n"
+    "IN__201.02__立面圖2"
+)
 
 ConfirmPlan = Callable[[Sequence[str]], bool]
 AskRegister = Callable[[Sequence[str]], Sequence[str]]
@@ -97,8 +121,7 @@ def _no_writable_pages_result(
     blocking = []
     if missing_start and not frame_problem:
         blocking.append("missing_series_start")
-        lines.append("圖框已就緒，但還沒有系列起點，所以沒有寫入。")
-        lines.append("請在每個系列的第一頁最前面加上 **，例如 **IN__201__立面圖，再跑一次。")
+        lines.append(SERIES_START_HELP)
     elif frame_problem and not missing_start:
         blocking.append("missing_title_frame")
         lines.append("沒有可寫入的 Layout 頁。請確認每一頁只有一個已登錄的圖框。")
@@ -109,9 +132,10 @@ def _no_writable_pages_result(
             blocking.append("missing_series_start")
         if not blocking:
             blocking.append("missing_title_frame")
-        lines.append("沒有可寫入的 Layout 頁。")
         if missing_start:
-            lines.append("請在系列第一頁最前面加上 **，例如 **IN__201__立面圖。")
+            lines.append(SERIES_START_HELP)
+        else:
+            lines.append("沒有可寫入的 Layout 頁。")
         if frame_problem:
             lines.append("請確認每一頁只有一個已登錄的圖框。")
     if not skipped:
