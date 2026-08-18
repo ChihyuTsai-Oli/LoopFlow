@@ -256,7 +256,7 @@ IN__201.02__立面圖2
 <h3 id="Duplicate-Sheet">Duplicate Sheet</h3>
 <p>複製後建立新的 <code>sheet_id</code>、<code>drawing_id</code> 與 <code>tag_id</code>；圖目錄定位點的 <code>lf_catalog_id</code> 也必須換新號：</p>
 <ul><li>除 <code>TAG_DW</code> 外，所有 Tag 清除來源綁定、自動欄位與人工補充說明，並恢復 template 預設 lock。</li><li><code>TAG_DW</code> 的人工編號、寬、高與其他內容完整保留。</li><li>使用者重新綁定新頁 Tag。</li><li>不覆蓋系統剪貼簿。</li></ul>
-<h3 id="圖目錄-獨立指令-排在-Layout-ID-實機驗收之後">圖目錄（獨立指令，排在 Layout ID 實機驗收之後）</h3>
+<h3 id="圖目錄-獨立指令-須先有-Sheet-metadata">圖目錄（獨立指令，須先有 Sheet metadata）</h3>
 <p><code>LF_Catalog</code> 只消費 Sheet metadata，不建立第二套圖號。使用者選獨立的圖號／圖名定位點與要列入的 Sheet，由定位點綁 <code>sheet_id</code>、文字可重建。規劃見 <code>LF_Catalog規劃.md</code>；正式契約等實作時寫入 <code>資料契約.md</code>。</p>
 <h2 id="10-建立與綁定-Tag">10. 建立與綁定 Tag</h2>
 <div class="tw"><table><thead><tr><th>模式</th><th>使用者動作</th><th>結果</th></tr></thead><tbody><tr><td>Grab</td><td>在 Layout 選 Tag，點進 Detail，再選來源</td><td>Height／Finish 寫 <code>lf_source_object_id</code>；家具 Item 寫 <code>lf_source_block_name</code></td></tr><tr><td>Laser</td><td>在 Layout 選 Height／Finish Laser Tag，再在 Detail 內點位置</td><td>用固定 View transform 射線寫 <code>lf_source_object_id</code>；多候選由使用者選，清單只顯示圖層名</td></tr><tr><td>Index</td><td>在 Layout 選 <code>TAG_SECTION_DETAIL</code> 或 <code>TAG_ELEV_1</code>～<code>4</code>，再從清單選全檔任一 Layout 的 Detail（可搜尋，點選時 zoom）</td><td>唯一對到已登記 View 才寫 <code>lf_target_view_id</code>；圖號之後由 Infuser 從目標頁算出</td></tr><tr><td>Furniture Item</td><td>經 Grab 選共用家具 Block</td><td>解析 <code>FF-01__Chair-1</code>；格式錯誤停止並警告</td></tr><tr><td><code>TAG_ELEV_0</code></td><td>使用者直接填方向／編號</td><td>不建立模型 binding</td></tr><tr><td><code>TAG_DW</code></td><td>使用者直接填編號／寬／高</td><td>純手動，不建立 binding</td></tr></tbody></table></div>
