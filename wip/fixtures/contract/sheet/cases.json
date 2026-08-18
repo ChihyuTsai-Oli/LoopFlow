@@ -75,6 +75,20 @@
       "page_name": "**IN__AB__平面",
       "expect": "inherit",
       "drawing_name": "IN__AB__平面"
+    },
+    {
+      "id": "manual-slash-three-part",
+      "page_name": "//S__901__結構平面圖",
+      "expect": "manual",
+      "series": "S",
+      "number": "901",
+      "drawing_name": "結構平面圖"
+    },
+    {
+      "id": "manual-slash-without-number-invalid",
+      "page_name": "//結構平面圖",
+      "expect": "manual_invalid",
+      "drawing_name": "結構平面圖"
     }
   ],
   "numbering_cases": [
@@ -137,6 +151,28 @@
       "id": "alphanumeric-single-digit-rolls-to-two-digits",
       "pages": ["**IN__A9__平面", "天花"],
       "expect_drawing_no": ["IN A9", "IN A10"]
+    },
+    {
+      "id": "manual-slash-does-not-consume-series",
+      "pages": ["**IN__101.01__一樓", "//S__901__結構平面圖", "二樓"],
+      "expect_drawing_no": ["IN 101.01", "S 901", "IN 101.02"],
+      "expect_drawing_name": ["一樓", "結構平面圖", "二樓"],
+      "expect_page_name": [
+        "**IN__101.01__一樓",
+        "//S__901__結構平面圖",
+        "IN__101.02__二樓"
+      ]
+    },
+    {
+      "id": "manual-slash-without-star",
+      "pages": ["//S__901__結構平面圖"],
+      "expect_drawing_no": ["S 901"],
+      "expect_page_name": ["//S__901__結構平面圖"]
+    },
+    {
+      "id": "invalid-slash-does-not-number",
+      "pages": ["**IN__101__一樓", "//結構"],
+      "expect_drawing_no": ["IN 101", null]
     }
   ],
   "identity_cases": [

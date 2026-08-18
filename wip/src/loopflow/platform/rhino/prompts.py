@@ -375,7 +375,11 @@ def ask_yes_no(message: str, title: str = "LoopFlow") -> bool:
 
 def format_result_popup(result) -> str:
     """失敗／阻擋時列出訊息與 Dictionary issues 全文。"""
-    lines = [getattr(result, "message", "") or ""]
+    message = getattr(result, "message", "") or ""
+    blocking = getattr(result, "blocking", None) or ()
+    if "missing_series_start" in blocking:
+        return message
+    lines = [message]
     details = getattr(result, "details", None) or {}
     for issue in details.get("issues") or ():
         text = str(issue).strip()

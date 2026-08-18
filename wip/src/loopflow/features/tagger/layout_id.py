@@ -27,6 +27,8 @@ from loopflow.features.sheet.metadata import (
 from loopflow.features.sheet.naming import (
     STATUS_BASELINE,
     STATUS_DUPLICATE_BASELINE,
+    STATUS_MANUAL,
+    STATUS_MANUAL_INVALID,
     STATUS_SKIPPED,
     STATUS_UNNUMBERED,
     NamingRules,
@@ -56,21 +58,26 @@ SERIES_START_HELP = (
     "1. ** 作為自動編號起點，勿刪\n"
     "2. ** 之間的頁面為同一系列\n"
     "3. ** 頁面之外的Layout名稱，只需要填寫圖名\n"
-    "4. 圖號 / 圖名 的編號與命名可以從Layout列表手動調整\n"
+    "4. // 頁面不參與自動編號，但仍需使用相同命名格式規範\n"
+    "5. 圖號 / 圖名 的編號與命名可以從Layout列表手動調整\n"
     "　經由自動編號寫入圖框中，不可直接修改圖框內容\n"
     "---\n"
+    "\n"
     "Sample\n"
+    "\n"
     "**IN__101.01__一樓平面圖\n"
     "二樓平面圖\n"
     "三樓平面圖\n"
     "**IN__201.01__立面圖1\n"
     "立面圖2\n"
-    "(Layout自動編號如下)\n"
+    "//S__901__結構平面圖\n"
+    "--------Layout自動編號如下--------\n"
     "**IN__101.01__一樓平面圖\n"
     "IN__101.02__二樓平面圖\n"
     "IN__101.03__三樓平面圖\n"
     "**IN__201.01__立面圖1\n"
-    "IN__201.02__立面圖2"
+    "IN__201.02__立面圖2\n"
+    "//S__901__結構平面圖"
 )
 
 ConfirmPlan = Callable[[Sequence[str]], bool]
@@ -119,32 +126,23 @@ def _no_writable_pages_result(
         reason and "系列起點" not in reason and "頁名是空的" not in reason
         for reason in reasons
     )
-    lines = []
-    blocking = []
-    if missing_start and not frame_problem:
+    details = {"skipped": skipped, "unregistered_blocks": unknown}
+    if missing_start:
         return results.blocked(
             STAGE,
             SERIES_START_HELP,
             ("missing_series_start",),
             command_id=COMMAND_ID,
-            details={"skipped": skipped, "unregistered_blocks": unknown},
+            details=details,
         )
-    if frame_problem and not missing_start:
+    lines = []
+    blocking = []
+    if frame_problem:
         blocking.append("missing_title_frame")
         lines.append("沒有可寫入的 Layout 頁。請確認每一頁只有一個已登錄的圖框。")
     else:
-        if frame_problem:
-            blocking.append("missing_title_frame")
-        if missing_start:
-            blocking.append("missing_series_start")
-        if not blocking:
-            blocking.append("missing_title_frame")
-        if missing_start:
-            lines.append(SERIES_START_HELP)
-        else:
-            lines.append("沒有可寫入的 Layout 頁。")
-        if frame_problem:
-            lines.append("請確認每一頁只有一個已登錄的圖框。")
+        blocking.append("missing_title_frame")
+        lines.append("沒有可寫入的 Layout 頁。")
     if not skipped:
         lines.append("這份檔案沒有可編號的 Layout 頁。")
     for item in skipped[:12]:
@@ -159,7 +157,7 @@ def _no_writable_pages_result(
         "\n".join(lines),
         tuple(blocking),
         command_id=COMMAND_ID,
-        details={"skipped": skipped, "unregistered_blocks": unknown},
+        details=details,
     )
 
 
@@ -227,14 +225,18 @@ def build_sheet_rows(
 
     rows = []
     for (scan, frame_id), plan in zip(writable, plans):
-        if plan.status in (STATUS_SKIPPED, STATUS_UNNUMBERED):
+        if plan.status in (STATUS_SKIPPED, STATUS_UNNUMBERED, STATUS_MANUAL_INVALID):
+            if plan.status == STATUS_UNNUMBERED:
+                reason = "頁序中還沒有系列起點，未編號"
+            elif plan.status == STATUS_MANUAL_INVALID:
+                reason = "手動頁格式不正確，需 //圖類別__圖號__圖名"
+            else:
+                reason = "頁名是空的"
             skipped.append(
                 {
                     "page_name": scan.page_name,
                     "page_number": scan.page_number,
-                    "reason": "頁序中還沒有系列起點，未編號"
-                    if plan.status == STATUS_UNNUMBERED
-                    else "頁名是空的",
+                    "reason": reason,
                 }
             )
             continue
@@ -266,6 +268,8 @@ def preview_lines(rows: Sequence[SheetRow], skipped: Sequence[dict]) -> Tuple[st
             marks.append("新頁")
         if row.plan.status == STATUS_BASELINE:
             marks.append("系列起點")
+        if row.plan.status == STATUS_MANUAL:
+            marks.append("手動頁，不編號")
         if row.plan.status == STATUS_DUPLICATE_BASELINE:
             marks.append("重複的系列起點，已接續目前系列")
         if row.previous_drawing_no and row.previous_drawing_no != row.plan.drawing_no:

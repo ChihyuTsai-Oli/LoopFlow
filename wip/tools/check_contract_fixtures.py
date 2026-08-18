@@ -476,12 +476,12 @@ def check_sheet() -> None:
         fail("baseline_mark 預設應為 **")
 
     cases = load(CONTRACT / "sheet" / "cases.json")
-    allowed_parse = {"baseline", "inherit", "skip"}
+    allowed_parse = {"baseline", "inherit", "skip", "manual", "manual_invalid"}
     for case in cases["page_name_cases"]:
         if case["expect"] not in allowed_parse:
             fail("sheet 頁名案例 %s 的 expect 不在 %s" % (case["id"], sorted(allowed_parse)))
-        if case["expect"] == "baseline" and not case.get("series"):
-            fail("sheet 頁名案例 %s 宣告 baseline 卻沒有 series" % case["id"])
+        if case["expect"] in ("baseline", "manual") and not case.get("series"):
+            fail("sheet 頁名案例 %s 宣告 %s 卻沒有 series" % (case["id"], case["expect"]))
         if case["expect"] == "skip" and "drawing_name" in case:
             fail("sheet 頁名案例 %s 要跳過就不該期望 drawing_name" % case["id"])
     for case in cases["numbering_cases"]:

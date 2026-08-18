@@ -34,6 +34,7 @@ from loopflow.features.tagger.keys import (
 )
 from loopflow.features.tagger.layout_id import SERIES_START_HELP, run_tagger_layout_id
 from loopflow.platform.rhino.memory import MemorySession
+from loopflow.platform.rhino.prompts import format_result_popup
 from loopflow.platform.rhino.state import ObjectViewState
 
 PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
@@ -120,26 +121,31 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("frame-new", DRAWING_NO_KEY), "IN 102")
 
     def test_manual_page_rename_restored_from_metadata(self):
-        session = _session([START_IN])
+        session = _session([START_IN, "天花詳圖"])
         _add_block(session, "frame-1", START_IN, "Sample_Frame")
+        _add_block(session, "frame-2", "天花詳圖", "Sample_Frame")
         run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
-        sheet_id = session.get_object_user_text("frame-1", SHEET_ID_KEY)
-        self.assertTrue(session.rename_layout_page(PAGE_IN, "隨便改名"))
+        sheet_id = session.get_object_user_text("frame-2", SHEET_ID_KEY)
+        self.assertTrue(session.rename_layout_page(PAGE_IN_2, "隨便改名"))
         run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
-        self.assertEqual(session.get_object_user_text("frame-1", SHEET_ID_KEY), sheet_id)
-        self.assertEqual(session.listed_layout_pages()[0]["name"], PAGE_IN)
-        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NAME_KEY), "一樓平面圖")
+        self.assertEqual(session.get_object_user_text("frame-2", SHEET_ID_KEY), sheet_id)
+        self.assertEqual(session.listed_layout_pages()[1]["name"], PAGE_IN_2)
+        self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NAME_KEY), "天花詳圖")
 
-    def test_stripped_star_restored_on_existing_sheet(self):
+    def test_stripped_star_stops_and_writes_nothing(self):
         session = _session([START_IN])
         _add_block(session, "frame-1", START_IN, "Sample_Frame")
         run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertTrue(session.rename_layout_page(PAGE_IN, PAGE_IN_PLAIN))
+        objects, document, pages = _snapshot(session)
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
-        self.assertTrue(result.ok, result.message)
-        self.assertEqual(session.listed_layout_pages()[0]["name"], PAGE_IN)
-        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 101")
-        self.assertNotIn("**", session.get_object_user_text("frame-1", DRAWING_NO_KEY))
+        self.assertFalse(result.ok)
+        self.assertIn("missing_series_start", result.blocking)
+        self.assertEqual(result.message, SERIES_START_HELP)
+        self.assertEqual(format_result_popup(result), SERIES_START_HELP)
+        self.assertEqual(session._object_meta, objects)
+        self.assertEqual(session._document_text, document)
+        self.assertEqual(session._layout_pages, pages)
 
     def test_third_field_updates_drawing_name(self):
         session = _session([START_IN])
@@ -182,8 +188,51 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertIn("missing_series_start", result.blocking)
         self.assertNotIn("missing_title_frame", result.blocking)
         self.assertEqual(result.message, SERIES_START_HELP)
+        self.assertEqual(format_result_popup(result), SERIES_START_HELP)
         self.assertTrue(result.details["skipped"])
         self.assertIsNone(session.get_object_user_text("frame-1", DRAWING_NO_KEY))
+
+    def test_missing_star_with_cover_still_only_help(self):
+        session = _session(["Preset", "IN__101__一樓平面圖"])
+        _add_block(session, "frame-1", "IN__101__一樓平面圖", "Sample_Frame")
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertFalse(result.ok)
+        self.assertEqual(result.blocking, ("missing_series_start",))
+        self.assertEqual(result.message, SERIES_START_HELP)
+        self.assertEqual(format_result_popup(result), SERIES_START_HELP)
+
+    def test_slash_page_writes_without_consuming_series(self):
+        session = _session([START_IN, "//S__901__結構平面圖", "天花詳圖"])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
+        _add_block(session, "frame-s", "//S__901__結構平面圖", "Sample_Frame")
+        _add_block(session, "frame-2", "天花詳圖", "Sample_Frame")
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 101")
+        self.assertEqual(session.get_object_user_text("frame-s", DRAWING_NO_KEY), "S 901")
+        self.assertEqual(session.get_object_user_text("frame-s", DRAWING_NAME_KEY), "結構平面圖")
+        self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NO_KEY), "IN 102")
+        self.assertEqual(
+            [page["name"] for page in session.listed_layout_pages()],
+            [PAGE_IN, "//S__901__結構平面圖", PAGE_IN_2],
+        )
+
+    def test_slash_only_writes_without_star(self):
+        session = _session(["//S__901__結構平面圖"])
+        _add_block(session, "frame-s", "//S__901__結構平面圖", "Sample_Frame")
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("frame-s", DRAWING_NO_KEY), "S 901")
+        self.assertEqual(session.listed_layout_pages()[0]["name"], "//S__901__結構平面圖")
+
+    def test_invalid_slash_skips_page(self):
+        session = _session([START_IN, "//結構"])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
+        _add_block(session, "frame-bad", "//結構", "Sample_Frame")
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 101")
+        self.assertIsNone(session.get_object_user_text("frame-bad", DRAWING_NO_KEY))
 
     def test_cover_before_series_is_skipped(self):
         session = _session(["封面", START_IN])

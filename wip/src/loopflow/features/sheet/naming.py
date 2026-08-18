@@ -2,7 +2,8 @@
 """Sheet 圖號命名的純邏輯：頁名解析與依頁序推導圖號。
 
 不碰 Rhino。命名格式來自文件 UserText，缺值用 `keys.NAMING_DEFAULTS`。
-頁名：`**圖類別__圖編號__圖名`（寫入後起點頁保留 `**`）；圖框圖號：`圖類別 圖編號`（空格，不含星號）。圖編號只要尾端是數字即可。
+頁名：`**圖類別__圖編號__圖名`（寫入後起點頁保留 `**`）；`//` 手動頁不編號但寫入圖框。
+圖框圖號：`圖類別 圖編號`（空格，不含 `**`／`//`）。圖編號只要尾端是數字即可。
 """
 from __future__ import annotations
 
@@ -14,14 +15,19 @@ from loopflow.features.sheet.keys import NAMING_DEFAULTS, NAMING_KEYS
 
 PARSE_BASELINE = "baseline"
 PARSE_INHERIT = "inherit"
+PARSE_MANUAL = "manual"
+PARSE_MANUAL_INVALID = "manual_invalid"
 PARSE_SKIP = "skip"
 
 STATUS_BASELINE = "baseline"
 STATUS_NUMBERED = "numbered"
 STATUS_DUPLICATE_BASELINE = "duplicate_baseline"
+STATUS_MANUAL = "manual"
+STATUS_MANUAL_INVALID = "manual_invalid"
 STATUS_UNNUMBERED = "unnumbered"
 STATUS_SKIPPED = "skipped_blank_name"
 
+MANUAL_MARK = "//"
 TRAILING_DIGITS_RE = re.compile(r"^(.*?)(\d+)$")
 
 
@@ -98,42 +104,61 @@ def split_fields(page_name: str, rules: NamingRules) -> Tuple[str, ...]:
     return tuple(part.strip() for part in raw.split(rules.separator))
 
 
+def _three_part(parts: Tuple[str, ...], rules: NamingRules):
+    if len(parts) >= 2 and parts[0] and is_number_token(parts[1]):
+        name = rules.separator.join(parts[2:]) if len(parts) > 2 else ""
+        return parts[0], parts[1], name
+    return None
+
+
 def parse_page_name(page_name: str, rules: NamingRules) -> PageParse:
-    """解析頁名。有 `**` 才當系列起點；三欄結構可更新圖名。"""
+    """解析頁名。`//` 為手動頁；`**` 才當系列起點；三欄結構可更新圖名。"""
     raw = "" if page_name is None else str(page_name).strip()
     if not raw:
         return PageParse(kind=PARSE_SKIP)
+    if raw.startswith(MANUAL_MARK):
+        body = raw[len(MANUAL_MARK) :].lstrip()
+        if not body:
+            return PageParse(kind=PARSE_MANUAL_INVALID, drawing_name="")
+        parsed = _three_part(split_fields(body, rules), rules)
+        if parsed is None:
+            return PageParse(kind=PARSE_MANUAL_INVALID, drawing_name=body)
+        prefix, number, name = parsed
+        return PageParse(
+            kind=PARSE_MANUAL,
+            drawing_name=name,
+            prefix=prefix,
+            number=number,
+            structured=True,
+        )
     marked = bool(rules.baseline_mark) and raw.startswith(rules.baseline_mark)
     if marked:
         raw = raw[len(rules.baseline_mark) :].lstrip()
         if not raw:
             return PageParse(kind=PARSE_SKIP)
     parts = split_fields(raw, rules)
+    parsed = _three_part(parts, rules)
     if marked:
-        if (
-            len(parts) >= 2
-            and parts[0]
-            and is_number_token(parts[1])
-        ):
-            name = rules.separator.join(parts[2:]) if len(parts) > 2 else ""
-            return PageParse(
-                kind=PARSE_BASELINE,
-                drawing_name=name,
-                prefix=parts[0],
-                number=parts[1],
-                structured=True,
-            )
-        return PageParse(kind=PARSE_INHERIT, drawing_name=raw)
-    if len(parts) >= 2 and parts[0] and is_number_token(parts[1]):
-        name = rules.separator.join(parts[2:]) if len(parts) > 2 else ""
+        if parsed is None:
+            return PageParse(kind=PARSE_INHERIT, drawing_name=raw)
+        prefix, number, name = parsed
         return PageParse(
-            kind=PARSE_INHERIT,
+            kind=PARSE_BASELINE,
             drawing_name=name,
-            prefix=parts[0],
-            number=parts[1],
+            prefix=prefix,
+            number=number,
             structured=True,
         )
-    return PageParse(kind=PARSE_INHERIT, drawing_name=raw)
+    if parsed is None:
+        return PageParse(kind=PARSE_INHERIT, drawing_name=raw)
+    prefix, number, name = parsed
+    return PageParse(
+        kind=PARSE_INHERIT,
+        drawing_name=name,
+        prefix=prefix,
+        number=number,
+        structured=True,
+    )
 
 
 def parse_drawing_no(drawing_no: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
@@ -171,10 +196,13 @@ def compose_page_name(
     drawing_name: Optional[str],
     *,
     marked: bool = False,
+    manual: bool = False,
 ) -> str:
     left = "%s%s%s" % (prefix, rules.separator, number)
     name = (drawing_name or "").strip()
     body = left if not name else "%s%s%s" % (left, rules.separator, name)
+    if manual:
+        return "%s%s" % (MANUAL_MARK, body)
     if marked and rules.baseline_mark:
         return "%s%s" % (rules.baseline_mark, body)
     return body
@@ -190,12 +218,10 @@ def assign_sheet_numbers(
     """依 Layout 頁序推導每頁的系列、編號、圖號與應有頁名。
 
     `known_names` 是 `{page_name: drawing_name}`，僅在頁名不是三欄結構時使用
-    （誤改頁名則恢復舊圖名）。`known_series` 是 `{page_name: (prefix, number)}`，
-    在尚未碰到 `**` 起點時，讓已有 metadata 的第一頁接續原系列，並把 `**` 加回頁名。
-    圖框圖號不含 `**`。
+    （誤改頁名則恢復舊圖名）。沒有 `**` 時不得用舊 metadata 當起點。
+    `//` 手動頁不改系列尾數。圖框圖號不含 `**`／`//`。
     """
     lookup = dict(known_names or {})
-    series_lookup = dict(known_series or {})
     plans = []
     prefix: Optional[str] = None
     number: Optional[str] = None
@@ -213,6 +239,39 @@ def assign_sheet_numbers(
                 )
             )
             continue
+        if parse.kind == PARSE_MANUAL_INVALID:
+            plans.append(
+                PagePlan(
+                    page_name=page_name,
+                    page_number=page_number,
+                    status=STATUS_MANUAL_INVALID,
+                    drawing_name=parse.drawing_name,
+                )
+            )
+            continue
+        if parse.kind == PARSE_MANUAL:
+            drawing_no = format_drawing_no(rules, parse.prefix or "", parse.number or "")
+            plans.append(
+                PagePlan(
+                    page_name=page_name,
+                    page_number=page_number,
+                    status=STATUS_MANUAL,
+                    series=parse.prefix,
+                    prefix=parse.prefix,
+                    number=parse.number,
+                    sequence=parse.number,
+                    drawing_no=drawing_no,
+                    drawing_name=parse.drawing_name or "",
+                    new_page_name=compose_page_name(
+                        rules,
+                        parse.prefix or "",
+                        parse.number or "",
+                        parse.drawing_name,
+                        manual=True,
+                    ),
+                )
+            )
+            continue
         status = STATUS_NUMBERED
         if parse.kind == PARSE_BASELINE:
             key = (parse.prefix, parse.number)
@@ -224,21 +283,15 @@ def assign_sheet_numbers(
                 prefix, number = parse.prefix, parse.number
                 status = STATUS_BASELINE
         elif prefix is None:
-            stored = series_lookup.get(page_name)
-            if stored and stored[0] and stored[1]:
-                prefix, number = stored[0], stored[1]
-                status = STATUS_BASELINE
-                seen_baselines.add((prefix, number))
-            else:
-                plans.append(
-                    PagePlan(
-                        page_name=page_name,
-                        page_number=page_number,
-                        status=STATUS_UNNUMBERED,
-                        drawing_name=lookup.get(page_name) or parse.drawing_name,
-                    )
+            plans.append(
+                PagePlan(
+                    page_name=page_name,
+                    page_number=page_number,
+                    status=STATUS_UNNUMBERED,
+                    drawing_name=lookup.get(page_name) or parse.drawing_name,
                 )
-                continue
+            )
+            continue
         else:
             number = increment_number(number)
         if parse.structured:

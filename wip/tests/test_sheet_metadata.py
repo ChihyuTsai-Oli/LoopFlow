@@ -28,7 +28,7 @@ from loopflow.features.sheet.metadata import (
 )
 from loopflow.features.sheet.naming import (
     NamingRules,
-    STATUS_BASELINE,
+    STATUS_UNNUMBERED,
     assign_sheet_numbers,
     increment_number,
     parse_page_name,
@@ -72,7 +72,7 @@ class NamingTests(unittest.TestCase):
                 self.assertIsNone(parsed.drawing_name)
                 continue
             self.assertEqual(parsed.drawing_name, case.get("drawing_name", ""), case["id"])
-            if case["expect"] == "baseline":
+            if case["expect"] in ("baseline", "manual"):
                 self.assertEqual(parsed.prefix, case["series"], case["id"])
                 self.assertEqual(parsed.number, case.get("number"), case["id"])
 
@@ -106,7 +106,7 @@ class NamingTests(unittest.TestCase):
         self.assertEqual(plans[1].new_page_name, "IN__202__天花詳圖")
         self.assertNotIn("**", plans[0].drawing_no)
 
-    def test_metadata_restore_puts_star_back_on_start_page(self):
+    def test_metadata_does_not_invent_star_without_page_mark(self):
         pages = [{"name": "IN__201__立面圖", "page_number": 1}]
         plans = assign_sheet_numbers(
             pages,
@@ -114,9 +114,8 @@ class NamingTests(unittest.TestCase):
             known_series={"IN__201__立面圖": ("IN", "201")},
             known_names={"IN__201__立面圖": "立面圖"},
         )
-        self.assertEqual(plans[0].status, STATUS_BASELINE)
-        self.assertEqual(plans[0].new_page_name, "**IN__201__立面圖")
-        self.assertEqual(plans[0].drawing_no, "IN 201")
+        self.assertEqual(plans[0].status, STATUS_UNNUMBERED)
+        self.assertIsNone(plans[0].drawing_no)
 
     def test_increment_keeps_letter_prefix_and_rolls_single_digit_to_ten(self):
         self.assertEqual(increment_number("201"), "202")
