@@ -26,6 +26,7 @@ CORE_COMMANDS = (
     "LF_Anchor_Frame",
     "LF_Extract_CP",
     "LF_Duplicate_Layout",
+    "LF_Catalog",
     "LF_Sync_Worksession",
 )
 
