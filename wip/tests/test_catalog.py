@@ -141,6 +141,32 @@ class SortAndPairTests(unittest.TestCase):
 
 
 class AssignAndBuildTests(unittest.TestCase):
+    def test_assign_name_reuses_number_catalog_id(self):
+        session = _session()
+        session.add_point("n1", (100, 200, 0))
+        session.add_point("m1", (180, 200, 0))
+        first = assign_catalog_points(session, ["n1"], FIELD_DRAWING_NO)
+        second = assign_catalog_points(session, ["m1"], FIELD_DRAWING_NAME)
+        self.assertTrue(first.ok, first.message)
+        self.assertTrue(second.ok, second.message)
+        self.assertEqual(
+            session.get_object_user_text("n1", CATALOG_ID_KEY),
+            session.get_object_user_text("m1", CATALOG_ID_KEY),
+        )
+
+    def test_assign_second_batch_reuses_same_catalog_id(self):
+        session = _session()
+        session.add_point("n1", (100, 200, 0))
+        session.add_point("n2", (100, 100, 0))
+        first = assign_catalog_points(session, ["n1"], FIELD_DRAWING_NO)
+        second = assign_catalog_points(session, ["n2"], FIELD_DRAWING_NO)
+        self.assertTrue(first.ok, first.message)
+        self.assertTrue(second.ok, second.message)
+        self.assertEqual(
+            session.get_object_user_text("n1", CATALOG_ID_KEY),
+            session.get_object_user_text("n2", CATALOG_ID_KEY),
+        )
+
     def test_assign_rejects_block(self):
         session = _session()
         session.add_object("block-1")
@@ -320,13 +346,29 @@ class AssignAndBuildTests(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertIn("missing_path", result.blocking)
 
-    def test_mixed_catalog_id_blocks(self):
+    def test_split_number_and_name_catalog_ids_unify_on_build(self):
         session = _session()
         session.set_layout_pages(["P1"])
         _add_sheet(session, "P1", SHEET_A, "IN 101", "一樓", 1)
         _add_anchor(session, "n1", (100, 200, 0), page="P1", layer=NUMBER_LAYER, field=FIELD_DRAWING_NO)
         _add_anchor(session, "m1", (180, 200, 0), page="P1", layer=NAME_LAYER, field=FIELD_DRAWING_NAME)
         session.set_object_user_text("m1", CATALOG_ID_KEY, "ffffffff-ffff-4fff-8fff-ffffffffffff")
+        result = build_catalog(session, [SHEET_A], confirm=lambda _lines: True, catalog=_catalog())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(
+            session.get_object_user_text("n1", CATALOG_ID_KEY),
+            session.get_object_user_text("m1", CATALOG_ID_KEY),
+        )
+
+    def test_mixed_catalog_id_within_one_field_blocks(self):
+        session = _session()
+        session.set_layout_pages(["P1"])
+        _add_sheet(session, "P1", SHEET_A, "IN 101", "一樓", 1)
+        _add_anchor(session, "n1", (100, 200, 0), page="P1", layer=NUMBER_LAYER, field=FIELD_DRAWING_NO)
+        _add_anchor(session, "n2", (100, 100, 0), page="P1", layer=NUMBER_LAYER, field=FIELD_DRAWING_NO)
+        _add_anchor(session, "m1", (180, 200, 0), page="P1", layer=NAME_LAYER, field=FIELD_DRAWING_NAME)
+        _add_anchor(session, "m2", (180, 100, 0), page="P1", layer=NAME_LAYER, field=FIELD_DRAWING_NAME)
+        session.set_object_user_text("n2", CATALOG_ID_KEY, "ffffffff-ffff-4fff-8fff-ffffffffffff")
         result = build_catalog(session, [SHEET_A], confirm=lambda _lines: True, catalog=_catalog())
         self.assertFalse(result.ok)
         self.assertIn("mixed_catalog_id", result.blocking)

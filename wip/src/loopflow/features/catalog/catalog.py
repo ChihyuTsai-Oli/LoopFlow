@@ -349,6 +349,42 @@ def _layer_field_ids(session: RhinoSession, layer: str, field: str) -> Tuple[str
     return tuple(ids)
 
 
+def _unique_catalog_ids(session: RhinoSession, object_ids: Sequence[str]) -> Tuple[str, ...]:
+    found = []
+    for object_id in object_ids:
+        catalog_id = text(session.get_object_user_text(object_id, CATALOG_ID_KEY))
+        if catalog_id and catalog_id not in found:
+            found.append(catalog_id)
+    return tuple(found)
+
+
+def _resolve_assign_catalog_id(
+    session: RhinoSession,
+    object_ids: Sequence[str],
+    field: str,
+) -> Tuple[Optional[str], Optional[str]]:
+    """圖號與圖名分次選取、或分批加選，都沿用同一份目錄身分。"""
+    selected = _unique_catalog_ids(session, object_ids)
+    other_field = FIELD_DRAWING_NAME if field == FIELD_DRAWING_NO else FIELD_DRAWING_NO
+    other_layer = NAME_LAYER if field == FIELD_DRAWING_NO else NUMBER_LAYER
+    current_layer = NUMBER_LAYER if field == FIELD_DRAWING_NO else NAME_LAYER
+    other_ids = _unique_catalog_ids(
+        session, _layer_field_ids(session, other_layer, other_field)
+    )
+    current_ids = _unique_catalog_ids(
+        session, _layer_field_ids(session, current_layer, field)
+    )
+    if len(other_ids) == 1:
+        return other_ids[0], None
+    if len(selected) > 1:
+        return None, "mixed_catalog_id"
+    if selected:
+        return selected[0], None
+    if len(current_ids) == 1:
+        return current_ids[0], None
+    return _new_id(), None
+
+
 def collect_anchors(session: RhinoSession) -> results.Result:
     number_ids = _layer_field_ids(session, NUMBER_LAYER, FIELD_DRAWING_NO)
     name_ids = _layer_field_ids(session, NAME_LAYER, FIELD_DRAWING_NAME)
@@ -359,18 +395,23 @@ def collect_anchors(session: RhinoSession) -> results.Result:
             ("missing_anchors",),
             command_id=COMMAND_ID,
         )
-    catalog_ids = set()
-    for object_id in number_ids + name_ids:
-        catalog_id = text(session.get_object_user_text(object_id, CATALOG_ID_KEY))
-        if catalog_id:
-            catalog_ids.add(catalog_id)
-    if len(catalog_ids) != 1:
+    number_catalog_ids = _unique_catalog_ids(session, number_ids)
+    name_catalog_ids = _unique_catalog_ids(session, name_ids)
+    if len(number_catalog_ids) > 1 or len(name_catalog_ids) > 1:
         return results.blocked(
             STAGE,
             "定位點混入多個圖目錄身分，已停止，不寫入。",
             ("mixed_catalog_id",),
             command_id=COMMAND_ID,
         )
+    if not number_catalog_ids or not name_catalog_ids:
+        return results.blocked(
+            STAGE,
+            "找不到成對的圖號／圖名定位點，已停止，不寫入。",
+            ("missing_anchors",),
+            command_id=COMMAND_ID,
+        )
+    catalog_ids = (number_catalog_ids[0],)
     pages = _page_index(session)
     numbers = []
     names = []
@@ -527,19 +568,14 @@ def assign_catalog_points(
                     ("not_point",),
                     command_id=COMMAND_ID,
                 )
-        existing = []
-        for object_id in object_ids:
-            catalog_id = text(current.get_object_user_text(object_id, CATALOG_ID_KEY))
-            if catalog_id and catalog_id not in existing:
-                existing.append(catalog_id)
-        if len(existing) > 1:
+        catalog_id, reason = _resolve_assign_catalog_id(current, object_ids, field)
+        if catalog_id is None:
             return results.blocked(
                 STAGE,
                 "選取的定位點屬於不同圖目錄，已停止，不寫入。",
-                ("mixed_catalog_id",),
+                (reason or "mixed_catalog_id",),
                 command_id=COMMAND_ID,
             )
-        catalog_id = existing[0] if existing else _new_id()
         layer = NUMBER_LAYER if field == FIELD_DRAWING_NO else NAME_LAYER
         color = NUMBER_COLOR if field == FIELD_DRAWING_NO else NAME_COLOR
         current.ensure_layer(layer)
