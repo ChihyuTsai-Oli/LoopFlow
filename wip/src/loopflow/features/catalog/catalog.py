@@ -1091,13 +1091,10 @@ def _default_pick_sheets(
         items.append(
             {
                 "sheet_id": sheet.sheet_id,
-                "label": "%s  %s  %s  %s"
-                % (
-                    sheet.page_number,
-                    meta.get("drawing_no") or "—",
-                    meta.get("drawing_name") or "—",
-                    sheet.page_name,
-                ),
+                "page_number": sheet.page_number,
+                "drawing_no": meta.get("drawing_no") or "—",
+                "drawing_name": meta.get("drawing_name") or "—",
+                "page_name": sheet.page_name or "",
             }
         )
     if not items:

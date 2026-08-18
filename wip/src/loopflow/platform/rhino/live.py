@@ -249,6 +249,16 @@ class LiveSession:
         if self._rs.IsLayer(path):
             self._rs.DeleteLayer(path)
 
+    def _unset_layer_index(self) -> int:
+        rhino = self._rhino
+        value = getattr(getattr(rhino, "RhinoMath", None), "UnsetIntIndex", None)
+        if value is not None:
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                pass
+        return -2147483648
+
     def _layer_obj(self, path: str):
         index = self._layer_index(path)
         if index < 0:
@@ -256,25 +266,29 @@ class LiveSession:
         return self._sc.doc.Layers[index]
 
     def _layer_index(self, path: str) -> int:
+        """對齊 rhinoscriptsyntax.__getlayer：FindByFullPath 要用 UnsetIntIndex。"""
         layers = self._sc.doc.Layers
+        wanted = str(path)
+        unset = self._unset_layer_index()
         try:
-            index = layers.FindByFullPath(path, -1)
-            if index is not None and int(index) >= 0:
+            index = layers.FindByFullPath(wanted, unset)
+            if index is not None and int(index) != unset and int(index) >= 0:
                 return int(index)
         except Exception:
             pass
+        if "::" not in wanted:
+            try:
+                layer = layers.FindName(wanted)
+                if layer is not None and not getattr(layer, "IsDeleted", False):
+                    return int(layer.Index)
+            except Exception:
+                pass
         try:
-            index = layers.FindByFullPath(path, True)
-            if index is not None and int(index) >= 0:
-                return int(index)
-        except Exception:
-            pass
-        try:
-            wanted = str(path)
             for layer in layers:
+                if getattr(layer, "IsDeleted", False):
+                    continue
                 full = str(getattr(layer, "FullPath", "") or "")
-                name = str(getattr(layer, "Name", "") or "")
-                if full == wanted or name == wanted:
+                if full == wanted:
                     return int(layer.Index)
         except Exception:
             pass
@@ -297,37 +311,24 @@ class LiveSession:
         layer.CommitChanges()
 
     def set_layer_printable(self, path: str, printable: bool) -> None:
-        """關掉列印。rs.LayerPrintable(..., False) 在 Python 會被當成查詢，必須用 0／1。"""
-        if not self.has_layer(path):
+        """關掉圖層面板 Print 欄（PlotEnabled）。
+
+        Rhino 8 的 rhinoscriptsyntax 沒有 LayerPrintable。LayerPrintColor 的寫法是
+        直接改 Layer 物件再 Redraw；呼叫 Layers.Modify 可能把改之前的複本寫回去。
+        """
+        layer = self._layer_obj(path)
+        if layer is None:
             return
-        enabled = bool(printable)
-        index = self._layer_index(path)
-        if index >= 0:
-            try:
-                layer = self._sc.doc.Layers[index]
-                layer.PlotEnabled = enabled
-                self._sc.doc.Layers.Modify(layer, index, True)
-            except Exception:
-                try:
-                    layer = self._sc.doc.Layers[index]
-                    layer.PlotEnabled = enabled
-                    layer.CommitChanges()
-                except Exception:
-                    pass
+        layer.PlotEnabled = bool(printable)
         try:
-            self._rs.LayerPrintable(path, 1 if enabled else 0)
+            commit = getattr(layer, "CommitChanges", None)
+            if callable(commit):
+                commit()
         except Exception:
             pass
+        self._redraw_views()
 
     def layer_printable(self, path: str) -> Optional[bool]:
-        if not self.has_layer(path):
-            return None
-        try:
-            value = self._rs.LayerPrintable(path)
-            if value is not None:
-                return bool(value)
-        except Exception:
-            pass
         layer = self._layer_obj(path)
         if layer is None:
             return None

@@ -525,6 +525,42 @@ class SchemaFixtureTests(unittest.TestCase):
         self.assertEqual(spec["row_tolerance"], catalog_keys.ROW_TOLERANCE)
 
 
+class SheetPickerCellsTests(unittest.TestCase):
+    def test_sheet_picker_cells_align_columns(self):
+        from loopflow.platform.rhino.prompts import _enum_has_flag, sheet_picker_cells
+
+        cells = sheet_picker_cells(
+            {
+                "sheet_id": SHEET_A,
+                "page_number": 3,
+                "drawing_no": "IN 101",
+                "drawing_name": "一樓",
+                "page_name": "**IN__101__一樓",
+            }
+        )
+        self.assertEqual(cells, ("3", "IN 101", "一樓", "**IN__101__一樓", SHEET_A))
+
+        class _Keys:
+            Shift = 1
+            Control = 2
+
+            def __init__(self, value: int) -> None:
+                self.value = value
+
+            def __int__(self) -> int:
+                return self.value
+
+            def __and__(self, other):
+                return _Keys(self.value & int(other))
+
+            def __str__(self) -> str:
+                return "Control" if self.value & 2 else "None"
+
+        self.assertTrue(_enum_has_flag(_Keys(2), "Control"))
+        self.assertFalse(_enum_has_flag(_Keys(2), "Shift"))
+        self.assertTrue(_enum_has_flag(_Keys(3), "Shift", "Control"))
+
+
 class RowSkipTests(unittest.TestCase):
     def test_orphan_and_missing_fields(self):
         slots_ok = bind_sheets_to_anchors(

@@ -2,6 +2,7 @@
 """Rhino 提示：指令列 Enter，或彈出視窗。"""
 from __future__ import annotations
 
+import time
 from typing import Optional, Sequence, Tuple
 
 
@@ -378,6 +379,24 @@ def ask_pick_title_frames(
     return dialog.selected_names()
 
 
+def sheet_picker_cells(item: dict) -> Tuple[str, str, str, str, str]:
+    """Sheet 選單列：頁序、圖號、圖名、頁名、sheet_id。"""
+    sheet_id = str(item.get("sheet_id") or "")
+    page_number = item.get("page_number")
+    drawing_no = item.get("drawing_no")
+    drawing_name = item.get("drawing_name")
+    page_name = item.get("page_name")
+    if page_number is None and drawing_no is None and item.get("label"):
+        return str(item.get("label") or ""), "", "", "", sheet_id
+    return (
+        "" if page_number is None else str(page_number),
+        str(drawing_no or "—"),
+        str(drawing_name or "—"),
+        str(page_name or ""),
+        sheet_id,
+    )
+
+
 def ask_pick_catalog_sheets(
     items: Sequence[dict],
     selected_ids: Sequence[str] = (),
@@ -394,10 +413,7 @@ def ask_pick_catalog_sheets(
     except ImportError:
         return None
 
-    rows = [
-        (str(item.get("label") or item.get("sheet_id") or ""), str(item.get("sheet_id") or ""))
-        for item in items
-    ]
+    rows = [sheet_picker_cells(item) for item in items]
     preselected = {str(item) for item in selected_ids if item}
 
     class _PickSheetsDialog(forms.Dialog[bool]):
@@ -406,18 +422,19 @@ def ask_pick_catalog_sheets(
             self.Title = title
             self.Padding = drawing.Padding(10)
             self.Resizable = True
-            self.Width = 720
+            self.Width = 780
             self.Height = 560
             self.font = _ui_font(drawing, 11)
             self.rows = rows
             self.selected = set()
             self.last_index = None
-            self.row_panels = []
-            self._handling_click = False
+            self.row_labels = []
+            self._last_click = None
             self._selected_bg = drawing.Color.FromArgb(61, 124, 198)
             self._selected_fg = drawing.Colors.White
             self._normal_bg = drawing.Colors.White
             self._normal_fg = drawing.Colors.Black
+            self._header_fg = drawing.Color.FromArgb(90, 90, 90)
 
             layout = forms.DynamicLayout()
             layout.Spacing = drawing.Size(6, 6)
@@ -432,22 +449,16 @@ def ask_pick_catalog_sheets(
             scroll = forms.Scrollable()
             scroll.Border = forms.BorderType.Line
             scroll.Height = 380
-            inner = forms.DynamicLayout()
-            inner.Padding = drawing.Padding(2, 2, 2, 2)
-            inner.Spacing = drawing.Size(0, 1)
+            table = forms.TableLayout()
+            table.Spacing = drawing.Size(0, 0)
+            table.Padding = drawing.Padding(0, 2, 0, 2)
+            table.Rows.Add(self._make_header_row())
             for index, row in enumerate(self.rows):
-                panel = forms.Panel()
-                panel.Padding = drawing.Padding(8, 5)
-                label = forms.Label()
-                label.Text = row[0]
-                label.Font = self.font
-                panel.Content = label
-                panel.MouseDown += self._make_click(index)
-                label.MouseDown += self._make_click(index)
-                inner.AddRow(panel)
-                self.row_panels.append((panel, label))
-            inner.Add(None)
-            scroll.Content = inner
+                table.Rows.Add(self._make_data_row(index, row))
+            spacer = forms.TableRow()
+            spacer.ScaleHeight = True
+            table.Rows.Add(spacer)
+            scroll.Content = table
             layout.AddRow(scroll)
 
             btn_all = forms.Button()
@@ -460,7 +471,6 @@ def ask_pick_catalog_sheets(
             extra.DefaultSpacing = drawing.Size(10, 0)
             extra.AddRow(btn_all, btn_clear, None)
             layout.AddRow(extra)
-            layout.Add(None)
 
             btn_ok = forms.Button()
             btn_ok.Text = "採用選取項目"
@@ -477,49 +487,86 @@ def ask_pick_catalog_sheets(
             self.AbortButton = btn_cancel
             self.DefaultButton = btn_ok
             for index, row in enumerate(self.rows):
-                if row[1] in preselected:
+                if row[4] in preselected:
                     self.selected.add(index)
             self._refresh_rows()
 
-        def _make_click(self, index: int):
-            def _on_click(sender, e) -> None:
-                if self._handling_click:
-                    return
-                self._handling_click = True
-                try:
-                    shift, ctrl = _mouse_modifiers(e)
-                    if shift and self.last_index is not None:
-                        start = min(self.last_index, index)
-                        end = max(self.last_index, index)
-                        if ctrl:
-                            for item in range(start, end + 1):
-                                self.selected.add(item)
-                        else:
-                            self.selected = set(range(start, end + 1))
-                    elif ctrl:
-                        if index in self.selected:
-                            self.selected.discard(index)
-                        else:
-                            self.selected.add(index)
-                        self.last_index = index
-                    else:
-                        self.selected = {index}
-                        self.last_index = index
-                    self._refresh_rows()
-                finally:
-                    self._handling_click = False
+        def _make_header_row(self):
+            row = forms.TableRow()
+            row.ScaleHeight = False
+            for index, caption in enumerate(("頁序", "圖號", "圖名", "頁名")):
+                label = forms.Label()
+                label.Text = caption
+                label.Font = self.font
+                label.TextColor = self._header_fg
+                header_panel = forms.Panel()
+                header_panel.Padding = drawing.Padding(8, 5, 8, 5)
+                header_panel.Content = label
+                row.Cells.Add(forms.TableCell(header_panel, index >= 2))
+            return row
 
-            return _on_click
+        def _make_data_row(self, index: int, row: Tuple[str, str, str, str, str]):
+            table_row = forms.TableRow()
+            table_row.ScaleHeight = False
+            labels = []
+            handler = self._make_click(index)
+            for col, text in enumerate(row[:4]):
+                label = forms.Label()
+                label.Text = text
+                label.Font = self.font
+                try:
+                    label.Wrap = getattr(forms.WrapMode, "None")
+                except Exception:
+                    pass
+                panel = forms.Panel()
+                panel.Padding = drawing.Padding(8, 5, 8, 5)
+                panel.Content = label
+                panel.MouseDown += handler
+                label.MouseDown += handler
+                labels.append((panel, label))
+                table_row.Cells.Add(forms.TableCell(panel, col >= 2))
+            self.row_labels.append(labels)
+            return table_row
 
         def _refresh_rows(self) -> None:
-            for index, pair in enumerate(self.row_panels):
-                panel, label = pair
-                if index in self.selected:
-                    panel.BackgroundColor = self._selected_bg
-                    label.TextColor = self._selected_fg
+            for index, cells in enumerate(self.row_labels):
+                selected = index in self.selected
+                bg = self._selected_bg if selected else self._normal_bg
+                fg = self._selected_fg if selected else self._normal_fg
+                for panel, label in cells:
+                    panel.BackgroundColor = bg
+                    label.BackgroundColor = bg
+                    label.TextColor = fg
+
+        def _make_click(self, index: int):
+            def _on_click(sender, e) -> None:
+                now = time.monotonic()
+                last = self._last_click
+                if last is not None and last[0] == index and (now - last[1]) < 0.08:
+                    return
+                self._last_click = (index, now)
+                shift, ctrl = _mouse_modifiers(e)
+                if shift and self.last_index is not None:
+                    start = min(self.last_index, index)
+                    end = max(self.last_index, index)
+                    if ctrl:
+                        for item in range(start, end + 1):
+                            self.selected.add(item)
+                    else:
+                        self.selected = set(range(start, end + 1))
+                    self.last_index = index
+                elif ctrl:
+                    if index in self.selected:
+                        self.selected.discard(index)
+                    else:
+                        self.selected.add(index)
+                    self.last_index = index
                 else:
-                    panel.BackgroundColor = self._normal_bg
-                    label.TextColor = self._normal_fg
+                    self.selected = {index}
+                    self.last_index = index
+                self._refresh_rows()
+
+            return _on_click
 
         def _on_select_all(self, sender, e) -> None:
             self.selected = set(range(len(self.rows)))
@@ -534,9 +581,9 @@ def ask_pick_catalog_sheets(
         def selected_ids(self):
             picked = set()
             for index in self.selected:
-                if 0 <= index < len(self.rows) and self.rows[index][1]:
-                    picked.add(self.rows[index][1])
-            return tuple(row[1] for row in self.rows if row[1] in picked)
+                if 0 <= index < len(self.rows) and self.rows[index][4]:
+                    picked.add(self.rows[index][4])
+            return tuple(row[4] for row in self.rows if row[4] in picked)
 
         def _on_ok(self, sender, e) -> None:
             self.Close(True)
@@ -551,19 +598,58 @@ def ask_pick_catalog_sheets(
     return dialog.selected_ids()
 
 
-def _mouse_modifiers(event) -> Tuple[bool, bool]:
-    """回傳 (shift, ctrl)。讀不到修飾鍵時兩者皆 False。"""
-    modifiers = getattr(event, "Modifiers", None)
+def _enum_has_flag(modifiers, *names: str) -> bool:
+    """判斷修飾鍵。Python.NET enum 的 `&` 結果不能直接當 bool。"""
     if modifiers is None:
-        return False, False
+        return False
+    text = str(modifiers)
+    keys = type(modifiers)
+    for name in names:
+        flag = getattr(keys, name, None)
+        if flag is not None:
+            try:
+                if (int(modifiers) & int(flag)) != 0:
+                    return True
+            except Exception:
+                try:
+                    if int(modifiers & flag) != 0:
+                        return True
+                except Exception:
+                    pass
+        if name in text:
+            return True
+    return False
+
+
+def _mouse_modifiers(event) -> Tuple[bool, bool]:
+    """回傳 (shift, ctrl)。優先讀 Keyboard／WinForms，避免點到文字時吃不到 Ctrl。"""
+    shift = False
+    ctrl = False
     try:
-        keys = type(modifiers)
-        shift = bool(modifiers & keys.Shift) if hasattr(keys, "Shift") else "Shift" in str(modifiers)
-        control = bool(modifiers & keys.Control) if hasattr(keys, "Control") else "Control" in str(modifiers)
-        return bool(shift), bool(control)
+        import Eto.Forms as forms  # type: ignore
+
+        keyboard = getattr(forms, "Keyboard", None)
+        keys = getattr(forms, "Keys", None)
+        if keyboard is not None and keys is not None:
+            mods = getattr(keyboard, "Modifiers", None)
+            shift = _enum_has_flag(mods, "Shift")
+            ctrl = _enum_has_flag(mods, "Control", "Application", "Command")
     except Exception:
-        text = str(modifiers)
-        return "Shift" in text, "Control" in text or "Cmd" in text or "Command" in text
+        pass
+    if not (shift and ctrl):
+        event_mods = getattr(event, "Modifiers", None)
+        shift = shift or _enum_has_flag(event_mods, "Shift")
+        ctrl = ctrl or _enum_has_flag(event_mods, "Control", "Application", "Command")
+    if not (shift and ctrl):
+        try:
+            import System.Windows.Forms as winforms  # type: ignore
+
+            km = winforms.Control.ModifierKeys
+            shift = shift or _enum_has_flag(km, "Shift")
+            ctrl = ctrl or _enum_has_flag(km, "Control")
+        except Exception:
+            pass
+    return bool(shift), bool(ctrl)
 
 
 def ask_yes_no(message: str, title: str = "LoopFlow") -> bool:
