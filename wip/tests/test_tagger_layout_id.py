@@ -80,8 +80,8 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NO_KEY), "IN 102")
         self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NAME_KEY), "天花詳圖")
         self.assertEqual(session.get_object_user_text("frame-1", SCALE_KEY), "1:50")
-        self.assertIsNone(session.get_object_user_text("frame-1", LEGACY_NO))
-        self.assertIsNone(session.get_object_user_text("frame-1", LEGACY_NAME))
+        self.assertEqual(session.get_object_user_text("frame-1", LEGACY_NO), "IN 101")
+        self.assertEqual(session.get_object_user_text("frame-1", LEGACY_NAME), "一樓平面圖")
         sheet_id = session.get_object_user_text("frame-1", SHEET_ID_KEY)
         self.assertTrue(sheet_id)
         self.assertEqual(get_sheet_field(session, sheet_id, "drawing_no"), "IN 101")
@@ -138,6 +138,7 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 101")
         self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NAME_KEY), "一樓平面")
+        self.assertEqual(session.get_object_user_text("frame-1", LEGACY_NAME), "一樓平面")
         self.assertEqual(session.listed_layout_pages()[0]["name"], "IN__101__一樓平面")
 
     def test_star_resets_series_start(self):

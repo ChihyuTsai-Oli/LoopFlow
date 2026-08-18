@@ -12,6 +12,8 @@ from typing import Callable, Optional, Sequence, Tuple
 from loopflow.features.sheet.keys import (
     DRAWING_NAME_KEY,
     DRAWING_NO_KEY,
+    LEGACY_DRAWING_NAME_KEY,
+    LEGACY_DRAWING_NO_KEY,
     SHEET_CODE_KEY,
     SHEET_ID_KEY,
 )
@@ -322,6 +324,8 @@ def apply_sheet_rows(
         )
         session.set_object_user_text(row.frame_id, DRAWING_NO_KEY, row.plan.drawing_no or "")
         session.set_object_user_text(row.frame_id, DRAWING_NAME_KEY, row.plan.drawing_name or "")
+        session.set_object_user_text(row.frame_id, LEGACY_DRAWING_NO_KEY, row.plan.drawing_no or "")
+        session.set_object_user_text(row.frame_id, LEGACY_DRAWING_NAME_KEY, row.plan.drawing_name or "")
         scan = scan_by_page.get(row.page_name)
         if scan is not None:
             sheet_code = format_sheet_ref(rules, row.plan.number or "")
@@ -330,6 +334,9 @@ def apply_sheet_rows(
         for row in reversed(list(rows)):
             if row.renames_page and rename_fn(row.page_name, row.plan.new_page_name):
                 renamed += 1
+    redraw = getattr(session, "redraw", None)
+    if callable(redraw):
+        redraw()
     return {
         "sheets": len(rows),
         "created_sheet_ids": created,

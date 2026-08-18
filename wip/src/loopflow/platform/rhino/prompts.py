@@ -5,6 +5,16 @@ from __future__ import annotations
 from typing import Optional, Sequence, Tuple
 
 
+def _ui_font(drawing, size: float = 11.0):
+    """開發期繁中介面用微軟正黑體；找不到再退回系統無襯線。"""
+    for name in ("微軟正黑體", "Microsoft JhengHei", "Microsoft JhengHei UI"):
+        try:
+            return drawing.Font(name, size)
+        except Exception:
+            continue
+    return drawing.Font(drawing.Fonts.Sans, size)
+
+
 def ask_command_string(
     message: str,
     default: str = "",
@@ -214,21 +224,29 @@ def ask_confirm_list(
         def __init__(self) -> None:
             super().__init__()
             self.Title = title
-            self.Padding = drawing.Padding(10)
+            self.Padding = drawing.Padding(12)
             self.Resizable = True
-            self.Width = 620
-            self.Height = 540
+            self.Width = 760
+            self.Height = 560
+            font = _ui_font(drawing, 11)
 
             layout = forms.DynamicLayout()
-            layout.Spacing = drawing.Size(6, 6)
+            layout.Spacing = drawing.Size(8, 8)
 
-            text_area = forms.TextArea()
-            text_area.ReadOnly = True
-            text_area.Wrap = False
-            text_area.Text = "\n".join(str(line) for line in lines)
-            text_area.Font = drawing.Font("Consolas", 10)
-            text_area.Height = 420
-            layout.AddRow(text_area)
+            scroll = forms.Scrollable()
+            scroll.Border = forms.BorderType.Line
+            scroll.Height = 430
+            inner = forms.DynamicLayout()
+            inner.Padding = drawing.Padding(10, 8, 10, 8)
+            inner.Spacing = drawing.Size(0, 10)
+            for line in lines:
+                label = forms.Label()
+                label.Text = str(line)
+                label.Font = font
+                inner.AddRow(label)
+            inner.Add(None)
+            scroll.Content = inner
+            layout.AddRow(scroll)
             layout.Add(None)
 
             btn_ok = forms.Button()
@@ -280,6 +298,7 @@ def ask_pick_title_frames(
             self.Width = 480
             self.Height = 520
             self.boxes = []
+            font = _ui_font(drawing, 11)
 
             layout = forms.DynamicLayout()
             layout.Spacing = drawing.Size(6, 6)
@@ -288,6 +307,7 @@ def ask_pick_title_frames(
                 "這些圖塊還沒登錄為圖框。請勾選真正的圖框；"
                 "沒勾選的會略過，不會寫入圖號。"
             )
+            note.Font = font
             layout.AddRow(note)
 
             scroll = forms.Scrollable()
@@ -295,11 +315,12 @@ def ask_pick_title_frames(
             scroll.Height = 360
             inner = forms.DynamicLayout()
             inner.Padding = drawing.Padding(6, 4, 6, 4)
-            inner.Spacing = drawing.Size(0, 0)
+            inner.Spacing = drawing.Size(0, 6)
             for name in names:
                 box = forms.CheckBox()
                 box.Text = str(name)
                 box.Checked = False
+                box.Font = font
                 inner.AddRow(box)
                 self.boxes.append(box)
             inner.Add(None)

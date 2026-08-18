@@ -412,6 +412,9 @@ class LiveSession:
     def set_object_user_text(self, object_id: str, key: str, value: str) -> None:
         self._rs.SetUserText(object_id, key, value)
 
+    def redraw(self) -> None:
+        self._rs.Redraw()
+
     def objects_on_layer(self, path: str):
         if not self.has_layer(path):
             return ()
