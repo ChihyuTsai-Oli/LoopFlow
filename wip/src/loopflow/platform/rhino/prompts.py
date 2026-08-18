@@ -360,6 +360,12 @@ def format_result_popup(result) -> str:
         text = str(issue).strip()
         if text and text not in lines:
             lines.append(text)
+    for item in details.get("skipped") or ():
+        if not isinstance(item, dict):
+            continue
+        text = "%s：%s" % (item.get("page_name") or "（未命名頁）", item.get("reason") or "")
+        if text.strip("：") and text not in lines:
+            lines.append(text)
     return "\n".join(item for item in lines if item)
 
 

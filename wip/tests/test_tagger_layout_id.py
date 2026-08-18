@@ -161,6 +161,16 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NO_KEY), "IN 102")
         self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NAME_KEY), "Layout 05")
 
+    def test_missing_star_explains_series_start(self):
+        session = _session(["IN__101__一樓平面圖"])
+        _add_block(session, "frame-1", "IN__101__一樓平面圖", "Sample_Frame")
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertFalse(result.ok)
+        self.assertIn("missing_series_start", result.blocking)
+        self.assertNotIn("missing_title_frame", result.blocking)
+        self.assertIn("**IN__201__立面圖", result.message)
+        self.assertIsNone(session.get_object_user_text("frame-1", DRAWING_NO_KEY))
+
     def test_cover_before_series_is_skipped(self):
         session = _session(["封面", START_IN])
         _add_block(session, "frame-cover", "封面", "Sample_Frame")

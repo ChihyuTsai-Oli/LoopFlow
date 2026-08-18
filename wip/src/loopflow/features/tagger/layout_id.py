@@ -80,6 +80,56 @@ def _skip_reason(scan: PageScan) -> str:
     return "這一頁有 %s 個圖框，無法決定身分" % len(scan.frame_ids)
 
 
+def _no_writable_pages_result(
+    skipped: Sequence[dict],
+    unknown: Sequence[str],
+) -> results.Result:
+    """沒有可寫入頁時，依實際原因說明；不要把「缺 ** 起點」說成缺圖框。"""
+    reasons = tuple(str(item.get("reason") or "") for item in skipped)
+    missing_start = any("系列起點" in reason for reason in reasons)
+    frame_problem = any(
+        reason and "系列起點" not in reason and "頁名是空的" not in reason
+        for reason in reasons
+    )
+    lines = []
+    blocking = []
+    if missing_start and not frame_problem:
+        blocking.append("missing_series_start")
+        lines.append("圖框已就緒，但還沒有系列起點，所以沒有寫入。")
+        lines.append("請在每個系列的第一頁最前面加上 **，例如 **IN__201__立面圖，再跑一次。")
+    elif frame_problem and not missing_start:
+        blocking.append("missing_title_frame")
+        lines.append("沒有可寫入的 Layout 頁。請確認每一頁只有一個已登錄的圖框。")
+    else:
+        if frame_problem:
+            blocking.append("missing_title_frame")
+        if missing_start:
+            blocking.append("missing_series_start")
+        if not blocking:
+            blocking.append("missing_title_frame")
+        lines.append("沒有可寫入的 Layout 頁。")
+        if missing_start:
+            lines.append("請在系列第一頁最前面加上 **，例如 **IN__201__立面圖。")
+        if frame_problem:
+            lines.append("請確認每一頁只有一個已登錄的圖框。")
+    if not skipped:
+        lines.append("這份檔案沒有可編號的 Layout 頁。")
+    for item in skipped[:12]:
+        lines.append(
+            "%s：%s"
+            % (item.get("page_name") or "（未命名頁）", item.get("reason") or "")
+        )
+    if len(skipped) > 12:
+        lines.append("…另有 %s 頁。" % (len(skipped) - 12))
+    return results.blocked(
+        STAGE,
+        "\n".join(lines),
+        tuple(blocking),
+        command_id=COMMAND_ID,
+        details={"skipped": skipped, "unregistered_blocks": unknown},
+    )
+
+
 def unregistered_block_names(scans: Sequence[PageScan]) -> Tuple[str, ...]:
     """沒有可用圖框的頁面上出現的未登錄 Block 名，供詢問使用者是否登錄。"""
     names = []
@@ -373,13 +423,7 @@ def run_tagger_layout_id(
             rows, skipped = build_sheet_rows(current, scans, rules)
             unknown = unregistered_block_names(scans)
         if not rows:
-            return results.blocked(
-                STAGE,
-                "沒有可寫入的 Layout 頁。請確認每一頁只有一個已登錄的圖框。",
-                ("missing_title_frame",),
-                command_id=COMMAND_ID,
-                details={"skipped": skipped, "unregistered_blocks": unknown},
-            )
+            return _no_writable_pages_result(skipped, unknown)
         if not confirmer(preview_lines(rows, skipped)):
             return results.cancelled(
                 STAGE,
