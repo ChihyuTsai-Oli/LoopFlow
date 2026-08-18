@@ -39,7 +39,7 @@ flowchart TD
 - `sheet_id` 才是 Sheet 的身分。Catalog 定位點綁 `sheet_id`，**永不**綁目前的圖號。
 - Catalog 文字是可丟棄的輸出，Catalog 定位點是持久的綁定。
 
-因此重新編號、改圖名、文字被刪、文字被手改、排版位置調整，都能由「定位點 + Sheet metadata」還原內容與原點；字型、大小、圖層等既有文字設定在 Refresh 時保留。
+因此重新編號、改圖名、文字被刪、文字被手改，都能由「定位點 + Sheet metadata」還原內容；字型、大小、圖層與已移動的位置在 Refresh 時保留。新建或重建時才把文字放回定位點左下角。
 
 ## 定位點契約
 
@@ -50,10 +50,11 @@ Catalog Anchor 是 Rhino Point 物件，UserText：
 | `lf_catalog_id` | 屬於哪一份圖目錄，UUID；同一文件可有多份目錄 |
 | `lf_catalog_field` | 只允許 `drawing_no` 或 `drawing_name` |
 | `lf_catalog_sheet_id` | 目前綁定的 Sheet；未使用的空位不寫此欄 |
+| `lf_catalog_home_layer` | 選取歸位前的圖層；清除定位點時還原 |
 
 `lf_catalog_id` 與 `lf_catalog_field` 代表定位點的模板角色，`lf_catalog_sheet_id` 只代表目前綁定，因此**空位仍是合法 anchor**：40 格的模板可以只放 28 張圖。定位點不保存圖號、圖名實值，也不保存 Layout 頁名。
 
-產生文字寫 `lf_generated_by = LF_Catalog`、`lf_catalog_id`、`lf_catalog_point_id`、`lf_catalog_field`。定位點是文字左下角原點。Refresh 對得到定位點就只改內容與原點，不重設字型、大小、圖層、顏色；對不到才新建；未用到的舊目錄文字才刪。**不得**用「定位點附近的文字」來判斷哪些是目錄文字。
+產生文字寫 `lf_generated_by = LF_Catalog`、`lf_catalog_id`、`lf_catalog_point_id`、`lf_catalog_field`。新建時定位點是文字左下角原點。Refresh 對得到定位點就只改內容，不重設字型、大小、圖層、顏色，也不把已移動的文字拉回定位點；對不到才新建；未用到的舊目錄文字才刪。定位點寫 `lf_catalog_home_layer`。**不得**用「定位點附近的文字」來判斷哪些是目錄文字。
 
 ## 三條硬規則
 
@@ -120,7 +121,7 @@ Sheet 順序用 Rhino Layout 頁序（不用圖號字串排序），定位點對
 
 ## 操作面板
 
-Eto Panel，初版六個動作：
+Eto Panel，七個動作：
 
 | 動作 | 行為 |
 |---|---|
@@ -128,7 +129,8 @@ Eto Panel，初版六個動作：
 | 選取圖名定位點 | 選 Point → 歸位 `LoopFlow::Drawing_Name` → 面板顯示數量 |
 | 選取 Sheet | 列出 Layout（頁序、圖號、圖名、頁名），Shift 連選、Ctrl 加選或取消，反白即選取 |
 | Build／Rebind | 驗證 → 預覽核對清單 → 寫定位點綁定 → 建立或更新文字 |
-| Refresh | 不改綁定；更新內容與原點，保留字型、大小、圖層 |
+| Refresh | 不改綁定；更新內容，保留字型、大小、圖層與已移動的位置 |
+| 清除定位點並還原圖層 | 清除定位點目錄資料、還原選取前的圖層、刪除目錄文字 |
 | 匯出 TXT | 依目前綁定輸出 `圖名, 圖號`，UTF-8 |
 
 Build／Rebind 改變「定位點 ↔ Sheet」關係；Refresh 只重新取得目前值並就地更新文字。兩者語意不可混。新增的 Layout **不自動**納入既有目錄（使用者可能刻意排除某些頁），要納入就重新選 Sheet 再 Build／Rebind。
@@ -142,9 +144,9 @@ Build／Rebind 改變「定位點 ↔ Sheet」關係；Refresh 只重新取得�
 | 圖名修改 | Refresh 後文字更新 |
 | 插頁導致圖號改變 | `sheet_id` 不變，Refresh 取到新 `drawing_no` |
 | Layout 頁名被手改 | 完全不影響目錄 |
-| 目錄文字被手改 | Refresh 把內容改回 metadata 值，字型／大小／圖層留下 |
+| 目錄文字被手改或移動 | Refresh 把內容改回 metadata 值；字型／大小／圖層／位置留下 |
 | 目錄文字被刪 | 定位點還在即可在 `Drawing_Text` 新建 |
-| 定位點被移動 | Refresh 後文字原點跟著走，字型設定留下 |
+| 定位點被移動 | Refresh 不把文字拉回新點位 |
 | 綁定的 Sheet 被刪除 | 該列不生成文字，報告 missing sheet，不阻擋其餘更新 |
 | Sheet metadata 為 orphan | 同上；metadata 存在不等於 Sheet 仍 active |
 | Sheet metadata 過期（頁序變了沒重跑 D04） | 回報 `stale` 並要求先執行 D04，不安靜輸出舊值 |
@@ -190,9 +192,12 @@ Build／Rebind 改變「定位點 ↔ Sheet」關係；Refresh 只重新取得�
 5. 插入 Layout 並跑 D04 重新編號 → Refresh，驗證既有綁定不變但圖號更新
 6. **不跑 D04 就 Refresh**，驗證回報 stale 而不是輸出舊值
 7. 刪一個目錄文字 → Refresh，驗證重建
-8. 移動定位點 → Refresh，驗證文字原點跟著走且字型留下
+8. 移動目錄文字 → Refresh，驗證位置留下且內容更新
 9. 刪一張 Layout → Refresh，驗證 missing sheet 報告且其餘正常
 10. 目錄跨兩頁時驗證兩頁各自排序正確、不交錯
 11. 故意把一個圖名定位點拖到隔壁欄，驗證報錯零寫入
 12. 匯出 TXT，驗證內容與畫面目錄一致
 13. Esc／取消各階段，驗證零寫入
+14. 開面板後確認 `LoopFlow` 與子圖層為不列印
+15. 確認關閉鈕高度與其餘按鈕相近
+16. 「清除定位點並還原圖層」確認後，點回到選取前的圖層、目錄文字刪除

@@ -16,6 +16,7 @@
     "field": "lf_catalog_field",
     "sheet_id": "lf_catalog_sheet_id",
     "point_id": "lf_catalog_point_id",
+    "home_layer": "lf_catalog_home_layer",
     "generated_by": "lf_generated_by"
   },
   "allowed_fields": ["drawing_no", "drawing_name"],
@@ -29,6 +30,7 @@
     "空位仍是合法 anchor，未綁定不寫 lf_catalog_sheet_id。",
     "排序必須先依 Layout 頁分組，再 X 分欄、Y 由上而下。",
     "產生文字在 LoopFlow::Drawing_Text，左下角對齊定位點。",
-    "產生文字寫 lf_generated_by、lf_catalog_id、lf_catalog_point_id；Refresh 更新內容與原點，保留字型、大小、圖層。"
+    "產生文字寫 lf_generated_by、lf_catalog_id、lf_catalog_point_id；Refresh 更新內容，保留字型、大小、圖層與已移動的位置。",
+    "定位點寫 lf_catalog_home_layer；清除定位點時還原該圖層並刪除目錄文字。"
   ]
 }

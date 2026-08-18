@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""E05 LF_Catalog：定位點排序、配對、Build／Refresh／TXT；Esc／stale 零寫入。"""
+"""E05 LF_Catalog：定位點排序、配對、Build／Refresh／還原圖層／TXT；Esc／stale 零寫入。"""
 from __future__ import annotations
 
 import json
@@ -24,6 +24,7 @@ from loopflow.features.catalog.catalog import (
     generated_text_ids,
     pair_catalog_anchors,
     refresh_catalog,
+    reset_catalog_points,
     sort_catalog_points,
 )
 from loopflow.features.catalog.keys import (
@@ -33,6 +34,7 @@ from loopflow.features.catalog.keys import (
     FIELD_KEY,
     GENERATED_BY_KEY,
     GENERATED_BY_VALUE,
+    HOME_LAYER_KEY,
     NAME_LAYER,
     NUMBER_LAYER,
     POINT_ID_KEY,
@@ -268,7 +270,7 @@ class AssignAndBuildTests(unittest.TestCase):
         self.assertIn("IN 201", values)
         self.assertIn("一樓平面", values)
 
-    def test_refresh_keeps_text_settings_and_follows_point(self):
+    def test_refresh_keeps_text_settings_and_moved_origin(self):
         session = _session()
         session.set_layout_pages(["P1"])
         _add_sheet(session, "P1", SHEET_A, "IN 101", "一樓", 1)
@@ -287,8 +289,7 @@ class AssignAndBuildTests(unittest.TestCase):
         for object_id in texts:
             session.set_text_height(object_id, 8.5)
             session.set_object_layer(object_id, "Manual::Catalog")
-        session.add_point("n1", (55.0, 40.0, 0), layer=NUMBER_LAYER)
-        session.add_point("m1", (135.0, 40.0, 0), layer=NAME_LAYER)
+            session.update_text(object_id, session.text_content(object_id) or "", origin=(10.0, 20.0, 0))
         write_sheet_metadata(
             session,
             SHEET_A,
@@ -303,8 +304,37 @@ class AssignAndBuildTests(unittest.TestCase):
         for object_id in after:
             self.assertEqual(session.text_height(object_id), 8.5)
             self.assertEqual(session.object_layer(object_id), "Manual::Catalog")
-            point_id = session.get_object_user_text(object_id, POINT_ID_KEY)
-            self.assertEqual(session.text_origin(object_id), session.point_xyz(point_id))
+            self.assertEqual(session.text_origin(object_id), (10.0, 20.0, 0))
+
+    def test_reset_catalog_points_restores_home_layer(self):
+        session = _session()
+        session.set_layout_pages(["P1"])
+        _add_sheet(session, "P1", SHEET_A, "IN 101", "一樓", 1)
+        session.add_point("n1", (100, 200, 0), layer="Drafting")
+        session.add_object_to_layout_page("P1", "n1")
+        session.add_point("m1", (180, 200, 0), layer="Drafting")
+        session.add_object_to_layout_page("P1", "m1")
+        self.assertTrue(assign_catalog_points(session, ["n1"], FIELD_DRAWING_NO).ok)
+        self.assertTrue(assign_catalog_points(session, ["m1"], FIELD_DRAWING_NAME).ok)
+        self.assertEqual(session.get_object_user_text("n1", HOME_LAYER_KEY), "Drafting")
+        self.assertEqual(session.object_layer("n1"), NUMBER_LAYER)
+        built = build_catalog(
+            session, [SHEET_A], confirm=lambda _lines: True, catalog=_catalog()
+        )
+        self.assertTrue(built.ok, built.message)
+        self.assertTrue(generated_text_ids(session, session.get_object_user_text("n1", CATALOG_ID_KEY)))
+        cancelled = reset_catalog_points(session, confirm=lambda: False)
+        self.assertEqual(cancelled.status, "cancelled")
+        self.assertEqual(session.object_layer("n1"), NUMBER_LAYER)
+        catalog_id = session.get_object_user_text("n1", CATALOG_ID_KEY)
+        result = reset_catalog_points(session, confirm=lambda: True)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.object_layer("n1"), "Drafting")
+        self.assertEqual(session.object_layer("m1"), "Drafting")
+        self.assertIsNone(session.get_object_user_text("n1", CATALOG_ID_KEY))
+        self.assertIsNone(session.get_object_user_text("n1", FIELD_KEY))
+        self.assertIsNone(session.get_object_user_text("n1", HOME_LAYER_KEY))
+        self.assertEqual(generated_text_ids(session, catalog_id), ())
 
     def test_stale_blocks_refresh(self):
         session = _session()
@@ -489,6 +519,7 @@ class SchemaFixtureTests(unittest.TestCase):
         self.assertEqual(spec["usertext_keys"]["field"], catalog_keys.FIELD_KEY)
         self.assertEqual(spec["usertext_keys"]["sheet_id"], catalog_keys.SHEET_ID_KEY)
         self.assertEqual(spec["usertext_keys"]["point_id"], catalog_keys.POINT_ID_KEY)
+        self.assertEqual(spec["usertext_keys"]["home_layer"], catalog_keys.HOME_LAYER_KEY)
         self.assertEqual(spec["generated_by_value"], catalog_keys.GENERATED_BY_VALUE)
         self.assertEqual(spec["column_tolerance"], catalog_keys.COLUMN_TOLERANCE)
         self.assertEqual(spec["row_tolerance"], catalog_keys.ROW_TOLERANCE)

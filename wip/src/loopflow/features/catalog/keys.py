@@ -23,6 +23,7 @@ NAME_COLOR = (0, 255, 0)
 TEXT_COLOR = (205, 179, 139)  # #CDB38B
 
 POINT_ID_KEY = "lf_catalog_point_id"
+HOME_LAYER_KEY = "lf_catalog_home_layer"
 
 # 文件單位為公分時的空間容差。
 COLUMN_TOLERANCE = 2.0

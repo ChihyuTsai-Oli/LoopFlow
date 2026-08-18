@@ -232,11 +232,16 @@ class LiveSession:
 
     def ensure_layer(self, path: str) -> bool:
         created = not self.has_layer(path)
+        parent_path = None
         current = ""
         for index, part in enumerate(path.split("::")):
             current = part if index == 0 else current + "::" + part
             if not self._rs.IsLayer(current):
-                self._rs.AddLayer(current)
+                if parent_path:
+                    self._rs.AddLayer(part, parent=parent_path)
+                else:
+                    self._rs.AddLayer(part)
+            parent_path = current
         silence_loopflow_layers(self, path)
         return created
 
@@ -245,10 +250,35 @@ class LiveSession:
             self._rs.DeleteLayer(path)
 
     def _layer_obj(self, path: str):
-        index = self._sc.doc.Layers.FindByFullPath(path, -1)
+        index = self._layer_index(path)
         if index < 0:
             return None
         return self._sc.doc.Layers[index]
+
+    def _layer_index(self, path: str) -> int:
+        layers = self._sc.doc.Layers
+        try:
+            index = layers.FindByFullPath(path, -1)
+            if index is not None and int(index) >= 0:
+                return int(index)
+        except Exception:
+            pass
+        try:
+            index = layers.FindByFullPath(path, True)
+            if index is not None and int(index) >= 0:
+                return int(index)
+        except Exception:
+            pass
+        try:
+            wanted = str(path)
+            for layer in layers:
+                full = str(getattr(layer, "FullPath", "") or "")
+                name = str(getattr(layer, "Name", "") or "")
+                if full == wanted or name == wanted:
+                    return int(layer.Index)
+        except Exception:
+            pass
+        return -1
 
     def get_layer_user_text(self, path: str, key: str) -> Optional[str]:
         layer = self._layer_obj(path)
@@ -267,19 +297,25 @@ class LiveSession:
         layer.CommitChanges()
 
     def set_layer_printable(self, path: str, printable: bool) -> None:
+        """關掉列印。rs.LayerPrintable(..., False) 在 Python 會被當成查詢，必須用 0／1。"""
         if not self.has_layer(path):
             return
+        enabled = bool(printable)
+        index = self._layer_index(path)
+        if index >= 0:
+            try:
+                layer = self._sc.doc.Layers[index]
+                layer.PlotEnabled = enabled
+                self._sc.doc.Layers.Modify(layer, index, True)
+            except Exception:
+                try:
+                    layer = self._sc.doc.Layers[index]
+                    layer.PlotEnabled = enabled
+                    layer.CommitChanges()
+                except Exception:
+                    pass
         try:
-            self._rs.LayerPrintable(path, bool(printable))
-            return
-        except Exception:
-            pass
-        layer = self._layer_obj(path)
-        if layer is None:
-            return
-        try:
-            layer.PlotEnabled = bool(printable)
-            layer.CommitChanges()
+            self._rs.LayerPrintable(path, 1 if enabled else 0)
         except Exception:
             pass
 

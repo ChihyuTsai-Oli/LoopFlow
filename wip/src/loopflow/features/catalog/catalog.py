@@ -22,6 +22,7 @@ from loopflow.features.catalog.keys import (
     FIELD_KEY,
     GENERATED_BY_KEY,
     GENERATED_BY_VALUE,
+    HOME_LAYER_KEY,
     NAME_COLOR,
     NAME_LAYER,
     NUMBER_COLOR,
@@ -554,7 +555,7 @@ def sync_catalog_text(
     *,
     height: float = TEXT_HEIGHT,
 ) -> Tuple[str, ...]:
-    """更新已有目錄文字的內容與原點；字型、大小、圖層維持原設定。缺件才新建。"""
+    """更新已有目錄文字的內容；字型、大小、圖層與位置維持原設定。缺件才在定位點新建。"""
     existing_by_point = {}
     for text_id in generated_text_ids(session, catalog_id):
         point_id = text(session.get_object_user_text(text_id, POINT_ID_KEY))
@@ -574,7 +575,7 @@ def sync_catalog_text(
             point_xyz = session.point_xyz(point_id)
             page_name = session.layout_page_name_of(point_id)
             existing = existing_by_point.get(point_id)
-            if existing and callable(updater) and updater(existing, content or "", origin=point_xyz):
+            if existing and callable(updater) and updater(existing, content or ""):
                 _write_text_keys(
                     session,
                     existing,
@@ -664,6 +665,7 @@ def assign_catalog_points(
         current.ensure_layer(layer)
         current.set_layer_appearance(layer, color)
         for object_id in object_ids:
+            _remember_home_layer(current, object_id)
             current.set_object_layer(object_id, layer)
             current.set_object_user_text(object_id, CATALOG_ID_KEY, catalog_id)
             current.set_object_user_text(object_id, FIELD_KEY, field)
@@ -678,6 +680,89 @@ def assign_catalog_points(
                 "count": len(object_ids),
                 "layer": layer,
             },
+        )
+
+    return run_guarded(session, action, command_id=COMMAND_ID)
+
+
+def _remember_home_layer(session: RhinoSession, object_id: str) -> None:
+    if text(session.get_object_user_text(object_id, HOME_LAYER_KEY)):
+        return
+    current = session.object_layer(object_id) or ""
+    if current in (NUMBER_LAYER, NAME_LAYER, TEXT_LAYER):
+        return
+    session.set_object_user_text(object_id, HOME_LAYER_KEY, current or "Default")
+
+
+def _catalog_point_ids(session: RhinoSession) -> Tuple[str, ...]:
+    ids = []
+    for object_id in session.iter_object_ids(include_hidden=True, include_locked=True):
+        if not session.is_point(object_id):
+            continue
+        if text(session.get_object_user_text(object_id, CATALOG_ID_KEY)) is None:
+            continue
+        ids.append(object_id)
+    return tuple(ids)
+
+
+def reset_catalog_points(
+    session: RhinoSession,
+    *,
+    confirm: Optional[Callable[[], bool]] = None,
+) -> results.Result:
+    """清除定位點目錄資料、還原原圖層，並刪除產生的目錄文字。"""
+    blocked = _require_schema(session)
+    if blocked is not None:
+        return blocked
+    point_ids = _catalog_point_ids(session)
+    if not point_ids:
+        return results.blocked(
+            STAGE,
+            "沒有圖目錄定位點可清除。",
+            ("missing_anchors",),
+            command_id=COMMAND_ID,
+        )
+    confirmer = confirm
+    if confirmer is None:
+        from loopflow.platform.rhino.prompts import ask_yes_no
+
+        def _ask() -> bool:
+            return ask_yes_no(
+                "將清除所有圖目錄定位點上的資料，把點放回原來的圖層，並刪除目錄文字。確定？",
+                "清除定位點",
+            )
+
+        confirmer = _ask
+    if not confirmer():
+        return results.cancelled(
+            STAGE,
+            "已取消清除定位點，未寫入。",
+            command_id=COMMAND_ID,
+        )
+
+    def action(current: RhinoSession) -> results.Result:
+        catalog_ids = []
+        restored = 0
+        for object_id in _catalog_point_ids(current):
+            catalog_id = text(current.get_object_user_text(object_id, CATALOG_ID_KEY))
+            if catalog_id and catalog_id not in catalog_ids:
+                catalog_ids.append(catalog_id)
+            home = text(current.get_object_user_text(object_id, HOME_LAYER_KEY)) or "Default"
+            current.ensure_layer(home)
+            current.set_object_layer(object_id, home)
+            current.set_object_user_text(object_id, CATALOG_ID_KEY, "")
+            current.set_object_user_text(object_id, FIELD_KEY, "")
+            current.set_object_user_text(object_id, SHEET_ID_KEY, "")
+            current.set_object_user_text(object_id, HOME_LAYER_KEY, "")
+            restored += 1
+        removed = 0
+        for catalog_id in catalog_ids:
+            removed += delete_generated_catalog_text(current, catalog_id)
+        return results.ok(
+            STAGE,
+            "已還原 %s 個定位點，刪除 %s 個目錄文字。" % (restored, removed),
+            command_id=COMMAND_ID,
+            details={"points": restored, "texts": removed},
         )
 
     return run_guarded(session, action, command_id=COMMAND_ID)
@@ -1056,6 +1141,12 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
         )
 
     selected_sheets: List[str] = []
+    session.ensure_layer(NUMBER_LAYER)
+    session.set_layer_appearance(NUMBER_LAYER, NUMBER_COLOR)
+    session.ensure_layer(NAME_LAYER)
+    session.set_layer_appearance(NAME_LAYER, NAME_COLOR)
+    session.ensure_layer(TEXT_LAYER)
+    session.set_layer_appearance(TEXT_LAYER, TEXT_COLOR)
 
     class _CatalogDialog(forms.Dialog[bool]):
         def __init__(self) -> None:
@@ -1064,7 +1155,7 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
             self.Padding = drawing.Padding(12)
             self.Resizable = True
             self.Width = 420
-            self.Height = 420
+            self.Height = 460
             font = None
             try:
                 from loopflow.platform.rhino.prompts import _ui_font
@@ -1091,18 +1182,22 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
                 ("選取 Sheet", self._on_pick_sheets),
                 ("Build／Rebind", self._on_build),
                 ("Refresh", self._on_refresh),
+                ("清除定位點並還原圖層", self._on_reset_points),
                 ("匯出 TXT", self._on_export),
             )
             for caption, handler in buttons:
                 button = forms.Button()
                 button.Text = caption
+                button.Height = 28
                 button.Click += handler
                 layout.AddRow(button)
 
             close_btn = forms.Button()
             close_btn.Text = "關閉"
+            close_btn.Height = 28
             close_btn.Click += self._on_close
             layout.AddRow(close_btn)
+            layout.Add(None)
             self.Content = layout
             self.AbortButton = close_btn
             self._refresh_counts()
@@ -1163,6 +1258,9 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
 
         def _on_refresh(self, sender, e) -> None:
             self._present(refresh_catalog(session))
+
+        def _on_reset_points(self, sender, e) -> None:
+            self._present(reset_catalog_points(session))
 
         def _on_export(self, sender, e) -> None:
             self._present(export_catalog_txt(session, ask_path=_default_ask_path))

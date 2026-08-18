@@ -534,6 +534,7 @@ def check_catalog() -> None:
         "field": "lf_catalog_field",
         "sheet_id": "lf_catalog_sheet_id",
         "point_id": "lf_catalog_point_id",
+        "home_layer": "lf_catalog_home_layer",
         "generated_by": "lf_generated_by",
     }
     for name, value in expected.items():
