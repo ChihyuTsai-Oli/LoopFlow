@@ -380,9 +380,10 @@ def ask_pick_title_frames(
 
 def ask_pick_catalog_sheets(
     items: Sequence[dict],
+    selected_ids: Sequence[str] = (),
     title: str = "選取 Sheet",
 ) -> Optional[Tuple[str, ...]]:
-    """勾選要列入目錄的 Sheet。取消回 None；確認但全不勾回空 tuple。"""
+    """以反白多選 Sheet。Shift 連選、Ctrl 加選或取消。取消回 None。"""
     if not items:
         return ()
     try:
@@ -393,45 +394,60 @@ def ask_pick_catalog_sheets(
     except ImportError:
         return None
 
+    rows = [
+        [str(item.get("label") or item.get("sheet_id") or ""), str(item.get("sheet_id") or "")]
+        for item in items
+    ]
+    preselected = {str(item) for item in selected_ids if item}
+
     class _PickSheetsDialog(forms.Dialog[bool]):
         def __init__(self) -> None:
             super().__init__()
             self.Title = title
             self.Padding = drawing.Padding(10)
             self.Resizable = True
-            self.Width = 640
-            self.Height = 520
-            self.boxes = []
+            self.Width = 720
+            self.Height = 560
             font = _ui_font(drawing, 11)
+            self.rows = rows
 
             layout = forms.DynamicLayout()
             layout.Spacing = drawing.Size(6, 6)
             note = forms.Label()
-            note.Text = "勾選要列入圖目錄的 Layout。未勾選的不納入；新增頁不會自動加入既有目錄。"
+            note.Text = (
+                "Shift 連選、Ctrl 加選或取消選取。選取列會反白。"
+                "未選的不納入；新增頁不會自動加入既有目錄。"
+            )
             note.Font = font
             layout.AddRow(note)
 
-            scroll = forms.Scrollable()
-            scroll.Border = forms.BorderType.Line
-            scroll.Height = 360
-            inner = forms.DynamicLayout()
-            inner.Padding = drawing.Padding(6, 4, 6, 4)
-            inner.Spacing = drawing.Size(0, 6)
-            for item in items:
-                box = forms.CheckBox()
-                box.Text = str(item.get("label") or item.get("sheet_id") or "")
-                box.Checked = False
-                box.Font = font
-                box.Tag = str(item.get("sheet_id") or "")
-                inner.AddRow(box)
-                self.boxes.append(box)
-            inner.Add(None)
-            scroll.Content = inner
-            layout.AddRow(scroll)
+            self.grid = forms.GridView()
+            self.grid.ShowHeader = False
+            self.grid.AllowMultipleSelection = True
+            self.grid.Border = forms.BorderType.Line
+            self.grid.Height = 380
+            column = forms.GridColumn()
+            column.DataCell = forms.TextBoxCell(0)
+            column.Editable = False
+            column.Expand = True
+            self.grid.Columns.Add(column)
+            self.grid.DataStore = self.rows
+            layout.AddRow(self.grid)
+
+            btn_all = forms.Button()
+            btn_all.Text = "全選"
+            btn_all.Click += self._on_select_all
+            btn_clear = forms.Button()
+            btn_clear.Text = "清除選取"
+            btn_clear.Click += self._on_clear
+            extra = forms.DynamicLayout()
+            extra.DefaultSpacing = drawing.Size(10, 0)
+            extra.AddRow(btn_all, btn_clear, None)
+            layout.AddRow(extra)
             layout.Add(None)
 
             btn_ok = forms.Button()
-            btn_ok.Text = "採用勾選項目"
+            btn_ok.Text = "採用選取項目"
             btn_ok.Click += self._on_ok
             btn_cancel = forms.Button()
             btn_cancel.Text = "取消（Esc）"
@@ -444,15 +460,61 @@ def ask_pick_catalog_sheets(
             self.Content = layout
             self.AbortButton = btn_cancel
             self.DefaultButton = btn_ok
+            self.Shown += self._on_loaded
+
+        def _on_loaded(self, sender, e) -> None:
+            self._apply_selection(preselected)
+
+        def _select_row(self, index: int) -> None:
+            select = getattr(self.grid, "SelectRow", None)
+            if callable(select):
+                select(index)
+
+        def _unselect_row(self, index: int) -> None:
+            unselect = getattr(self.grid, "UnselectRow", None)
+            if callable(unselect):
+                unselect(index)
+
+        def _apply_selection(self, wanted) -> None:
+            unselect_all = getattr(self.grid, "UnselectAll", None)
+            if callable(unselect_all):
+                unselect_all()
+            else:
+                for index in range(len(self.rows)):
+                    self._unselect_row(index)
+            for index, row in enumerate(self.rows):
+                if row[1] in wanted:
+                    self._select_row(index)
+
+        def _on_select_all(self, sender, e) -> None:
+            select_all = getattr(self.grid, "SelectAll", None)
+            if callable(select_all):
+                select_all()
+                return
+            for index in range(len(self.rows)):
+                self._select_row(index)
+
+        def _on_clear(self, sender, e) -> None:
+            self._apply_selection(set())
 
         def selected_ids(self):
-            picked = []
-            for box in self.boxes:
-                if box.Checked:
-                    sheet_id = str(getattr(box, "Tag", "") or "")
-                    if sheet_id:
-                        picked.append(sheet_id)
-            return tuple(picked)
+            picked = set()
+            for item in self.grid.SelectedItems or ():
+                try:
+                    sheet_id = item[1]
+                except (TypeError, IndexError, KeyError):
+                    continue
+                if sheet_id:
+                    picked.add(str(sheet_id))
+            if not picked:
+                for index in getattr(self.grid, "SelectedRows", None) or ():
+                    try:
+                        idx = int(index)
+                    except (TypeError, ValueError):
+                        continue
+                    if 0 <= idx < len(self.rows) and self.rows[idx][1]:
+                        picked.add(str(self.rows[idx][1]))
+            return tuple(row[1] for row in self.rows if row[1] in picked)
 
         def _on_ok(self, sender, e) -> None:
             self.Close(True)

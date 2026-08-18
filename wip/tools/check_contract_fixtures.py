@@ -520,15 +520,20 @@ def check_catalog() -> None:
         fail("圖號定位點圖層必須是 LoopFlow::Drawing_Number")
     if spec["layers"].get("drawing_name") != "LoopFlow::Drawing_Name":
         fail("圖名定位點圖層必須是 LoopFlow::Drawing_Name")
+    if spec["layers"].get("text") != "LoopFlow::Drawing_Text":
+        fail("目錄文字圖層必須是 LoopFlow::Drawing_Text")
     if spec["layer_colors"].get("drawing_no") != [255, 0, 0]:
         fail("圖號定位點顏色必須是紅 (255,0,0)")
     if spec["layer_colors"].get("drawing_name") != [0, 255, 0]:
         fail("圖名定位點顏色必須是綠 (0,255,0)")
+    if spec["layer_colors"].get("text") != [205, 179, 139]:
+        fail("目錄文字顏色必須是 #CDB38B")
     keys = spec["usertext_keys"]
     expected = {
         "catalog_id": "lf_catalog_id",
         "field": "lf_catalog_field",
         "sheet_id": "lf_catalog_sheet_id",
+        "point_id": "lf_catalog_point_id",
         "generated_by": "lf_generated_by",
     }
     for name, value in expected.items():

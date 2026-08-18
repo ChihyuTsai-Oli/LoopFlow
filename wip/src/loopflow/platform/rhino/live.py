@@ -476,13 +476,21 @@ class LiveSession:
             float(point[1]),
             float(point[2]) if point is not None and len(point) > 2 else 0.0,
         )
-        text_id = self._rs.AddText(str(content), xyz, float(height))
+        text_id = self._rs.AddText(
+            str(content),
+            xyz,
+            float(height),
+            "Arial",
+            0,
+            1 | 65536,  # Left + Bottom，左下角對齊定位點
+        )
         if not text_id:
             raise RuntimeError("無法建立目錄文字")
         object_id = str(text_id)
         if layer:
             self.ensure_layer(layer)
             self.set_object_layer(object_id, layer)
+        self._set_text_origin(object_id, xyz)
         if page_name:
             page = self._page_view(page_name)
             obj = self._rhino_object(object_id)
@@ -494,6 +502,52 @@ class LiveSession:
                     pass
                 obj.CommitChanges()
         return object_id
+
+    def _set_text_origin(self, object_id: str, origin) -> None:
+        obj = self._rhino_object(object_id)
+        geom = getattr(obj, "Geometry", None) if obj is not None else None
+        if geom is None or self._rhino is None:
+            return
+        try:
+            plane = geom.Plane
+            plane.Origin = self._rhino.Geometry.Point3d(
+                float(origin[0]),
+                float(origin[1]),
+                float(origin[2]) if origin is not None and len(origin) > 2 else 0.0,
+            )
+            geom.Plane = plane
+            geom.Justification = self._rhino.Geometry.TextJustification.BottomLeft
+            self._sc.doc.Objects.Replace(obj.Id, geom)
+        except Exception:
+            pass
+
+    def update_text(self, object_id: str, content: str, origin=None) -> bool:
+        obj = self._rhino_object(object_id)
+        geom = getattr(obj, "Geometry", None) if obj is not None else None
+        if geom is None:
+            return False
+        try:
+            if hasattr(geom, "PlainText"):
+                geom.PlainText = str(content)
+            elif hasattr(geom, "Text"):
+                geom.Text = str(content)
+            else:
+                return False
+            if origin is not None:
+                plane = geom.Plane
+                plane.Origin = self._rhino.Geometry.Point3d(
+                    float(origin[0]),
+                    float(origin[1]),
+                    float(origin[2]) if len(origin) > 2 else 0.0,
+                )
+                geom.Plane = plane
+                try:
+                    geom.Justification = self._rhino.Geometry.TextJustification.BottomLeft
+                except Exception:
+                    pass
+            return bool(self._sc.doc.Objects.Replace(obj.Id, geom))
+        except Exception:
+            return False
 
     def document_path(self) -> Optional[str]:
         path = getattr(self._sc.doc, "Path", None) or ""

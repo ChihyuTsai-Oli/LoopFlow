@@ -3,16 +3,19 @@
   "schema_version": 1,
   "layers": {
     "drawing_no": "LoopFlow::Drawing_Number",
-    "drawing_name": "LoopFlow::Drawing_Name"
+    "drawing_name": "LoopFlow::Drawing_Name",
+    "text": "LoopFlow::Drawing_Text"
   },
   "layer_colors": {
     "drawing_no": [255, 0, 0],
-    "drawing_name": [0, 255, 0]
+    "drawing_name": [0, 255, 0],
+    "text": [205, 179, 139]
   },
   "usertext_keys": {
     "catalog_id": "lf_catalog_id",
     "field": "lf_catalog_field",
     "sheet_id": "lf_catalog_sheet_id",
+    "point_id": "lf_catalog_point_id",
     "generated_by": "lf_generated_by"
   },
   "allowed_fields": ["drawing_no", "drawing_name"],
@@ -25,6 +28,7 @@
     "判定條件是在指定圖層且具備 lf_catalog_id；不得由圖層名反推 lf_catalog_field。",
     "空位仍是合法 anchor，未綁定不寫 lf_catalog_sheet_id。",
     "排序必須先依 Layout 頁分組，再 X 分欄、Y 由上而下。",
-    "產生文字寫 lf_generated_by=LF_Catalog 與 lf_catalog_id；Refresh 依這兩個 key 精準刪除再建。"
+    "產生文字在 LoopFlow::Drawing_Text，左下角對齊定位點。",
+    "產生文字寫 lf_generated_by、lf_catalog_id、lf_catalog_point_id；Refresh 更新內容與原點，保留字型、大小、圖層。"
   ]
 }

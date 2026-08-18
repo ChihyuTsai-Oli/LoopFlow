@@ -35,7 +35,10 @@ from loopflow.features.catalog.keys import (
     GENERATED_BY_VALUE,
     NAME_LAYER,
     NUMBER_LAYER,
+    POINT_ID_KEY,
     SHEET_ID_KEY,
+    TEXT_COLOR,
+    TEXT_LAYER,
 )
 from loopflow.features.sheet.keys import SHEET_ID_KEY as FRAME_SHEET_ID_KEY
 from loopflow.features.sheet.metadata import write_sheet_metadata
@@ -207,6 +210,12 @@ class AssignAndBuildTests(unittest.TestCase):
         self.assertEqual(len(texts), 2)
         values = {session.text_content(item) for item in texts}
         self.assertEqual(values, {"IN 101", "一樓"})
+        self.assertEqual(session.layer_color(TEXT_LAYER), TEXT_COLOR)
+        for object_id in texts:
+            self.assertEqual(session.object_layer(object_id), TEXT_LAYER)
+            point_id = session.get_object_user_text(object_id, POINT_ID_KEY)
+            self.assertIn(point_id, ("n1", "m1"))
+            self.assertEqual(session.text_origin(object_id), session.point_xyz(point_id))
 
     def test_preview_cancel_writes_nothing(self):
         session = _session()
@@ -241,6 +250,44 @@ class AssignAndBuildTests(unittest.TestCase):
         values = {session.text_content(item) for item in generated_text_ids(session, CATALOG_ID)}
         self.assertIn("IN 201", values)
         self.assertIn("一樓平面", values)
+
+    def test_refresh_keeps_text_settings_and_follows_point(self):
+        session = _session()
+        session.set_layout_pages(["P1"])
+        _add_sheet(session, "P1", SHEET_A, "IN 101", "一樓", 1)
+        _add_anchor(
+            session, "n1", (100, 200, 0), page="P1", layer=NUMBER_LAYER, field=FIELD_DRAWING_NO
+        )
+        _add_anchor(
+            session, "m1", (180, 200, 0), page="P1", layer=NAME_LAYER, field=FIELD_DRAWING_NAME
+        )
+        result = build_catalog(
+            session, [SHEET_A], confirm=lambda _lines: True, catalog=_catalog()
+        )
+        self.assertTrue(result.ok, result.message)
+        texts = generated_text_ids(session, CATALOG_ID)
+        self.assertEqual(len(texts), 2)
+        for object_id in texts:
+            session.set_text_height(object_id, 8.5)
+            session.set_object_layer(object_id, "Manual::Catalog")
+        session.add_point("n1", (55.0, 40.0, 0), layer=NUMBER_LAYER)
+        session.add_point("m1", (135.0, 40.0, 0), layer=NAME_LAYER)
+        write_sheet_metadata(
+            session,
+            SHEET_A,
+            {"drawing_name": "一樓平面", "drawing_no": "IN 101", "page_position": 1},
+        )
+        refreshed = refresh_catalog(session, catalog=_catalog())
+        self.assertTrue(refreshed.ok, refreshed.message)
+        after = generated_text_ids(session, CATALOG_ID)
+        self.assertEqual(set(after), set(texts))
+        values = {session.text_content(item) for item in after}
+        self.assertEqual(values, {"IN 101", "一樓平面"})
+        for object_id in after:
+            self.assertEqual(session.text_height(object_id), 8.5)
+            self.assertEqual(session.object_layer(object_id), "Manual::Catalog")
+            point_id = session.get_object_user_text(object_id, POINT_ID_KEY)
+            self.assertEqual(session.text_origin(object_id), session.point_xyz(point_id))
 
     def test_stale_blocks_refresh(self):
         session = _session()
@@ -293,6 +340,28 @@ class AssignAndBuildTests(unittest.TestCase):
         self.assertTrue(generated)
         for object_id in generated:
             self.assertEqual(session.get_object_user_text(object_id, GENERATED_BY_KEY), GENERATED_BY_VALUE)
+
+    def test_legacy_text_on_anchor_layer_does_not_count_as_point(self):
+        session = _session()
+        session.set_layout_pages(["P1"])
+        _add_sheet(session, "P1", SHEET_A, "IN 101", "一樓", 1)
+        _add_anchor(
+            session, "n1", (100, 200, 0), page="P1", layer=NUMBER_LAYER, field=FIELD_DRAWING_NO, sheet_id=SHEET_A
+        )
+        _add_anchor(
+            session, "m1", (180, 200, 0), page="P1", layer=NAME_LAYER, field=FIELD_DRAWING_NAME, sheet_id=SHEET_A
+        )
+        leftover = session.add_text("舊圖號", (100, 200, 0), layer=NUMBER_LAYER, page_name="P1")
+        session.set_object_user_text(leftover, GENERATED_BY_KEY, GENERATED_BY_VALUE)
+        session.set_object_user_text(leftover, CATALOG_ID_KEY, CATALOG_ID)
+        session.set_object_user_text(leftover, FIELD_KEY, FIELD_DRAWING_NO)
+        refreshed = refresh_catalog(session, catalog=_catalog())
+        self.assertTrue(refreshed.ok, refreshed.message)
+        self.assertIsNone(session.text_content(leftover))
+        texts = generated_text_ids(session, CATALOG_ID)
+        self.assertEqual(len(texts), 2)
+        for object_id in texts:
+            self.assertEqual(session.object_layer(object_id), TEXT_LAYER)
 
     def test_row_mismatch_zero_write(self):
         session = _session()
@@ -395,11 +464,14 @@ class SchemaFixtureTests(unittest.TestCase):
 
         self.assertEqual(spec["layers"]["drawing_no"], catalog_keys.NUMBER_LAYER)
         self.assertEqual(spec["layers"]["drawing_name"], catalog_keys.NAME_LAYER)
+        self.assertEqual(spec["layers"]["text"], catalog_keys.TEXT_LAYER)
         self.assertEqual(tuple(spec["layer_colors"]["drawing_no"]), catalog_keys.NUMBER_COLOR)
         self.assertEqual(tuple(spec["layer_colors"]["drawing_name"]), catalog_keys.NAME_COLOR)
+        self.assertEqual(tuple(spec["layer_colors"]["text"]), catalog_keys.TEXT_COLOR)
         self.assertEqual(spec["usertext_keys"]["catalog_id"], catalog_keys.CATALOG_ID_KEY)
         self.assertEqual(spec["usertext_keys"]["field"], catalog_keys.FIELD_KEY)
         self.assertEqual(spec["usertext_keys"]["sheet_id"], catalog_keys.SHEET_ID_KEY)
+        self.assertEqual(spec["usertext_keys"]["point_id"], catalog_keys.POINT_ID_KEY)
         self.assertEqual(spec["generated_by_value"], catalog_keys.GENERATED_BY_VALUE)
         self.assertEqual(spec["column_tolerance"], catalog_keys.COLUMN_TOLERANCE)
         self.assertEqual(spec["row_tolerance"], catalog_keys.ROW_TOLERANCE)

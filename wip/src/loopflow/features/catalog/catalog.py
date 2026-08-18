@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""LF_Catalog：依定位點與 Sheet metadata 建立／重建圖目錄。
+"""LF_Catalog：依定位點與 Sheet metadata 建立／更新圖目錄。
 
 D04 寫 Sheet metadata；本模組只讀 `sheet_id` 與 Sheet metadata API，不解析
 Layout 頁名、不讀圖框文字、不另存圖號／圖名副本。責任與零寫入條件見
@@ -26,9 +26,12 @@ from loopflow.features.catalog.keys import (
     NAME_LAYER,
     NUMBER_COLOR,
     NUMBER_LAYER,
+    POINT_ID_KEY,
     ROW_TOLERANCE,
     SHEET_ID_KEY,
+    TEXT_COLOR,
     TEXT_HEIGHT,
+    TEXT_LAYER,
 )
 from loopflow.features.sheet.metadata import (
     get_sheet_metadata,
@@ -340,6 +343,8 @@ def _catalog_point(session: RhinoSession, object_id: str, pages: Dict[str, int])
 def _layer_field_ids(session: RhinoSession, layer: str, field: str) -> Tuple[str, ...]:
     ids = []
     for object_id in session.objects_on_layer(layer) or ():
+        if not session.is_point(object_id):
+            continue
         if text(session.get_object_user_text(object_id, CATALOG_ID_KEY)) is None:
             continue
         actual = text(session.get_object_user_text(object_id, FIELD_KEY))
@@ -494,6 +499,110 @@ def delete_generated_catalog_text(session: RhinoSession, catalog_id: str) -> int
     return removed
 
 
+def _ensure_text_layer(session: RhinoSession) -> None:
+    session.ensure_layer(TEXT_LAYER)
+    session.set_layer_appearance(TEXT_LAYER, TEXT_COLOR)
+
+
+def _write_text_keys(
+    session: RhinoSession,
+    text_id: str,
+    *,
+    catalog_id: str,
+    point_id: str,
+    field: str,
+) -> None:
+    session.set_object_user_text(text_id, GENERATED_BY_KEY, GENERATED_BY_VALUE)
+    session.set_object_user_text(text_id, CATALOG_ID_KEY, catalog_id)
+    session.set_object_user_text(text_id, POINT_ID_KEY, point_id)
+    session.set_object_user_text(text_id, FIELD_KEY, field)
+
+
+def _create_catalog_text_object(
+    session: RhinoSession,
+    content: str,
+    point_xyz,
+    *,
+    page_name: Optional[str],
+    catalog_id: str,
+    point_id: str,
+    field: str,
+    height: float,
+) -> str:
+    _ensure_text_layer(session)
+    text_id = session.add_text(
+        content,
+        point_xyz,
+        layer=TEXT_LAYER,
+        page_name=page_name,
+        height=height,
+    )
+    _write_text_keys(
+        session,
+        text_id,
+        catalog_id=catalog_id,
+        point_id=point_id,
+        field=field,
+    )
+    return text_id
+
+
+def sync_catalog_text(
+    session: RhinoSession,
+    rows: Sequence[CatalogRow],
+    catalog_id: str,
+    *,
+    height: float = TEXT_HEIGHT,
+) -> Tuple[str, ...]:
+    """更新已有目錄文字的內容與原點；字型、大小、圖層維持原設定。缺件才新建。"""
+    existing_by_point = {}
+    for text_id in generated_text_ids(session, catalog_id):
+        point_id = text(session.get_object_user_text(text_id, POINT_ID_KEY))
+        if point_id:
+            existing_by_point[point_id] = text_id
+    keep = set()
+    written = []
+    updater = getattr(session, "update_text", None)
+    for row in rows:
+        placements = (
+            (row.number_point_id, FIELD_DRAWING_NO, row.drawing_no),
+            (row.name_point_id, FIELD_DRAWING_NAME, row.drawing_name),
+        )
+        for point_id, field, content in placements:
+            if row.skip_reason:
+                continue
+            point_xyz = session.point_xyz(point_id)
+            page_name = session.layout_page_name_of(point_id)
+            existing = existing_by_point.get(point_id)
+            if existing and callable(updater) and updater(existing, content or "", origin=point_xyz):
+                _write_text_keys(
+                    session,
+                    existing,
+                    catalog_id=catalog_id,
+                    point_id=point_id,
+                    field=field,
+                )
+                keep.add(existing)
+                written.append(existing)
+                continue
+            text_id = _create_catalog_text_object(
+                session,
+                content or "",
+                point_xyz,
+                page_name=page_name,
+                catalog_id=catalog_id,
+                point_id=point_id,
+                field=field,
+                height=height,
+            )
+            keep.add(text_id)
+            written.append(text_id)
+    for text_id in generated_text_ids(session, catalog_id):
+        if text_id not in keep:
+            session.delete_object(text_id)
+    return tuple(written)
+
+
 def create_catalog_text(
     session: RhinoSession,
     rows: Sequence[CatalogRow],
@@ -501,33 +610,7 @@ def create_catalog_text(
     *,
     height: float = TEXT_HEIGHT,
 ) -> Tuple[str, ...]:
-    created = []
-    for row in rows:
-        if row.skip_reason:
-            continue
-        number_xyz = session.point_xyz(row.number_point_id)
-        name_xyz = session.point_xyz(row.name_point_id)
-        page_name = session.layout_page_name_of(row.number_point_id)
-        number_text = session.add_text(
-            row.drawing_no or "",
-            number_xyz,
-            layer=NUMBER_LAYER,
-            page_name=page_name,
-            height=height,
-        )
-        session.set_object_user_text(number_text, GENERATED_BY_KEY, GENERATED_BY_VALUE)
-        session.set_object_user_text(number_text, CATALOG_ID_KEY, catalog_id)
-        name_text = session.add_text(
-            row.drawing_name or "",
-            name_xyz,
-            layer=NAME_LAYER,
-            page_name=page_name,
-            height=height,
-        )
-        session.set_object_user_text(name_text, GENERATED_BY_KEY, GENERATED_BY_VALUE)
-        session.set_object_user_text(name_text, CATALOG_ID_KEY, catalog_id)
-        created.extend((number_text, name_text))
-    return tuple(created)
+    return sync_catalog_text(session, rows, catalog_id, height=height)
 
 
 def assign_catalog_points(
@@ -662,8 +745,7 @@ def _apply_rows(
 ) -> Tuple[int, Tuple[str, ...]]:
     if write_bindings:
         write_catalog_anchor_metadata(session, slots, catalog_id)
-    delete_generated_catalog_text(session, catalog_id)
-    created = create_catalog_text(session, rows, catalog_id)
+    created = sync_catalog_text(session, rows, catalog_id)
     skipped = tuple(
         row.skip_reason
         for row in rows
@@ -803,7 +885,7 @@ def refresh_catalog(
         created, skipped = _apply_rows(
             current, bound.slots, rows, catalog_id, write_bindings=False
         )
-        message = "已重建圖目錄文字 %s 個。" % created
+        message = "已更新圖目錄文字 %s 個。" % created
         if skipped:
             message += " 略過 %s 列。" % len(skipped)
         return results.ok(
@@ -908,7 +990,10 @@ def _default_pick_points(message: str) -> Optional[Sequence[str]]:
     return pick_catalog_points(message)
 
 
-def _default_pick_sheets(session: RhinoSession) -> Optional[Sequence[str]]:
+def _default_pick_sheets(
+    session: RhinoSession,
+    selected: Sequence[str] = (),
+) -> Optional[Sequence[str]]:
     from loopflow.platform.rhino.prompts import ask_pick_catalog_sheets
 
     loaded = load_tag_templates()
@@ -935,7 +1020,7 @@ def _default_pick_sheets(session: RhinoSession) -> Optional[Sequence[str]]:
 
         show_message("沒有可列入目錄的 Sheet。請先執行 Layout ID。")
         return None
-    return ask_pick_catalog_sheets(items)
+    return ask_pick_catalog_sheets(items, selected_ids=selected)
 
 
 def _default_ask_path(default: Optional[str]) -> Optional[str]:
@@ -1055,7 +1140,7 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
             self._present(assign_catalog_points(session, ids, FIELD_DRAWING_NAME))
 
         def _on_pick_sheets(self, sender, e) -> None:
-            picked = _default_pick_sheets(session)
+            picked = _default_pick_sheets(session, selected_sheets)
             if picked is None:
                 return
             selected_sheets[:] = list(picked)
@@ -1063,7 +1148,7 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
 
         def _on_build(self, sender, e) -> None:
             if not selected_sheets:
-                picked = _default_pick_sheets(session)
+                picked = _default_pick_sheets(session, selected_sheets)
                 if picked is None:
                     return
                 selected_sheets[:] = list(picked)

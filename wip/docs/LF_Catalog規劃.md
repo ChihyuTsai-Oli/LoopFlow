@@ -39,7 +39,7 @@ flowchart TD
 - `sheet_id` 才是 Sheet 的身分。Catalog 定位點綁 `sheet_id`，**永不**綁目前的圖號。
 - Catalog 文字是可丟棄的輸出，Catalog 定位點是持久的綁定。
 
-因此重新編號、改圖名、文字被刪、文字被手改、排版位置調整，都能由「定位點 + Sheet metadata」完整重建。
+因此重新編號、改圖名、文字被刪、文字被手改、排版位置調整，都能由「定位點 + Sheet metadata」還原內容與原點；字型、大小、圖層等既有文字設定在 Refresh 時保留。
 
 ## 定位點契約
 
@@ -53,7 +53,7 @@ Catalog Anchor 是 Rhino Point 物件，UserText：
 
 `lf_catalog_id` 與 `lf_catalog_field` 代表定位點的模板角色，`lf_catalog_sheet_id` 只代表目前綁定，因此**空位仍是合法 anchor**：40 格的模板可以只放 28 張圖。定位點不保存圖號、圖名實值，也不保存 Layout 頁名。
 
-產生的文字寫最低限度 UserText 供精準清除：`lf_generated_by = LF_Catalog` 與 `lf_catalog_id`。Refresh 以這兩個 key 找出舊文字刪除後重建，**不得**用「定位點附近的文字」來判斷哪些是目錄文字。
+產生文字寫 `lf_generated_by = LF_Catalog`、`lf_catalog_id`、`lf_catalog_point_id`、`lf_catalog_field`。定位點是文字左下角原點。Refresh 對得到定位點就只改內容與原點，不重設字型、大小、圖層、顏色；對不到才新建；未用到的舊目錄文字才刪。**不得**用「定位點附近的文字」來判斷哪些是目錄文字。
 
 ## 三條硬規則
 
@@ -87,6 +87,7 @@ Block 內的 Point 屬於 block 幾何，無法個別換圖層、也無法個別
 |---|---|---|
 | 選取圖號定位點 | `LoopFlow::Drawing_Number` | 紅 `(255, 0, 0)` |
 | 選取圖名定位點 | `LoopFlow::Drawing_Name` | 綠 `(0, 255, 0)` |
+| 產生目錄文字 | `LoopFlow::Drawing_Text` | `#CDB38B` `(205, 179, 139)` |
 
 紅綠區分讓「圖名定位點被誤拖到圖號欄」在畫面上一眼可辨，但這只是輔助，不取代程式檢查。
 
@@ -125,12 +126,12 @@ Eto Panel，初版六個動作：
 |---|---|
 | 選取圖號定位點 | 選 Point → 歸位 `LoopFlow::Drawing_Number` → 面板顯示數量 |
 | 選取圖名定位點 | 選 Point → 歸位 `LoopFlow::Drawing_Name` → 面板顯示數量 |
-| 選取 Sheet | 列出 Layout（頁序、圖號、圖名、頁名）供勾選，可排除封面、測試頁、空白頁 |
-| Build／Rebind | 驗證 → 預覽核對清單 → 寫定位點綁定 → 建立文字 |
-| Refresh | 不改綁定，只依 `sheet_id` 重新取值並重建文字 |
+| 選取 Sheet | 列出 Layout（頁序、圖號、圖名、頁名），Shift 連選、Ctrl 加選或取消，反白即選取 |
+| Build／Rebind | 驗證 → 預覽核對清單 → 寫定位點綁定 → 建立或更新文字 |
+| Refresh | 不改綁定；更新內容與原點，保留字型、大小、圖層 |
 | 匯出 TXT | 依目前綁定輸出 `圖名, 圖號`，UTF-8 |
 
-Build／Rebind 改變「定位點 ↔ Sheet」關係；Refresh 只重新取得目前值。兩者語意不可混。新增的 Layout **不自動**納入既有目錄（使用者可能刻意排除某些頁），要納入就重新選 Sheet 再 Build／Rebind。
+Build／Rebind 改變「定位點 ↔ Sheet」關係；Refresh 只重新取得目前值並就地更新文字。兩者語意不可混。新增的 Layout **不自動**納入既有目錄（使用者可能刻意排除某些頁），要納入就重新選 Sheet 再 Build／Rebind。
 
 面板固定顯示提醒：目錄定位點是持久控制物件，建立目錄後請勿刪除；移動目錄時請連同定位點一起移動。
 
@@ -141,9 +142,9 @@ Build／Rebind 改變「定位點 ↔ Sheet」關係；Refresh 只重新取得�
 | 圖名修改 | Refresh 後文字更新 |
 | 插頁導致圖號改變 | `sheet_id` 不變，Refresh 取到新 `drawing_no` |
 | Layout 頁名被手改 | 完全不影響目錄 |
-| 目錄文字被手改 | Refresh 不相信舊文字，重建回 metadata 值 |
-| 目錄文字被刪 | 定位點還在即可完整重建 |
-| 定位點被移動 | 在新位置生成文字，定位點也是排版工具 |
+| 目錄文字被手改 | Refresh 把內容改回 metadata 值，字型／大小／圖層留下 |
+| 目錄文字被刪 | 定位點還在即可在 `Drawing_Text` 新建 |
+| 定位點被移動 | Refresh 後文字原點跟著走，字型設定留下 |
 | 綁定的 Sheet 被刪除 | 該列不生成文字，報告 missing sheet，不阻擋其餘更新 |
 | Sheet metadata 為 orphan | 同上；metadata 存在不等於 Sheet 仍 active |
 | Sheet metadata 過期（頁序變了沒重跑 D04） | 回報 `stale` 並要求先執行 D04，不安靜輸出舊值 |
@@ -156,7 +157,7 @@ Build／Rebind 改變「定位點 ↔ Sheet」關係；Refresh 只重新取得�
 
 ## Duplicate Sheet 的連動
 
-複製圖目錄頁很常見（做第二冊、留備份版本）。若不換號，兩份目錄會有相同的 `lf_catalog_id`，Refresh 會同時刪掉兩邊的文字再重建，或 anchor 數量變兩倍而配對錯亂；而「混入**多個** `catalog_id` 才零寫入」的防呆剛好抓不到「同一個 `catalog_id` 出現兩次」。
+複製圖目錄頁很常見（做第二冊、留備份版本）。若不換號，兩份目錄會有相同的 `lf_catalog_id`，Refresh 會同時改到兩邊的文字，或 anchor 數量變兩倍而配對錯亂；而「混入**多個** `catalog_id` 才零寫入」的防呆剛好抓不到「同一個 `catalog_id` 出現兩次」。
 
 因此 `資料契約.md` 的「Duplicate Sheet 特例」已增列：Catalog Point 的 `lf_catalog_id` 必須換新號，`lf_catalog_sheet_id` 依 Sheet 換號規則重新指定或清除。
 
@@ -171,25 +172,25 @@ Build／Rebind 改變「定位點 ↔ Sheet」關係；Refresh 只重新取得�
 1. Catalog contract 與 fixtures（含 `資料契約.md` 的 Catalog Anchor 正式章節）
 2. 定位點排序純邏輯（分頁分組、X 分欄容差、Y 遞減）
 3. 配對與綁定（逐頁數量、同列容差、Build／Rebind）
-4. 產生文字與 Refresh（以 `lf_generated_by` 精準清除重建）
+4. 產生文字與 Refresh（以 `lf_catalog_point_id` 就地更新，缺件才新建）
 5. TXT 匯出
 6. Eto Panel
 7. Rhino 8 實機驗收
 
 ## 自動測試涵蓋
 
-排序：單欄由上而下、雙欄左欄接右欄、X 微小誤差仍同欄、選取順序不影響結果、**跨頁不混排**。配對：逐頁數量相等／不等、同列驗證通過／失敗、Sheet 少於定位點、Sheet 多於定位點零寫入。綁定：Build 寫入正確 `sheet_id`、Rebind 替換舊綁定、Refresh 不動綁定。資料更新：改圖名、改圖號、改頁名不影響目錄、stale 偵測。缺失：Sheet 被刪、orphan metadata、欄位缺值。輸出：文字被刪可重建、文字被手改可恢復、不影響人工文字。安全：Esc 零寫入、預覽取消零寫入、混入多個 `catalog_id` 零寫入、選到 Block 零寫入。匯出：順序與目錄一致、UTF-8 中文正常、Rhino 檔未儲存時要求選路徑。
+排序：單欄由上而下、雙欄左欄接右欄、X 微小誤差仍同欄、選取順序不影響結果、**跨頁不混排**。配對：逐頁數量相等／不等、同列驗證通過／失敗、Sheet 少於定位點、Sheet 多於定位點零寫入。綁定：Build 寫入正確 `sheet_id`、Rebind 替換舊綁定、Refresh 不動綁定。資料更新：改圖名、改圖號、改頁名不影響目錄、stale 偵測。缺失：Sheet 被刪、orphan metadata、欄位缺值。輸出：文字被刪可重建、文字被手改可恢復內容、Refresh 維持字型／大小／圖層、不影響人工文字。安全：Esc 零寫入、預覽取消零寫入、混入多個 `catalog_id` 零寫入、選到 Block 零寫入。匯出：順序與目錄一致、UTF-8 中文正常、Rhino 檔未儲存時要求選路徑。
 
 ## Rhino 8 實機驗收清單
 
 1. 在圖目錄模板放兩欄定位點，選圖號、選圖名，確認歸位到紅／綠圖層
 2. 選 10 張 Layout → Build，驗證由左上往下、再往右欄排列
 3. 檢查定位點 UserText（`lf_catalog_id`／`lf_catalog_field`／`lf_catalog_sheet_id`）
-4. 改一張 Sheet 的圖名 → Refresh，驗證文字更新
+4. 改一張 Sheet 的圖名、並改過目錄文字的字型／大小 → Refresh，驗證內容更新且設定留下
 5. 插入 Layout 並跑 D04 重新編號 → Refresh，驗證既有綁定不變但圖號更新
 6. **不跑 D04 就 Refresh**，驗證回報 stale 而不是輸出舊值
 7. 刪一個目錄文字 → Refresh，驗證重建
-8. 移動定位點 → Refresh，驗證文字在新位置生成
+8. 移動定位點 → Refresh，驗證文字原點跟著走且字型留下
 9. 刪一張 Layout → Refresh，驗證 missing sheet 報告且其餘正常
 10. 目錄跨兩頁時驗證兩頁各自排序正確、不交錯
 11. 故意把一個圖名定位點拖到隔壁欄，驗證報錯零寫入

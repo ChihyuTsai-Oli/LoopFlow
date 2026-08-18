@@ -17,10 +17,16 @@ ALLOWED_FIELDS = (FIELD_DRAWING_NO, FIELD_DRAWING_NAME)
 
 NUMBER_LAYER = "LoopFlow::Drawing_Number"
 NAME_LAYER = "LoopFlow::Drawing_Name"
+TEXT_LAYER = "LoopFlow::Drawing_Text"
 NUMBER_COLOR = (255, 0, 0)
 NAME_COLOR = (0, 255, 0)
+TEXT_COLOR = (205, 179, 139)  # #CDB38B
+
+POINT_ID_KEY = "lf_catalog_point_id"
 
 # 文件單位為公分時的空間容差。
 COLUMN_TOLERANCE = 2.0
 ROW_TOLERANCE = 2.0
 TEXT_HEIGHT = 3.0
+# rhinoscriptsyntax：Left + Bottom，文字左下角對齊定位點。
+TEXT_JUSTIFICATION_BOTTOM_LEFT = 1 | 65536

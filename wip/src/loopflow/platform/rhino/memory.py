@@ -282,10 +282,41 @@ class MemorySession:
             "text": str(content),
             "point": xyz,
             "height": float(height),
+            "font": "Arial",
+            "justification": "bottom_left",
         }
         if page_name:
             self.add_object_to_layout_page(page_name, object_id)
         return object_id
+
+    def update_text(self, object_id: str, content: str, origin=None) -> bool:
+        item = self._texts.get(object_id)
+        if not item:
+            return False
+        item["text"] = str(content)
+        if origin is not None:
+            item["point"] = tuple(float(v) for v in origin)
+        self._modified = True
+        return True
+
+    def text_height(self, object_id: str) -> Optional[float]:
+        item = self._texts.get(object_id)
+        if not item:
+            return None
+        return float(item.get("height") or 0.0)
+
+    def set_text_height(self, object_id: str, height: float) -> None:
+        item = self._texts.get(object_id)
+        if item is None:
+            return
+        item["height"] = float(height)
+        self._modified = True
+
+    def text_origin(self, object_id: str):
+        item = self._texts.get(object_id)
+        if not item:
+            return None
+        return tuple(item.get("point") or ())
 
     def text_content(self, object_id: str) -> Optional[str]:
         item = self._texts.get(object_id)

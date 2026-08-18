@@ -187,6 +187,9 @@ class RhinoSession(Protocol):
     ) -> str:
         ...
 
+    def update_text(self, object_id: str, content: str, origin=None) -> bool:
+        ...
+
     def document_path(self) -> Optional[str]:
         ...
 
