@@ -25,8 +25,9 @@ python wip/tools/check_contract_fixtures.py
 | `quantity/cases.json` | COUNT＝1；才＝cm²÷918.09；坪＝m²×0.3025 |
 | `view/cases.json` | 唯一 CP 通過、缺 Text Dot／幾何／CP、CP 歧義、取消、1.x 升級、非法 transform |
 | `sheet/cases.json` | 頁名首次匯入、插頁補號、空白頁繼承系列、orphan 不是 active、stale 頁序、圖框 0／1／2 個 |
+| `catalog/cases.json` | 單欄／雙欄排序、跨頁不混排、逐頁數量不符、同列失敗、Sheet 多於空位、空位留白 |
 
-`schema/` 的 `registry.json`、`tag_templates.json`、`view.json` 與 `sheet.json` 由檢查器一併核對：10 份 manifest、恰好一個 `title_frame`、24 個 legacy key 與畫面擷取一致；View 圖層為 `LoopFlow::Anchor_Frame`；Sheet metadata 命名空間為 `lf_sheet`，身分錨點為 `lf_sheet_id`。
+`schema/` 的 `registry.json`、`tag_templates.json`、`view.json`、`sheet.json` 與 `catalog.json` 由檢查器一併核對：10 份 manifest、恰好一個 `title_frame`、24 個 legacy key 與畫面擷取一致；View 圖層為 `LoopFlow::Anchor_Frame`；Sheet metadata 命名空間為 `lf_sheet`，身分錨點為 `lf_sheet_id`；Catalog 定位點圖層為 `LoopFlow::Drawing_Number`／`Drawing_Name`。
 
 `local_frame/` 與 `quantity/` 是後續 GH 數量計算的材料，2.0 不從模型求值；檢查器仍核對常數與案例，以免契約腐壞。
 

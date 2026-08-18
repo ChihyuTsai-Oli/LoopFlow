@@ -19,7 +19,9 @@ class MemorySession:
         self._blocks: Dict[str, tuple] = {}
         self._block_names: Dict[str, str] = {}
         self._points: Dict[str, tuple] = {}
+        self._texts: Dict[str, dict] = {}
         self._text_dots: Dict[str, dict] = {}
+        self._document_path: Optional[str] = None
         self._clipping_planes: Dict[str, dict] = {}
         self._ray_hits: list = []
         self._layout_active = True
@@ -72,8 +74,12 @@ class MemorySession:
         self._blocks.pop(object_id, None)
         self._block_names.pop(object_id, None)
         self._points.pop(object_id, None)
+        self._texts.pop(object_id, None)
         self._text_dots.pop(object_id, None)
         self._clipping_planes.pop(object_id, None)
+        for ids in self._page_objects.values():
+            if object_id in ids:
+                ids.remove(object_id)
         self._modified = True
 
     def iter_object_ids(self, *, include_hidden: bool = True, include_locked: bool = True):
@@ -236,6 +242,62 @@ class MemorySession:
 
     def placeholder_point(self, object_id: str):
         return self._points.get(object_id)
+
+    def add_point(self, object_id: str, xyz=(0.0, 0.0, 0.0), *, layer: Optional[str] = None) -> None:
+        if object_id not in self._objects:
+            self.add_object(object_id, layer=layer)
+        elif layer not in (None, ""):
+            self.set_object_layer(object_id, layer)
+        self._points[object_id] = tuple(float(v) for v in xyz)
+
+    def is_point(self, object_id: str) -> bool:
+        return object_id in self._points and object_id not in self._blocks
+
+    def point_xyz(self, object_id: str):
+        point = self._points.get(object_id)
+        if not point:
+            return None
+        return tuple(float(v) for v in point)
+
+    def layout_page_name_of(self, object_id: str) -> Optional[str]:
+        for page_name, ids in self._page_objects.items():
+            if object_id in ids:
+                return page_name
+        return None
+
+    def add_text(
+        self,
+        content: str,
+        point,
+        *,
+        layer: str,
+        page_name: Optional[str] = None,
+        height: float = 1.0,
+    ) -> str:
+        object_id = "mem-%s" % self._next_id
+        self._next_id += 1
+        self.add_object(object_id, layer=layer)
+        xyz = tuple(float(v) for v in (point or (0.0, 0.0, 0.0)))
+        self._texts[object_id] = {
+            "text": str(content),
+            "point": xyz,
+            "height": float(height),
+        }
+        if page_name:
+            self.add_object_to_layout_page(page_name, object_id)
+        return object_id
+
+    def text_content(self, object_id: str) -> Optional[str]:
+        item = self._texts.get(object_id)
+        if not item:
+            return None
+        return str(item.get("text") or "")
+
+    def document_path(self) -> Optional[str]:
+        return self._document_path
+
+    def set_document_path(self, path: Optional[str]) -> None:
+        self._document_path = None if path in (None, "") else str(path)
 
     def set_curve(self, object_id: str, polygon, *, closed: bool = True, elevation=None) -> None:
         pts = tuple(tuple(pt) for pt in polygon)

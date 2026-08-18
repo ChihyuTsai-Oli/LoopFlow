@@ -1,0 +1,30 @@
+{
+  "schema_id": "loopflow.catalog",
+  "schema_version": 1,
+  "layers": {
+    "drawing_no": "LoopFlow::Drawing_Number",
+    "drawing_name": "LoopFlow::Drawing_Name"
+  },
+  "layer_colors": {
+    "drawing_no": [255, 0, 0],
+    "drawing_name": [0, 255, 0]
+  },
+  "usertext_keys": {
+    "catalog_id": "lf_catalog_id",
+    "field": "lf_catalog_field",
+    "sheet_id": "lf_catalog_sheet_id",
+    "generated_by": "lf_generated_by"
+  },
+  "allowed_fields": ["drawing_no", "drawing_name"],
+  "generated_by_value": "LF_Catalog",
+  "column_tolerance": 2.0,
+  "row_tolerance": 2.0,
+  "notes": [
+    "Catalog 只消費 Sheet metadata，不解析 Layout 頁名、不讀圖框文字、不另存圖號／圖名副本。",
+    "定位點綁 lf_catalog_sheet_id（即 sheet_id），永不綁目前圖號。",
+    "判定條件是在指定圖層且具備 lf_catalog_id；不得由圖層名反推 lf_catalog_field。",
+    "空位仍是合法 anchor，未綁定不寫 lf_catalog_sheet_id。",
+    "排序必須先依 Layout 頁分組，再 X 分欄、Y 由上而下。",
+    "產生文字寫 lf_generated_by=LF_Catalog 與 lf_catalog_id；Refresh 依這兩個 key 精準刪除再建。"
+  ]
+}

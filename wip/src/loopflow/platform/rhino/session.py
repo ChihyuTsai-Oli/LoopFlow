@@ -167,6 +167,29 @@ class RhinoSession(Protocol):
     def zoom_to_layout_detail(self, layout: str, detail_id: str) -> None:
         ...
 
+    def is_point(self, object_id: str) -> bool:
+        ...
+
+    def point_xyz(self, object_id: str):
+        ...
+
+    def layout_page_name_of(self, object_id: str) -> Optional[str]:
+        ...
+
+    def add_text(
+        self,
+        content: str,
+        point,
+        *,
+        layer: str,
+        page_name: Optional[str] = None,
+        height: float = 1.0,
+    ) -> str:
+        ...
+
+    def document_path(self) -> Optional[str]:
+        ...
+
     def snapshot(self) -> DocumentSnapshot:
         ...
 
@@ -232,7 +255,8 @@ def run_guarded(
 ) -> results.Result:
     """執行動作後還原選取／鎖定／顯示／顏色。
 
-    成功：保留文件 modified（指令可能已寫入資料）。
+    成功：保留文件 modified（指令可能已寫入資料）；允許刪除快照中的物件
+    （例如 Refresh 精準刪舊目錄文字再重建）。
     取消、失敗、例外：連 modified 一併還原。
     """
     try:
@@ -266,7 +290,7 @@ def run_guarded(
         snapshot,
         restore_document_modified=not outcome.ok,
     )
-    if not restored.ok:
+    if not restored.ok and not outcome.ok:
         return results.failed(
             "restore",
             restored.message,

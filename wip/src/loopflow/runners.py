@@ -120,6 +120,15 @@ def run_anchor_frame() -> Result:
     return _present_failure(run_register(opened.details["session"]))
 
 
+def run_catalog() -> Result:
+    from loopflow.features.catalog.catalog import run_catalog as run_catalog_command
+
+    opened = _open_live_session()
+    if not opened.ok:
+        return opened
+    return _present_failure(run_catalog_command(opened.details["session"]))
+
+
 RUNNERS: Dict[str, Runner] = {
     "LF_Nexus": run_nexus,
     "LF_Open_Dictionary": run_open_dictionary,
@@ -132,6 +141,7 @@ RUNNERS: Dict[str, Runner] = {
     "LF_Tagger_Index": run_tagger_index,
     "LF_Tagger_Layout_ID": run_tagger_layout_id,
     "LF_Anchor_Frame": run_anchor_frame,
+    "LF_Catalog": run_catalog,
 }
 
 

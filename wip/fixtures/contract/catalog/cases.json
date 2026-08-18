@@ -1,0 +1,129 @@
+{
+  "schema_id": "loopflow.catalog",
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "single-column-top-to-bottom",
+      "expect": "pass",
+      "number_points": [
+        {"id": "n1", "page_number": 1, "x": 100.0, "y": 200.0},
+        {"id": "n2", "page_number": 1, "x": 100.1, "y": 150.0},
+        {"id": "n3", "page_number": 1, "x": 99.9, "y": 100.0}
+      ],
+      "name_points": [
+        {"id": "m1", "page_number": 1, "x": 180.0, "y": 200.0},
+        {"id": "m2", "page_number": 1, "x": 180.0, "y": 150.0},
+        {"id": "m3", "page_number": 1, "x": 180.0, "y": 100.0}
+      ],
+      "sheet_ids": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"],
+      "expect_order": ["n1", "n2", "n3"],
+      "expect_empty_slots": 1
+    },
+    {
+      "id": "two-columns-left-then-right",
+      "expect": "pass",
+      "number_points": [
+        {"id": "n-right-top", "page_number": 1, "x": 300.0, "y": 200.0},
+        {"id": "n-left-bottom", "page_number": 1, "x": 100.0, "y": 100.0},
+        {"id": "n-left-top", "page_number": 1, "x": 100.0, "y": 200.0},
+        {"id": "n-right-bottom", "page_number": 1, "x": 300.0, "y": 100.0}
+      ],
+      "name_points": [
+        {"id": "m-left-top", "page_number": 1, "x": 160.0, "y": 200.0},
+        {"id": "m-left-bottom", "page_number": 1, "x": 160.0, "y": 100.0},
+        {"id": "m-right-top", "page_number": 1, "x": 360.0, "y": 200.0},
+        {"id": "m-right-bottom", "page_number": 1, "x": 360.0, "y": 100.0}
+      ],
+      "sheet_ids": [
+        "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
+      ],
+      "expect_order": ["n-left-top", "n-left-bottom", "n-right-top", "n-right-bottom"]
+    },
+    {
+      "id": "cross-page-must-not-interleave",
+      "expect": "pass",
+      "number_points": [
+        {"id": "p2-top", "page_number": 2, "x": 100.0, "y": 200.0},
+        {"id": "p1-top", "page_number": 1, "x": 100.0, "y": 200.0},
+        {"id": "p1-bottom", "page_number": 1, "x": 100.0, "y": 100.0},
+        {"id": "p2-bottom", "page_number": 2, "x": 100.0, "y": 100.0}
+      ],
+      "name_points": [
+        {"id": "m-p1-top", "page_number": 1, "x": 180.0, "y": 200.0},
+        {"id": "m-p1-bottom", "page_number": 1, "x": 180.0, "y": 100.0},
+        {"id": "m-p2-top", "page_number": 2, "x": 180.0, "y": 200.0},
+        {"id": "m-p2-bottom", "page_number": 2, "x": 180.0, "y": 100.0}
+      ],
+      "sheet_ids": [
+        "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
+      ],
+      "expect_order": ["p1-top", "p1-bottom", "p2-top", "p2-bottom"]
+    },
+    {
+      "id": "page-count-mismatch",
+      "expect": "page_count_mismatch",
+      "number_points": [
+        {"id": "n1", "page_number": 1, "x": 100.0, "y": 200.0},
+        {"id": "n2", "page_number": 1, "x": 100.0, "y": 100.0},
+        {"id": "n3", "page_number": 2, "x": 100.0, "y": 200.0}
+      ],
+      "name_points": [
+        {"id": "m1", "page_number": 1, "x": 180.0, "y": 200.0},
+        {"id": "m2", "page_number": 2, "x": 180.0, "y": 200.0},
+        {"id": "m3", "page_number": 2, "x": 180.0, "y": 100.0}
+      ],
+      "sheet_ids": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]
+    },
+    {
+      "id": "row-mismatch",
+      "expect": "row_mismatch",
+      "number_points": [
+        {"id": "n1", "page_number": 1, "x": 100.0, "y": 200.0},
+        {"id": "n2", "page_number": 1, "x": 100.0, "y": 100.0}
+      ],
+      "name_points": [
+        {"id": "m1", "page_number": 1, "x": 180.0, "y": 200.0},
+        {"id": "m-wrong-column", "page_number": 1, "x": 360.0, "y": 150.0}
+      ],
+      "sheet_ids": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]
+    },
+    {
+      "id": "too-many-sheets",
+      "expect": "too_many_sheets",
+      "number_points": [
+        {"id": "n1", "page_number": 1, "x": 100.0, "y": 200.0},
+        {"id": "n2", "page_number": 1, "x": 100.0, "y": 100.0}
+      ],
+      "name_points": [
+        {"id": "m1", "page_number": 1, "x": 180.0, "y": 200.0},
+        {"id": "m2", "page_number": 1, "x": 180.0, "y": 100.0}
+      ],
+      "sheet_ids": [
+        "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
+      ]
+    },
+    {
+      "id": "fewer-sheets-leave-empty-slots",
+      "expect": "pass",
+      "number_points": [
+        {"id": "n1", "page_number": 1, "x": 100.0, "y": 200.0},
+        {"id": "n2", "page_number": 1, "x": 100.0, "y": 100.0}
+      ],
+      "name_points": [
+        {"id": "m1", "page_number": 1, "x": 180.0, "y": 200.0},
+        {"id": "m2", "page_number": 1, "x": 180.0, "y": 100.0}
+      ],
+      "sheet_ids": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
+      "expect_order": ["n1", "n2"],
+      "expect_empty_slots": 1
+    }
+  ]
+}

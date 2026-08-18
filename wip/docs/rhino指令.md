@@ -44,6 +44,9 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Tagger_Layout_ID
 
 LF_Anchor_Frame
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Anchor_Frame.py"
+
+LF_Catalog
+_-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Catalog.py"
 ```
 
 ## 按鈕配置
@@ -60,6 +63,7 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Anchor_Frame.py"
 | Index | `LF_Tagger_Index` | — |
 | Layout ID | `LF_Tagger_Layout_ID` | — |
 | 註冊 View | `LF_Anchor_Frame` | — |
+| 圖目錄 | `LF_Catalog` | — |
 
 Grab：在 **Layout** 先選 Tag 圖塊，再在目標 Detail 內點一下進入模型空間，然後選來源（剖面 2D 線、3D 物件或家具圖塊）。Height／Finish 綁物件 `_07_UUID`；家具 Item 綁 Block 名稱（`FF-01__Chair-1`）。Esc、點在 Detail 外、鎖定、`TAG_DW`、Laser／Index／圖框圖塊都不寫入。結束後回到 Layout。不填 Infuser 顯示欄。來源沒有 UUID 時不猜測對應的 3D 物件。
 
@@ -70,6 +74,8 @@ Index：在 **Layout** 選 `TAG_SECTION_DETAIL` 或 `TAG_ELEV_1`～`4`，再從�
 Layout ID：跑全檔 Layout。系列第一頁寫 `**圖類別__圖號__圖名`（例如 `**IN__201__立面圖`、`**IN__A01__平面`），後面的頁只寫圖名。`//S__901__結構平面圖` 不編號但仍寫圖框，執行後保留 `//`。圖號只要尾端是數字就放行；`101.9` 下一頁為 `101.10`。核對清單確認才寫入；取消整批零寫入。Layout 起點頁名保留 `**`，接續頁為三欄無星號；圖框 `lf_drawing_no` 寫空格格式（不含 `**`／`//`），並寫 `lf_drawing_name`、`lf_sheet_id`。不寫 `lf_scale`。在 D08 之前一併寫舊欄 `DWG_NO`／`DWG_NAME`。`TAG_ELEV_0` 寫目前頁編號。未登錄 Block 勾選真正的圖框（預設全不勾）。只改圖名：改第三欄再跑。要改編號：該頁再加 `**` 再跑。圖框已就緒但缺 `**`（也沒有可寫入的 `//`）時停止，警告只顯示命名規則與 Sample。詳細命名與操作見 `工作流程.md` §9。一頁沒有圖框或有兩個圖框則跳過。不進 Nexus。**家中 Rhino 8 已測（2026-08-18）。**
 
 註冊 View：在 **2D 模型空間**框選剖面物件與恰好一個 Text Dot，再輸入外擴距離（預設 50）。框畫在 `LoopFlow::Anchor_Frame`。寫入 `lf_view_id`、Clipping Plane 物件 ID 與固定 2D↔3D transform。名稱對不到或對到兩個以上 Clipping Plane、沒有 Text Dot、沒有幾何、Esc，都不寫入。不進 Nexus。本批不射線。
+
+圖目錄：開 Eto 面板。選獨立 Point 作為圖號（紅 `LoopFlow::Drawing_Number`）與圖名（綠 `LoopFlow::Drawing_Name`）定位點，再勾選要列入的 Sheet，Build 預覽後寫 `lf_catalog_sheet_id` 並產生文字。Refresh 不改綁定，只依 Sheet metadata 重建文字。匯出 TXT 為 `圖名, 圖號`（UTF-8）。定位點綁 `sheet_id` 不綁目前圖號；空位可不綁。選到 Block、逐頁數量不符、同列失敗、Sheet 多於空位、metadata 過期、Esc／取消，都不寫入。missing／orphan Sheet 略過並報告。新 Layout 不會自動納入。不進 Nexus。**待家中 Rhino 8 實機。**
 
 左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。正式工具列在 G02 封裝時才建立。
 
@@ -107,7 +113,6 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Test_Random_M3D_
 
 | 指令 | 用途 | 前置條件 |
 |---|---|---|
-| `LF_Catalog` | 依選定 Sheet 建立圖目錄 | D04 已通過，可實作。規劃見 `LF_Catalog規劃.md` |
 | `LF_Help` | 開啟 GitHub 說明頁，分中／英文版 | GitHub 說明頁尚未建立。**頁面建好後才實作**入口與按鈕，本階段不登錄為可跑指令 |
 
 Tagger／Infuser／Extract／Layout／Worksession 等其餘指令已在 `資料契約.md` 登錄 ID，但 2.0 尚未實作；按了只會回報尚未實作。它們進入可跑狀態時再列入本文件上方清單。

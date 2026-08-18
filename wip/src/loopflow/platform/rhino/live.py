@@ -434,6 +434,71 @@ class LiveSession:
     def delete_object(self, object_id: str) -> None:
         self._rs.DeleteObject(object_id)
 
+    def is_point(self, object_id: str) -> bool:
+        return bool(self._rs.IsPoint(object_id))
+
+    def point_xyz(self, object_id: str):
+        if not self.is_point(object_id):
+            return None
+        point = self._rs.PointCoordinates(object_id)
+        if not point:
+            return None
+        return (float(point[0]), float(point[1]), float(point[2]))
+
+    def layout_page_name_of(self, object_id: str) -> Optional[str]:
+        obj = self._rhino_object(object_id)
+        if obj is None:
+            return None
+        viewport_id = obj.Attributes.ViewportId
+        try:
+            import System  # type: ignore
+
+            if viewport_id == System.Guid.Empty:
+                return None
+        except Exception:
+            pass
+        for page in self._ordered_page_views():
+            if page.MainViewport.Id == viewport_id:
+                return str(getattr(page, "PageName", "") or "")
+        return None
+
+    def add_text(
+        self,
+        content: str,
+        point,
+        *,
+        layer: str,
+        page_name: Optional[str] = None,
+        height: float = 1.0,
+    ) -> str:
+        xyz = (
+            float(point[0]),
+            float(point[1]),
+            float(point[2]) if point is not None and len(point) > 2 else 0.0,
+        )
+        text_id = self._rs.AddText(str(content), xyz, float(height))
+        if not text_id:
+            raise RuntimeError("無法建立目錄文字")
+        object_id = str(text_id)
+        if layer:
+            self.ensure_layer(layer)
+            self.set_object_layer(object_id, layer)
+        if page_name:
+            page = self._page_view(page_name)
+            obj = self._rhino_object(object_id)
+            if page is not None and obj is not None:
+                obj.Attributes.ViewportId = page.MainViewport.Id
+                try:
+                    obj.Attributes.Space = self._rhino.DocObjects.ActiveSpace.PageSpace
+                except Exception:
+                    pass
+                obj.CommitChanges()
+        return object_id
+
+    def document_path(self) -> Optional[str]:
+        path = getattr(self._sc.doc, "Path", None) or ""
+        return str(path) if path else None
+
     def is_closed_curve(self, object_id: str) -> bool:
         return bool(self._rs.IsCurve(object_id) and self._rs.IsCurveClosed(object_id))
 

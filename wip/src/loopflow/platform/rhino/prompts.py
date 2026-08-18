@@ -61,6 +61,21 @@ def ask_open_filename(
     return str(value)
 
 
+def ask_save_filename(
+    message: str,
+    file_filter: str,
+    folder: Optional[str] = None,
+    filename: Optional[str] = None,
+) -> Optional[str]:
+    """存檔路徑；沒有 Rhino 時丟 ImportError，取消時回傳 None。"""
+    import rhinoscriptsyntax as rs  # type: ignore
+
+    value = rs.SaveFileName(message, file_filter, folder, filename)
+    if not value:
+        return None
+    return str(value)
+
+
 def ask_popup_choice(
     message: str,
     items: Sequence[str],
@@ -363,6 +378,95 @@ def ask_pick_title_frames(
     return dialog.selected_names()
 
 
+def ask_pick_catalog_sheets(
+    items: Sequence[dict],
+    title: str = "選取 Sheet",
+) -> Optional[Tuple[str, ...]]:
+    """勾選要列入目錄的 Sheet。取消回 None；確認但全不勾回空 tuple。"""
+    if not items:
+        return ()
+    try:
+        import Eto.Drawing as drawing  # type: ignore
+        import Eto.Forms as forms  # type: ignore
+        import Rhino  # type: ignore
+        import Rhino.UI  # type: ignore
+    except ImportError:
+        return None
+
+    class _PickSheetsDialog(forms.Dialog[bool]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.Title = title
+            self.Padding = drawing.Padding(10)
+            self.Resizable = True
+            self.Width = 640
+            self.Height = 520
+            self.boxes = []
+            font = _ui_font(drawing, 11)
+
+            layout = forms.DynamicLayout()
+            layout.Spacing = drawing.Size(6, 6)
+            note = forms.Label()
+            note.Text = "勾選要列入圖目錄的 Layout。未勾選的不納入；新增頁不會自動加入既有目錄。"
+            note.Font = font
+            layout.AddRow(note)
+
+            scroll = forms.Scrollable()
+            scroll.Border = forms.BorderType.Line
+            scroll.Height = 360
+            inner = forms.DynamicLayout()
+            inner.Padding = drawing.Padding(6, 4, 6, 4)
+            inner.Spacing = drawing.Size(0, 6)
+            for item in items:
+                box = forms.CheckBox()
+                box.Text = str(item.get("label") or item.get("sheet_id") or "")
+                box.Checked = False
+                box.Font = font
+                box.Tag = str(item.get("sheet_id") or "")
+                inner.AddRow(box)
+                self.boxes.append(box)
+            inner.Add(None)
+            scroll.Content = inner
+            layout.AddRow(scroll)
+            layout.Add(None)
+
+            btn_ok = forms.Button()
+            btn_ok.Text = "採用勾選項目"
+            btn_ok.Click += self._on_ok
+            btn_cancel = forms.Button()
+            btn_cancel.Text = "取消（Esc）"
+            btn_cancel.Click += self._on_cancel
+            btn_layout = forms.DynamicLayout()
+            btn_layout.DefaultSpacing = drawing.Size(10, 0)
+            btn_layout.AddRow(None, btn_cancel, btn_ok)
+            layout.AddRow(btn_layout)
+
+            self.Content = layout
+            self.AbortButton = btn_cancel
+            self.DefaultButton = btn_ok
+
+        def selected_ids(self):
+            picked = []
+            for box in self.boxes:
+                if box.Checked:
+                    sheet_id = str(getattr(box, "Tag", "") or "")
+                    if sheet_id:
+                        picked.append(sheet_id)
+            return tuple(picked)
+
+        def _on_ok(self, sender, e) -> None:
+            self.Close(True)
+
+        def _on_cancel(self, sender, e) -> None:
+            self.Close(False)
+
+    dialog = _PickSheetsDialog()
+    accepted = bool(dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow))
+    if not accepted:
+        return None
+    return dialog.selected_ids()
+
+
 def ask_yes_no(message: str, title: str = "LoopFlow") -> bool:
     """是／否詢問。無 Rhino 時回 False，維持零寫入。"""
     try:
@@ -414,6 +518,7 @@ def show_message(message: str, title: str = "LoopFlow") -> None:
 
 
 # 與 Rhino ObjectType／rs.filter 對齊。第二個 GetObject 參數是 filter，不可傳 True。
+FILTER_POINT = 1
 FILTER_CURVE = 4
 FILTER_SURFACE = 8
 FILTER_POLYSURFACE = 16
@@ -559,6 +664,20 @@ def pick_anchor_selection(
         return None
     filter_code = FILTER_CURVE | FILTER_INSTANCE | FILTER_HATCH | FILTER_TEXTDOT
     ids = rs.GetObjects(message, filter_code, preselect=True)
+    if not ids:
+        return None
+    return tuple(str(item) for item in ids)
+
+
+def pick_catalog_points(
+    message: str = "選取目錄定位點（獨立 Point，Esc 取消）",
+) -> Optional[Tuple[str, ...]]:
+    """只選 Point。第三參數是 group，不可把 True 當 filter。"""
+    try:
+        import rhinoscriptsyntax as rs  # type: ignore
+    except ImportError:
+        return None
+    ids = rs.GetObjects(message, FILTER_POINT, preselect=True)
     if not ids:
         return None
     return tuple(str(item) for item in ids)

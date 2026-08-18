@@ -59,5 +59,5 @@ NAMING_DEFAULTS = {
 TITLE_FRAME_REGISTRY_KEY = "lf_title_frame_blocks"
 TITLE_FRAME_REGISTRY_SEPARATOR = ";"
 
-# 保留給尚未實作的 LF_Catalog，其他功能不得占用。
+# Catalog Anchor 專用前綴；其他功能不得占用。
 CATALOG_RESERVED_PREFIX = "lf_catalog_"

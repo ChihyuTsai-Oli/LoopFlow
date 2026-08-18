@@ -42,6 +42,7 @@ _READY = {
     "LF_Tagger_Index": "D03",
     "LF_Tagger_Layout_ID": "D04",
     "LF_Anchor_Frame": "E01",
+    "LF_Catalog": "E05",
 }
 
 _COMMANDS = {

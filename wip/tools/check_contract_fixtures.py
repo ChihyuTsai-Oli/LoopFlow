@@ -511,6 +511,86 @@ def check_sheet() -> None:
             fail("sheet 圖框案例 %s 沒有跳過的理由" % case["id"])
 
 
+def check_catalog() -> None:
+    """檢查 Catalog schema 與案例形狀；排序／配對行為由 unittest 驗證。"""
+    spec = load(SCHEMA / "catalog.json")
+    if spec["schema_id"] != "loopflow.catalog" or spec["schema_version"] != 1:
+        fail("catalog schema 身分錯誤")
+    if spec["layers"].get("drawing_no") != "LoopFlow::Drawing_Number":
+        fail("圖號定位點圖層必須是 LoopFlow::Drawing_Number")
+    if spec["layers"].get("drawing_name") != "LoopFlow::Drawing_Name":
+        fail("圖名定位點圖層必須是 LoopFlow::Drawing_Name")
+    if spec["layer_colors"].get("drawing_no") != [255, 0, 0]:
+        fail("圖號定位點顏色必須是紅 (255,0,0)")
+    if spec["layer_colors"].get("drawing_name") != [0, 255, 0]:
+        fail("圖名定位點顏色必須是綠 (0,255,0)")
+    keys = spec["usertext_keys"]
+    expected = {
+        "catalog_id": "lf_catalog_id",
+        "field": "lf_catalog_field",
+        "sheet_id": "lf_catalog_sheet_id",
+        "generated_by": "lf_generated_by",
+    }
+    for name, value in expected.items():
+        if keys.get(name) != value:
+            fail("catalog UserText %s 應為 %s" % (name, value))
+    if spec["allowed_fields"] != ["drawing_no", "drawing_name"]:
+        fail("catalog allowed_fields 只能是 drawing_no／drawing_name")
+    if spec["generated_by_value"] != "LF_Catalog":
+        fail("產生文字的 lf_generated_by 必須是 LF_Catalog")
+    if float(spec["column_tolerance"]) <= 0 or float(spec["row_tolerance"]) <= 0:
+        fail("catalog 容差必須為正數")
+
+    allowed = {
+        "pass",
+        "page_count_mismatch",
+        "row_mismatch",
+        "too_many_sheets",
+        "missing_anchors",
+        "missing_sheets",
+        "mixed_catalog_id",
+        "block_instance",
+    }
+    cases = load(CONTRACT / "catalog" / "cases.json")
+    if cases.get("schema_id") != "loopflow.catalog":
+        fail("catalog cases 的 schema_id 必須是 loopflow.catalog")
+    for case in cases["cases"]:
+        expect = case.get("expect")
+        if expect not in allowed:
+            fail("catalog 案例 %s 的 expect 不在 %s" % (case.get("id"), sorted(allowed)))
+        numbers = case.get("number_points") or []
+        names = case.get("name_points") or []
+        sheets = case.get("sheet_ids") or []
+        for sheet_id in sheets:
+            if not UUID_RE.match(sheet_id):
+                fail("catalog 案例 %s 的 sheet_id 不是 UUID v4" % case["id"])
+        if expect == "pass":
+            n_pages = {}
+            m_pages = {}
+            for point in numbers:
+                n_pages[point["page_number"]] = n_pages.get(point["page_number"], 0) + 1
+            for point in names:
+                m_pages[point["page_number"]] = m_pages.get(point["page_number"], 0) + 1
+            if n_pages != m_pages:
+                fail("catalog 通過案例 %s 的逐頁數量應相等" % case["id"])
+            if len(sheets) > min(len(numbers), len(names)):
+                fail("catalog 通過案例 %s 的 Sheet 數不可多於定位點" % case["id"])
+            order = case.get("expect_order") or []
+            if order and set(order) != {point["id"] for point in numbers}:
+                fail("catalog 案例 %s 的 expect_order 必須涵蓋全部圖號定位點" % case["id"])
+        if expect == "too_many_sheets" and len(sheets) <= min(len(numbers), len(names)):
+            fail("catalog 案例 %s 宣告 too_many_sheets 但 Sheet 並不多於定位點" % case["id"])
+        if expect == "page_count_mismatch":
+            n_pages = {}
+            m_pages = {}
+            for point in numbers:
+                n_pages[point["page_number"]] = n_pages.get(point["page_number"], 0) + 1
+            for point in names:
+                m_pages[point["page_number"]] = m_pages.get(point["page_number"], 0) + 1
+            if n_pages == m_pages:
+                fail("catalog 案例 %s 宣告 page_count_mismatch 但逐頁數量相同" % case["id"])
+
+
 def main() -> int:
     check_measurement_baseline()
     check_dictionary_cases()
@@ -524,12 +604,13 @@ def main() -> int:
     check_quantity()
     check_view()
     check_sheet()
+    check_catalog()
     if FAILS:
         print("契約 fixtures 失敗 %s 項：" % len(FAILS))
         for msg in FAILS:
             print(" -", msg)
         return 1
-    print("契約 fixtures 通過：92 筆量綱、15 欄、24 個 Tag key、Space／Registry／Duplicate／View／Sheet 案例；quantity／frame 常數保留給 GH。")
+    print("契約 fixtures 通過：92 筆量綱、15 欄、24 個 Tag key、Space／Registry／Duplicate／View／Sheet／Catalog 案例；quantity／frame 常數保留給 GH。")
     return 0
 
 
