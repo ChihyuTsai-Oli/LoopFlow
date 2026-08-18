@@ -212,7 +212,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <h2 id="9-建立-Sheet-圖框與-Layout-ID">9. 建立 Sheet、圖框與 Layout ID</h2>
 <p>使用者建立 Layout、Detail、圖框與 Tag Blocks。圖號與圖名的真相是 Sheet metadata，不是頁名字串。指令 <code>LF_Tagger_Layout_ID</code> 負責建立與維持這份 metadata；其他功能（含圖目錄）只讀、不自行解析頁名。</p>
 <h3 id="使用者怎麼跑-Layout-ID">使用者怎麼跑 Layout ID</h3>
-<ol><li>每個系列的第一頁用 baseline 頁名，例如 <code>IN 101.01__一樓平面圖</code>（<code>.01</code> 是系列起點，<code>__</code> 分隔圖號與圖名）。</li><li>同系列後面幾頁可寫 <code>IN__天花詳圖</code>，或直接用 Rhino 預設頁名；新建空白頁繼承上一頁的系列並接下一號。</li><li>跑 <code>LF_Tagger_Layout_ID</code>。遇到未登錄為圖框的 Block 會列出名稱，問要不要當圖框；沒登錄的一律不寫。</li><li>核對清單顯示每頁：舊頁名 → 新頁名／圖號／圖名／狀態。確認才寫入；取消整批零寫入。</li><li>寫入後：圖框有 <code>lf_sheet_id</code>、<code>lf_drawing_no</code>、<code>lf_drawing_name</code>；頁名改成由 metadata 產生。比例 <code>lf_scale</code> 人工，指令不碰。</li><li>插頁、改頁序後必須再跑一次，圖號才會更新。沒重跑時圖目錄等 consumer 應回報過期，不得安靜輸出舊值。</li></ol>
+<ol><li>每個系列的第一頁用 baseline 頁名，例如 <code>IN 101.01__一樓平面圖</code>（<code>.01</code> 是系列起點，<code>__</code> 分隔圖號與圖名）。</li><li>同系列後面幾頁可寫 <code>IN__天花詳圖</code>，或直接用 Rhino 預設頁名；新建空白頁繼承上一頁的系列並接下一號。</li><li>跑 <code>LF_Tagger_Layout_ID</code>。遇到未登錄為圖框的 Block 會列出名稱，勾選真正的圖框（預設全不勾）；沒勾選的不登錄、不寫。</li><li>核對清單顯示每頁：舊頁名 → 新頁名／圖號／圖名／狀態。確認才寫入；取消整批零寫入。</li><li>寫入後：圖框有 <code>lf_sheet_id</code>、<code>lf_drawing_no</code>、<code>lf_drawing_name</code>；頁名改成由 metadata 產生。比例 <code>lf_scale</code> 人工，指令不碰。</li><li>插頁、改頁序後必須再跑一次，圖號才會更新。沒重跑時圖目錄等 consumer 應回報過期，不得安靜輸出舊值。</li></ol>
 <p>一頁沒有圖框、或有兩個以上圖框，該頁跳過並報告，不改頁名。<code>TAG_ELEV_0</code> 寫目前頁的 <code>lf_sheet_code</code>。其餘 Tag 不碰。圖框上的字要變，需另把 <code>Tag_Blocks.3dm</code> 的文字欄位改指 <code>lf_*</code>（任務 LF-D08）；本指令的驗收看 Attribute User Text。</p>
 <h3 id="Duplicate-Sheet">Duplicate Sheet</h3>
 <p>複製後建立新的 <code>sheet_id</code>、<code>drawing_id</code> 與 <code>tag_id</code>；圖目錄定位點的 <code>lf_catalog_id</code> 也必須換新號：</p>
@@ -238,7 +238,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <h3 id="Detail-Layout-重整">Detail／Layout 重整</h3>
 <p>重新註冊 View 或執行 Duplicate Sheet 規則 → 重新綁定 → Sync → Health。不得沿用無法證明有效的舊 target ID。</p>
 <h2 id="實機驗收重點">實機驗收重點</h2>
-<ul><li>正常、取消、失敗、中斷與重跑。</li><li>hidden／locked 物件仍納入正式 Scan。</li><li>ID mapping 與 rollback。</li><li>Drawing 人工修改保護。</li><li>Duplicate Sheet 清除／保留規則；圖目錄定位點換新 <code>catalog_id</code>。</li><li><code>TAG_DW</code> 永不被 Sync 覆寫。</li><li>Layout ID：核對清單取消零寫入；插頁後未重跑時 consumer 回報過期；未登錄 Block 不寫入。</li><li>家具共用名稱與格式錯誤警告。</li><li>非 cm 警告。</li><li>Registry last-good 與雙程序競態。</li></ul></main>
+<ul><li>正常、取消、失敗、中斷與重跑。</li><li>hidden／locked 物件仍納入正式 Scan。</li><li>ID mapping 與 rollback。</li><li>Drawing 人工修改保護。</li><li>Duplicate Sheet 清除／保留規則；圖目錄定位點換新 <code>catalog_id</code>。</li><li><code>TAG_DW</code> 永不被 Sync 覆寫。</li><li>Layout ID：核對清單取消零寫入；插頁後未重跑時 consumer 回報過期；未勾選的 Block 不登錄、不寫入。</li><li>家具共用名稱與格式錯誤警告。</li><li>非 cm 警告。</li><li>Registry last-good 與雙程序競態。</li></ul></main>
 </div>
 <script>
 (function(){

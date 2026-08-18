@@ -46,7 +46,7 @@ STAGE = "write_sheet_id"
 PAGE_TAG_TEMPLATE_ID = "TAG_ELEV_0"
 
 ConfirmPlan = Callable[[Sequence[str]], bool]
-AskRegister = Callable[[Sequence[str]], bool]
+AskRegister = Callable[[Sequence[str]], Sequence[str]]
 
 
 @dataclass(frozen=True)
@@ -290,13 +290,32 @@ def _default_confirm(lines: Sequence[str]) -> bool:
     return ask_confirm_list(lines, title="Layout ID 核對清單")
 
 
-def _default_ask_register(names: Sequence[str]) -> bool:
-    from loopflow.platform.rhino.prompts import ask_yes_no
+def _default_ask_register(names: Sequence[str]) -> Sequence[str]:
+    from loopflow.platform.rhino.prompts import ask_pick_title_frames
 
-    return ask_yes_no(
-        "這些圖塊還沒登錄為圖框：\n%s\n\n要登錄成本專案的圖框嗎？" % "\n".join(names),
-        "Layout ID",
-    )
+    return ask_pick_title_frames(names)
+
+
+def _picked_title_frames(
+    asker: AskRegister,
+    unknown: Sequence[str],
+) -> Tuple[str, ...]:
+    """只接受清單裡的名稱；空選、取消或否都當沒登錄。"""
+    if not unknown:
+        return ()
+    selected = asker(unknown)
+    if selected is True:
+        selected = unknown
+    if not selected:
+        return ()
+    allowed = {name.casefold(): name for name in unknown}
+    picked = []
+    for item in selected:
+        key = str(item or "").strip().casefold()
+        name = allowed.get(key)
+        if name is not None and name not in picked:
+            picked.append(name)
+    return tuple(picked)
 
 
 def run_tagger_layout_id(
@@ -343,8 +362,9 @@ def run_tagger_layout_id(
         rules = load_naming_rules(current)
         rows, skipped = build_sheet_rows(current, scans, rules)
         unknown = unregistered_block_names(scans)
-        if unknown and register_asker(unknown):
-            register_title_frame_names(current, unknown)
+        picked = _picked_title_frames(register_asker, unknown)
+        if picked:
+            register_title_frame_names(current, picked)
             scans = scan_layout_pages(current, loaded)
             rows, skipped = build_sheet_rows(current, scans, rules)
             unknown = unregistered_block_names(scans)

@@ -253,6 +253,92 @@ def ask_confirm_list(
     return bool(dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow))
 
 
+def ask_pick_title_frames(
+    names: Sequence[str],
+    title: str = "Layout ID",
+) -> Tuple[str, ...]:
+    """勾選哪些未登錄 Block 是圖框。預設全不勾；取消或全不選回空 tuple。"""
+    if not names:
+        return ()
+    try:
+        import Eto.Drawing as drawing  # type: ignore
+        import Eto.Forms as forms  # type: ignore
+        import Rhino  # type: ignore
+        import Rhino.UI  # type: ignore
+    except ImportError:
+        return ()
+
+    class _PickFramesDialog(forms.Dialog[bool]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.Title = title
+            self.Padding = drawing.Padding(10)
+            self.Resizable = True
+            self.Width = 480
+            self.Height = 520
+            self.boxes = []
+
+            layout = forms.DynamicLayout()
+            layout.Spacing = drawing.Size(5, 5)
+            note = forms.Label()
+            note.Text = (
+                "這些圖塊還沒登錄為圖框。請勾選真正的圖框；"
+                "沒勾選的會略過，不會寫入圖號。"
+            )
+            note.Wrap = forms.WrapMode.Word
+            layout.AddRow(note)
+
+            scroll = forms.Scrollable()
+            scroll.Border = forms.BorderType.Line
+            scroll.Height = 360
+            inner = forms.DynamicLayout()
+            inner.Padding = drawing.Padding(8)
+            inner.Spacing = drawing.Size(4, 4)
+            for name in names:
+                box = forms.CheckBox()
+                box.Text = str(name)
+                box.Checked = False
+                inner.AddRow(box)
+                self.boxes.append(box)
+            scroll.Content = inner
+            layout.AddRow(scroll)
+            layout.Add(None)
+
+            btn_ok = forms.Button()
+            btn_ok.Text = "登錄勾選項目"
+            btn_ok.Click += self._on_ok
+            btn_skip = forms.Button()
+            btn_skip.Text = "都不登錄"
+            btn_skip.Click += self._on_cancel
+            btn_layout = forms.DynamicLayout()
+            btn_layout.DefaultSpacing = drawing.Size(10, 0)
+            btn_layout.AddRow(None, btn_skip, btn_ok)
+            layout.AddRow(btn_layout)
+
+            self.Content = layout
+            self.AbortButton = btn_skip
+            self.DefaultButton = btn_ok
+
+        def selected_names(self):
+            picked = []
+            for box in self.boxes:
+                if box.Checked:
+                    picked.append(str(box.Text or ""))
+            return tuple(name for name in picked if name)
+
+        def _on_ok(self, sender, e) -> None:
+            self.Close(True)
+
+        def _on_cancel(self, sender, e) -> None:
+            self.Close(False)
+
+    dialog = _PickFramesDialog()
+    accepted = bool(dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow))
+    if not accepted:
+        return ()
+    return dialog.selected_names()
+
+
 def ask_yes_no(message: str, title: str = "LoopFlow") -> bool:
     """是／否詢問。無 Rhino 時回 False，維持零寫入。"""
     try:
