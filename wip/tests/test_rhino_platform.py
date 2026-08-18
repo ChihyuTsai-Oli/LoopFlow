@@ -15,7 +15,11 @@ if str(SRC) not in sys.path:
 from loopflow.foundation import results
 from loopflow.platform.rhino.live import LIVE_VERIFIED_IN_RHINO, open_session, rgb_tuple
 from loopflow.platform.rhino.memory import MemorySession
-from loopflow.platform.rhino.session import run_guarded
+from loopflow.platform.rhino.session import (
+    is_loopflow_layer,
+    loopflow_layer_chain,
+    run_guarded,
+)
 from loopflow.platform.rhino.state import ObjectViewState
 
 
@@ -134,6 +138,23 @@ class LiveAdapterGuardTests(unittest.TestCase):
         self.assertNotIn("Rhino", imported)
         self.assertNotIn("rhinoscriptsyntax", imported)
         self.assertNotIn("scriptcontext", imported)
+
+
+class LoopFlowLayerTests(unittest.TestCase):
+    def test_loopflow_chain_and_type_layer_untouched(self):
+        self.assertTrue(is_loopflow_layer("LoopFlow"))
+        self.assertTrue(is_loopflow_layer("LoopFlow::Anchor_Frame"))
+        self.assertFalse(is_loopflow_layer("M3D::01_Wall"))
+        self.assertEqual(
+            loopflow_layer_chain("LoopFlow::Drawing_Text"),
+            ("LoopFlow", "LoopFlow::Drawing_Text"),
+        )
+        session = MemorySession()
+        session.ensure_layer("M3D::01_Wall")
+        session.ensure_layer("LoopFlow::Anchor_Frame")
+        self.assertFalse(session.layer_printable("LoopFlow"))
+        self.assertFalse(session.layer_printable("LoopFlow::Anchor_Frame"))
+        self.assertIsNone(session.layer_printable("M3D::01_Wall"))
 
 
 class ColorHelperTests(unittest.TestCase):

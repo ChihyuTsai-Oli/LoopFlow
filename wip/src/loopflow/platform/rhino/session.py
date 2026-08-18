@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import traceback
-from typing import Callable, Optional, Protocol, Sequence
+from typing import Callable, Optional, Protocol, Sequence, Tuple
 
 from loopflow.foundation import results
 from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
@@ -63,6 +63,12 @@ class RhinoSession(Protocol):
         rgb: Sequence[int],
         material_name: Optional[str] = None,
     ) -> None:
+        ...
+
+    def set_layer_printable(self, path: str, printable: bool) -> None:
+        ...
+
+    def layer_printable(self, path: str) -> Optional[bool]:
         ...
 
     def object_name(self, object_id: str) -> Optional[str]:
@@ -302,3 +308,39 @@ def run_guarded(
             details={"action_status": outcome.status},
         )
     return outcome
+
+
+LOOPFLOW_LAYER_ROOT = "LoopFlow"
+
+
+def is_loopflow_layer(path: str) -> bool:
+    text = str(path or "")
+    return text == LOOPFLOW_LAYER_ROOT or text.startswith(LOOPFLOW_LAYER_ROOT + "::")
+
+
+def loopflow_layer_chain(path: str) -> Tuple[str, ...]:
+    if not is_loopflow_layer(path):
+        return ()
+    current = ""
+    chain = []
+    for index, part in enumerate(str(path).split("::")):
+        current = part if index == 0 else current + "::" + part
+        chain.append(current)
+    return tuple(chain)
+
+
+def silence_loopflow_layers(session: RhinoSession, path: str) -> None:
+    """LoopFlow 與其子圖層一律不列印。建立任一子層時一併關掉既有同族圖層。"""
+    if not is_loopflow_layer(path):
+        return
+    setter = getattr(session, "set_layer_printable", None)
+    if not callable(setter):
+        return
+    for item in loopflow_layer_chain(path):
+        setter(item, False)
+    lister = getattr(session, "layer_paths", None)
+    if not callable(lister):
+        return
+    for existing in lister() or ():
+        if is_loopflow_layer(str(existing)):
+            setter(str(existing), False)

@@ -395,7 +395,7 @@ def ask_pick_catalog_sheets(
         return None
 
     rows = [
-        [str(item.get("label") or item.get("sheet_id") or ""), str(item.get("sheet_id") or "")]
+        (str(item.get("label") or item.get("sheet_id") or ""), str(item.get("sheet_id") or ""))
         for item in items
     ]
     preselected = {str(item) for item in selected_ids if item}
@@ -408,8 +408,16 @@ def ask_pick_catalog_sheets(
             self.Resizable = True
             self.Width = 720
             self.Height = 560
-            font = _ui_font(drawing, 11)
+            self.font = _ui_font(drawing, 11)
             self.rows = rows
+            self.selected = set()
+            self.last_index = None
+            self.row_panels = []
+            self._handling_click = False
+            self._selected_bg = drawing.Color.FromArgb(61, 124, 198)
+            self._selected_fg = drawing.Colors.White
+            self._normal_bg = drawing.Colors.White
+            self._normal_fg = drawing.Colors.Black
 
             layout = forms.DynamicLayout()
             layout.Spacing = drawing.Size(6, 6)
@@ -418,21 +426,29 @@ def ask_pick_catalog_sheets(
                 "Shift 連選、Ctrl 加選或取消選取。選取列會反白。"
                 "未選的不納入；新增頁不會自動加入既有目錄。"
             )
-            note.Font = font
+            note.Font = self.font
             layout.AddRow(note)
 
-            self.grid = forms.GridView()
-            self.grid.ShowHeader = False
-            self.grid.AllowMultipleSelection = True
-            self.grid.Border = forms.BorderType.Line
-            self.grid.Height = 380
-            column = forms.GridColumn()
-            column.DataCell = forms.TextBoxCell(0)
-            column.Editable = False
-            column.Expand = True
-            self.grid.Columns.Add(column)
-            self.grid.DataStore = self.rows
-            layout.AddRow(self.grid)
+            scroll = forms.Scrollable()
+            scroll.Border = forms.BorderType.Line
+            scroll.Height = 380
+            inner = forms.DynamicLayout()
+            inner.Padding = drawing.Padding(2, 2, 2, 2)
+            inner.Spacing = drawing.Size(0, 1)
+            for index, row in enumerate(self.rows):
+                panel = forms.Panel()
+                panel.Padding = drawing.Padding(8, 5)
+                label = forms.Label()
+                label.Text = row[0]
+                label.Font = self.font
+                panel.Content = label
+                panel.MouseDown += self._make_click(index)
+                label.MouseDown += self._make_click(index)
+                inner.AddRow(panel)
+                self.row_panels.append((panel, label))
+            inner.Add(None)
+            scroll.Content = inner
+            layout.AddRow(scroll)
 
             btn_all = forms.Button()
             btn_all.Text = "全選"
@@ -460,60 +476,66 @@ def ask_pick_catalog_sheets(
             self.Content = layout
             self.AbortButton = btn_cancel
             self.DefaultButton = btn_ok
-            self.Shown += self._on_loaded
-
-        def _on_loaded(self, sender, e) -> None:
-            self._apply_selection(preselected)
-
-        def _select_row(self, index: int) -> None:
-            select = getattr(self.grid, "SelectRow", None)
-            if callable(select):
-                select(index)
-
-        def _unselect_row(self, index: int) -> None:
-            unselect = getattr(self.grid, "UnselectRow", None)
-            if callable(unselect):
-                unselect(index)
-
-        def _apply_selection(self, wanted) -> None:
-            unselect_all = getattr(self.grid, "UnselectAll", None)
-            if callable(unselect_all):
-                unselect_all()
-            else:
-                for index in range(len(self.rows)):
-                    self._unselect_row(index)
             for index, row in enumerate(self.rows):
-                if row[1] in wanted:
-                    self._select_row(index)
+                if row[1] in preselected:
+                    self.selected.add(index)
+            self._refresh_rows()
+
+        def _make_click(self, index: int):
+            def _on_click(sender, e) -> None:
+                if self._handling_click:
+                    return
+                self._handling_click = True
+                try:
+                    shift, ctrl = _mouse_modifiers(e)
+                    if shift and self.last_index is not None:
+                        start = min(self.last_index, index)
+                        end = max(self.last_index, index)
+                        if ctrl:
+                            for item in range(start, end + 1):
+                                self.selected.add(item)
+                        else:
+                            self.selected = set(range(start, end + 1))
+                    elif ctrl:
+                        if index in self.selected:
+                            self.selected.discard(index)
+                        else:
+                            self.selected.add(index)
+                        self.last_index = index
+                    else:
+                        self.selected = {index}
+                        self.last_index = index
+                    self._refresh_rows()
+                finally:
+                    self._handling_click = False
+
+            return _on_click
+
+        def _refresh_rows(self) -> None:
+            for index, pair in enumerate(self.row_panels):
+                panel, label = pair
+                if index in self.selected:
+                    panel.BackgroundColor = self._selected_bg
+                    label.TextColor = self._selected_fg
+                else:
+                    panel.BackgroundColor = self._normal_bg
+                    label.TextColor = self._normal_fg
 
         def _on_select_all(self, sender, e) -> None:
-            select_all = getattr(self.grid, "SelectAll", None)
-            if callable(select_all):
-                select_all()
-                return
-            for index in range(len(self.rows)):
-                self._select_row(index)
+            self.selected = set(range(len(self.rows)))
+            self.last_index = 0 if self.rows else None
+            self._refresh_rows()
 
         def _on_clear(self, sender, e) -> None:
-            self._apply_selection(set())
+            self.selected = set()
+            self.last_index = None
+            self._refresh_rows()
 
         def selected_ids(self):
             picked = set()
-            for item in self.grid.SelectedItems or ():
-                try:
-                    sheet_id = item[1]
-                except (TypeError, IndexError, KeyError):
-                    continue
-                if sheet_id:
-                    picked.add(str(sheet_id))
-            if not picked:
-                for index in getattr(self.grid, "SelectedRows", None) or ():
-                    try:
-                        idx = int(index)
-                    except (TypeError, ValueError):
-                        continue
-                    if 0 <= idx < len(self.rows) and self.rows[idx][1]:
-                        picked.add(str(self.rows[idx][1]))
+            for index in self.selected:
+                if 0 <= index < len(self.rows) and self.rows[index][1]:
+                    picked.add(self.rows[index][1])
             return tuple(row[1] for row in self.rows if row[1] in picked)
 
         def _on_ok(self, sender, e) -> None:
@@ -527,6 +549,21 @@ def ask_pick_catalog_sheets(
     if not accepted:
         return None
     return dialog.selected_ids()
+
+
+def _mouse_modifiers(event) -> Tuple[bool, bool]:
+    """回傳 (shift, ctrl)。讀不到修飾鍵時兩者皆 False。"""
+    modifiers = getattr(event, "Modifiers", None)
+    if modifiers is None:
+        return False, False
+    try:
+        keys = type(modifiers)
+        shift = bool(modifiers & keys.Shift) if hasattr(keys, "Shift") else "Shift" in str(modifiers)
+        control = bool(modifiers & keys.Control) if hasattr(keys, "Control") else "Control" in str(modifiers)
+        return bool(shift), bool(control)
+    except Exception:
+        text = str(modifiers)
+        return "Shift" in text, "Control" in text or "Cmd" in text or "Command" in text
 
 
 def ask_yes_no(message: str, title: str = "LoopFlow") -> bool:

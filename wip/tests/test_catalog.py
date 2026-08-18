@@ -156,6 +156,9 @@ class AssignAndBuildTests(unittest.TestCase):
             session.get_object_user_text("n1", CATALOG_ID_KEY),
             session.get_object_user_text("m1", CATALOG_ID_KEY),
         )
+        self.assertFalse(session.layer_printable("LoopFlow"))
+        self.assertFalse(session.layer_printable(NUMBER_LAYER))
+        self.assertFalse(session.layer_printable(NAME_LAYER))
 
     def test_assign_second_batch_reuses_same_catalog_id(self):
         session = _session()
@@ -169,6 +172,20 @@ class AssignAndBuildTests(unittest.TestCase):
             session.get_object_user_text("n1", CATALOG_ID_KEY),
             session.get_object_user_text("n2", CATALOG_ID_KEY),
         )
+
+    def test_loopflow_layers_are_not_printable_type_layers_stay_printable(self):
+        session = _session()
+        session.ensure_layer("M3D::01_Wall")
+        session.add_point("n1", (100, 200, 0))
+        result = assign_catalog_points(session, ["n1"], FIELD_DRAWING_NO)
+        self.assertTrue(result.ok, result.message)
+        self.assertFalse(session.layer_printable("LoopFlow"))
+        self.assertFalse(session.layer_printable(NUMBER_LAYER))
+        self.assertIsNone(session.layer_printable("M3D::01_Wall"))
+        session.ensure_layer(TEXT_LAYER)
+        self.assertFalse(session.layer_printable(TEXT_LAYER))
+        self.assertFalse(session.layer_printable(NUMBER_LAYER))
+        self.assertIsNone(session.layer_printable("M3D::01_Wall"))
 
     def test_assign_rejects_block(self):
         session = _session()

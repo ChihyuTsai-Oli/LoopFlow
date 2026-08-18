@@ -1041,7 +1041,7 @@ def _default_ask_path(default: Optional[str]) -> Optional[str]:
 
 
 def _show_catalog_panel(session: RhinoSession) -> results.Result:
-    from loopflow.platform.rhino.prompts import show_failure_popup, show_message
+    from loopflow.platform.rhino.prompts import show_failure_popup
 
     try:
         import Eto.Drawing as drawing  # type: ignore
@@ -1117,9 +1117,7 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
             )
 
         def _present(self, result: results.Result) -> None:
-            if result.ok:
-                show_message(result.message, "LF_Catalog")
-            else:
+            if not result.ok:
                 show_failure_popup(result)
             self._refresh_counts()
 
@@ -1140,7 +1138,11 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
             self._present(assign_catalog_points(session, ids, FIELD_DRAWING_NAME))
 
         def _on_pick_sheets(self, sender, e) -> None:
-            picked = _default_pick_sheets(session, selected_sheets)
+            self.Visible = False
+            try:
+                picked = _default_pick_sheets(session, selected_sheets)
+            finally:
+                self.Visible = True
             if picked is None:
                 return
             selected_sheets[:] = list(picked)
@@ -1148,7 +1150,11 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
 
         def _on_build(self, sender, e) -> None:
             if not selected_sheets:
-                picked = _default_pick_sheets(session, selected_sheets)
+                self.Visible = False
+                try:
+                    picked = _default_pick_sheets(session, selected_sheets)
+                finally:
+                    self.Visible = True
                 if picked is None:
                     return
                 selected_sheets[:] = list(picked)

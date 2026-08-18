@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Optional, Tuple
 
 from loopflow.foundation import results
-from loopflow.platform.rhino.session import capture_snapshot, restore_snapshot
+from loopflow.platform.rhino.session import capture_snapshot, restore_snapshot, silence_loopflow_layers
 from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
 
 LIVE_VERIFIED_IN_RHINO = True
@@ -237,6 +237,7 @@ class LiveSession:
             current = part if index == 0 else current + "::" + part
             if not self._rs.IsLayer(current):
                 self._rs.AddLayer(current)
+        silence_loopflow_layers(self, path)
         return created
 
     def delete_layer(self, path: str) -> None:
@@ -264,6 +265,37 @@ class LiveSession:
             raise KeyError("未知圖層：%s" % path)
         layer.SetUserString(key, value)
         layer.CommitChanges()
+
+    def set_layer_printable(self, path: str, printable: bool) -> None:
+        if not self.has_layer(path):
+            return
+        try:
+            self._rs.LayerPrintable(path, bool(printable))
+            return
+        except Exception:
+            pass
+        layer = self._layer_obj(path)
+        if layer is None:
+            return
+        try:
+            layer.PlotEnabled = bool(printable)
+            layer.CommitChanges()
+        except Exception:
+            pass
+
+    def layer_printable(self, path: str) -> Optional[bool]:
+        if not self.has_layer(path):
+            return None
+        try:
+            value = self._rs.LayerPrintable(path)
+            if value is not None:
+                return bool(value)
+        except Exception:
+            pass
+        layer = self._layer_obj(path)
+        if layer is None:
+            return None
+        return bool(getattr(layer, "PlotEnabled", True))
 
     def set_layer_appearance(self, path: str, rgb, material_name: Optional[str] = None) -> None:
         if not self.has_layer(path):

@@ -92,6 +92,8 @@ class RegisterTests(unittest.TestCase):
         frame_id = result.details["frame_id"]
         self.assertEqual(session.object_layer(frame_id), ANCHOR_LAYER)
         self.assertEqual(session.object_layer(frame_id), "LoopFlow::Anchor_Frame")
+        self.assertFalse(session.layer_printable("LoopFlow"))
+        self.assertFalse(session.layer_printable(ANCHOR_LAYER))
         self.assertEqual(session.object_name(frame_id), "A-A")
         self.assertEqual(session.get_object_user_text(frame_id, SCHEMA_ID_KEY), VIEW_SCHEMA_ID)
         self.assertEqual(session.get_object_user_text(frame_id, SCHEMA_VERSION_KEY), "1")

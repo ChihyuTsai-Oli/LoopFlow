@@ -5,7 +5,11 @@ from __future__ import annotations
 from typing import Dict, List, Optional
 
 from loopflow.foundation import results
-from loopflow.platform.rhino.session import capture_snapshot, restore_snapshot
+from loopflow.platform.rhino.session import (
+    capture_snapshot,
+    restore_snapshot,
+    silence_loopflow_layers,
+)
 from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
 
 
@@ -157,6 +161,7 @@ class MemorySession:
             if current not in self._layers:
                 self._layers[current] = {"user_text": {}}
                 self._modified = True
+        silence_loopflow_layers(self, path)
         return created
 
     def delete_layer(self, path: str) -> None:
@@ -184,6 +189,19 @@ class MemorySession:
         self._layers[path]["color"] = tuple(int(value) for value in rgb)
         self._layers[path]["material_name"] = material_name
         self._modified = True
+
+    def set_layer_printable(self, path: str, printable: bool) -> None:
+        if path not in self._layers:
+            return
+        self._layers[path]["printable"] = bool(printable)
+        self._modified = True
+
+    def layer_printable(self, path: str) -> Optional[bool]:
+        layer = self._layers.get(path) or {}
+        value = layer.get("printable")
+        if value is None:
+            return None
+        return bool(value)
 
     def layer_color(self, path: str):
         layer = self._layers.get(path) or {}
