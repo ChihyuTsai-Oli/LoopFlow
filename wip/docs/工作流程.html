@@ -207,7 +207,8 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <p>View 不依名稱或可變 bbox 重新猜測。Section linked output 可以先保留、更新與檢查，不必立即 Materialize 或 Tag。</p>
 <h2 id="8-Materialize-可編輯-Drawing">8. Materialize 可編輯 Drawing</h2>
 <p>使用者需要獨立整理線稿時，將 Section 結果轉為 <code>drawing_id</code>：</p>
-<ul><li>辨識前次產出，讓使用者選擇取代、新增或略過。</li><li>保存來源 <code>view_id</code>、source revision 與 drawing element provenance。</li><li>回報 indexed／unindexed／ambiguous 覆蓋率。</li><li>復原原有 selection、layer lock 與 visibility。</li><li>使用者補線、刪線或改樣式後標記為 modified；更新不靜默覆寫。</li></ul>
+<ul><li>產出放在根圖層 <code>LoopFlow_Extract</code>（與 <code>LoopFlow</code> 平級，不是 <code>LoopFlow::Extract</code>）。實作時列印寬度設 <code>No Print</code>（<code>PlotWeight = -1</code>）。子層名稱等 E02 開工再定。</li><li>辨識前次產出，讓使用者選擇取代、新增或略過。</li><li>保存來源 <code>view_id</code>、source revision 與 drawing element provenance。</li><li>回報 indexed／unindexed／ambiguous 覆蓋率。</li><li>復原原有 selection、layer lock 與 visibility。</li><li>使用者補線、刪線或改樣式後標記為 modified；更新不靜默覆寫。</li></ul>
+<p>2.0 <strong>尚未實作</strong> Extract；本節只鎖定根圖層名稱與冪等政策。</p>
 <p><strong>安全停點</strong>：Drawing 完成即可獨立存檔與人工整理。</p>
 <h2 id="9-建立-Sheet-圖框與-Layout-ID">9. 建立 Sheet、圖框與 Layout ID</h2>
 <p>使用者建立 Layout、Detail、圖框與 Tag Blocks。圖號與圖名的真相是 <strong>Sheet metadata</strong>，不是頁名字串。指令 <code>LF_Tagger_Layout_ID</code> 負責建立與維持這份 metadata；其他功能（含圖目錄）只讀、不自行解析頁名。</p>
