@@ -39,6 +39,9 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Tagger_Laser.py"
 LF_Tagger_Index
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Tagger_Index.py"
 
+LF_Tagger_Layout_ID
+_-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Tagger_Layout_ID.py"
+
 LF_Anchor_Frame
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Anchor_Frame.py"
 ```
@@ -55,6 +58,7 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Anchor_Frame.py"
 | Grab | `LF_Tagger_Grab` | — |
 | Laser | `LF_Tagger_Laser` | — |
 | Index | `LF_Tagger_Index` | — |
+| Layout ID | `LF_Tagger_Layout_ID` | — |
 | 註冊 View | `LF_Anchor_Frame` | — |
 
 Grab：在 **Layout** 先選 Tag 圖塊，再在目標 Detail 內點一下進入模型空間，然後選來源（剖面 2D 線、3D 物件或家具圖塊）。Height／Finish 綁物件 `_07_UUID`；家具 Item 綁 Block 名稱（`FF-01__Chair-1`）。Esc、點在 Detail 外、鎖定、`TAG_DW`、Laser／Index／圖框圖塊都不寫入。結束後回到 Layout。不填 Infuser 顯示欄。來源沒有 UUID 時不猜測對應的 3D 物件。
@@ -62,6 +66,8 @@ Grab：在 **Layout** 先選 Tag 圖塊，再在目標 Detail 內點一下進入
 Laser：在 **Layout** 先選 Height／Finish 的 Laser Tag，再在目標 Detail 內點一下剖面位置。用該點所在 View 框上已寫死的 `lf_view_transform` 射出 3D 射線，打到帶 `_07_UUID` 的物件後寫 `lf_source_object_id`。不靠名稱／bbox 重算。Esc、點在 Detail 外、鎖定、Grab／Item／`TAG_DW`／Index／圖框、0 或 ≥2 個重疊 View、沒打到、來源無 UUID，都不寫入。多個近距離命中時讓使用者選一個，清單只顯示圖層名（有物件名稱才附上），不顯示 GUID。圖塊名不分大小寫。不填 Infuser 顯示欄。本批不接 Extract 來源索引。
 
 Index：在 **Layout** 選 `TAG_SECTION_DETAIL` 或 `TAG_ELEV_1`～`4`，再從可搜尋清單選全檔任一 Layout 的 Detail（顯示頁名＋Detail 名，不顯示 GUID；點選時跳頁並 zoom）。用該 Detail 模型空間中心對已登記 View 框，恰好一個才寫 `lf_target_view_id`。Esc、鎖定、Grab／Laser／`TAG_ELEV_0`／圖框／`TAG_DW`、模型空間、沒有 Detail、0 或 ≥2 個 View、取消清單，都不寫入。不寫 Detail GUID、不寫圖號顯示欄、不寫 `lf_sheet_id`。圖塊名不分大小寫。不進 Nexus。
+
+Layout ID：跑全檔 Layout。第一次依頁名匯入圖號／圖名，之後以 Sheet metadata 為準。核對清單確認才寫入；取消整批零寫入。只寫已登錄圖框的 `lf_sheet_id`／`lf_drawing_no`／`lf_drawing_name`，不寫 `lf_scale`、不寫舊 key `DWG_*`。`TAG_ELEV_0` 寫目前頁的 `lf_sheet_code`。未登錄 Block 會詢問是否當圖框；沒登錄的不寫。一頁沒有圖框或有兩個圖框則跳過該頁。驗收看 Attribute User Text，圖框上的字要等 D08 改 Block 欄位才會變。不進 Nexus。**尚未 Rhino 8 實機驗證。**
 
 註冊 View：在 **2D 模型空間**框選剖面物件與恰好一個 Text Dot，再輸入外擴距離（預設 50）。框畫在 `LoopFlow::Anchor_Frame`。寫入 `lf_view_id`、Clipping Plane 物件 ID 與固定 2D↔3D transform。名稱對不到或對到兩個以上 Clipping Plane、沒有 Text Dot、沒有幾何、Esc，都不寫入。不進 Nexus。本批不射線。
 
@@ -101,7 +107,6 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Test_Random_M3D_
 
 | 指令 | 用途 | 前置條件 |
 |---|---|---|
-| `LF_Tagger_Layout_ID` | 建立／維持 Sheet metadata，寫圖框圖號與圖名 | **正在實作**；完成並列入上方清單後才測 |
 | `LF_Catalog` | 依選定 Sheet 建立圖目錄 | D04 實機驗收後才實作。規劃見 `LF_Catalog規劃.md` |
 | `LF_Help` | 開啟 GitHub 說明頁，分中／英文版 | GitHub 說明頁尚未建立。**頁面建好後才實作**入口與按鈕，本階段不登錄為可跑指令 |
 

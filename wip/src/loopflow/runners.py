@@ -102,6 +102,15 @@ def run_tagger_index() -> Result:
     return _present_failure(run_index(opened.details["session"]))
 
 
+def run_tagger_layout_id() -> Result:
+    from loopflow.features.tagger.layout_id import run_tagger_layout_id as run_layout_id
+
+    opened = _open_live_session()
+    if not opened.ok:
+        return opened
+    return _present_failure(run_layout_id(opened.details["session"]))
+
+
 def run_anchor_frame() -> Result:
     from loopflow.features.view.register import run_anchor_frame as run_register
 
@@ -121,6 +130,7 @@ RUNNERS: Dict[str, Runner] = {
     "LF_Tagger_Grab": run_tagger_grab,
     "LF_Tagger_Laser": run_tagger_laser,
     "LF_Tagger_Index": run_tagger_index,
+    "LF_Tagger_Layout_ID": run_tagger_layout_id,
     "LF_Anchor_Frame": run_anchor_frame,
 }
 

@@ -40,6 +40,7 @@ _READY = {
     "LF_Tagger_Grab": "D01",
     "LF_Tagger_Laser": "D02",
     "LF_Tagger_Index": "D03",
+    "LF_Tagger_Layout_ID": "D04",
     "LF_Anchor_Frame": "E01",
 }
 

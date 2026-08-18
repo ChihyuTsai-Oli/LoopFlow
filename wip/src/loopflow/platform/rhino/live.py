@@ -826,9 +826,7 @@ class LiveSession:
         if rhino is None:
             return ()
         items = []
-        pages = self._sc.doc.Views.GetPageViews() or ()
-        ordered = sorted(pages, key=lambda page: int(getattr(page, "PageNumber", 0) or 0))
-        for page in ordered:
+        for page in self._ordered_page_views():
             details = page.GetDetailViews() or ()
             for detail in details:
                 name = getattr(detail, "Name", None)
@@ -841,6 +839,60 @@ class LiveSession:
                     }
                 )
         return tuple(items)
+
+    def _ordered_page_views(self):
+        pages = self._sc.doc.Views.GetPageViews() or ()
+        return sorted(pages, key=lambda page: int(getattr(page, "PageNumber", 0) or 0))
+
+    def _page_view(self, page_name: str):
+        target = str(page_name or "")
+        for page in self._ordered_page_views():
+            if str(getattr(page, "PageName", "") or "") == target:
+                return page
+        return None
+
+    def listed_layout_pages(self):
+        if self._rhino is None:
+            return ()
+        return tuple(
+            {
+                "name": str(getattr(page, "PageName", None) or ""),
+                "page_number": int(getattr(page, "PageNumber", 0) or 0),
+            }
+            for page in self._ordered_page_views()
+        )
+
+    def objects_on_layout_page(self, page_name: str):
+        if self._rhino is None:
+            return ()
+        page = self._page_view(page_name)
+        if page is None:
+            return ()
+        viewport_id = page.MainViewport.Id
+        ids = []
+        for obj in self._sc.doc.Objects:
+            if obj.Attributes.ViewportId == viewport_id:
+                ids.append(str(obj.Id))
+        return tuple(ids)
+
+    def rename_layout_page(self, page_name: str, new_name: str) -> bool:
+        if self._rhino is None:
+            return False
+        page = self._page_view(page_name)
+        if page is None:
+            return False
+        target = str(new_name or "")
+        if not target:
+            return False
+        if target == str(getattr(page, "PageName", "") or ""):
+            return True
+        if self._page_view(target) is not None:
+            return False
+        try:
+            page.PageName = target
+        except Exception:
+            return False
+        return True
 
     def detail_model_point(self, detail_id: str):
         obj = self._rhino_object(detail_id)
@@ -873,21 +925,19 @@ class LiveSession:
         rhino = self._rhino
         if rhino is None or not detail_id:
             return
-        page_name = str(layout or "")
-        for page in self._sc.doc.Views.GetPageViews() or ():
-            if str(getattr(page, "PageName", "") or "") != page_name:
-                continue
-            self._sc.doc.Views.ActiveView = page
-            page.SetPageAsActive()
-            try:
-                self._rs.UnselectAllObjects()
-                self._rs.SelectObject(detail_id)
-                page.MainViewport.ZoomExtentsSelected()
-                page.MainViewport.Magnify(0.8, False)
-            except Exception:
-                pass
-            self._redraw_views()
+        page = self._page_view(layout)
+        if page is None:
             return
+        self._sc.doc.Views.ActiveView = page
+        page.SetPageAsActive()
+        try:
+            self._rs.UnselectAllObjects()
+            self._rs.SelectObject(detail_id)
+            page.MainViewport.ZoomExtentsSelected()
+            page.MainViewport.Magnify(0.8, False)
+        except Exception:
+            pass
+        self._redraw_views()
 
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)

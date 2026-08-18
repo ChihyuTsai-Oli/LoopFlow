@@ -24,6 +24,8 @@ class MemorySession:
         self._ray_hits: list = []
         self._layout_active = True
         self._layout_details: list = []
+        self._layout_pages: List[str] = []
+        self._page_objects: Dict[str, List[str]] = {}
         self._detail_model_points: Dict[str, tuple] = {}
         self.zoomed_layout_details: List[dict] = []
         self._modified = False
@@ -439,6 +441,41 @@ class MemorySession:
         self.zoomed_layout_details.append(
             {"layout": str(layout or ""), "detail_id": str(detail_id or "")}
         )
+
+    def set_layout_pages(self, names) -> None:
+        """依傳入順序設定 Layout 頁；頁序從 1 起算。"""
+        self._layout_pages = [str(name) for name in names]
+        for name in self._layout_pages:
+            self._page_objects.setdefault(name, [])
+
+    def add_object_to_layout_page(self, page_name: str, object_id: str) -> None:
+        page = str(page_name)
+        if page not in self._layout_pages:
+            self._layout_pages.append(page)
+        self._page_objects.setdefault(page, [])
+        if object_id not in self._page_objects[page]:
+            self._page_objects[page].append(object_id)
+
+    def listed_layout_pages(self):
+        return tuple(
+            {"name": name, "page_number": index + 1}
+            for index, name in enumerate(self._layout_pages)
+        )
+
+    def objects_on_layout_page(self, page_name: str):
+        return tuple(self._page_objects.get(str(page_name), ()))
+
+    def rename_layout_page(self, page_name: str, new_name: str) -> bool:
+        old = str(page_name)
+        new = str(new_name)
+        if old not in self._layout_pages:
+            return False
+        if new != old and new in self._layout_pages:
+            return False
+        self._layout_pages[self._layout_pages.index(old)] = new
+        self._page_objects[new] = self._page_objects.pop(old, [])
+        self._modified = True
+        return True
 
     def snapshot(self) -> DocumentSnapshot:
         return capture_snapshot(self)

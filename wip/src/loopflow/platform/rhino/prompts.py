@@ -195,6 +195,74 @@ def ask_layout_detail_choice(
     return None
 
 
+def ask_confirm_list(
+    lines: Sequence[str],
+    title: str = "LoopFlow",
+    ok_text: str = "確認寫入",
+    cancel_text: str = "取消（Esc）",
+) -> bool:
+    """把核對清單完整列出，使用者按確認才回 True。無 Eto 時回 False，不寫入。"""
+    try:
+        import Eto.Drawing as drawing  # type: ignore
+        import Eto.Forms as forms  # type: ignore
+        import Rhino  # type: ignore
+        import Rhino.UI  # type: ignore
+    except ImportError:
+        return False
+
+    class _ConfirmListDialog(forms.Dialog[bool]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.Title = title
+            self.Padding = drawing.Padding(10)
+            self.Resizable = True
+            self.Width = 620
+            self.Height = 540
+
+            layout = forms.DynamicLayout()
+            layout.Spacing = drawing.Size(5, 5)
+
+            listbox = forms.ListBox()
+            listbox.Height = 420
+            listbox.DataStore = [str(line) for line in lines]
+            layout.AddRow(listbox)
+            layout.Add(None)
+
+            btn_ok = forms.Button()
+            btn_ok.Text = ok_text
+            btn_ok.Click += self._on_ok
+            btn_cancel = forms.Button()
+            btn_cancel.Text = cancel_text
+            btn_cancel.Click += self._on_cancel
+            btn_layout = forms.DynamicLayout()
+            btn_layout.DefaultSpacing = drawing.Size(10, 0)
+            btn_layout.AddRow(None, btn_cancel, btn_ok)
+            layout.AddRow(btn_layout)
+
+            self.Content = layout
+            self.AbortButton = btn_cancel
+            self.DefaultButton = btn_ok
+
+        def _on_ok(self, sender, e) -> None:
+            self.Close(True)
+
+        def _on_cancel(self, sender, e) -> None:
+            self.Close(False)
+
+    dialog = _ConfirmListDialog()
+    return bool(dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow))
+
+
+def ask_yes_no(message: str, title: str = "LoopFlow") -> bool:
+    """是／否詢問。無 Rhino 時回 False，維持零寫入。"""
+    try:
+        import rhinoscriptsyntax as rs  # type: ignore
+    except ImportError:
+        return False
+    answer = rs.MessageBox(message, 4 | 32, title)
+    return answer == 6
+
+
 def format_result_popup(result) -> str:
     """失敗／阻擋時列出訊息與 Dictionary issues 全文。"""
     lines = [getattr(result, "message", "") or ""]

@@ -265,14 +265,7 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(spec["task"], "E01")
         self.assertTrue(ENTRY.is_file())
 
-    def test_layout_id_still_not_implemented(self):
-        from loopflow.bootstrap import run_command
-
-        with redirect_stdout(io.StringIO()):
-            result = run_command("LF_Tagger_Layout_ID")
-        self.assertEqual(result.status, "not_implemented")
-
-    def test_run_command_without_rhino_does_not_claim_success(self):
+    def test_catalog_and_entrypoint(self):
         from loopflow.bootstrap import run_command
 
         with redirect_stdout(io.StringIO()) as buffer:
