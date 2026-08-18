@@ -276,6 +276,14 @@ class LiveSession:
                 return int(index)
         except Exception:
             pass
+        try:
+            layer_id = self._rs.LayerId(wanted)
+            if layer_id:
+                found = self._sc.doc.Layers.FindId(layer_id)
+                if found is not None and not getattr(found, "IsDeleted", False):
+                    return int(found.Index)
+        except Exception:
+            pass
         if "::" not in wanted:
             try:
                 layer = layers.FindName(wanted)
@@ -311,27 +319,58 @@ class LiveSession:
         layer.CommitChanges()
 
     def set_layer_printable(self, path: str, printable: bool) -> None:
-        """關掉圖層面板 Print 欄（PlotEnabled）。
+        """關掉圖層面板的列印。畫面上看的是列印寬度「No Print」，即 PlotWeight = -1。
 
-        Rhino 8 的 rhinoscriptsyntax 沒有 LayerPrintable。LayerPrintColor 的寫法是
-        直接改 Layer 物件再 Redraw；呼叫 Layers.Modify 可能把改之前的複本寫回去。
+        這與改圖層顏色同一條路：rs.LayerPrintWidth 存在，且用 __getlayer 找層。
+        PlotEnabled 單獨改時，Print 欄通常不會動。
         """
-        layer = self._layer_obj(path)
-        if layer is None:
+        if not self.has_layer(path):
             return
-        layer.PlotEnabled = bool(printable)
+        width = 0.0 if printable else -1.0
         try:
-            commit = getattr(layer, "CommitChanges", None)
-            if callable(commit):
-                commit()
+            self._rs.LayerPrintWidth(path, width)
+        except Exception:
+            pass
+        layer = self._layer_obj(path)
+        if layer is not None:
+            try:
+                layer.PlotWeight = width
+            except Exception:
+                pass
+            try:
+                layer.PlotEnabled = bool(printable)
+            except Exception:
+                pass
+            try:
+                commit = getattr(layer, "CommitChanges", None)
+                if callable(commit):
+                    commit()
+            except Exception:
+                pass
+        try:
+            self._sc.doc.Views.RedrawEnabled = True
         except Exception:
             pass
         self._redraw_views()
 
     def layer_printable(self, path: str) -> Optional[bool]:
+        if not self.has_layer(path):
+            return None
+        try:
+            width = self._rs.LayerPrintWidth(path)
+            if width is not None and float(width) < 0:
+                return False
+        except Exception:
+            pass
         layer = self._layer_obj(path)
         if layer is None:
             return None
+        try:
+            weight = float(getattr(layer, "PlotWeight", 0) or 0)
+            if weight < 0:
+                return False
+        except Exception:
+            pass
         return bool(getattr(layer, "PlotEnabled", True))
 
     def set_layer_appearance(self, path: str, rgb, material_name: Optional[str] = None) -> None:
