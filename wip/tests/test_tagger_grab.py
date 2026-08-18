@@ -18,6 +18,8 @@ if str(SRC) not in sys.path:
 from loopflow.features.tagger.grab import bind_tag, run_tagger_grab
 from loopflow.features.tagger.keys import (
     BINDING_MODE_KEY,
+    LOCK_LEGACY_KEY,
+    LOCK_LEGACY_HINT,
     LOCK_STATE_KEY,
     SOURCE_BLOCK_NAME_KEY,
     SOURCE_OBJECT_ID_KEY,
@@ -161,6 +163,45 @@ class BindTests(unittest.TestCase):
         session = _session()
         session.set_object_user_text("tag", LOCK_STATE_KEY, "true")
         session.set_document_modified(False)
+        result = bind_tag(session, "tag", "wall", _catalog())
+        self.assertEqual(result.blocking, ("tag_locked",))
+        self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
+
+    def test_legacy_x_lock_zero_write(self):
+        session = _session()
+        session.set_object_user_text("tag", LOCK_LEGACY_KEY, "x")
+        result = bind_tag(session, "tag", "wall", _catalog())
+        self.assertEqual(result.blocking, ("tag_locked",))
+        self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
+        self.assertIsNone(session.get_object_user_text("tag", LOCK_STATE_KEY))
+
+    def test_legacy_X_lock_zero_write(self):
+        session = _session()
+        session.set_object_user_text("tag", LOCK_LEGACY_KEY, " X ")
+        result = bind_tag(session, "tag", "wall", _catalog())
+        self.assertEqual(result.blocking, ("tag_locked",))
+        self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
+        self.assertIsNone(session.get_object_user_text("tag", LOCK_STATE_KEY))
+
+    def test_legacy_lock_hint_still_binds(self):
+        session = _session()
+        session.set_object_user_text("tag", LOCK_LEGACY_KEY, LOCK_LEGACY_HINT)
+        result = bind_tag(session, "tag", "wall", _catalog())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY), OBJECT_ID)
+        self.assertEqual(session.get_object_user_text("tag", LOCK_LEGACY_KEY), LOCK_LEGACY_HINT)
+        self.assertIsNone(session.get_object_user_text("tag", LOCK_STATE_KEY))
+
+    def test_legacy_lock_empty_still_binds(self):
+        session = _session()
+        session._meta("tag")["user_text"][LOCK_LEGACY_KEY] = ""
+        result = bind_tag(session, "tag", "wall", _catalog())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY), OBJECT_ID)
+
+    def test_legacy_lock_key_alias_zero_write(self):
+        session = _session()
+        session.set_object_user_text("tag", "foo_不更新", "x")
         result = bind_tag(session, "tag", "wall", _catalog())
         self.assertEqual(result.blocking, ("tag_locked",))
         self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))

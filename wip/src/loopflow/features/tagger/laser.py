@@ -7,8 +7,7 @@ from typing import Callable, Optional, Sequence
 from loopflow.features.tagger.binding import UUID_V4_RE, write_object_binding
 from loopflow.features.tagger.keys import (
     LASER_OBJECT_TEMPLATE_IDS,
-    LOCK_STATE_KEY,
-    is_lock_true,
+    is_tag_locked,
 )
 from loopflow.features.tagger.templates import TagTemplate, TagTemplateSet, load_tag_templates
 from loopflow.features.view.keys import SCHEMA_ID_KEY, VIEW_SCHEMA_ID, VIEW_TRANSFORM_KEY
@@ -154,7 +153,7 @@ def bind_laser_hit(
             command_id=COMMAND_ID,
             details={"block_name": block_name},
         )
-    if is_lock_true(session.get_object_user_text(tag_id, LOCK_STATE_KEY)):
+    if is_tag_locked(session, tag_id):
         return results.blocked(
             "bind_tag",
             "此 Tag 已鎖定，請先解除鎖定再綁定。",
@@ -267,7 +266,7 @@ def run_tagger_laser(
                 command_id=COMMAND_ID,
                 details={"template_id": template.template_id},
             )
-        if is_lock_true(current.get_object_user_text(tag_id, LOCK_STATE_KEY)):
+        if is_tag_locked(current, tag_id):
             return results.blocked(
                 "bind_tag",
                 "此 Tag 已鎖定，請先解除鎖定再綁定。",

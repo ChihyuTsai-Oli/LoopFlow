@@ -13,8 +13,7 @@ from loopflow.features.tagger.binding import (
 from loopflow.features.tagger.keys import (
     GRAB_BLOCK_TEMPLATE_IDS,
     GRAB_OBJECT_TEMPLATE_IDS,
-    LOCK_STATE_KEY,
-    is_lock_true,
+    is_tag_locked,
 )
 from loopflow.features.tagger.templates import TagTemplate, TagTemplateSet, load_tag_templates
 from loopflow.features.viewer.inspect import check_document_schema
@@ -80,7 +79,7 @@ def bind_tag(
             command_id=COMMAND_ID,
             details={"block_name": block_name},
         )
-    if is_lock_true(session.get_object_user_text(tag_id, LOCK_STATE_KEY)):
+    if is_tag_locked(session, tag_id):
         return results.blocked(
             "bind_tag",
             "此 Tag 已鎖定，請先解除鎖定再綁定。",
@@ -220,7 +219,7 @@ def run_tagger_grab(
                 command_id=COMMAND_ID,
                 details={"template_id": template.template_id},
             )
-        if is_lock_true(current.get_object_user_text(tag_id, LOCK_STATE_KEY)):
+        if is_tag_locked(current, tag_id):
             return results.blocked(
                 "bind_tag",
                 "此 Tag 已鎖定，請先解除鎖定再綁定。",

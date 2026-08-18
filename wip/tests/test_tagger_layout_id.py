@@ -27,6 +27,8 @@ from loopflow.features.sheet.keys import (
 from loopflow.features.sheet.metadata import get_sheet_field
 from loopflow.features.tagger.keys import (
     BINDING_MODE_KEY,
+    LOCK_LEGACY_KEY,
+    LOCK_LEGACY_HINT,
     LOCK_STATE_KEY,
     TAG_ID_KEY,
     TARGET_SHEET_ID_KEY,
@@ -311,6 +313,25 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("elev0", SHEET_CODE_KEY), "101")
         self.assertIsNone(session.get_object_user_text("elev0", TARGET_SHEET_ID_KEY))
         self.assertIsNone(session.get_object_user_text("elev0", DRAWING_NO_KEY))
+
+    def test_locked_elev0_skips_sheet_code(self):
+        session = _session([START_IN])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
+        _add_block(session, "elev0", START_IN, "TAG_ELEV_0", **{LOCK_LEGACY_KEY: "x"})
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(result.ok, result.message)
+        self.assertIsNone(session.get_object_user_text("elev0", SHEET_CODE_KEY))
+        self.assertEqual(session.get_object_user_text("elev0", LOCK_LEGACY_KEY), "x")
+        self.assertIsNone(session.get_object_user_text("elev0", LOCK_STATE_KEY))
+
+    def test_elev0_hint_still_writes_sheet_code(self):
+        session = _session([START_IN])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
+        _add_block(session, "elev0", START_IN, "TAG_ELEV_0", **{LOCK_LEGACY_KEY: LOCK_LEGACY_HINT})
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("elev0", SHEET_CODE_KEY), "101")
+        self.assertEqual(session.get_object_user_text("elev0", LOCK_LEGACY_KEY), LOCK_LEGACY_HINT)
 
     def test_missing_schema_blocks(self):
         session = MemorySession()

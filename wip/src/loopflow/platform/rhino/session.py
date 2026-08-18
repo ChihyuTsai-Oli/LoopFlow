@@ -86,6 +86,9 @@ class RhinoSession(Protocol):
     def get_object_user_text(self, object_id: str, key: str) -> Optional[str]:
         ...
 
+    def object_user_text_keys(self, object_id: str) -> Sequence[str]:
+        ...
+
     def set_object_user_text(self, object_id: str, key: str, value: str) -> None:
         ...
 

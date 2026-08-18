@@ -236,6 +236,9 @@ class MemorySession:
             return None
         return str(value)
 
+    def object_user_text_keys(self, object_id: str):
+        return tuple(self._meta(object_id)["user_text"].keys())
+
     def set_object_user_text(self, object_id: str, key: str, value: str) -> None:
         text = self._meta(object_id)["user_text"]
         if value in (None, ""):

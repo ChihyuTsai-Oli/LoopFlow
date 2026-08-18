@@ -65,11 +65,11 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Catalog.py"
 | 註冊 View | `LF_Anchor_Frame` | — |
 | 圖目錄 | `LF_Catalog` | — |
 
-Grab：在 **Layout** 先選 Tag 圖塊，再在目標 Detail 內點一下進入模型空間，然後選來源（剖面 2D 線、3D 物件或家具圖塊）。Height／Finish 綁物件 `_07_UUID`；家具 Item 綁 Block 名稱（`FF-01__Chair-1`）。Esc、點在 Detail 外、鎖定、`TAG_DW`、Laser／Index／圖框圖塊都不寫入。結束後回到 Layout。不填 Infuser 顯示欄。來源沒有 UUID 時不猜測對應的 3D 物件。
+Grab：在 **Layout** 先選 Tag 圖塊，再在目標 Detail 內點一下進入模型空間，然後選來源（剖面 2D 線、3D 物件或家具圖塊）。Height／Finish 綁物件 `_07_UUID`；家具 Item 綁 Block 名稱（`FF-01__Chair-1`）。Esc、點在 Detail 外、鎖定（`lf_lock_state=true`／`1`，或鎖定欄寫 `x`／`X`）、`TAG_DW`、Laser／Index／圖框圖塊都不寫入。結束後回到 Layout。不填 Infuser 顯示欄。來源沒有 UUID 時不猜測對應的 3D 物件。
 
-Laser：在 **Layout** 先選 Height／Finish 的 Laser Tag，再在目標 Detail 內點一下剖面位置。用該點所在 View 框上已寫死的 `lf_view_transform` 射出 3D 射線，打到帶 `_07_UUID` 的物件後寫 `lf_source_object_id`。不靠名稱／bbox 重算。Esc、點在 Detail 外、鎖定、Grab／Item／`TAG_DW`／Index／圖框、0 或 ≥2 個重疊 View、沒打到、來源無 UUID，都不寫入。多個近距離命中時讓使用者選一個，清單只顯示圖層名（有物件名稱才附上），不顯示 GUID。圖塊名不分大小寫。不填 Infuser 顯示欄。本批不接 Extract 來源索引。
+Laser：在 **Layout** 先選 Height／Finish 的 Laser Tag，再在目標 Detail 內點一下剖面位置。用該點所在 View 框上已寫死的 `lf_view_transform` 射出 3D 射線，打到帶 `_07_UUID` 的物件後寫 `lf_source_object_id`。不靠名稱／bbox 重算。Esc、點在 Detail 外、鎖定（同上）、Grab／Item／`TAG_DW`／Index／圖框、0 或 ≥2 個重疊 View、沒打到、來源無 UUID，都不寫入。多個近距離命中時讓使用者選一個，清單只顯示圖層名（有物件名稱才附上），不顯示 GUID。圖塊名不分大小寫。不填 Infuser 顯示欄。本批不接 Extract 來源索引。
 
-Index：在 **Layout** 選 `TAG_SECTION_DETAIL` 或 `TAG_ELEV_1`～`4`，再從可搜尋清單選全檔任一 Layout 的 Detail（顯示頁名＋Detail 名，不顯示 GUID；點選時跳頁並 zoom）。用該 Detail 模型空間中心對已登記 View 框，恰好一個才寫 `lf_target_view_id`。Esc、鎖定、Grab／Laser／`TAG_ELEV_0`／圖框／`TAG_DW`、模型空間、沒有 Detail、0 或 ≥2 個 View、取消清單，都不寫入。不寫 Detail GUID、不寫圖號顯示欄、不寫 `lf_sheet_id`。圖塊名不分大小寫。不進 Nexus。
+Index：在 **Layout** 選 `TAG_SECTION_DETAIL` 或 `TAG_ELEV_1`～`4`，再從可搜尋清單選全檔任一 Layout 的 Detail（顯示頁名＋Detail 名，不顯示 GUID；點選時跳頁並 zoom）。用該 Detail 模型空間中心對已登記 View 框，恰好一個才寫 `lf_target_view_id`。Esc、鎖定（同上）、Grab／Laser／`TAG_ELEV_0`／圖框／`TAG_DW`、模型空間、沒有 Detail、0 或 ≥2 個 View、取消清單，都不寫入。不寫 Detail GUID、不寫圖號顯示欄、不寫 `lf_sheet_id`。圖塊名不分大小寫。不進 Nexus。
 
 Layout ID：跑全檔 Layout。系列第一頁寫 `**圖類別__圖號__圖名`（例如 `**IN__201__立面圖`、`**IN__A01__平面`），後面的頁只寫圖名。`//S__901__結構平面圖` 不編號但仍寫圖框，執行後保留 `//`。圖號只要尾端是數字就放行；`101.9` 下一頁為 `101.10`。核對清單確認才寫入；取消整批零寫入。Layout 起點頁名保留 `**`，接續頁為三欄無星號；圖框 `lf_drawing_no` 寫空格格式（不含 `**`／`//`），並寫 `lf_drawing_name`、`lf_sheet_id`。不寫 `lf_scale`。在 D08 之前一併寫舊欄 `DWG_NO`／`DWG_NAME`。`TAG_ELEV_0` 寫目前頁編號。未登錄 Block 勾選真正的圖框（預設全不勾）。只改圖名：改第三欄再跑。要改編號：該頁再加 `**` 再跑。圖框已就緒但缺 `**`（也沒有可寫入的 `//`）時停止，警告只顯示命名規則與 Sample。詳細命名與操作見 `工作流程.md` §9。一頁沒有圖框或有兩個圖框則跳過。不進 Nexus。**家中 Rhino 8 已測（2026-08-18）。**
 

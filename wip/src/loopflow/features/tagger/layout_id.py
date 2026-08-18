@@ -39,7 +39,7 @@ from loopflow.features.sheet.naming import (
     parse_drawing_no,
 )
 from loopflow.features.tagger.binding import UUID_V4_RE, ensure_identity, new_id, text
-from loopflow.features.tagger.keys import LOCK_STATE_KEY, is_lock_true
+from loopflow.features.tagger.keys import is_tag_locked
 from loopflow.features.tagger.templates import TagTemplateSet, load_tag_templates
 from loopflow.features.viewer.inspect import check_document_schema
 from loopflow.foundation import results
@@ -318,7 +318,7 @@ def _write_page_tags(
         template = catalog.by_block_name(session.block_definition_name(object_id) or "")
         if template is None or template.template_id != PAGE_TAG_TEMPLATE_ID:
             continue
-        if is_lock_true(session.get_object_user_text(object_id, LOCK_STATE_KEY)):
+        if is_tag_locked(session, object_id):
             continue
         session.set_object_user_text(object_id, SHEET_CODE_KEY, sheet_code)
         written += 1

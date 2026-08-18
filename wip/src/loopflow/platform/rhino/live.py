@@ -517,6 +517,12 @@ class LiveSession:
             return None
         return str(value)
 
+    def object_user_text_keys(self, object_id: str):
+        keys = self._rs.GetUserText(object_id)
+        if not keys:
+            return ()
+        return tuple(str(item) for item in keys)
+
     def set_object_user_text(self, object_id: str, key: str, value: str) -> None:
         self._rs.SetUserText(object_id, key, value)
 
