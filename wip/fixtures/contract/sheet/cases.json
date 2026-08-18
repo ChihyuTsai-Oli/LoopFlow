@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "page_name_cases": [
+    {
+      "id": "baseline-standard",
+      "page_name": "IN 101.01__一樓平面圖",
+      "expect": "baseline",
+      "series": "IN 101",
+      "drawing_name": "一樓平面圖"
+    },
+    {
+      "id": "same-series-follow",
+      "page_name": "IN__天花詳圖",
+      "expect": "inherit",
+      "drawing_name": "天花詳圖"
+    },
+    {
+      "id": "no-separator-inherits",
+      "page_name": "Layout 05",
+      "expect": "inherit",
+      "drawing_name": "Layout 05"
+    },
+    {
+      "id": "multi-separator-keeps-rest-as-name",
+      "page_name": "IN 101.01__一樓__平面圖",
+      "expect": "baseline",
+      "series": "IN 101",
+      "drawing_name": "一樓__平面圖"
+    },
+    {
+      "id": "empty-drawing-name-allowed",
+      "page_name": "IN 101.01__",
+      "expect": "baseline",
+      "series": "IN 101",
+      "drawing_name": ""
+    },
+    {
+      "id": "baseline-mark-without-prefix-inherits",
+      "page_name": ".01__無前綴",
+      "expect": "inherit",
+      "drawing_name": "無前綴"
+    },
+    {
+      "id": "blank-page-name-skipped",
+      "page_name": "   ",
+      "expect": "skip"
+    }
+  ],
+  "numbering_cases": [
+    {
+      "id": "first-import-two-series",
+      "pages": [
+        "IN 101.01__一樓平面圖",
+        "IN__天花詳圖",
+        "IN__地坪詳圖",
+        "EL 201.01__東向立面",
+        "EL__西向立面"
+      ],
+      "expect_drawing_no": [
+        "IN 101.01",
+        "IN 101.02",
+        "IN 101.03",
+        "EL 201.01",
+        "EL 201.02"
+      ]
+    },
+    {
+      "id": "insert-middle-renumbers-following",
+      "pages": ["IN 101.01__一樓平面圖", "IN__新增頁", "IN__天花詳圖"],
+      "expect_drawing_no": ["IN 101.01", "IN 101.02", "IN 101.03"]
+    },
+    {
+      "id": "blank-new-page-inherits-series",
+      "pages": ["IN 101.01__一樓平面圖", "Layout 05"],
+      "expect_drawing_no": ["IN 101.01", "IN 101.02"],
+      "expect_drawing_name": ["一樓平面圖", "Layout 05"]
+    },
+    {
+      "id": "pages-before-first-series-unnumbered",
+      "pages": ["封面", "IN 101.01__一樓平面圖"],
+      "expect_drawing_no": [null, "IN 101.01"]
+    },
+    {
+      "id": "no-series-at-all-unnumbered",
+      "pages": ["封面", "目錄"],
+      "expect_drawing_no": [null, null]
+    }
+  ],
+  "identity_cases": [
+    {
+      "id": "rerun-keeps-sheet-id",
+      "change": "rerun_without_edits",
+      "expect": "sheet_id_unchanged"
+    },
+    {
+      "id": "manual-page-rename-keeps-sheet-id",
+      "change": "page_renamed_by_user",
+      "expect": "sheet_id_unchanged"
+    },
+    {
+      "id": "insert-page-keeps-sheet-id",
+      "change": "page_inserted_before",
+      "expect": "sheet_id_unchanged"
+    }
+  ],
+  "active_cases": [
+    {
+      "id": "frame-on-page-is-active",
+      "pages_with_frame": ["IN 101.01__一樓平面圖"],
+      "metadata_sheet_ids": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
+      "frame_sheet_ids": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
+      "expect_active": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]
+    },
+    {
+      "id": "orphan-metadata-not-active",
+      "pages_with_frame": ["IN 101.01__一樓平面圖"],
+      "metadata_sheet_ids": [
+        "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+      ],
+      "frame_sheet_ids": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
+      "expect_active": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]
+    }
+  ],
+  "stale_cases": [
+    {
+      "id": "page-position-matches-is-current",
+      "recorded_page_position": 2,
+      "current_page_position": 2,
+      "expect": "current"
+    },
+    {
+      "id": "page-moved-without-rerun-is-stale",
+      "recorded_page_position": 2,
+      "current_page_position": 4,
+      "expect": "stale"
+    },
+    {
+      "id": "missing-record-is-stale",
+      "recorded_page_position": null,
+      "current_page_position": 1,
+      "expect": "stale"
+    }
+  ],
+  "frame_cases": [
+    {
+      "id": "single-frame-writes",
+      "frames_on_page": 1,
+      "expect": "write"
+    },
+    {
+      "id": "no-frame-skips-page",
+      "frames_on_page": 0,
+      "expect": "skip"
+    },
+    {
+      "id": "two-frames-skips-page",
+      "frames_on_page": 2,
+      "expect": "skip"
+    },
+    {
+      "id": "locked-frame-skips-page",
+      "frames_on_page": 1,
+      "locked": true,
+      "expect": "skip"
+    },
+    {
+      "id": "unregistered-block-zero-write",
+      "frames_on_page": 0,
+      "unregistered_blocks": ["Random_Furniture"],
+      "expect": "skip"
+    }
+  ]
+}

@@ -156,8 +156,9 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 → 發布串接資料（獨立指令）
 → 建立 Section／註冊 View
 → Materialize 可編輯 Drawing
-→ 建立 Sheet／圖框
+→ 建立 Sheet／圖框／Layout ID
 → 建立並綁定 Tag
+→ 選用：建立圖目錄（獨立指令 `LF_Catalog`，須先有 Sheet metadata）
 → Sync 顯示資料
 → Health／Repair</code></pre>
 <h2 id="1-開案檢查">1. 開案檢查</h2>
@@ -209,11 +210,15 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <ul><li>辨識前次產出，讓使用者選擇取代、新增或略過。</li><li>保存來源 <code>view_id</code>、source revision 與 drawing element provenance。</li><li>回報 indexed／unindexed／ambiguous 覆蓋率。</li><li>復原原有 selection、layer lock 與 visibility。</li><li>使用者補線、刪線或改樣式後標記為 modified；更新不靜默覆寫。</li></ul>
 <p><strong>安全停點</strong>：Drawing 完成即可獨立存檔與人工整理。</p>
 <h2 id="9-建立-Sheet-圖框與-Layout-ID">9. 建立 Sheet、圖框與 Layout ID</h2>
-<p>使用者建立 Layout、Detail、圖框與 Tag Blocks。系統以 Sheet metadata 產生 Layout 名稱、圖號與圖名。</p>
-<ul><li>只對 manifest 中 <code>role: title_frame</code> 的 Block 寫入圖框資料。</li><li>未知 Block 報告並略過。</li><li>比例維持人工輸入，canonical key 不含圖幅或排序資訊。</li></ul>
+<p>使用者建立 Layout、Detail、圖框與 Tag Blocks。圖號與圖名的真相是 Sheet metadata，不是頁名字串。指令 <code>LF_Tagger_Layout_ID</code> 負責建立與維持這份 metadata；其他功能（含圖目錄）只讀、不自行解析頁名。</p>
+<h3 id="使用者怎麼跑-Layout-ID">使用者怎麼跑 Layout ID</h3>
+<ol><li>每個系列的第一頁用 baseline 頁名，例如 <code>IN 101.01__一樓平面圖</code>（<code>.01</code> 是系列起點，<code>__</code> 分隔圖號與圖名）。</li><li>同系列後面幾頁可寫 <code>IN__天花詳圖</code>，或直接用 Rhino 預設頁名；新建空白頁繼承上一頁的系列並接下一號。</li><li>跑 <code>LF_Tagger_Layout_ID</code>。遇到未登錄為圖框的 Block 會列出名稱，問要不要當圖框；沒登錄的一律不寫。</li><li>核對清單顯示每頁：舊頁名 → 新頁名／圖號／圖名／狀態。確認才寫入；取消整批零寫入。</li><li>寫入後：圖框有 <code>lf_sheet_id</code>、<code>lf_drawing_no</code>、<code>lf_drawing_name</code>；頁名改成由 metadata 產生。比例 <code>lf_scale</code> 人工，指令不碰。</li><li>插頁、改頁序後必須再跑一次，圖號才會更新。沒重跑時圖目錄等 consumer 應回報過期，不得安靜輸出舊值。</li></ol>
+<p>一頁沒有圖框、或有兩個以上圖框，該頁跳過並報告，不改頁名。<code>TAG_ELEV_0</code> 寫目前頁的 <code>lf_sheet_code</code>。其餘 Tag 不碰。圖框上的字要變，需另把 <code>Tag_Blocks.3dm</code> 的文字欄位改指 <code>lf_*</code>（任務 LF-D08）；本指令的驗收看 Attribute User Text。</p>
 <h3 id="Duplicate-Sheet">Duplicate Sheet</h3>
-<p>複製後建立新的 <code>sheet_id</code>、<code>drawing_id</code> 與 <code>tag_id</code>：</p>
+<p>複製後建立新的 <code>sheet_id</code>、<code>drawing_id</code> 與 <code>tag_id</code>；圖目錄定位點的 <code>lf_catalog_id</code> 也必須換新號：</p>
 <ul><li>除 <code>TAG_DW</code> 外，所有 Tag 清除來源綁定、自動欄位與人工補充說明，並恢復 template 預設 lock。</li><li><code>TAG_DW</code> 的人工編號、寬、高與其他內容完整保留。</li><li>使用者重新綁定新頁 Tag。</li><li>不覆蓋系統剪貼簿。</li></ul>
+<h3 id="圖目錄-獨立指令-排在-Layout-ID-實機驗收之後">圖目錄（獨立指令，排在 Layout ID 實機驗收之後）</h3>
+<p><code>LF_Catalog</code> 只消費 Sheet metadata，不建立第二套圖號。使用者選獨立的圖號／圖名定位點與要列入的 Sheet，由定位點綁 <code>sheet_id</code>、文字可重建。規劃見 <code>LF_Catalog規劃.md</code>；正式契約等實作時寫入 <code>資料契約.md</code>。</p>
 <h2 id="10-建立與綁定-Tag">10. 建立與綁定 Tag</h2>
 <div class="tw"><table><thead><tr><th>模式</th><th>使用者動作</th><th>結果</th></tr></thead><tbody><tr><td>Grab</td><td>在 Layout 選 Tag，點進 Detail，再選來源</td><td>Height／Finish 寫 <code>lf_source_object_id</code>；家具 Item 寫 <code>lf_source_block_name</code></td></tr><tr><td>Laser</td><td>在 Layout 選 Height／Finish Laser Tag，再在 Detail 內點位置</td><td>用固定 View transform 射線寫 <code>lf_source_object_id</code>；多候選由使用者選，清單只顯示圖層名</td></tr><tr><td>Index</td><td>在 Layout 選 <code>TAG_SECTION_DETAIL</code> 或 <code>TAG_ELEV_1</code>～<code>4</code>，再從清單選全檔任一 Layout 的 Detail（可搜尋，點選時 zoom）</td><td>唯一對到已登記 View 才寫 <code>lf_target_view_id</code>；圖號之後由 Infuser 從目標頁算出</td></tr><tr><td>Furniture Item</td><td>經 Grab 選共用家具 Block</td><td>解析 <code>FF-01__Chair-1</code>；格式錯誤停止並警告</td></tr><tr><td><code>TAG_ELEV_0</code></td><td>使用者直接填方向／編號</td><td>不建立模型 binding</td></tr><tr><td><code>TAG_DW</code></td><td>使用者直接填編號／寬／高</td><td>純手動，不建立 binding</td></tr></tbody></table></div>
 <p>同款家具可共用 Block 名稱；家具 Tag 綁定名稱類型，不具 object-level orphan 偵測。Locked Tag 不允許重新綁定，必須先由使用者解除 lock。</p>
@@ -233,7 +238,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <h3 id="Detail-Layout-重整">Detail／Layout 重整</h3>
 <p>重新註冊 View 或執行 Duplicate Sheet 規則 → 重新綁定 → Sync → Health。不得沿用無法證明有效的舊 target ID。</p>
 <h2 id="實機驗收重點">實機驗收重點</h2>
-<ul><li>正常、取消、失敗、中斷與重跑。</li><li>hidden／locked 物件仍納入正式 Scan。</li><li>ID mapping 與 rollback。</li><li>Drawing 人工修改保護。</li><li>Duplicate Sheet 清除／保留規則。</li><li><code>TAG_DW</code> 永不被 Sync 覆寫。</li><li>家具共用名稱與格式錯誤警告。</li><li>非 cm 警告。</li><li>Registry last-good 與雙程序競態。</li></ul></main>
+<ul><li>正常、取消、失敗、中斷與重跑。</li><li>hidden／locked 物件仍納入正式 Scan。</li><li>ID mapping 與 rollback。</li><li>Drawing 人工修改保護。</li><li>Duplicate Sheet 清除／保留規則；圖目錄定位點換新 <code>catalog_id</code>。</li><li><code>TAG_DW</code> 永不被 Sync 覆寫。</li><li>Layout ID：核對清單取消零寫入；插頁後未重跑時 consumer 回報過期；未登錄 Block 不寫入。</li><li>家具共用名稱與格式錯誤警告。</li><li>非 cm 警告。</li><li>Registry last-good 與雙程序競態。</li></ul></main>
 </div>
 <script>
 (function(){

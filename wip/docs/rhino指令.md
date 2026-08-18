@@ -101,6 +101,8 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Test_Random_M3D_
 
 | 指令 | 用途 | 前置條件 |
 |---|---|---|
+| `LF_Tagger_Layout_ID` | 建立／維持 Sheet metadata，寫圖框圖號與圖名 | **正在實作**；完成並列入上方清單後才測 |
+| `LF_Catalog` | 依選定 Sheet 建立圖目錄 | D04 實機驗收後才實作。規劃見 `LF_Catalog規劃.md` |
 | `LF_Help` | 開啟 GitHub 說明頁，分中／英文版 | GitHub 說明頁尚未建立。**頁面建好後才實作**入口與按鈕，本階段不登錄為可跑指令 |
 
 Tagger／Infuser／Extract／Layout／Worksession 等其餘指令已在 `資料契約.md` 登錄 ID，但 2.0 尚未實作；按了只會回報尚未實作。它們進入可跑狀態時再列入本文件上方清單。

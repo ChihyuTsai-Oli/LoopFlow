@@ -1,0 +1,61 @@
+{
+  "schema_id": "loopflow.sheet",
+  "schema_version": 1,
+  "document_namespace": "lf_sheet",
+  "usertext_keys": {
+    "sheet_id": "lf_sheet_id",
+    "drawing_no": "lf_drawing_no",
+    "drawing_name": "lf_drawing_name",
+    "scale": "lf_scale",
+    "sheet_code": "lf_sheet_code"
+  },
+  "metadata_fields": [
+    "drawing_no",
+    "drawing_name",
+    "series",
+    "sequence",
+    "page_position",
+    "level",
+    "zone",
+    "scale",
+    "issue"
+  ],
+  "layout_id_written_fields": [
+    "drawing_no",
+    "drawing_name",
+    "series",
+    "sequence",
+    "page_position"
+  ],
+  "manual_fields": ["level", "zone", "scale", "issue"],
+  "persistent_fields": ["sheet_id", "series", "drawing_name"],
+  "derived_fields": ["sequence", "drawing_no"],
+  "naming_keys": {
+    "separator": "lf_sheet_naming.separator",
+    "baseline_mark": "lf_sheet_naming.baseline_mark",
+    "drawing_no_format": "lf_sheet_naming.drawing_no_format",
+    "sheet_ref_format": "lf_sheet_naming.sheet_ref_format"
+  },
+  "naming_defaults": {
+    "separator": "__",
+    "baseline_mark": ".01",
+    "drawing_no_format": "{prefix} {major:03d}.{minor:02d}",
+    "sheet_ref_format": "{major:03d}.{minor:02d}",
+    "prefix_pattern": "([A-Za-z\\s]+?)[\\s]*(\\d+)$"
+  },
+  "title_frame_registry_key": "lf_title_frame_blocks",
+  "title_frame_registry_separator": ";",
+  "catalog_reserved_prefix": "lf_catalog_",
+  "legacy_keys": ["DWG_NO", "DWG_NAME", "03-A3 Scale"],
+  "notes": [
+    "Sheet 不進 Registry；metadata 存在 Rhino 文件 UserText 的 lf_sheet.<sheet_id>.<field>。",
+    "身分錨點是該頁 title frame 上的 lf_sheet_id；0 或 ≥2 個圖框即跳過該頁。",
+    "sheet_id 為 persistent identity；drawing_no 與 sequence 為 derived，可被重算。",
+    "頁名只在首次匯入時解析，之後一律以 metadata 為準。",
+    "新建空白 Layout 繼承頁序上一頁的 series。",
+    "page_position 記錄寫入當下頁序，供 consumer 偵測 stale。",
+    "metadata 存在不等於 Sheet 仍 active；orphan record 不自動清除。",
+    "legacy_keys 只供 migration 與 1.x 對照，2.0 不寫、不雙寫。",
+    "lf_catalog_ 前綴保留給未實作的 LF_Catalog。"
+  ]
+}

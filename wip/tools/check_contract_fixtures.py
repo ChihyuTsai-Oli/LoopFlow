@@ -442,6 +442,75 @@ def check_view() -> None:
             fail("view %s 期望 %s 得到 %s" % (case["id"], case["expect"], got))
 
 
+def check_sheet() -> None:
+    """檢查 Sheet schema 與案例的結構一致，不重寫編號邏輯（行為由 unittest 驗證）。"""
+    spec = load(SCHEMA / "sheet.json")
+    if spec["schema_id"] != "loopflow.sheet" or spec["schema_version"] != 1:
+        fail("sheet schema 身分錯誤")
+    if spec["document_namespace"] != "lf_sheet":
+        fail("Sheet metadata 命名空間必須是 lf_sheet")
+    if spec["usertext_keys"].get("sheet_id") != "lf_sheet_id":
+        fail("Sheet 身分錨點必須是 lf_sheet_id")
+    fields = set(spec["metadata_fields"])
+    for group in ("layout_id_written_fields", "manual_fields", "derived_fields"):
+        extra = set(spec[group]) - fields
+        if extra:
+            fail("sheet %s 出現未定義欄位 %s" % (group, sorted(extra)))
+    if set(spec["manual_fields"]) & set(spec["layout_id_written_fields"]):
+        fail("人工欄位不得同時由 Layout ID 寫入")
+    if set(spec["persistent_fields"]) & set(spec["derived_fields"]):
+        fail("persistent 與 derived 欄位不得重疊")
+    if "scale" in spec["layout_id_written_fields"]:
+        fail("比例是人工欄，Layout ID 不得寫入")
+    if not spec["catalog_reserved_prefix"].startswith("lf_catalog"):
+        fail("Catalog 保留前綴必須是 lf_catalog_")
+    defaults = spec["naming_defaults"]
+    try:
+        sample = defaults["drawing_no_format"].format(prefix="IN", major=101, minor=2)
+    except (KeyError, IndexError, ValueError) as exc:
+        fail("drawing_no_format 無法格式化：%s" % exc)
+        sample = ""
+    if sample and sample != "IN 101.02":
+        fail("drawing_no_format 預設應產生 IN 101.02，得到 %s" % sample)
+    if defaults["baseline_mark"] not in "IN 101.01":
+        fail("baseline_mark 預設應能在 1.x 命名中出現")
+
+    cases = load(CONTRACT / "sheet" / "cases.json")
+    allowed_parse = {"baseline", "inherit", "skip"}
+    for case in cases["page_name_cases"]:
+        if case["expect"] not in allowed_parse:
+            fail("sheet 頁名案例 %s 的 expect 不在 %s" % (case["id"], sorted(allowed_parse)))
+        if case["expect"] == "baseline" and not case.get("series"):
+            fail("sheet 頁名案例 %s 宣告 baseline 卻沒有 series" % case["id"])
+        if case["expect"] == "skip" and "drawing_name" in case:
+            fail("sheet 頁名案例 %s 要跳過就不該期望 drawing_name" % case["id"])
+    for case in cases["numbering_cases"]:
+        if len(case["pages"]) != len(case["expect_drawing_no"]):
+            fail("sheet 編號案例 %s 的頁數與期望圖號數不符" % case["id"])
+        numbered = [no for no in case["expect_drawing_no"] if no]
+        if len(numbered) != len(set(numbered)):
+            fail("sheet 編號案例 %s 出現重複圖號" % case["id"])
+    for case in cases["active_cases"]:
+        active = set(case["expect_active"])
+        if active - set(case["frame_sheet_ids"]):
+            fail("sheet active 案例 %s 把沒有圖框的 Sheet 當 active" % case["id"])
+        if active - set(case["metadata_sheet_ids"]):
+            fail("sheet active 案例 %s 的 active Sheet 缺 metadata" % case["id"])
+        for sheet_id in case["metadata_sheet_ids"]:
+            if not UUID_RE.match(sheet_id):
+                fail("sheet active 案例 %s 的 sheet_id 不是 UUID v4" % case["id"])
+    for case in cases["stale_cases"]:
+        recorded = case["recorded_page_position"]
+        expect = "current" if recorded == case["current_page_position"] else "stale"
+        if case["expect"] != expect:
+            fail("sheet stale 案例 %s 期望 %s 與頁序推算不符" % (case["id"], case["expect"]))
+    for case in cases["frame_cases"]:
+        if case["expect"] == "write" and (case["frames_on_page"] != 1 or case.get("locked")):
+            fail("sheet 圖框案例 %s 只有單一未鎖圖框才能寫入" % case["id"])
+        if case["expect"] == "skip" and case["frames_on_page"] == 1 and not case.get("locked"):
+            fail("sheet 圖框案例 %s 沒有跳過的理由" % case["id"])
+
+
 def main() -> int:
     check_measurement_baseline()
     check_dictionary_cases()
@@ -454,12 +523,13 @@ def main() -> int:
     check_registry()
     check_quantity()
     check_view()
+    check_sheet()
     if FAILS:
         print("契約 fixtures 失敗 %s 項：" % len(FAILS))
         for msg in FAILS:
             print(" -", msg)
         return 1
-    print("契約 fixtures 通過：92 筆量綱、15 欄、24 個 Tag key、Space／Registry／Duplicate／View 案例；quantity／frame 常數保留給 GH。")
+    print("契約 fixtures 通過：92 筆量綱、15 欄、24 個 Tag key、Space／Registry／Duplicate／View／Sheet 案例；quantity／frame 常數保留給 GH。")
     return 0
 
 
