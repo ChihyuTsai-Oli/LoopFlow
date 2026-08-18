@@ -466,14 +466,14 @@ def check_sheet() -> None:
         fail("Catalog 保留前綴必須是 lf_catalog_")
     defaults = spec["naming_defaults"]
     try:
-        sample = defaults["drawing_no_format"].format(prefix="IN", major=101, minor=2)
+        sample = defaults["drawing_no_format"].format(prefix="IN", number="201")
     except (KeyError, IndexError, ValueError) as exc:
         fail("drawing_no_format 無法格式化：%s" % exc)
         sample = ""
-    if sample and sample != "IN 101.02":
-        fail("drawing_no_format 預設應產生 IN 101.02，得到 %s" % sample)
-    if defaults["baseline_mark"] not in "IN 101.01":
-        fail("baseline_mark 預設應能在 1.x 命名中出現")
+    if sample and sample != "IN 201":
+        fail("drawing_no_format 預設應產生 IN 201，得到 %s" % sample)
+    if defaults.get("baseline_mark") != "**":
+        fail("baseline_mark 預設應為 **")
 
     cases = load(CONTRACT / "sheet" / "cases.json")
     allowed_parse = {"baseline", "inherit", "skip"}

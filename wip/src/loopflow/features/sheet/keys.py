@@ -47,10 +47,9 @@ NAMING_KEYS = {
 }
 NAMING_DEFAULTS = {
     "separator": "__",
-    "baseline_mark": ".01",
-    "drawing_no_format": "{prefix} {major:03d}.{minor:02d}",
-    "sheet_ref_format": "{major:03d}.{minor:02d}",
-    "prefix_pattern": r"([A-Za-z\s]+?)[\s]*(\d+)$",
+    "baseline_mark": "**",
+    "drawing_no_format": "{prefix} {number}",
+    "sheet_ref_format": "{number}",
 }
 
 # 本份 .3dm 額外認可的圖框 Block；manifest 的 title_frame 恆定有效。

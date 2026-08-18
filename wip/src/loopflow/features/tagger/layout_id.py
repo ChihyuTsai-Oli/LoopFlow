@@ -32,7 +32,7 @@ from loopflow.features.sheet.naming import (
     assign_sheet_numbers,
     format_sheet_ref,
     load_naming_rules,
-    parse_series_text,
+    parse_drawing_no,
 )
 from loopflow.features.tagger.binding import UUID_V4_RE, ensure_identity, new_id, text
 from loopflow.features.tagger.keys import LOCK_STATE_KEY, is_lock_true
@@ -126,9 +126,13 @@ def build_sheet_rows(
         name = get_sheet_field(session, sheet_id, "drawing_name")
         if name is not None:
             known_names[scan.page_name] = name
-        prefix, major = parse_series_text(get_sheet_field(session, sheet_id, "series"), rules)
-        if prefix is not None and major is not None:
-            known_series[scan.page_name] = (prefix, major)
+        series = get_sheet_field(session, sheet_id, "series")
+        number = get_sheet_field(session, sheet_id, "sequence")
+        if not number:
+            _prefix, number = parse_drawing_no(get_sheet_field(session, sheet_id, "drawing_no"))
+            series = series or _prefix
+        if series and number:
+            known_series[scan.page_name] = (series, number)
 
     pages = [
         {"name": scan.page_name, "page_number": scan.page_number}
@@ -270,7 +274,7 @@ def apply_sheet_rows(
         session.set_object_user_text(row.frame_id, DRAWING_NAME_KEY, row.plan.drawing_name or "")
         scan = scan_by_page.get(row.page_name)
         if scan is not None:
-            sheet_code = format_sheet_ref(rules, row.plan.major, row.plan.sequence)
+            sheet_code = format_sheet_ref(rules, row.plan.number or "")
             tagged += _write_page_tags(session, scan, catalog, sheet_code)
     if callable(rename_fn):
         for row in reversed(list(rows)):

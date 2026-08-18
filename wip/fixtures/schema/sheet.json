@@ -38,10 +38,9 @@
   },
   "naming_defaults": {
     "separator": "__",
-    "baseline_mark": ".01",
-    "drawing_no_format": "{prefix} {major:03d}.{minor:02d}",
-    "sheet_ref_format": "{major:03d}.{minor:02d}",
-    "prefix_pattern": "([A-Za-z\\s]+?)[\\s]*(\\d+)$"
+    "baseline_mark": "**",
+    "drawing_no_format": "{prefix} {number}",
+    "sheet_ref_format": "{number}"
   },
   "title_frame_registry_key": "lf_title_frame_blocks",
   "title_frame_registry_separator": ";",
@@ -51,8 +50,9 @@
     "Sheet 不進 Registry；metadata 存在 Rhino 文件 UserText 的 lf_sheet.<sheet_id>.<field>。",
     "身分錨點是該頁 title frame 上的 lf_sheet_id；0 或 ≥2 個圖框即跳過該頁。",
     "sheet_id 為 persistent identity；drawing_no 與 sequence 為 derived，可被重算。",
-    "頁名只在首次匯入時解析，之後一律以 metadata 為準。",
-    "新建空白 Layout 繼承頁序上一頁的 series。",
+    "系列起點頁名為 **圖類別__圖編號__圖名；寫入後拿掉 **。圖框 drawing_no 為「圖類別 空格 圖編號」。",
+    "頁名三欄可在重跑時更新圖名；加 ** 可重設該頁起點編號。亂名則恢復 metadata 圖名。",
+    "新建空白 Layout 繼承頁序上一頁的 series，編號尾數 +1。",
     "page_position 記錄寫入當下頁序，供 consumer 偵測 stale。",
     "metadata 存在不等於 Sheet 仍 active；orphan record 不自動清除。",
     "legacy_keys 只供 migration 與 1.x 對照，2.0 不寫、不雙寫。",

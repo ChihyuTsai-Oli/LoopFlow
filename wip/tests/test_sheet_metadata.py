@@ -71,7 +71,8 @@ class NamingTests(unittest.TestCase):
                 continue
             self.assertEqual(parsed.drawing_name, case.get("drawing_name", ""), case["id"])
             if case["expect"] == "baseline":
-                self.assertEqual("%s %s" % (parsed.prefix, parsed.major), case["series"])
+                self.assertEqual(parsed.prefix, case["series"], case["id"])
+                self.assertEqual(parsed.number, case.get("number"), case["id"])
 
     def test_numbering_cases_match_contract(self):
         for case in CASES["numbering_cases"]:
@@ -85,17 +86,21 @@ class NamingTests(unittest.TestCase):
             expected_names = case.get("expect_drawing_name")
             if expected_names:
                 self.assertEqual([plan.drawing_name for plan in plans], expected_names)
+            expected_pages = case.get("expect_page_name")
+            if expected_pages:
+                self.assertEqual([plan.new_page_name for plan in plans], expected_pages, case["id"])
 
-    def test_defaults_match_1x_sample(self):
+    def test_defaults_use_star_and_space_drawing_no(self):
         self.assertEqual(NAMING_DEFAULTS["separator"], "__")
-        self.assertEqual(NAMING_DEFAULTS["baseline_mark"], ".01")
+        self.assertEqual(NAMING_DEFAULTS["baseline_mark"], "**")
         pages = [
-            {"name": "IN 101.01__Floor Plan", "page_number": 1},
-            {"name": "IN__Ceiling Detail", "page_number": 2},
+            {"name": "**IN__201__立面圖", "page_number": 1},
+            {"name": "天花詳圖", "page_number": 2},
         ]
         plans = assign_sheet_numbers(pages, self.rules)
-        self.assertEqual(plans[1].drawing_no, "IN 101.02")
-        self.assertEqual(plans[1].new_page_name, "IN 101.02__Ceiling Detail")
+        self.assertEqual(plans[0].drawing_no, "IN 201")
+        self.assertEqual(plans[1].drawing_no, "IN 202")
+        self.assertEqual(plans[1].new_page_name, "IN__202__天花詳圖")
 
 
 class SheetApiTests(unittest.TestCase):
@@ -122,29 +127,29 @@ class SheetApiTests(unittest.TestCase):
     def test_orphan_metadata_is_not_active(self):
         session = _session()
         catalog = _catalog()
-        session.set_layout_pages(["IN 101.01__一樓平面圖"])
+        session.set_layout_pages(["IN__201__立面圖"])
         session.add_object("frame-a")
         session.set_block("frame-a", (0, 0, 0), name="Sample_Frame")
         session.set_object_user_text("frame-a", SHEET_ID_KEY, SHEET_A)
-        session.add_object_to_layout_page("IN 101.01__一樓平面圖", "frame-a")
-        write_sheet_metadata(session, SHEET_A, {"drawing_no": "IN 101.01", "page_position": 1})
-        write_sheet_metadata(session, SHEET_B, {"drawing_no": "IN 101.02", "page_position": 2})
+        session.add_object_to_layout_page("IN__201__立面圖", "frame-a")
+        write_sheet_metadata(session, SHEET_A, {"drawing_no": "IN 201", "page_position": 1})
+        write_sheet_metadata(session, SHEET_B, {"drawing_no": "IN 202", "page_position": 2})
         active = list_active_sheets(session, catalog)
         self.assertEqual([sheet.sheet_id for sheet in active], [SHEET_A])
 
     def test_stale_when_page_order_moved(self):
         session = _session()
         catalog = _catalog()
-        session.set_layout_pages(["IN 101.01__一樓平面圖", "IN 101.02__天花"])
-        for index, name in enumerate(("IN 101.01__一樓平面圖", "IN 101.02__天花"), start=1):
+        session.set_layout_pages(["IN__201__立面圖", "IN__202__天花"])
+        for index, name in enumerate(("IN__201__立面圖", "IN__202__天花"), start=1):
             frame_id = "frame-%s" % index
             sheet_id = SHEET_A if index == 1 else SHEET_B
             session.add_object(frame_id)
             session.set_block(frame_id, (0, 0, 0), name="Sample_Frame")
             session.set_object_user_text(frame_id, SHEET_ID_KEY, sheet_id)
             session.add_object_to_layout_page(name, frame_id)
-            write_sheet_metadata(session, sheet_id, {"drawing_no": "IN 101.0%s" % index, "page_position": index})
-        session.set_layout_pages(["IN 101.02__天花", "IN 101.01__一樓平面圖"])
+            write_sheet_metadata(session, sheet_id, {"drawing_no": "IN 20%s" % index, "page_position": index})
+        session.set_layout_pages(["IN__202__天花", "IN__201__立面圖"])
         self.assertEqual(set(stale_sheet_ids(session, catalog)), {SHEET_A, SHEET_B})
 
     def test_does_not_invent_scale(self):

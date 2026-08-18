@@ -220,12 +220,15 @@ def ask_confirm_list(
             self.Height = 540
 
             layout = forms.DynamicLayout()
-            layout.Spacing = drawing.Size(5, 5)
+            layout.Spacing = drawing.Size(6, 6)
 
-            listbox = forms.ListBox()
-            listbox.Height = 420
-            listbox.DataStore = [str(line) for line in lines]
-            layout.AddRow(listbox)
+            text_area = forms.TextArea()
+            text_area.ReadOnly = True
+            text_area.Wrap = False
+            text_area.Text = "\n".join(str(line) for line in lines)
+            text_area.Font = drawing.Font("Consolas", 10)
+            text_area.Height = 420
+            layout.AddRow(text_area)
             layout.Add(None)
 
             btn_ok = forms.Button()
@@ -279,27 +282,27 @@ def ask_pick_title_frames(
             self.boxes = []
 
             layout = forms.DynamicLayout()
-            layout.Spacing = drawing.Size(5, 5)
+            layout.Spacing = drawing.Size(6, 6)
             note = forms.Label()
             note.Text = (
                 "這些圖塊還沒登錄為圖框。請勾選真正的圖框；"
                 "沒勾選的會略過，不會寫入圖號。"
             )
-            note.Wrap = forms.WrapMode.Word
             layout.AddRow(note)
 
             scroll = forms.Scrollable()
             scroll.Border = forms.BorderType.Line
             scroll.Height = 360
             inner = forms.DynamicLayout()
-            inner.Padding = drawing.Padding(8)
-            inner.Spacing = drawing.Size(4, 4)
+            inner.Padding = drawing.Padding(6, 4, 6, 4)
+            inner.Spacing = drawing.Size(0, 0)
             for name in names:
                 box = forms.CheckBox()
                 box.Text = str(name)
                 box.Checked = False
                 inner.AddRow(box)
                 self.boxes.append(box)
+            inner.Add(None)
             scroll.Content = inner
             layout.AddRow(scroll)
             layout.Add(None)

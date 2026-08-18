@@ -39,6 +39,9 @@ from loopflow.platform.rhino.state import ObjectViewState
 PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 LEGACY_NO = "DWG_NO"
 LEGACY_NAME = "DWG_NAME"
+START_IN = "**IN__101__一樓平面圖"
+PAGE_IN = "IN__101__一樓平面圖"
+PAGE_IN_2 = "IN__102__天花詳圖"
 
 
 def _session(pages=None) -> MemorySession:
@@ -67,32 +70,32 @@ def _snapshot(session):
 
 class LayoutIdCommandTests(unittest.TestCase):
     def test_first_import_writes_canonical_keys(self):
-        session = _session(["IN 101.01__一樓平面圖", "IN__天花詳圖"])
-        _add_block(session, "frame-1", "IN 101.01__一樓平面圖", "Sample_Frame", **{SCALE_KEY: "1:50"})
-        _add_block(session, "frame-2", "IN__天花詳圖", "Sample_Frame")
+        session = _session([START_IN, "天花詳圖"])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame", **{SCALE_KEY: "1:50"})
+        _add_block(session, "frame-2", "天花詳圖", "Sample_Frame")
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 101.01")
+        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 101")
         self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NAME_KEY), "一樓平面圖")
-        self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NO_KEY), "IN 101.02")
+        self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NO_KEY), "IN 102")
         self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NAME_KEY), "天花詳圖")
         self.assertEqual(session.get_object_user_text("frame-1", SCALE_KEY), "1:50")
         self.assertIsNone(session.get_object_user_text("frame-1", LEGACY_NO))
         self.assertIsNone(session.get_object_user_text("frame-1", LEGACY_NAME))
         sheet_id = session.get_object_user_text("frame-1", SHEET_ID_KEY)
         self.assertTrue(sheet_id)
-        self.assertEqual(get_sheet_field(session, sheet_id, "drawing_no"), "IN 101.01")
+        self.assertEqual(get_sheet_field(session, sheet_id, "drawing_no"), "IN 101")
         self.assertEqual(session.get_object_user_text("frame-1", BINDING_MODE_KEY), "none")
         self.assertEqual(session.get_object_user_text("frame-1", TEMPLATE_ID_KEY), "Sample_Frame")
         self.assertIsNotNone(session.get_object_user_text("frame-1", TAG_ID_KEY))
         self.assertEqual(
             [page["name"] for page in session.listed_layout_pages()],
-            ["IN 101.01__一樓平面圖", "IN 101.02__天花詳圖"],
+            [PAGE_IN, PAGE_IN_2],
         )
 
     def test_rerun_keeps_sheet_id(self):
-        session = _session(["IN 101.01__一樓平面圖"])
-        _add_block(session, "frame-1", "IN 101.01__一樓平面圖", "Sample_Frame")
+        session = _session([START_IN])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
         run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         first = session.get_object_user_text("frame-1", SHEET_ID_KEY)
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
@@ -101,52 +104,76 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertEqual(result.details["created_sheet_ids"], 0)
 
     def test_insert_middle_renumbers_but_keeps_ids(self):
-        session = _session(["IN 101.01__一樓平面圖", "IN__天花詳圖"])
-        _add_block(session, "frame-1", "IN 101.01__一樓平面圖", "Sample_Frame")
-        _add_block(session, "frame-2", "IN__天花詳圖", "Sample_Frame")
+        session = _session([START_IN, "天花詳圖"])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
+        _add_block(session, "frame-2", "天花詳圖", "Sample_Frame")
         run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         first = session.get_object_user_text("frame-1", SHEET_ID_KEY)
         second = session.get_object_user_text("frame-2", SHEET_ID_KEY)
-        session.set_layout_pages(["IN 101.01__一樓平面圖", "IN__新增頁", "IN 101.02__天花詳圖"])
-        _add_block(session, "frame-new", "IN__新增頁", "Sample_Frame")
+        session.set_layout_pages([PAGE_IN, "新增頁", PAGE_IN_2])
+        _add_block(session, "frame-new", "新增頁", "Sample_Frame")
         run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertEqual(session.get_object_user_text("frame-1", SHEET_ID_KEY), first)
         self.assertEqual(session.get_object_user_text("frame-2", SHEET_ID_KEY), second)
-        self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NO_KEY), "IN 101.03")
-        self.assertEqual(session.get_object_user_text("frame-new", DRAWING_NO_KEY), "IN 101.02")
+        self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NO_KEY), "IN 103")
+        self.assertEqual(session.get_object_user_text("frame-new", DRAWING_NO_KEY), "IN 102")
 
     def test_manual_page_rename_restored_from_metadata(self):
-        session = _session(["IN 101.01__一樓平面圖"])
-        _add_block(session, "frame-1", "IN 101.01__一樓平面圖", "Sample_Frame")
+        session = _session([START_IN])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
         run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         sheet_id = session.get_object_user_text("frame-1", SHEET_ID_KEY)
-        self.assertTrue(session.rename_layout_page("IN 101.01__一樓平面圖", "隨便改名"))
+        self.assertTrue(session.rename_layout_page(PAGE_IN, "隨便改名"))
         run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertEqual(session.get_object_user_text("frame-1", SHEET_ID_KEY), sheet_id)
-        self.assertEqual(session.listed_layout_pages()[0]["name"], "IN 101.01__一樓平面圖")
+        self.assertEqual(session.listed_layout_pages()[0]["name"], PAGE_IN)
+        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NAME_KEY), "一樓平面圖")
+
+    def test_third_field_updates_drawing_name(self):
+        session = _session([START_IN])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
+        run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(session.rename_layout_page(PAGE_IN, "IN__101__一樓平面"))
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 101")
+        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NAME_KEY), "一樓平面")
+        self.assertEqual(session.listed_layout_pages()[0]["name"], "IN__101__一樓平面")
+
+    def test_star_resets_series_start(self):
+        session = _session([START_IN, "天花詳圖"])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
+        _add_block(session, "frame-2", "天花詳圖", "Sample_Frame")
+        run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(session.rename_layout_page(PAGE_IN_2, "**IN__301__新系列"))
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 101")
+        self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NO_KEY), "IN 301")
+        self.assertEqual(session.listed_layout_pages()[1]["name"], "IN__301__新系列")
 
     def test_blank_layout_inherits_previous_series(self):
-        session = _session(["IN 101.01__一樓平面圖", "Layout 05"])
-        _add_block(session, "frame-1", "IN 101.01__一樓平面圖", "Sample_Frame")
+        session = _session([START_IN, "Layout 05"])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
         _add_block(session, "frame-2", "Layout 05", "Sample_Frame")
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NO_KEY), "IN 101.02")
+        self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NO_KEY), "IN 102")
         self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NAME_KEY), "Layout 05")
 
     def test_cover_before_series_is_skipped(self):
-        session = _session(["封面", "IN 101.01__一樓平面圖"])
+        session = _session(["封面", START_IN])
         _add_block(session, "frame-cover", "封面", "Sample_Frame")
-        _add_block(session, "frame-1", "IN 101.01__一樓平面圖", "Sample_Frame")
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertTrue(result.ok, result.message)
         self.assertIsNone(session.get_object_user_text("frame-cover", DRAWING_NO_KEY))
-        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 101.01")
+        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 101")
         self.assertEqual(len(result.details["skipped"]), 1)
 
     def test_unregistered_block_not_written_when_refused(self):
-        session = _session(["IN 101.01__一樓平面圖"])
-        _add_block(session, "chair", "IN 101.01__一樓平面圖", "Random_Furniture")
+        session = _session([START_IN])
+        _add_block(session, "chair", START_IN, "Random_Furniture")
         objects, document, pages = _snapshot(session)
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertFalse(result.ok)
@@ -157,10 +184,10 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertIsNone(session.document_user_text(TITLE_FRAME_REGISTRY_KEY))
 
     def test_register_only_picked_title_frame(self):
-        session = _session(["IN 101.01__一樓平面圖"])
-        _add_block(session, "tag-title", "IN 101.01__一樓平面圖", "tag_title")
-        _add_block(session, "tag-compass", "IN 101.01__一樓平面圖", "tag_compass")
-        _add_block(session, "frame", "IN 101.01__一樓平面圖", "_Frame_A3_shop_drawing")
+        session = _session([START_IN])
+        _add_block(session, "tag-title", START_IN, "tag_title")
+        _add_block(session, "tag-compass", START_IN, "tag_compass")
+        _add_block(session, "frame", START_IN, "_Frame_A3_shop_drawing")
         result = run_tagger_layout_id(
             session,
             confirm=lambda _lines: True,
@@ -173,28 +200,28 @@ class LayoutIdCommandTests(unittest.TestCase):
             session.document_user_text(TITLE_FRAME_REGISTRY_KEY),
             "_Frame_A3_shop_drawing",
         )
-        self.assertEqual(session.get_object_user_text("frame", DRAWING_NO_KEY), "IN 101.01")
+        self.assertEqual(session.get_object_user_text("frame", DRAWING_NO_KEY), "IN 101")
         self.assertIsNone(session.get_object_user_text("tag-title", DRAWING_NO_KEY))
         self.assertIsNone(session.get_object_user_text("tag-compass", DRAWING_NO_KEY))
 
     def test_two_frames_skip_page(self):
-        session = _session(["IN 101.01__一樓平面圖"])
-        _add_block(session, "frame-1", "IN 101.01__一樓平面圖", "Sample_Frame")
-        _add_block(session, "frame-2", "IN 101.01__一樓平面圖", "Sample_Frame")
+        session = _session([START_IN])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
+        _add_block(session, "frame-2", START_IN, "Sample_Frame")
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertFalse(result.ok)
         self.assertIsNone(session.get_object_user_text("frame-1", DRAWING_NO_KEY))
 
     def test_locked_frame_skips_page(self):
-        session = _session(["IN 101.01__一樓平面圖"])
-        _add_block(session, "frame-1", "IN 101.01__一樓平面圖", "Sample_Frame", **{LOCK_STATE_KEY: "true"})
+        session = _session([START_IN])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame", **{LOCK_STATE_KEY: "true"})
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertFalse(result.ok)
         self.assertIsNone(session.get_object_user_text("frame-1", DRAWING_NO_KEY))
 
     def test_cancel_preview_is_zero_write(self):
-        session = _session(["IN 101.01__一樓平面圖"])
-        _add_block(session, "frame-1", "IN 101.01__一樓平面圖", "Sample_Frame")
+        session = _session([START_IN])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
         objects, document, pages = _snapshot(session)
         result = run_tagger_layout_id(session, confirm=lambda _lines: False, ask_register=lambda _names: ())
         self.assertEqual(result.status, "cancelled")
@@ -203,19 +230,19 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertEqual(session._layout_pages, pages)
 
     def test_elev0_writes_current_sheet_code_not_index_fields(self):
-        session = _session(["IN 101.01__一樓平面圖"])
-        _add_block(session, "frame-1", "IN 101.01__一樓平面圖", "Sample_Frame")
-        _add_block(session, "elev0", "IN 101.01__一樓平面圖", "TAG_ELEV_0")
+        session = _session([START_IN])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
+        _add_block(session, "elev0", START_IN, "TAG_ELEV_0")
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(session.get_object_user_text("elev0", SHEET_CODE_KEY), "101.01")
+        self.assertEqual(session.get_object_user_text("elev0", SHEET_CODE_KEY), "101")
         self.assertIsNone(session.get_object_user_text("elev0", TARGET_SHEET_ID_KEY))
         self.assertIsNone(session.get_object_user_text("elev0", DRAWING_NO_KEY))
 
     def test_missing_schema_blocks(self):
         session = MemorySession()
-        session.set_layout_pages(["IN 101.01__一樓平面圖"])
-        _add_block(session, "frame-1", "IN 101.01__一樓平面圖", "Sample_Frame")
+        session.set_layout_pages([START_IN])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertFalse(result.ok)
         self.assertIn("missing_document_schema", result.blocking)
@@ -227,8 +254,8 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertIn("missing_layout", result.blocking)
 
     def test_selection_restored(self):
-        session = _session(["IN 101.01__一樓平面圖"])
-        _add_block(session, "frame-1", "IN 101.01__一樓平面圖", "Sample_Frame")
+        session = _session([START_IN])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
         session.set_view_state(
             ObjectViewState(
                 object_id="frame-1",
