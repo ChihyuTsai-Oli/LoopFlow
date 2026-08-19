@@ -18,8 +18,9 @@ if str(SRC) not in sys.path:
 from loopflow.features.tagger.grab import bind_tag, run_tagger_grab
 from loopflow.features.tagger.keys import (
     BINDING_MODE_KEY,
-    LOCK_LEGACY_KEY,
+    LOCK_CANONICAL_HINT,
     LOCK_LEGACY_HINT,
+    LOCK_LEGACY_KEY,
     LOCK_STATE_KEY,
     SOURCE_BLOCK_NAME_KEY,
     SOURCE_OBJECT_ID_KEY,
@@ -191,6 +192,21 @@ class BindTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY), OBJECT_ID)
         self.assertEqual(session.get_object_user_text("tag", LOCK_LEGACY_KEY), LOCK_LEGACY_HINT)
         self.assertIsNone(session.get_object_user_text("tag", LOCK_STATE_KEY))
+
+    def test_canonical_x_lock_zero_write(self):
+        session = _session()
+        session.set_object_user_text("tag", LOCK_STATE_KEY, "x")
+        result = bind_tag(session, "tag", "wall", _catalog())
+        self.assertEqual(result.blocking, ("tag_locked",))
+        self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
+
+    def test_english_lock_hint_still_binds(self):
+        session = _session()
+        session.set_object_user_text("tag", LOCK_STATE_KEY, LOCK_CANONICAL_HINT)
+        result = bind_tag(session, "tag", "wall", _catalog())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY), OBJECT_ID)
+        self.assertEqual(session.get_object_user_text("tag", LOCK_STATE_KEY), LOCK_CANONICAL_HINT)
 
     def test_legacy_lock_empty_still_binds(self):
         session = _session()

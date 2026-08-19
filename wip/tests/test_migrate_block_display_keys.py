@@ -15,7 +15,12 @@ from loopflow.devtools.migrate_block_display_keys import (
     collect_steps,
     run_migrate_block_display_keys,
 )
-from loopflow.features.tagger.keys import LOCK_LEGACY_KEY, LOCK_LEGACY_HINT
+from loopflow.features.tagger.keys import (
+    LOCK_CANONICAL_HINT,
+    LOCK_LEGACY_HINT,
+    LOCK_LEGACY_KEY,
+    LOCK_STATE_KEY,
+)
 from loopflow.platform.rhino.memory import MemorySession
 
 
@@ -42,7 +47,8 @@ class MigrateBlockDisplayKeysTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("item-1", "lf_item_name"), "Chair-1")
         self.assertIsNone(session.get_object_user_text("item-1", "lf_type_display_name"))
         self.assertIsNone(session.get_object_user_text("item-1", "attr_note"))
-        self.assertEqual(session.get_object_user_text("item-1", LOCK_LEGACY_KEY), "x")
+        self.assertEqual(session.get_object_user_text("item-1", LOCK_STATE_KEY), "x")
+        self.assertIsNone(session.get_object_user_text("item-1", LOCK_LEGACY_KEY))
 
     def test_height_note_goes_to_type_display_name(self):
         session = MemorySession()
@@ -110,7 +116,8 @@ class MigrateBlockDisplayKeysTests(unittest.TestCase):
         run_migrate_block_display_keys(session, confirm=lambda _lines: True)
         self.assertEqual(session.get_object_user_text("curve-1", "DWG_NO"), "should stay")
         self.assertEqual(session.get_object_user_text("elev-0", "lf_sheet_code"), "201")
-        self.assertEqual(session.get_object_user_text("elev-0", LOCK_LEGACY_KEY), LOCK_LEGACY_HINT)
+        self.assertIsNone(session.get_object_user_text("elev-0", LOCK_LEGACY_KEY))
+        self.assertIsNone(session.get_object_user_text("elev-0", LOCK_STATE_KEY))
         self.assertEqual(collect_steps(session), [])
 
     def test_title_frame_drops_category_and_ref_without_copying(self):
@@ -149,6 +156,44 @@ class MigrateBlockDisplayKeysTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("idx-1", "lf_sheet_ref"), "201.01")
         self.assertEqual(session.get_object_user_text("idx-1", "lf_detail_no"), "01")
         self.assertIsNone(session.get_object_user_text("idx-1", "Category"))
+
+
+    def test_lock_x_copied_to_canonical(self):
+        session = MemorySession()
+        _block(
+            session,
+            "h-1",
+            "Tag_Height_Grab",
+            **{LOCK_LEGACY_KEY: " X ", "attr_mat_key": "PT"},
+        )
+        run_migrate_block_display_keys(session, confirm=lambda _lines: True)
+        self.assertEqual(session.get_object_user_text("h-1", LOCK_STATE_KEY), "X")
+        self.assertIsNone(session.get_object_user_text("h-1", LOCK_LEGACY_KEY))
+        self.assertEqual(session.get_object_user_text("h-1", "lf_type_category"), "PT")
+
+    def test_existing_lock_state_not_overwritten(self):
+        session = MemorySession()
+        _block(
+            session,
+            "h-1",
+            "Tag_Height_Grab",
+            **{LOCK_LEGACY_KEY: "x", LOCK_STATE_KEY: "true"},
+        )
+        run_migrate_block_display_keys(session, confirm=lambda _lines: True)
+        self.assertEqual(session.get_object_user_text("h-1", LOCK_STATE_KEY), "true")
+        self.assertIsNone(session.get_object_user_text("h-1", LOCK_LEGACY_KEY))
+
+    def test_english_lock_hint_deleted_without_copy(self):
+        session = MemorySession()
+        _block(
+            session,
+            "item-1",
+            "Tag_Item",
+            **{LOCK_LEGACY_KEY: LOCK_CANONICAL_HINT},
+        )
+        run_migrate_block_display_keys(session, confirm=lambda _lines: True)
+        self.assertIsNone(session.get_object_user_text("item-1", LOCK_LEGACY_KEY))
+        self.assertIsNone(session.get_object_user_text("item-1", LOCK_STATE_KEY))
 
 
 if __name__ == "__main__":

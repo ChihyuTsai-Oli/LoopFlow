@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """D08 開發輔助：全檔圖塊把舊顯示欄抄到 lf_* 後刪掉舊 key。
 
-不是產品指令。鎖定欄不刪、已有的 lf_* 不覆蓋。責任見 `wip/docs/D08_Tag圖塊欄位.md`。
+不是產品指令。已有的 lf_* 不覆蓋。鎖定欄若寫 x／X 會抄到 lf_lock_state
+後刪舊名字；提示文字只刪不抄。責任見 `wip/docs/D08_Tag圖塊欄位.md`。
 """
 from __future__ import annotations
 
@@ -15,7 +16,11 @@ from loopflow.features.sheet.keys import (
     SCALE_KEY,
     SHEET_ID_KEY,
 )
-from loopflow.features.tagger.keys import LOCK_LEGACY_KEY
+from loopflow.features.tagger.keys import (
+    LOCK_LEGACY_KEY,
+    LOCK_STATE_KEY,
+    is_legacy_lock_x,
+)
 from loopflow.features.tagger.templates import DEFAULT_PATH
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
@@ -38,12 +43,15 @@ def _text(value) -> Optional[str]:
     return text or None
 
 
-def load_template_migrations(path: Optional[Path] = None) -> Dict[str, Tuple[Tuple[str, str], ...]]:
-    """block 名（小寫）→ ((舊 key, 新 key), ...)。不含鎖定欄。"""
+def load_template_migrations(
+    path: Optional[Path] = None,
+) -> Tuple[Dict[str, Tuple[Tuple[str, str], ...]], frozenset]:
+    """回傳 (block 名小寫 → 舊→新 key, 允許鎖定的 block 名小寫)。"""
     source = path or DEFAULT_PATH
     payload = json.loads(source.read_text(encoding="utf-8"))
     lock = str(payload.get("lock_legacy_key") or LOCK_LEGACY_KEY)
     mapping = {}
+    lock_allowed = set()
     for item in payload.get("templates") or ():
         pairs = []
         seen = set()
@@ -58,9 +66,12 @@ def load_template_migrations(path: Optional[Path] = None) -> Dict[str, Tuple[Tup
                 seen.add(old_key)
                 pairs.append((old_key, new_key))
         migrations = tuple(pairs)
-        for name in item.get("block_names") or ():
-            mapping[str(name).casefold()] = migrations
-    return mapping
+        names = tuple(str(name) for name in (item.get("block_names") or ()))
+        if item.get("lock_allowed"):
+            lock_allowed.update(name.casefold() for name in names)
+        for name in names:
+            mapping[name.casefold()] = migrations
+    return mapping, frozenset(lock_allowed)
 
 
 def _frame_migrations(all_migrations: Dict[str, Tuple[Tuple[str, str], ...]]) -> Tuple[Tuple[str, str], ...]:
@@ -102,6 +113,7 @@ def plan_object(
     session: RhinoSession,
     object_id: str,
     all_migrations: Dict[str, Tuple[Tuple[str, str], ...]],
+    lock_allowed_blocks: frozenset = frozenset(),
 ) -> List[dict]:
     """回傳此物件要抄寫／刪除的步驟。非圖塊或沒有舊顯示欄則空。"""
     if not session.is_block_instance(object_id):
@@ -128,21 +140,34 @@ def plan_object(
         for stray in FRAME_STRAY_KEYS:
             if stray in keys and stray not in seen:
                 steps.append(_step(object_id, block_name, stray, "", None))
+    if (
+        block_name.casefold() in lock_allowed_blocks
+        and LOCK_LEGACY_KEY in keys
+        and LOCK_LEGACY_KEY not in seen
+    ):
+        old_value = _text(session.get_object_user_text(object_id, LOCK_LEGACY_KEY))
+        new_value = _text(session.get_object_user_text(object_id, LOCK_STATE_KEY))
+        copy_value = (
+            old_value if new_value is None and is_legacy_lock_x(old_value) else None
+        )
+        steps.append(
+            _step(object_id, block_name, LOCK_LEGACY_KEY, LOCK_STATE_KEY, copy_value)
+        )
     return steps
 
 
 def collect_steps(session: RhinoSession) -> List[dict]:
-    all_migrations = load_template_migrations()
+    all_migrations, lock_allowed = load_template_migrations()
     steps = []
     for object_id in session.iter_object_ids(include_hidden=True, include_locked=True):
-        steps.extend(plan_object(session, object_id, all_migrations))
+        steps.extend(plan_object(session, object_id, all_migrations, lock_allowed))
     return steps
 
 
 def apply_steps(session: RhinoSession, steps: Sequence[dict]) -> None:
     for step in steps:
         object_id = step["object_id"]
-        if step.get("copy_value") is not None:
+        if step.get("copy_value") is not None and step.get("new_key"):
             session.set_object_user_text(object_id, step["new_key"], step["copy_value"])
         _clear_key(session, object_id, step["old_key"])
 
@@ -158,7 +183,8 @@ def _preview_lines(steps: Sequence[dict]) -> List[str]:
         "將處理 %s 個圖塊上的 %s 個舊欄。" % (len(by_object), len(steps)),
         "人工值會先抄到 lf_*（已有新欄不覆蓋），然後刪掉舊名字。",
         "圖框上的 Category／REF_ID 會刪掉，不抄到 Index 欄。",
-        "鎖定欄不刪。文件 metadata 與 lf_sheet_id 不碰。",
+        "鎖定欄若寫 x／X 會抄到 lf_lock_state；提示文字只刪不抄。",
+        "文件 metadata 與 lf_sheet_id 不碰。",
         "",
     ]
     names = sorted(set(by_object.values()))

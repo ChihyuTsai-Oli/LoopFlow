@@ -13,6 +13,8 @@ TARGET_SHEET_ID_KEY = "lf_target_sheet_id"
 LOCK_STATE_KEY = "lf_lock_state"
 LOCK_LEGACY_KEY = "attr_Lock_不更新>寫入x或X"
 LOCK_LEGACY_HINT = "x為不更新"
+LOCK_CANONICAL_HINT = "x to lock"
+LOCK_HINTS = frozenset((LOCK_LEGACY_HINT, LOCK_CANONICAL_HINT))
 
 GRAB_OBJECT_TEMPLATE_IDS = frozenset(("TAG_HEIGHT_GRAB", "TAG_FINISH_GRAB"))
 GRAB_BLOCK_TEMPLATE_IDS = frozenset(("TAG_ITEM",))
@@ -28,11 +30,11 @@ def is_lock_true(value) -> bool:
 
 
 def is_legacy_lock_x(value) -> bool:
-    """1.x 鎖定欄：trim 後恰為單一 x／X。空值與預設提示不算。"""
+    """trim 後恰為單一 x／X。空值與中／英預設提示不算。"""
     if value in (None, ""):
         return False
     text = str(value).strip()
-    if text == LOCK_LEGACY_HINT:
+    if text.casefold() in {hint.casefold() for hint in LOCK_HINTS}:
         return False
     return text.upper() == "X"
 
@@ -54,8 +56,9 @@ def _object_user_text_keys(session, object_id):
 
 
 def is_tag_locked(session, object_id) -> bool:
-    """D08 前：canonical true／1，或舊 lock 欄寫 x／X。只讀不寫舊 key。"""
-    if is_lock_true(session.get_object_user_text(object_id, LOCK_STATE_KEY)):
+    """canonical true／1，或 lf_lock_state／舊 lock 欄寫 x／X。只讀不寫舊 key。"""
+    lock_value = session.get_object_user_text(object_id, LOCK_STATE_KEY)
+    if is_lock_true(lock_value) or is_legacy_lock_x(lock_value):
         return True
     seen = set()
     for key in _object_user_text_keys(session, object_id):

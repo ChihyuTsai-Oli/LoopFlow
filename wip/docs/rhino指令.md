@@ -68,7 +68,7 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Disp
 | 註冊 View | `LF_Anchor_Frame` | — |
 | 圖目錄 | `LF_Catalog` | — |
 
-開發期輔助（**不是產品指令**，不進正式工具列）：`LF_D08_Migrate_Display_Keys` 全檔把圖塊舊顯示欄抄到 `lf_*` 後刪舊名字（鎖定欄不刪）。圖塊公式改完後跑一次即可，不必逐張刪 UserText。
+開發期輔助（**不是產品指令**，不進正式工具列）：`LF_D08_Migrate_Display_Keys` 全檔把圖塊舊顯示欄抄到 `lf_*` 後刪舊名字。鎖定欄若寫 `x`／`X` 會抄到 `lf_lock_state` 後刪舊名字；提示文字只刪不抄。圖塊公式改完後跑一次即可，不必逐張刪 UserText。
 
 Grab：在 **Layout** 先選 Tag 圖塊，再在目標 Detail 內點一下進入模型空間，然後選來源（剖面 2D 線、3D 物件或家具圖塊）。Height／Finish 綁物件 `_07_UUID`；家具 Item 綁 Block 名稱（`FF-01__Chair-1`）。Esc、點在 Detail 外、鎖定（`lf_lock_state=true`／`1`，或鎖定欄寫 `x`／`X`）、`TAG_DW`、Laser／Index／圖框圖塊都不寫入。結束後回到 Layout。不填 Infuser 顯示欄。來源沒有 UUID 時不猜測對應的 3D 物件。舊鎖定欄 `x`／`X` **家中 Rhino 8 已測（2026-08-18）**。
 
