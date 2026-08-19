@@ -69,7 +69,7 @@ HARD_PLACEMENT_ISSUES = (
     "bbox_unavailable",
 )
 MAX_POPUP_LINES = 12
-APPLY_REMINDER = "請執行選單 5 寫入模型 Metadata，把正確資料寫回。"
+APPLY_REMINDER = "請執行 Nexus 5 寫入模型 Metadata，把正確資料寫回。"
 
 
 def _text(value) -> str:
@@ -227,9 +227,9 @@ def compare_apply_usertext(
         "placement": placement.details,
     }
     if not mismatches:
-        message = "Verify 通過。%s 個物件的 UserText 與 Apply 結果相符。" % count
+        message = "檢核通過。%s 個物件的資料與寫入結果相符。" % count
         return results.ok("verify_model", message, command_id=command_id, details=payload)
-    message = "Verify 發現 %s 個物件不符。" % len(mismatches)
+    message = "檢核發現 %s 個物件不符。" % len(mismatches)
     return results.ok_with_warnings(
         "verify_model",
         message,
@@ -264,12 +264,19 @@ def select_only(session: RhinoSession, object_ids: Sequence[str]) -> None:
         )
 
 
-def format_verify_popup(result: results.Result) -> str:
+def format_verify_popup(result: results.Result, *, cannot_publish: bool = False) -> str:
+    """選單 6 與 Publish Exchange 共用同一份不符清單。"""
     details = result.details or {}
     mismatches = details.get("mismatches") or ()
+    lines = []
+    if cannot_publish:
+        lines.append("尚未通過檢核，不能發布。")
     if not mismatches:
-        return result.message
-    lines = [result.message, "不符合的物件已選取："]
+        if result.message:
+            lines.append(result.message)
+        return "\n".join(lines) if lines else (result.message or "")
+    lines.append(result.message)
+    lines.append("不符合的物件已選取：")
     for item in mismatches[:MAX_POPUP_LINES]:
         notes = "；".join(item["notes"])
         lines.append("- %s：%s" % (item["label"], notes))
@@ -298,7 +305,7 @@ def verify_model_data(
         if cancel:
             return results.cancelled(
                 "verify_model",
-                "使用者取消 Verify。",
+                "使用者取消檢核。",
                 command_id=command_id,
             )
         return compare_apply_usertext(

@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import copy
+import errno
 import os
+import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, Mapping, Optional
+from typing import Callable, Mapping, Optional, Sequence
 
 from loopflow.features.registry import schema
 from loopflow.features.registry.lock import acquire_lock, release_lock
@@ -15,6 +17,11 @@ from loopflow.foundation import atomic_io, results
 from loopflow.foundation.paths import resolve_workfiles
 
 COMMAND_ID = schema.COMMAND_ID
+REPLACE_WAITS = (0.2, 0.4, 0.8, 1.6)
+LOCKED_REGISTRY_MESSAGE = (
+    "正式 Registry 檔被佔用（常見是雲端同步還在寫檔）。"
+    "請等同步結束後再開 Rhino 發一次，不要刪 Project_Registry.json。"
+)
 
 
 def _stamp_now() -> str:
@@ -40,6 +47,39 @@ def _prepare_payload(payload: Mapping, current: Optional[Mapping]) -> dict:
     return body
 
 
+def _is_sharing_violation(exc: OSError) -> bool:
+    if getattr(exc, "winerror", None) == 32:
+        return True
+    return getattr(exc, "errno", None) in (errno.EACCES, errno.EPERM, errno.EBUSY)
+
+
+def _replace_with_retry(
+    pending: Path,
+    official: Path,
+    replace: Optional[Callable[[Path, Path], None]],
+    sleep: Callable[[float], None],
+    waits: Sequence[float],
+) -> None:
+    last = None
+    for index, wait in enumerate((0.0,) + tuple(waits)):
+        if wait:
+            sleep(wait)
+        try:
+            if callable(replace):
+                replace(pending, official)
+            else:
+                os.replace(str(pending), str(official))
+            return
+        except OSError as exc:
+            last = exc
+            if not _is_sharing_violation(exc):
+                raise
+            if index >= len(waits):
+                raise
+    if last is not None:
+        raise last
+
+
 def publish_registry(
     payload: Mapping,
     *,
@@ -51,6 +91,8 @@ def publish_registry(
     host: Optional[str] = None,
     pid_alive: Optional[Callable[[int], bool]] = None,
     now=None,
+    sleep: Optional[Callable[[float], None]] = None,
+    replace_waits: Optional[Sequence[float]] = None,
 ) -> results.Result:
     """寫入 exchange/<project_id>/ 的正式 Registry。失敗不刪正式檔，保留 last-good。"""
     workfiles = resolve_workfiles(environ=environ)
@@ -157,11 +199,28 @@ def publish_registry(
                 )
 
         try:
-            if callable(replace):
-                replace(pending, official)
-            else:
-                os.replace(str(pending), str(official))
+            _replace_with_retry(
+                pending,
+                official,
+                replace,
+                sleep or time.sleep,
+                REPLACE_WAITS if replace_waits is None else replace_waits,
+            )
         except OSError as exc:
+            if _is_sharing_violation(exc):
+                copied = atomic_io.copy_file(pending, last_good)
+                extra = ""
+                if copied.ok:
+                    extra = " 新內容已寫入 last-good，等同步後再發一次。"
+                return results.failed(
+                    "replace_registry",
+                    LOCKED_REGISTRY_MESSAGE + extra,
+                    command_id=command_id,
+                    details={
+                        "filename": official.name,
+                        "os_error": str(exc),
+                    },
+                )
             return results.failed(
                 "replace_registry",
                 "atomic replace 失敗，正式檔未刪。%s" % exc,

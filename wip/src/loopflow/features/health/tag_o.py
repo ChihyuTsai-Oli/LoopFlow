@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-"""LF_TAG-O：只讀檢查全檔 Layout 頁的 Tag 是否活著或斷連。
+"""LF_TAG-O：檢查全檔 Layout 頁的 Tag 是否活著或斷連。
 
-以 1.0 風格色碼面板列出詳細結果。不寫 UserText、不改圖面顏色、不做 Repair。
-只檢查 D08 Tag 圖塊；未知圖塊不列入。鎖定 Tag 仍判斷 stale／orphaned。
-`TAG_DW` 與 `TAG_ELEV_0` 無來源屬正常。家具跟綁定實例：改名要更新，刪除為 orphaned。
+過期把自動欄改成「!」並塗橘；斷連改成「?」並塗紅。未綁定不列入面板。
+鎖定 Tag 不改文字與顏色。只檢查與上色，不實作 Repair。
+只檢查 D08 Tag 圖塊；未知圖塊不列入。
+`TAG_DW` 與 `TAG_ELEV_0` 無來源屬正常。家具跟綁定實例：改名要更新，刪除為斷連。
 """
 from __future__ import annotations
 
@@ -11,6 +12,12 @@ import os
 import time
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
+from loopflow.features.health.appearance import (
+    MODE_BROKEN,
+    MODE_CLEAR,
+    MODE_STALE,
+    apply_tag_health,
+)
 from loopflow.features.infuser.part import (
     PAGE_TAG_TEMPLATE_ID,
     PROJECT_ID_KEY,
@@ -28,6 +35,9 @@ from loopflow.features.infuser.reader import load_published_registry
 from loopflow.features.sheet.metadata import is_title_frame, registered_title_frame_names
 from loopflow.features.tagger.binding import text
 from loopflow.features.tagger.keys import (
+    HEALTH_STATE_BROKEN,
+    HEALTH_STATE_KEY,
+    HEALTH_STATE_STALE,
     INDEX_TEMPLATE_IDS,
     LAST_SYNCED_REVISION_KEY,
     SOURCE_BLOCK_NAME_KEY,
@@ -59,6 +69,7 @@ COLOR_TEXT = "text"
 COLOR_OK = "ok"
 COLOR_WARN = "warn"
 COLOR_BROK = "brok"
+COLOR_RULE = "rule"
 EXT_SPACE = "EXT"
 PANEL_TITLE = "TAG-O ~ Holy Cargo ~~"
 UNASSIGNED_PAGE = "（未分頁）"
@@ -67,6 +78,7 @@ STATUS_HEALTHY = "healthy"
 STATUS_UNBOUND = "unbound"
 STATUS_ORPHANED = "orphaned"
 STATUS_STALE = "stale"
+STATUS_MISSING_TARGET = "missing_target"
 STATUS_AMBIGUOUS = "ambiguous"
 STATUS_UNCHECKED = "unchecked"
 
@@ -74,14 +86,19 @@ PROBLEM_STATUSES = (
     STATUS_UNBOUND,
     STATUS_ORPHANED,
     STATUS_STALE,
+    STATUS_MISSING_TARGET,
     STATUS_AMBIGUOUS,
 )
+BROKEN_STATUSES = (STATUS_ORPHANED, STATUS_MISSING_TARGET)
+STALE_STATUSES = (STATUS_STALE, STATUS_AMBIGUOUS)
 
 STATUS_LINE = {
+    STATUS_HEALTHY: ("正常", COLOR_OK),
     STATUS_UNBOUND: ("缺來源", COLOR_WARN),
-    STATUS_ORPHANED: ("來源不在", COLOR_BROK),
+    STATUS_ORPHANED: ("斷連", COLOR_BROK),
     STATUS_STALE: ("過期", COLOR_WARN),
-    STATUS_AMBIGUOUS: ("歧義", COLOR_WARN),
+    STATUS_MISSING_TARGET: ("斷連", COLOR_BROK),
+    STATUS_AMBIGUOUS: ("過期", COLOR_WARN),
     STATUS_UNCHECKED: ("未檢查", COLOR_DIM),
 }
 
@@ -123,6 +140,13 @@ def _display_keys(template: TagTemplate):
     return ()
 
 
+def _has_display_mark(session: RhinoSession, tag_id: str, template: TagTemplate, mark: str) -> bool:
+    for key in _display_keys(template):
+        if text(session.get_object_user_text(tag_id, key)) == mark:
+            return True
+    return False
+
+
 def _display_is_empty(session: RhinoSession, tag_id: str, template: TagTemplate) -> bool:
     keys = _display_keys(template)
     if not keys:
@@ -136,7 +160,7 @@ def _issue_sort_key(issue: Mapping, page_names: Sequence[str]):
         page_index = list(page_names).index(page)
     except ValueError:
         page_index = len(page_names) + (0 if page == UNASSIGNED_PAGE else 1)
-    orphaned = 0 if issue.get("status") == STATUS_ORPHANED else 1
+    orphaned = 0 if issue.get("status") in BROKEN_STATUSES else 1
     return (
         page_index,
         orphaned,
@@ -172,6 +196,7 @@ def _empty_counts() -> Dict[str, int]:
         "unbound": 0,
         "orphaned": 0,
         "stale": 0,
+        "missing_target": 0,
         "ambiguous": 0,
         "unchecked": 0,
         "skipped_title_frame": 0,
@@ -234,14 +259,20 @@ def _classify_index_tag(
     resolved = _resolve_index_sheet(
         session, catalog, tag_id, cache, host_page_name
     )
-    if resolved.ok:
-        return STATUS_HEALTHY
-    reason = (resolved.blocking or ("missing_sheet",))[0]
-    if reason == "missing_source":
-        return STATUS_UNBOUND
-    if reason == "ambiguous_sheet":
-        return STATUS_AMBIGUOUS
-    return STATUS_ORPHANED
+    if not resolved.ok:
+        reason = (resolved.blocking or ("missing_sheet",))[0]
+        if reason == "missing_source":
+            return STATUS_UNBOUND
+        if reason == "ambiguous_sheet":
+            return STATUS_AMBIGUOUS
+        return STATUS_MISSING_TARGET
+    fields = (resolved.details or {}).get("fields") or {}
+    for key in infuser_keys.INDEX_RENDER_KEYS:
+        expected = text(fields.get(key))
+        actual = text(session.get_object_user_text(tag_id, key))
+        if actual != expected:
+            return STATUS_STALE
+    return STATUS_HEALTHY
 
 
 def _inspect_block(
@@ -327,6 +358,18 @@ def _inspect_block(
     ):
         status = STATUS_STALE
         reason = STATUS_STALE
+
+    if reason not in ("manual", "elev_0"):
+        health = text(session.get_object_user_text(object_id, HEALTH_STATE_KEY))
+        if health == HEALTH_STATE_BROKEN and status != STATUS_UNBOUND:
+            status = STATUS_MISSING_TARGET
+            reason = STATUS_MISSING_TARGET
+        elif status == STATUS_HEALTHY and (
+            health == HEALTH_STATE_STALE
+            or _has_display_mark(session, object_id, template, infuser_keys.STALE_DISPLAY)
+        ):
+            status = STATUS_STALE
+            reason = STATUS_STALE
 
     return {
         "kind": "tag",
@@ -487,6 +530,36 @@ def _doc_label(session: RhinoSession) -> str:
     return os.path.basename(str(raw))
 
 
+def _panel_visible(row: Mapping) -> bool:
+    if row.get("kind") != "tag":
+        return False
+    if row.get("reason") in ("manual", "elev_0"):
+        return False
+    return row.get("status") != STATUS_UNBOUND
+
+
+def _apply_health_rows(session: RhinoSession, catalog: TagTemplateSet, tags) -> None:
+    for row in tags:
+        if row.get("kind") != "tag":
+            continue
+        if row.get("locked") or row.get("reason") in ("manual", "elev_0"):
+            continue
+        status = row.get("status")
+        if status == STATUS_UNBOUND:
+            continue
+        template = catalog.by_block_name(str(row.get("block_name") or ""))
+        keys = _display_keys(template) if template else ()
+        tag_id = str(row.get("tag_id") or "")
+        if not tag_id:
+            continue
+        if status in STALE_STATUSES:
+            apply_tag_health(session, tag_id, keys, MODE_STALE)
+        elif status in BROKEN_STATUSES:
+            apply_tag_health(session, tag_id, keys, MODE_BROKEN)
+        elif status == STATUS_HEALTHY:
+            apply_tag_health(session, tag_id, keys, MODE_CLEAR)
+
+
 def build_panel_lines(
     outcome: Mapping,
     *,
@@ -494,13 +567,13 @@ def build_panel_lines(
     notes: Sequence[str] = (),
     now: Optional[str] = None,
 ) -> Tuple[tuple, ...]:
-    """組 1.0 風格色碼列表。顏色只在面板文字，不改圖面。點選斷連列可跳頁。"""
+    """色碼列表：已綁定 Tag 依頁序，頁與頁之間灰線。點選可跳頁。"""
     stamp = now or time.strftime("%Y-%m-%d  %H:%M:%S")
     revision = outcome.get("registry_revision")
-    issues = list(outcome.get("issues") or ())
     counts = outcome.get("counts") or {}
     scanned = counts.get("scanned", 0)
     page_names = tuple(outcome.get("page_names") or ())
+    rows = [row for row in (outcome.get("tags") or ()) if _panel_visible(row)]
     lines: List[tuple] = [
         (PANEL_TITLE, COLOR_HEAD),
         ("檔案：%s" % doc_name, COLOR_DIM),
@@ -513,28 +586,26 @@ def build_panel_lines(
         lines.append((str(note), COLOR_DIM))
     lines.append(("", COLOR_TEXT))
 
-    if issues:
-        lines.append(("── Tag 綁定狀態  （%s 項）──" % len(issues), COLOR_HEAD))
-    else:
-        lines.append(("── Tag 綁定狀態 ──", COLOR_HEAD))
-    if not issues:
+    lines.append(("── Tag 綁定狀態  （%s 項）──" % len(rows), COLOR_HEAD))
+    if not rows:
         if scanned == 0:
             lines.append(("  沒有掃到可檢查的 Tag", COLOR_DIM))
         else:
-            lines.append(("  全部 Tag 來源正常", COLOR_OK))
+            lines.append(("  沒有已綁定的 Tag", COLOR_DIM))
     else:
-        ranked = sorted(
-            issues,
-            key=lambda row: _issue_sort_key(row, page_names),
-        )
+        ranked = sorted(rows, key=lambda row: _issue_sort_key(row, page_names))
         names = [str(row.get("block_name") or "") for row in ranked]
         width = max((len(name) for name in names), default=0)
+        last_page = None
         for row in ranked:
+            page = str(row.get("page_name") or "（未命名頁）")
+            if last_page is not None and page != last_page:
+                lines.append(("", COLOR_RULE))
+            last_page = page
             status = row.get("status")
             label, color = STATUS_LINE.get(status, (str(status or ""), COLOR_TEXT))
             lock = "  （鎖定）" if row.get("locked") else ""
             name = str(row.get("block_name") or "").ljust(width)
-            page = str(row.get("page_name") or "（未命名頁）")
             lines.append(
                 (
                     "  [%s]  %s  ->  %s%s" % (label, name, page, lock),
@@ -562,7 +633,7 @@ def build_panel_lines(
         lines.append(("  %s" % space, COLOR_TEXT))
 
     lines.append(("", COLOR_TEXT))
-    lines.append(("只讀檢查。不改 Tag、不改圖面顏色。Repair 尚未實作。", COLOR_DIM))
+    lines.append(("過期塗橘寫 !，斷連塗紅寫 ?。未綁定不列出。Repair 尚未實作。", COLOR_DIM))
     return tuple(lines)
 
 
@@ -574,9 +645,10 @@ def _summary(counts: Mapping[str, int], revision, notes: Sequence[str]) -> str:
     problems = []
     labels = (
         ("unbound", "缺來源"),
-        ("orphaned", "來源不在"),
+        ("orphaned", "斷連"),
+        ("missing_target", "斷連"),
         ("stale", "過期未同步"),
-        ("ambiguous", "來源歧義"),
+        ("ambiguous", "過期／歧義"),
     )
     for key, label in labels:
         if counts.get(key):
@@ -596,7 +668,7 @@ def _summary(counts: Mapping[str, int], revision, notes: Sequence[str]) -> str:
         extra.append("TAG_ELEV_0 %s" % counts["skipped_elev_0"])
     if extra:
         lines.append("涵蓋但不判 unbound：%s。" % "、".join(extra))
-    lines.append("只讀，不改 Tag、不改顏色。Repair 尚未實作。")
+    lines.append("過期會把自動欄改成 ! 並塗橘；斷連改成 ? 並塗紅。Repair 尚未實作。")
     for note in notes[:6]:
         lines.append(note)
     return "\n".join(lines)
@@ -611,7 +683,7 @@ def run_tag_o(
     show_message: Optional[ShowMessage] = None,
     show_panel: Optional[ShowPanel] = None,
 ) -> results.Result:
-    """全檔 Layout 頁只讀檢查。不寫入。"""
+    """全檔 Layout 頁檢查。過期／斷連會改 Tag 外觀。"""
     schema = check_document_schema(session)
     if not schema.ok:
         return results.failed(
@@ -715,11 +787,14 @@ def run_tag_o(
             result = results.ok(
                 STAGE, message, command_id=COMMAND_ID, details=details
             )
-        if result.ok:
-            if show_panel:
-                show_panel(panel_lines)
-            elif show_message:
-                show_message(result.message)
         return result
 
-    return run_guarded(session, action, command_id=COMMAND_ID)
+    guarded = run_guarded(session, action, command_id=COMMAND_ID)
+    if guarded.ok:
+        _apply_health_rows(session, loaded, (guarded.details or {}).get("tags") or ())
+        panel_lines = (guarded.details or {}).get("panel_lines")
+        if show_panel and panel_lines is not None:
+            show_panel(panel_lines)
+        elif show_message:
+            show_message(guarded.message)
+    return guarded

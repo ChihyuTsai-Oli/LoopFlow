@@ -9,6 +9,13 @@ from __future__ import annotations
 import re
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
+from loopflow.features.health.appearance import (
+    MODE_BROKEN,
+    MODE_CLEAR,
+    apply_queued_appearances,
+    is_broken,
+    queue_appearance,
+)
 from loopflow.features.infuser import keys as infuser_keys
 from loopflow.features.infuser.reader import load_published_registry
 from loopflow.features.sheet.metadata import (
@@ -514,6 +521,18 @@ def _fields_from_pages(
     )
 
 
+def _pages_hitting_view(
+    session: RhinoSession,
+    cache: Dict[str, object],
+    view_id: str,
+) -> Tuple[str, ...]:
+    pages_by_view = cache.get("pages_by_view")
+    if pages_by_view is None:
+        pages_by_view = _pages_for_views(session)
+        cache["pages_by_view"] = pages_by_view
+    return tuple(dict.fromkeys(pages_by_view.get(view_id) or ()))
+
+
 def _resolve_index_sheet(
     session: RhinoSession,
     catalog: TagTemplateSet,
@@ -521,6 +540,27 @@ def _resolve_index_sheet(
     cache: Dict[str, object],
     host_page_name: Optional[str] = None,
 ) -> results.Result:
+    view_id = _as_uuid(session.get_object_user_text(tag_id, TARGET_VIEW_ID_KEY))
+    stored_layout = text(session.get_object_user_text(tag_id, TARGET_LAYOUT_KEY))
+    if stored_layout:
+        matched = _match_stored_layout(stored_layout, _listed_page_names(session))
+        if not matched:
+            return results.blocked(
+                STAGE,
+                "綁定的目標 Layout 已不在。",
+                ("missing_target",),
+                command_id=COMMAND_ID,
+            )
+        if view_id is not None and matched not in _pages_hitting_view(
+            session, cache, view_id
+        ):
+            return results.blocked(
+                STAGE,
+                "綁定的目標 Detail 已不在。",
+                ("missing_target",),
+                command_id=COMMAND_ID,
+            )
+        return _fields_from_pages(session, catalog, (matched,))
     existing = text(session.get_object_user_text(tag_id, TARGET_SHEET_ID_KEY))
     if _as_uuid(existing) is not None:
         sheet_id, fields = _lookup_sheet_fields(session, catalog, existing)
@@ -537,14 +577,6 @@ def _resolve_index_sheet(
             ("missing_sheet",),
             command_id=COMMAND_ID,
         )
-    stored_layout = text(session.get_object_user_text(tag_id, TARGET_LAYOUT_KEY))
-    if stored_layout:
-        matched = _match_stored_layout(stored_layout, _listed_page_names(session))
-        if matched:
-            stored = _fields_from_pages(session, catalog, (matched,))
-            if stored.ok:
-                return stored
-    view_id = _as_uuid(session.get_object_user_text(tag_id, TARGET_VIEW_ID_KEY))
     if view_id is None:
         return results.blocked(
             STAGE,
@@ -552,22 +584,12 @@ def _resolve_index_sheet(
             ("missing_source",),
             command_id=COMMAND_ID,
         )
-    pages_by_view = cache.get("pages_by_view")
-    if pages_by_view is None:
-        pages_by_view = _pages_for_views(session)
-        cache["pages_by_view"] = pages_by_view
-    pages = tuple(dict.fromkeys(pages_by_view.get(view_id) or ()))
-    if stored_layout:
-        matched = _match_stored_layout(stored_layout, pages)
-        if matched:
-            stored = _fields_from_pages(session, catalog, (matched,))
-            if stored.ok:
-                return stored
+    pages = _pages_hitting_view(session, cache, view_id)
     if not pages:
         return results.blocked(
             STAGE,
-            "目標 View 對不到 Layout 頁。",
-            ("missing_sheet",),
+            "綁定的目標 Detail 已不在。",
+            ("missing_target",),
             command_id=COMMAND_ID,
         )
     preferred = _prefer_target_pages(pages, host_page_name)
@@ -710,6 +732,8 @@ def infuse_page(
         "ambiguous": 0,
         "invalid_block_name": 0,
         "missing_sheet": 0,
+        "missing_target": 0,
+        "skipped_broken": 0,
         "missing_registry": 0,
     }
     notes: List[str] = []
@@ -768,7 +792,21 @@ def infuse_page(
         "notes": notes,
         "host_sheet_id": host_sheet_id,
         "used_live_object": bool(cache.get("used_live_object")),
+        "appearances": tuple(cache.get("appearances") or ()),
     }
+
+
+def _render_keys(template: TagTemplate) -> Tuple[str, ...]:
+    family = template.family
+    if family == "height":
+        return infuser_keys.HEIGHT_RENDER_KEYS
+    if family == "finish":
+        return infuser_keys.FINISH_RENDER_KEYS
+    if family == "item":
+        return infuser_keys.ITEM_RENDER_KEYS
+    if template.template_id in INDEX_TEMPLATE_IDS or family == "index":
+        return infuser_keys.INDEX_RENDER_KEYS
+    return ()
 
 
 def _infuse_tag(
@@ -785,6 +823,9 @@ def _infuse_tag(
     cache: dict,
     host_page_name: Optional[str] = None,
 ) -> str:
+    keys = _render_keys(template)
+    if is_broken(session, tag_id):
+        return "skipped_broken"
     family = template.family
     if family in ("height", "finish"):
         source_id = text(session.get_object_user_text(tag_id, SOURCE_OBJECT_ID_KEY))
@@ -792,6 +833,7 @@ def _infuse_tag(
         if source_id is None:
             _write_fields(session, tag_id, missing)
             _stamp(session, tag_id, host_sheet_id, revision)
+            queue_appearance(cache, tag_id, keys, MODE_CLEAR)
             return "missing_source"
         source_key = _as_uuid(source_id) or _norm_id(source_id)
         if source_key in dupes:
@@ -802,24 +844,35 @@ def _infuse_tag(
             session, source_id, objects, types_by_id, cache
         )
         if row is None:
-            _write_fields(session, tag_id, missing)
+            _write_fields(
+                session,
+                tag_id,
+                {key: infuser_keys.BROKEN_DISPLAY for key in keys},
+            )
             _stamp(session, tag_id, host_sheet_id, revision)
+            queue_appearance(cache, tag_id, keys, MODE_BROKEN)
             return "orphaned" if has_registry else "missing_registry"
         if from_live:
             cache["used_live_object"] = True
         fields = _height_fields(row) if family == "height" else _finish_fields(row)
         _write_fields(session, tag_id, fields)
         _stamp(session, tag_id, host_sheet_id, revision)
+        queue_appearance(cache, tag_id, keys, MODE_CLEAR)
         return "updated"
     if family == "item":
         source_name, source_status = _item_source_name(session, tag_id)
         if source_status != "ok":
-            _write_fields(
-                session,
-                tag_id,
-                {key: infuser_keys.MISSING_DISPLAY for key in infuser_keys.ITEM_RENDER_KEYS},
+            mark = (
+                infuser_keys.BROKEN_DISPLAY
+                if source_status == "orphaned"
+                else infuser_keys.MISSING_DISPLAY
             )
+            _write_fields(session, tag_id, {key: mark for key in keys})
             _stamp(session, tag_id, host_sheet_id, revision)
+            if source_status == "orphaned":
+                queue_appearance(cache, tag_id, keys, MODE_BROKEN)
+            else:
+                queue_appearance(cache, tag_id, keys, MODE_CLEAR)
             return "orphaned" if source_status == "orphaned" else "missing_source"
         parsed = _item_fields(
             source_name,
@@ -829,7 +882,7 @@ def _infuse_tag(
             _write_fields(
                 session,
                 tag_id,
-                {key: infuser_keys.MISSING_DISPLAY for key in infuser_keys.ITEM_RENDER_KEYS},
+                {key: infuser_keys.MISSING_DISPLAY for key in keys},
             )
             _stamp(session, tag_id, host_sheet_id, revision)
             reason = (parsed.blocking or ("missing_source",))[0]
@@ -838,26 +891,42 @@ def _infuse_tag(
         if source_name:
             session.set_object_user_text(tag_id, SOURCE_BLOCK_NAME_KEY, source_name)
         _stamp(session, tag_id, host_sheet_id, revision)
+        queue_appearance(cache, tag_id, keys, MODE_CLEAR)
         return "updated"
     if template.template_id in INDEX_TEMPLATE_IDS or family == "index":
         resolved = _resolve_index_sheet(
             session, catalog, tag_id, cache, host_page_name
         )
         if not resolved.ok:
+            reason = (resolved.blocking or ("missing_sheet",))[0]
+            if reason == "missing_source":
+                _write_fields(
+                    session,
+                    tag_id,
+                    {key: infuser_keys.MISSING_DISPLAY for key in keys},
+                )
+                _stamp(session, tag_id, host_sheet_id, revision)
+                queue_appearance(cache, tag_id, keys, MODE_CLEAR)
+                return "missing_source"
+            if reason == "ambiguous_sheet":
+                _write_fields(
+                    session,
+                    tag_id,
+                    {key: infuser_keys.MISSING_DISPLAY for key in keys},
+                )
+                _stamp(session, tag_id, host_sheet_id, revision)
+                return "ambiguous"
             _write_fields(
                 session,
                 tag_id,
-                {key: infuser_keys.MISSING_DISPLAY for key in infuser_keys.INDEX_RENDER_KEYS},
+                {key: infuser_keys.BROKEN_DISPLAY for key in keys},
             )
             _stamp(session, tag_id, host_sheet_id, revision)
-            reason = (resolved.blocking or ("missing_sheet",))[0]
-            if reason == "missing_source":
-                return "missing_source"
-            if reason == "ambiguous_sheet":
-                return "ambiguous"
-            return "missing_sheet"
+            queue_appearance(cache, tag_id, keys, MODE_BROKEN)
+            return "missing_target"
         _write_fields(session, tag_id, resolved.details["fields"])
         _stamp(session, tag_id, host_sheet_id, revision)
+        queue_appearance(cache, tag_id, keys, MODE_CLEAR)
         return "updated"
     return "unknown_template"
 
@@ -892,6 +961,8 @@ def _summary(page_name: str, revision, counts: Mapping[str, int], notes: Sequenc
         ("ambiguous", "來源歧義"),
         ("invalid_block_name", "家具名稱不符"),
         ("missing_sheet", "缺目標圖號"),
+        ("missing_target", "目標消失"),
+        ("skipped_broken", "斷連未灌回"),
     )
     for key, label in problem_labels:
         if counts.get(key):
@@ -924,6 +995,8 @@ def _result_from_counts(
         "ambiguous",
         "invalid_block_name",
         "missing_sheet",
+        "missing_target",
+        "skipped_broken",
         "used_last_good",
         "used_live_object",
         "missing_project_id",
@@ -1030,6 +1103,7 @@ def run_infuser_part(
         extra = dict(extra_warnings)
         if outcome.get("used_live_object"):
             extra["used_live_object"] = True
+        extra["appearances"] = outcome.get("appearances") or ()
         result = _result_from_counts(
             page_name,
             revision,
@@ -1041,4 +1115,7 @@ def run_infuser_part(
             show_message(result.message)
         return result
 
-    return run_guarded(session, action, command_id=COMMAND_ID)
+    guarded = run_guarded(session, action, command_id=COMMAND_ID)
+    if guarded.ok:
+        apply_queued_appearances(session, (guarded.details or {}).get("appearances"))
+    return guarded

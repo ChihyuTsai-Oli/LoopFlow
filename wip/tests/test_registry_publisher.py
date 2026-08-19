@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -263,6 +264,64 @@ class PublishTests(unittest.TestCase):
             self.assertEqual(result.stage, "replace_registry")
             self.assertEqual(info["registry"].read_bytes(), before)
             self.assertEqual(info["last_good"].read_bytes(), last_good)
+            self.assertFalse(info["pending"].exists())
+            self.assertFalse(info["lock"].exists())
+
+    def test_sharing_violation_retries_then_succeeds(self):
+        with tempfile.TemporaryDirectory(prefix="loopflow-reg-") as raw:
+            info = _paths(Path(raw))
+            first = publish_registry(_min_payload(), environ=info["environ"])
+            self.assertTrue(first.ok, first.message)
+            calls = []
+
+            def _flaky(src, dest):
+                calls.append(1)
+                if len(calls) < 3:
+                    err = OSError(32, "file in use")
+                    err.winerror = 32
+                    raise err
+                os.replace(str(src), str(dest))
+
+            result = publish_registry(
+                _min_payload(),
+                environ=info["environ"],
+                replace=_flaky,
+                sleep=lambda _wait: None,
+            )
+            self.assertTrue(result.ok, result.message)
+            self.assertEqual(len(calls), 3)
+            self.assertEqual(
+                read_json(info["registry"]).details["payload"]["registry_revision"],
+                2,
+            )
+
+    def test_sharing_violation_keeps_official_and_saves_last_good(self):
+        with tempfile.TemporaryDirectory(prefix="loopflow-reg-") as raw:
+            info = _paths(Path(raw))
+            first = publish_registry(_min_payload(), environ=info["environ"])
+            self.assertTrue(first.ok, first.message)
+            before = info["registry"].read_bytes()
+
+            def _fail(_src, _dest):
+                err = OSError(32, "file in use")
+                err.winerror = 32
+                raise err
+
+            result = publish_registry(
+                _min_payload(),
+                environ=info["environ"],
+                replace=_fail,
+                sleep=lambda _wait: None,
+            )
+            self.assertFalse(result.ok)
+            self.assertEqual(result.stage, "replace_registry")
+            self.assertIn("雲端同步", result.message)
+            self.assertIn("不要刪", result.message)
+            self.assertEqual(info["registry"].read_bytes(), before)
+            self.assertEqual(
+                read_json(info["last_good"]).details["payload"]["registry_revision"],
+                2,
+            )
             self.assertFalse(info["pending"].exists())
             self.assertFalse(info["lock"].exists())
 

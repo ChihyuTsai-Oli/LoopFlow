@@ -8,6 +8,7 @@ from typing import Optional
 
 from loopflow.features.tagger.keys import (
     BINDING_MODE_KEY,
+    HEALTH_STATE_KEY,
     SOURCE_BLOCK_NAME_KEY,
     SOURCE_OBJECT_ID_KEY,
     TAG_ID_KEY,
@@ -57,6 +58,7 @@ def ensure_identity(
     session.set_object_user_text(tag_id, TEMPLATE_ID_KEY, block_name)
     session.set_object_user_text(tag_id, TEMPLATE_VERSION_KEY, "1")
     session.set_object_user_text(tag_id, BINDING_MODE_KEY, binding_mode)
+    session.set_object_user_text(tag_id, HEALTH_STATE_KEY, "")
 
 
 def write_object_binding(

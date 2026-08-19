@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Callable, Mapping, Optional
 
 from loopflow.features.infuser.part import PROJECT_ID_KEY, infuse_page, _result_from_counts
+from loopflow.features.health.appearance import apply_queued_appearances
 from loopflow.features.infuser.reader import load_published_registry
 from loopflow.features.tagger.templates import TagTemplateSet, load_tag_templates
 from loopflow.features.viewer.inspect import check_document_schema
@@ -97,11 +98,13 @@ def run_infuser_all(
         totals = {}
         notes = []
         used_live = False
+        appearances = []
         for page_name in page_names:
             outcome = infuse_page(
                 current, page_name, loaded, payload, revision, redraw=False
             )
             _merge_counts(totals, outcome["counts"])
+            appearances.extend(outcome.get("appearances") or ())
             for note in outcome.get("notes") or ():
                 if "尚未進 Registry" in str(note):
                     used_live = True
@@ -116,6 +119,7 @@ def run_infuser_all(
             extra["used_live_object"] = True
         extra["page_count"] = len(page_names)
         extra["page_names"] = tuple(page_names)
+        extra["appearances"] = tuple(appearances)
         redraw = getattr(current, "redraw", None)
         if callable(redraw):
             redraw()
@@ -132,4 +136,7 @@ def run_infuser_all(
             show_message(result.message)
         return result
 
-    return run_guarded(session, action, command_id=COMMAND_ID)
+    guarded = run_guarded(session, action, command_id=COMMAND_ID)
+    if guarded.ok:
+        apply_queued_appearances(session, (guarded.details or {}).get("appearances"))
+    return guarded

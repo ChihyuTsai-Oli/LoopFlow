@@ -118,7 +118,7 @@ class VerifyModelTests(unittest.TestCase):
         self.assertIn("空間名稱", popups[0])
         self.assertIn("廁所", popups[0])
         self.assertIn("客廳", popups[0])
-        self.assertIn("5 寫入模型 Metadata", popups[0])
+        self.assertIn("Nexus 5 寫入模型 Metadata", popups[0])
         self.assertIsNotNone(session.get_object_user_text("wall", OBJECT_ID_KEY))
 
     def test_manual_revision_is_mismatch_and_apply_restores(self):
@@ -135,7 +135,7 @@ class VerifyModelTests(unittest.TestCase):
         self.assertIn("wall", result.details["mismatch_object_ids"])
         self.assertIn("資料版次", popups[0])
         self.assertIn("99", popups[0])
-        self.assertIn("5 寫入模型 Metadata", popups[0])
+        self.assertIn("Nexus 5 寫入模型 Metadata", popups[0])
         _apply(session, catalog)
         self.assertEqual(session.get_object_user_text("wall", DATA_REVISION_KEY), "0")
         popups = []

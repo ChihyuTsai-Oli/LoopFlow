@@ -28,6 +28,7 @@ CORE_COMMANDS = (
     "LF_Duplicate_Layout",
     "LF_Catalog",
     "LF_Sync_Worksession",
+    "LF_Document",
 )
 
 _READY = {

@@ -119,6 +119,11 @@ class PublishHandoffTests(unittest.TestCase):
             )
             self.assertFalse(result.ok)
             self.assertEqual(result.blocking, ("verify_not_passed",))
+            self.assertIn("尚未通過檢核，不能發布。", result.message)
+            self.assertIn("檢核發現", result.message)
+            self.assertIn("UUID", result.message)
+            self.assertIn("Nexus 5 寫入模型 Metadata", result.message)
+            self.assertTrue(session.get_view_state("wall").selected)
             self.assertFalse((Path(raw) / "exchange").exists() and any((Path(raw) / "exchange").rglob("Project_Registry.json")))
 
     def test_partial_selection_cannot_publish(self):

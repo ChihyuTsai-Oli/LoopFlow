@@ -138,7 +138,9 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <a class="l2 intro" href="#9-建立-Sheet-圖框與-Layout-ID">9. 建立 Sheet、圖框與 Layout ID</a>
 <a class="l2 intro" href="#10-建立與綁定-Tag">10. 建立與綁定 Tag</a>
 <a class="l2 intro" href="#11-同步顯示資料-Infuser">11. 同步顯示資料（Infuser）</a>
-<a class="l2 intro" href="#12-Health-與-Repair-TAG-O">12. Health 與 Repair（TAG-O）</a>
+<a class="l2 intro" href="#12-Health-TAG-O">12. Health（TAG-O）</a>
+<a class="l2 intro" href="#13-Sync-Worksession-獨立指令">13. Sync Worksession（獨立指令）</a>
+<a class="l2 intro" href="#14-Document-獨立指令">14. Document（獨立指令）</a>
 <a class="l2 intro" href="#變更循環">變更循環</a>
 <a class="l2 intro" href="#實機驗收重點">實機驗收重點</a></nav>
 <main><h1 class="doctitle" id="LoopFlow-2-0-工作流程">LoopFlow 2.0 — 工作流程</h1>
@@ -161,6 +163,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 → 選用：建立圖目錄（獨立指令 `LF_Catalog`，須先有 Sheet metadata）
 → Infuser 注入 Tag 顯示資料
 → TAG-O 確認活著或斷連</code></pre>
+<p>目前主鏈（開案到 TAG-O）已接通並實機通過。剩餘開發順序：<strong>Extract CP → Duplicate Layout → Sync Worksession → Document。</strong> TAG-O 只檢查與上色，不實作 Repair。</p>
 <h2 id="1-開案檢查">1. 開案檢查</h2>
 <p><strong>動作</strong>：解析 <code>LOOPFLOW_WORKFILES_ROOT</code>、Dictionary、<code>exchange/</code>、project identity、schema version 與 Rhino 文件單位。</p>
 <p><strong>使用者介入</strong>：只有設定缺失、專案辨識不明或非 cm 警告時處理。</p>
@@ -186,7 +189,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <p>使用者確認後才寫入：Object ID、Type reference、Space、高程、remarks 與 revision。物件 <code>_01</code> 不加 <code>*</code>。物件 <code>_06</code>／<code>_13</code>＝高程框 <code>_15</code> 加相對樓板高度。<code>_14</code> 寫尚未發布的 <code>0</code>，或已發布 Registry 的 <code>registry_revision</code>；手動改過的值會被寫回。ID 變更必須保存 <code>old_id → new_id</code> mapping。不寫寬深高、數量或座標框。</p>
 <p>同時落在複數空間框的物件會依序 zoom 並彈出清單點選空間名稱。</p>
 <h3 id="檢核模型-Metadata">檢核模型 Metadata</h3>
-<p>在記憶體算出再跑一次寫入會得到的 UserText，與物件現值比對，<strong>不寫入</strong>。相符彈出視窗說明符合；不符彈出視窗列出差異，提醒執行選單 <strong>5 寫入模型 Metadata</strong> 寫回正確資料，並一次選取那些物件。彈窗文字全黑。彈窗在還原 Rhino 狀態之後才出現。</p>
+<p>在記憶體算出再跑一次寫入會得到的 UserText，與物件現值比對，<strong>不寫入</strong>。相符彈出視窗說明符合；不符彈出視窗列出差異，提醒「請執行 Nexus 5 寫入模型 Metadata，把正確資料寫回。」，並一次選取那些物件。彈窗文字全黑。彈窗在還原 Rhino 狀態之後才出現。</p>
 <p><strong>中斷</strong>：保留已完成且可驗證的寫入與 mapping；重跑檢核顯示剩餘差異，不假裝全案完成。</p>
 <h3 id="匯出-Type-Layers-為字典-獨立指令">匯出 Type Layers 為字典（獨立指令）</h3>
 <p><code>LF_Export_Type_Layers</code> 先做開案檢查，再在字典目錄新增 <code>{原檔名}_Export.xlsx</code>，供人工核對後合併進正式 Dictionary。第 1 列紅色提示；<code>diff_status</code> 有變動時只改該格文字顏色。不得覆寫正式 Dictionary，也不可把匯出檔當正式字典開啟。<code>added_in_rhino</code> 列合併時必須編新的 <code>_03_ID編號</code>，不可與既有列重複。</p>
@@ -198,7 +201,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <p><strong>前置</strong>：全案檢核通過。<code>LF_Publish_Exchange</code> 先做開案檢查，組 payload 後呼叫 C03；C03 才寫檔。局部選取不得發布。</p>
 <p><strong>動作</strong>：取得 exclusive lock（PID、主機、時間）、重新讀取現況並遞增 <code>registry_revision</code>、寫 pending、驗證完整 payload，再 atomic replace 正式 Registry。成功後把該次 <code>registry_revision</code> 寫進正式範圍物件的 <code>_14_資料版次</code>。尚未發布的新物件維持 <code>0</code>。</p>
 <p><strong>輸出</strong>：新的不可人工編輯 Registry revision，只包含 canonical schema 與明確 extension。</p>
-<p><strong>失敗</strong>：保留 last-good；顯示失敗階段，不先刪正式 JSON。</p>
+<p><strong>失敗</strong>：彈窗與選單 6 檢核同一份不符清單，並一次選取那些物件。保留 last-good；顯示失敗階段，不先刪正式 JSON。若提示正式檔被佔用，等雲端同步結束後再發。</p>
 <h2 id="7-建立-Section-並註冊-View">7. 建立 Section 並註冊 View</h2>
 <p>使用 Rhino 8 內建 Clipping／Section 指令建立剖面、立面或平面。獨立指令 <code>LF_Anchor_Frame</code>（按鈕可顯示「註冊 View」）把 Section、固定 2D↔3D transform 登記為 <code>view_id</code>。不進 Nexus 選單。</p>
 <p><strong>動作</strong>（在 <strong>2D 模型空間</strong>，不要在 Layout）：</p>
@@ -208,7 +211,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <h2 id="8-Materialize-可編輯-Drawing">8. Materialize 可編輯 Drawing</h2>
 <p>使用者需要獨立整理線稿時，將 Section 結果轉為 <code>drawing_id</code>：</p>
 <ul><li>產出放在根圖層 <code>LoopFlow_Extract</code>（與 <code>LoopFlow</code> 平級，不是 <code>LoopFlow::Extract</code>）。實作時列印寬度設 <code>No Print</code>（<code>PlotWeight = -1</code>）。子層名稱等 E02 開工再定。</li><li>辨識前次產出，讓使用者選擇取代、新增或略過。</li><li>保存來源 <code>view_id</code>、source revision 與 drawing element provenance。</li><li>回報 indexed／unindexed／ambiguous 覆蓋率。</li><li>復原原有 selection、layer lock 與 visibility。</li><li>使用者補線、刪線或改樣式後標記為 modified；更新不靜默覆寫。</li></ul>
-<p>2.0 <strong>尚未實作</strong> Extract；本節只鎖定根圖層名稱與冪等政策。</p>
+<p>2.0 <strong>尚未實作</strong> Extract；本節只鎖定根圖層名稱與冪等政策。<strong>剩餘第一項；現在不要實作程式。</strong></p>
 <p><strong>安全停點</strong>：Drawing 完成即可獨立存檔與人工整理。</p>
 <h2 id="9-建立-Sheet-圖框與-Layout-ID">9. 建立 Sheet、圖框與 Layout ID</h2>
 <p>使用者建立 Layout、Detail、圖框與 Tag Blocks。圖號與圖名的真相是 <strong>Sheet metadata</strong>，不是頁名字串。指令 <code>LF_Tagger_Layout_ID</code> 負責建立與維持這份 metadata；其他功能（含圖目錄）只讀、不自行解析頁名。</p>
@@ -255,6 +258,7 @@ IN__201.02__立面圖2
 <p>不要直接改圖框 UserText（下次 Layout ID 會依規則重算）。用 Layout 頁名再跑一次：</p>
 <ul><li><strong>還沒按確認：</strong> 核對清單按取消，改頁名，再跑。</li><li><strong>只改圖名：</strong> 改第三欄，例如 <code>**IN__201__立面圖</code> → <code>**IN__201__一樓平面</code>，再跑。圖號仍依系列重算。若把頁名改成沒有 <code>__</code> 的亂名，且前面已有 <code>**</code>：當成誤改，圖名維持舊的，頁名改回自動組成的名字（起點頁仍帶 <code>**</code>）。</li><li><strong>改編號或從某頁重排：</strong> 在那一頁最前面再加 <code>**</code>，寫成你要的 <code>**圖類別__圖號__圖名</code>，再跑。該頁變成新起點，後面跟著從這個尾數往後編，直到下一頁也有 <code>**</code>。例如第四頁起要從 <code>301</code> 開始 → 把第四頁改成 <code>**IN__301__新圖名</code> 再跑。</li><li><strong>手動固定某一頁圖號：</strong> 用 <code>//圖類別__圖號__圖名</code>，不佔系列。</li><li><strong>不要</strong>刪掉所有起點頁的 <code>**</code>；檔案裡一個 <code>**</code> 都沒有時會停止、不改圖框。不要指望只改中間一頁、後面完全不動；連續編號就是這樣算的。</li></ul>
 <h3 id="Duplicate-Sheet">Duplicate Sheet</h3>
+<p>2.0 <strong>尚未實作</strong> Duplicate Layout；本節只鎖定複製後的 ID 與清除／保留規則。<strong>Extract CP 之後再開，現在不要實作程式。</strong></p>
 <p>複製後建立新的 <code>sheet_id</code>、<code>drawing_id</code> 與 <code>tag_id</code>；圖目錄定位點的 <code>lf_catalog_id</code> 也必須換新號：</p>
 <ul><li>除 <code>TAG_DW</code> 外，所有 Tag 清除來源綁定、自動欄位與人工補充說明，並恢復 template 預設 lock。</li><li><code>TAG_DW</code> 的人工編號、寬、高與其他內容完整保留。</li><li>使用者重新綁定新頁 Tag。</li><li>不覆蓋系統剪貼簿。</li></ul>
 <h3 id="圖目錄-獨立指令-須先有-Sheet-metadata">圖目錄（獨立指令，須先有 Sheet metadata）</h3>
@@ -263,13 +267,18 @@ IN__201.02__立面圖2
 <div class="tw"><table><thead><tr><th>模式</th><th>使用者動作</th><th>結果</th></tr></thead><tbody><tr><td>Grab</td><td>在 Layout 選 Tag，點進 Detail，再選來源</td><td>Height／Finish 寫 <code>lf_source_object_id</code>；家具 Item 寫 <code>lf_source_block_name</code></td></tr><tr><td>Laser</td><td>在 Layout 選 Height／Finish Laser Tag，再在 Detail 內點位置</td><td>用固定 View transform 射線寫 <code>lf_source_object_id</code>；多候選由使用者選，清單只顯示圖層名</td></tr><tr><td>Index</td><td>在 Layout 選 <code>TAG_SECTION_DETAIL</code> 或 <code>TAG_ELEV_1</code>～<code>4</code>，再從清單選全檔任一 Layout 的 Detail（可搜尋，點選時 zoom）</td><td>唯一對到已登記 View 才寫 <code>lf_target_view_id</code> 與所選頁名 <code>lf_target_layout</code>；圖號之後由 Infuser 從目標頁算出</td></tr><tr><td>Furniture Item</td><td>經 Grab 選共用家具 Block</td><td>解析 <code>FF-01__Chair-1</code>；格式錯誤停止並警告</td></tr><tr><td><code>TAG_ELEV_0</code></td><td>使用者直接填方向／編號</td><td>不建立模型 binding</td></tr><tr><td><code>TAG_DW</code></td><td>使用者直接填編號／寬／高</td><td>純手動，不建立 binding</td></tr></tbody></table></div>
 <p>同款家具可共用 Block 名稱。Grab 會同時記下家具<strong>實例</strong>；之後改 Block 名稱或刪掉該實例，Infuser／TAG-O 會跟現況，不必再 Grab。尚未記下實例的舊 Tag 仍只靠名稱，需再 Grab 一次。Locked Tag 不允許重新綁定，必須先由使用者解除 lock。<code>lf_00_lock_state</code> 為 <code>true</code>／<code>1</code> 或 <code>x</code>／<code>X</code> 算鎖定；空值與提示 <code>x為不更新</code>／<code>x to lock</code> 不算。未改完的實例，舊欄 <code>attr_Lock_不更新&gt;寫入x或X</code> 寫 <code>x</code>／<code>X</code> 也算。指令只讀舊欄，不把 <code>x</code> 寫進 <code>lf_00_lock_state</code>。</p>
 <h2 id="11-同步顯示資料-Infuser">11. 同步顯示資料（Infuser）</h2>
-<p>使用者可選同步當前頁（Part）或全部頁（All）。<strong>目前可跑 <code>LF_Infuser_Part</code>（當前 Layout 頁）與 <code>LF_Infuser_All</code>（全檔 Layout 頁）</strong>。Infuser 從指定 Registry revision 與 Sheet metadata 把資料<strong>注入</strong> Tag Block 顯示欄：</p>
-<ul><li>Height／Finish 先對 Registry <code>objects[]</code> 的 <code>object_id</code>（不分大小寫、可去 <code>{}</code>）；對不到再讀文件裡帶同一 <code>_07_UUID</code> 的物件 UserText（含連結檔；同 UUID 多筆時取資料最齊的）。<code>type_display_name</code> 仍優先從 Registry <code>types[]</code> 補。</li><li>Index 先用綁定時記下的 <code>lf_target_layout</code> 對目標頁；沒有這欄才從目標 View 反查 Layout 頁。同一 View 也打到 Tag 所在頁時，改用其他頁；其他頁拆不出圖號再改回本頁。頁上沒有可用圖框時改從頁名拆圖類別／圖號（含 <code>DC__201.a2</code>）。<code>lf_detail_no</code> 是手填編號，Infuser 不寫。Layout ID 改頁名時會同步更新 <code>lf_target_layout</code>。</li><li>家具若 Grab 時有記下實例，Infuser 讀該實例<strong>現況</strong> Block 名稱再拆三段；改名會更新畫面，實例刪除則寫 <code>-</code>。沒有實例 id 的舊 Tag 仍用記下的名稱。不需 Registry。</li><li>不覆寫 locked Tag。</li><li>不覆寫 <code>TAG_DW</code>、比例、Detail 編號及其他人工欄位。</li><li>只處理 D08 Tag 圖塊；其他圖塊略過、不警告。</li><li>缺來源、過期、歧義回報明確狀態，不以顏色作唯一真相。</li><li>Part 完成就是合法停點，不要求每次全案同步。All 一次處理所有 Layout 頁，規則與 Part 相同；模型空間也可跑。失敗／缺 schema／Registry 檔損壞則整批不寫。</li><li>第一輪 Infuser 不必等 TAG-O；TAG-O 做完後，下一輪 Infuser 依其判斷更新、跳過或警告。</li></ul>
+<p>使用者可選同步當前頁（Part）或全部頁（All）。<strong>目前可跑 <code>LF_Infuser_Part</code>（當前 Layout 頁）與 <code>LF_Infuser_All</code>（全檔 Layout 頁）。</strong> 公司已測注入；家中已測與 TAG-O 來回。Infuser 從指定 Registry revision 與 Sheet metadata 把資料<strong>注入</strong> Tag Block 顯示欄：</p>
+<ul><li>Height／Finish 先對 Registry <code>objects[]</code> 的 <code>object_id</code>（不分大小寫、可去 <code>{}</code>）；對不到再讀文件裡帶同一 <code>_07_UUID</code> 的物件 UserText（含連結檔；同 UUID 多筆時取資料最齊的）。<code>type_display_name</code> 仍優先從 Registry <code>types[]</code> 補。</li><li>Index 先用綁定時記下的 <code>lf_target_layout</code> 對目標頁；沒有這欄才從目標 View 反查 Layout 頁。同一 View 也打到 Tag 所在頁時，改用其他頁；其他頁拆不出圖號再改回本頁。頁上沒有可用圖框時改從頁名拆圖類別／圖號（含 <code>DC__201.a2</code>）。<code>lf_detail_no</code> 是手填編號，Infuser 不寫。Layout ID 改頁名時會同步更新 <code>lf_target_layout</code>。若記下的目標頁已刪，或該頁還在但已沒有對到 <code>lf_target_view_id</code> 的 Detail：寫 <code>?</code>、塗紅，摘要標「目標消失」，不可改對到別頁。</li><li>家具若 Grab 時有記下實例，Infuser 讀該實例<strong>現況</strong> Block 名稱再拆三段；改名會更新畫面，實例刪除則寫 <code>?</code>、塗紅。沒有實例 id 的舊 Tag 仍用記下的名稱。不需 Registry。</li><li>未綁定寫 <code>-</code>，不塗警示色。已標斷連（<code>lf_health_state=broken</code>）不灌回；再 Grab／Laser／Index 會清掉此欄，接著再跑 Infuser 可恢復。不必刪 Tag。</li><li>不覆寫 locked Tag。</li><li>不覆寫 <code>TAG_DW</code>、比例、Detail 編號及其他人工欄位。</li><li>只處理 D08 Tag 圖塊；其他圖塊略過、不警告。</li><li>缺來源、過期、歧義回報明確狀態，不以顏色作唯一真相。</li><li>Part 完成就是合法停點，不要求每次全案同步。All 一次處理所有 Layout 頁，規則與 Part 相同；模型空間也可跑。失敗／缺 schema／Registry 檔損壞則整批不寫。</li><li>第一輪 Infuser 不必等 TAG-O；TAG-O 標成斷連後，下一輪 Infuser 不灌回。再綁定後跑 Infuser 可恢復。</li></ul>
+<p><strong>公司 Rhino 8 已測注入（2026-08-19）</strong>；與 TAG-O 來回 <strong>家中 Rhino 8 已測（2026-08-19）</strong>。</p>
 <p>畫面要看得到注入結果，須先完成 D08（Tag 圖塊文字欄改讀 <code>lf_*</code>）。逐步操作見 <code>D08_Tag圖塊欄位.md</code>。</p>
-<h2 id="12-Health-與-Repair-TAG-O">12. Health 與 Repair（TAG-O）</h2>
-<p><strong>目前可跑 <code>LF_TAG-O</code>。</strong> 在 Infuser 注入之後只讀檢查 identity、binding、revision、template 與覆蓋範圍。開 <strong>TAG-O ~ Holy Cargo ~~</strong> 深色面板（可捲動），依 <strong>Layout 頁序</strong>以色碼列出每一筆斷連（橘：缺來源／過期／歧義；紅：來源不在）。<strong>點選列表會切到該 Tag 所在 Layout 並拉近，但留出圖框周圍。</strong> 只檢查 D08 Tag 圖塊，其他圖塊不列入。畫面仍是 <code>-</code> 的 Tag 算過期／未寫入。家具改名而未注入為過期，刪除綁定實例為來源不在。紙空間 Viewport 對不到的 Tag 仍會列入。全檔 Layout 頁、模型空間也可跑。含 locked Tag；<code>TAG_DW</code> 與 <code>TAG_ELEV_0</code> 無來源屬正常，不判 unbound。沒掃到 Tag 時不顯示「全部正常」。不寫 UserText、不改圖面物件顏色。沒有 Infuser 注入結果則實機測不出東西。</p>
-<p>Repair 是獨立動作，<strong>本批尚未實作</strong>：先顯示影響與預覽，使用者確認後才執行。不得偷偷重綁、換 ID、刪 Drawing 或覆寫人工內容。提示顏色必須可還原原始顏色。</p>
-<p>操作來回：Infuser 注入 → TAG-O 確認活著或斷連 → 下一輪 Infuser。下一輪 Infuser 尚不自動依 TAG-O 結果跳過。</p>
+<h2 id="12-Health-TAG-O">12. Health（TAG-O）</h2>
+<p><strong>目前可跑 <code>LF_TAG-O</code>。家中 Rhino 8 已測（2026-08-19）。</strong> 在 Infuser 注入之後檢查 identity、binding、revision、template 與覆蓋範圍。開 <strong>TAG-O ~ Holy Cargo ~~</strong> 深色面板（可捲動），依 <strong>Layout 頁序</strong>列出已綁定 Tag，頁與頁之間灰線。<code>[正常]</code> 綠 <code>#AADC78</code>；<code>[過期]</code> 橘 <code>#EA9328</code>（自動欄改 <code>!</code>、整顆塗橘）；<code>[斷連]</code> 紅 <code>#D81C1C</code>（自動欄改 <code>?</code>、整顆塗紅）。來源不在、目標頁已刪、目標頁上 Detail 已刪，都顯示斷連。<strong>點選列表會反白該列、切到該 Tag 所在 Layout 並拉近，但留出圖框周圍。</strong> 只檢查 D08 Tag 圖塊。未綁定（畫面 <code>-</code>）不列出、不塗警示色。<code>TAG_DW</code> 與 <code>TAG_ELEV_0</code> 不列入。鎖定的 Tag 仍列出並標「鎖定」，但不改文字與顏色。家具改名而未注入為過期，刪除綁定實例為斷連。紙空間 Viewport 對不到的 Tag 仍會列入。全檔 Layout 頁、模型空間也可跑。沒掃到 Tag 時不顯示「全部正常」。沒有 Infuser 注入結果則實機測不出東西。</p>
+<p>TAG-O <strong>只檢查與上色</strong>，不自動修復。使用者依橘／紅與面板內容自行改資料、再綁定或再跑 Infuser。2.0 <strong>不實作 Repair</strong>。過期再 Infuser 後回到 ByLayer；斷連再綁定、再 Infuser 後回到 ByLayer。</p>
+<p>操作來回：Infuser 注入 → TAG-O 確認活著或斷連 → 下一輪 Infuser。斷連 Tag Infuser 不灌回；再綁定後跑 Infuser 可恢復。不必刪 Tag。</p>
+<h2 id="13-Sync-Worksession-獨立指令">13. Sync Worksession（獨立指令）</h2>
+<p><strong>尚未實作。</strong> Duplicate Layout 之後再開。指令 <code>LF_Sync_Worksession</code> 監看與更新 Worksession，讓出圖端看得到 3D 參照。取消／失敗不得弄壞上一份有效參照。</p>
+<h2 id="14-Document-獨立指令">14. Document（獨立指令）</h2>
+<p><strong>尚未實作。</strong> Sync Worksession 之後再開。指令 <code>LF_Document</code> 開啟 GitHub 上的 LoopFlow 文件頁，不改模型。舊名 <code>LF_Help</code> 不登錄。</p>
 <h2 id="變更循環">變更循環</h2>
 <h3 id="只改資料">只改資料</h3>
 <p>重新 Scan／Apply／Verify → Publish 新 Registry revision → Sync → Health。若只是人工備註且屬 instance override，不得被 Dictionary 重匯覆寫。</p>

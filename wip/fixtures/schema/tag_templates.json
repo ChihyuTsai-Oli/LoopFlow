@@ -13,7 +13,8 @@
     {"key": "source_block_name", "usertext": "lf_source_block_name", "owner": "system"},
     {"key": "lock_state", "usertext": "lf_00_lock_state", "owner": "system"},
     {"key": "host_sheet_id", "usertext": "lf_host_sheet_id", "owner": "system"},
-    {"key": "last_synced_revision", "usertext": "lf_last_synced_revision", "owner": "system"}
+    {"key": "last_synced_revision", "usertext": "lf_last_synced_revision", "owner": "system"},
+    {"key": "health_state", "usertext": "lf_health_state", "owner": "system"}
   ],
   "templates": [
     {

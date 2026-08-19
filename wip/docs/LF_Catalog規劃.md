@@ -202,4 +202,4 @@ Build／Rebind 改變「定位點 ↔ Sheet」關係；Refresh 只重新取得�
 15. 確認關閉鈕高度與其餘按鈕相近
 16. 「清除定位點並還原圖層」確認後，點回到選取前的圖層、目錄文字刪除
 
-家中 Rhino 8（2026-08-18）已測：定位點歸位、Sheet 四欄與 Ctrl 加選、Build、Refresh 不拉回已移動文字、關閉鈕高度、列印寬度 `No Print`。上表其餘項目可作回歸。不要開 Extract／Infuser／TAG-O。
+家中 Rhino 8（2026-08-18）已測：定位點歸位、Sheet 四欄與 Ctrl 加選、Build、Refresh 不拉回已移動文字、關閉鈕高度、列印寬度 `No Print`。上表其餘項目可作回歸。此檔是 Catalog 當時的操作指示；Infuser／TAG-O 其後已實機通過。Extract 仍尚未實作、不要開。

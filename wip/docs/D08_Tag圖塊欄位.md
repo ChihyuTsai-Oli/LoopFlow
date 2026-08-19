@@ -157,6 +157,6 @@ Attribute User Text 列表上的 **Key 名字來自 Block 裡的文字公式**�
 ## 不要做
 
 - 不要改巢狀裝飾線、引線、固定標籤 `Grab`／`Laser`／`W.`／`H.`
-- 不要開 Infuser／Extract／TAG-O
+- 此檔是當時改圖塊的操作指示。改圖塊時不要順手改 Infuser／TAG-O／Extract 程式。Infuser／TAG-O 其後已實機通過；Extract 仍尚未實作、不要開
 - 不要把改好的檔覆寫進 `releases/` 或正式專案
 - 不要另存一份中文 `Tag_Blocks.3dm`；2.0 只維護這份英文圖塊庫

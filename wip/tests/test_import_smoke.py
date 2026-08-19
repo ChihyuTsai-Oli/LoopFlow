@@ -79,9 +79,24 @@ class ImportSmokeTests(unittest.TestCase):
 
     def test_unimplemented_command_reports_not_implemented(self):
         from loopflow.bootstrap import run_command
+        from loopflow.command_catalog import CORE_COMMANDS, get_command
+
+        remaining = (
+            "LF_Extract_CP",
+            "LF_Duplicate_Layout",
+            "LF_Sync_Worksession",
+            "LF_Document",
+        )
+        for command_id in remaining:
+            self.assertIn(command_id, CORE_COMMANDS)
+            self.assertEqual(get_command(command_id)["status"], "not_implemented")
 
         with redirect_stdout(io.StringIO()):
             result = run_command("LF_Extract_CP")
+        self.assertFalse(result.ok)
+        self.assertEqual(result.status, "not_implemented")
+        with redirect_stdout(io.StringIO()):
+            result = run_command("LF_Document")
         self.assertFalse(result.ok)
         self.assertEqual(result.status, "not_implemented")
 

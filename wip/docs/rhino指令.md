@@ -94,11 +94,11 @@ Layout ID：跑全檔 Layout。系列第一頁寫 `**圖類別__圖號__圖名`�
 
 圖目錄：開 Eto 面板。選獨立 Point 作為圖號（紅 `LoopFlow::Drawing_Number`）與圖名（綠 `LoopFlow::Drawing_Name`）定位點；選 Sheet 為頁序／圖號／圖名／頁名四欄，Shift 連選、Ctrl 加選或取消，反白即選取。Build 預覽後寫 `lf_catalog_sheet_id` 並在 `LoopFlow::Drawing_Text`（`#CDB38B`）產生文字，左下角對齊定位點。Refresh 只改內容，已移動的文字留在原處。成功不另彈確認窗；失敗才彈窗。「清除定位點並還原圖層」會還原選取前的圖層並刪除目錄文字。匯出 TXT 為 `圖名, 圖號`（UTF-8）。定位點綁 `sheet_id` 不綁目前圖號；空位可不綁。`LoopFlow` 與其子圖層不列印（列印寬度設為 `No Print`／`PlotWeight = -1`）。選到 Block、逐頁數量不符、同列失敗、Sheet 多於空位、metadata 過期、Esc／取消，都不寫入。missing／orphan Sheet 略過並報告。新 Layout 不會自動納入。不進 Nexus。**家中 Rhino 8 已測（2026-08-18）。**
 
-Infuser Part：在 **Layout** 跑 `LF_Infuser_Part`，只處理**目前這一頁**的 D08 Tag（含標在 Detail 圖上的）。其他圖塊略過。Height／Finish 先對 Registry 寫高程與 Type 顯示欄（UUID 不分大小寫）；對不到再讀模型上同一 `_07_UUID` 的現況（同 UUID 多筆取最齊的）。家具若有綁定實例，讀該實例現況名稱再拆三段（改名會更新；實例刪除寫 `-`）；Index 先用 `lf_target_layout` 對目標頁，沒有才從 View 反查，寫 `lf_sheet_code`／`lf_sheet_ref`。同一 View 也打到本頁時用其他頁；其他頁拆不出圖號再改回本頁。`lf_detail_no` 是手填（A、B、1），不注入。會寫 `lf_host_sheet_id` 與 `lf_last_synced_revision`。鎖定、`TAG_DW`、圖框、`TAG_ELEV_0`、比例、Detail 編號與備註都不改。缺值畫面為 `-`。沒有正式 Registry 時改讀 last-good，Height／Finish 仍可從模型讀；檔案壞掉則整批不寫。結束會彈出摘要。**公司 Rhino 8 已測（2026-08-19）。**
+Infuser Part：在 **Layout** 跑 `LF_Infuser_Part`，只處理**目前這一頁**的 D08 Tag（含標在 Detail 圖上的）。其他圖塊略過。Height／Finish 先對 Registry 寫高程與 Type 顯示欄（UUID 不分大小寫）；對不到再讀模型上同一 `_07_UUID` 的現況（同 UUID 多筆取最齊的）。家具若有綁定實例，讀該實例現況名稱再拆三段（改名會更新；實例刪除寫 `?`、塗紅）；Index 先用 `lf_target_layout` 對目標頁，沒有才從 View 反查，寫 `lf_sheet_code`／`lf_sheet_ref`。同一 View 也打到本頁時用其他頁；其他頁拆不出圖號再改回本頁。記下的目標頁已刪、或該頁沒有對到目標 View 的 Detail，則寫 `?`、塗紅，摘要標「目標消失」，不改對到別頁。已標斷連的 Tag 不灌回；再綁定後跑 Infuser 可恢復。不必刪 Tag。`lf_detail_no` 是手填（A、B、1），不注入。會寫 `lf_host_sheet_id` 與 `lf_last_synced_revision`。鎖定、`TAG_DW`、圖框、`TAG_ELEV_0`、比例、Detail 編號與備註都不改。未綁定畫面為 `-`，不塗警示色。沒有正式 Registry 時改讀 last-good，Height／Finish 仍可從模型讀；檔案壞掉則整批不寫。結束會彈出摘要。**公司 Rhino 8 已測注入（2026-08-19）**；與 TAG-O 來回 **家中 Rhino 8 已測（2026-08-19）**。
 
-Infuser All：跑 `LF_Infuser_All`，規則與 Part 相同，一次處理**全檔所有 Layout 頁**。不限目前頁，模型空間也可跑。結束彈出全檔摘要。**公司 Rhino 8 已測（2026-08-19）。**
+Infuser All：跑 `LF_Infuser_All`，規則與 Part 相同，一次處理**全檔所有 Layout 頁**。不限目前頁，模型空間也可跑。結束彈出全檔摘要。**公司 Rhino 8 已測（2026-08-19）**；與 TAG-O 來回見上。
 
-TAG-O：跑 `LF_TAG-O`，開 **TAG-O ~ Holy Cargo ~~** 深色面板（可捲動），依 Layout 頁序用顏色列出每一筆斷連（橘：缺來源／過期／歧義；紅：來源不在）。**點選項目會切到該 Layout 並拉近，留出圖框周圍。** 只檢查 D08 Tag 圖塊。畫面仍是 `-` 的 Tag 會列為過期。家具改名而未注入為過期，刪除綁定實例為來源不在。並列出沒被 Finish Tag 涵蓋的空間。模型空間也可跑。鎖定的 Tag 仍會判斷並標「鎖定」。門窗與 `TAG_ELEV_0` 沒有來源算正常。沒掃到 Tag 時不顯示「全部正常」。**只改面板文字顏色，不改圖面上的 Tag 顏色、不改 UserText**。Repair 尚未實作。**未在 Rhino 8 實機驗證**。
+TAG-O：跑 `LF_TAG-O`，開 **TAG-O ~ Holy Cargo ~~** 深色面板（可捲動），依 Layout 頁序列出已綁定 Tag，頁與頁之間灰線。`[正常]` 綠 `#AADC78`；`[過期]` 橘 `#EA9328`（自動欄 `!`、整顆塗橘）；`[斷連]` 紅 `#D81C1C`（自動欄 `?`、整顆塗紅）。來源不在、目標頁／Detail 消失都顯示斷連。未綁定不列出。**點選項目會反白該列、切到該 Layout 並拉近，留出圖框周圍。** 只檢查 D08 Tag 圖塊。家具改名而未注入為過期，刪除綁定實例為斷連。並列出沒被 Finish Tag 涵蓋的空間。模型空間也可跑。鎖定的 Tag 仍列出並標「鎖定」，但不改文字與顏色。門窗與 `TAG_ELEV_0` 不列入。沒掃到 Tag 時不顯示「全部正常」。只檢查與上色，不自動修復；使用者依此自行修改。斷連再綁定後跑 Infuser 可恢復，不必刪 Tag。**家中 Rhino 8 已測（2026-08-19）。**
 
 左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。正式工具列在 G02 封裝時才建立。
 
@@ -134,8 +134,13 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Test_Random_M3D_
 
 ## 預定新增
 
-| 指令 | 用途 | 前置條件 |
-|---|---|---|
-| `LF_Help` | 開啟 GitHub 說明頁，分中／英文版 | GitHub 說明頁尚未建立。**頁面建好後才實作**入口與按鈕，本階段不登錄為可跑指令 |
+剩餘開發順序：**Extract CP → Duplicate Layout → Sync Worksession → Document。** 現在不要實作。進入可跑狀態時再列入上方清單。
 
-Extract／Duplicate Layout／Worksession 已在 `資料契約.md` 登錄 ID，但 2.0 尚未實作；按了只會回報尚未實作。它們進入可跑狀態時再列入本文件上方清單。Cabinet／三支 2D 工具不屬 2.0。
+| 指令 | 用途 | 狀態 |
+|---|---|---|
+| `LF_Extract_CP` | 把 Section 結果整理成可編輯 Drawing | 已登錄 ID；尚未實作 |
+| `LF_Duplicate_Layout` | 複製 Layout，新 ID 並依契約清除／保留 Tag | 已登錄 ID；尚未實作 |
+| `LF_Sync_Worksession` | 監看與更新 Worksession | 已登錄 ID；尚未實作 |
+| `LF_Document` | 開啟 GitHub 上的 LoopFlow 文件頁 | 已登錄 ID；尚未實作。舊名 `LF_Help` 不登錄 |
+
+Cabinet／三支 2D 工具不屬 2.0。

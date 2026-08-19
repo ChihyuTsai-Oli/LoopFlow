@@ -6,6 +6,8 @@ from loopflow.features.sheet.keys import SHEET_CODE_KEY
 from loopflow.features.tagger.keys import HOST_SHEET_ID_KEY, LAST_SYNCED_REVISION_KEY
 
 MISSING_DISPLAY = "-"
+STALE_DISPLAY = "!"
+BROKEN_DISPLAY = "?"
 
 ELEVATION_BASIS_KEY = "lf_elevation_basis"
 ELEVATION_DISPLAY_KEY = "lf_elevation_display"
@@ -82,7 +84,9 @@ __all__ = [
     "LAST_SYNCED_REVISION_KEY",
     "LEGACY_DISPLAY_KEYS",
     "MANUAL_KEYS",
+    "BROKEN_DISPLAY",
     "MISSING_DISPLAY",
+    "STALE_DISPLAY",
     "REMARKS_MANUAL_KEY",
     "SHEET_CODE_KEY",
     "SHEET_REF_KEY",

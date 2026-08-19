@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""D05 TAG-O：只讀確認 Tag 活著或斷連；不寫入、不改顏色。"""
+"""D05 TAG-O：檢查 Tag 活著或斷連；過期塗橘寫 !，斷連塗紅寫 ?。"""
 from __future__ import annotations
 
 import io
@@ -20,13 +20,16 @@ from loopflow.command_catalog import get_command
 from loopflow.features.health.tag_o import (
     COLOR_BROK,
     COLOR_OK,
+    COLOR_RULE,
     COLOR_WARN,
     PANEL_TITLE,
     UNASSIGNED_PAGE,
     run_tag_o,
 )
 from loopflow.foundation.usertext import SPACE_FRAME_DISPLAY_KEY
+from loopflow.features.health.appearance import COLOR_BROKEN_RGB, COLOR_STALE_RGB
 from loopflow.features.infuser.keys import (
+    BROKEN_DISPLAY,
     ELEVATION_BASIS_KEY,
     ELEVATION_DISPLAY_KEY,
     ITEM_CATEGORY_KEY,
@@ -35,11 +38,15 @@ from loopflow.features.infuser.keys import (
     MISSING_DISPLAY,
     SHEET_CODE_KEY,
     SHEET_REF_KEY,
+    STALE_DISPLAY,
     TYPE_CATEGORY_KEY,
     TYPE_DISPLAY_NAME_KEY,
     TYPE_SEQUENCE_KEY,
 )
+from loopflow.features.sheet.keys import SHEET_ID_KEY
+from loopflow.features.sheet.metadata import write_sheet_metadata
 from loopflow.features.tagger.keys import (
+    HEALTH_STATE_KEY,
     LAST_SYNCED_REVISION_KEY,
     LOCK_STATE_KEY,
     SOURCE_BLOCK_NAME_KEY,
@@ -54,6 +61,8 @@ from test_infuser_part import (
     OBJECT_ID,
     OTHER,
     PAGE,
+    SHEET_ID,
+    TARGET_SHEET_ID,
     VIEW_ID,
     _add_block,
     _add_live_source,
@@ -220,14 +229,19 @@ class HealthTests(unittest.TestCase):
             user_text=_filled_height(),
         )
         _stamp(session, "tag")
-        before = _snapshot(session)
         result = _run(session)
         self.assertTrue(result.ok, result.message)
         self.assertEqual(result.details["counts"]["healthy"], 1)
         self.assertEqual(result.details["counts"]["scanned"], 1)
         self.assertFalse(result.warnings)
-        self.assertEqual(session._object_meta, before["objects"])
-        self.assertIn("只讀", result.message)
+        self.assertEqual(
+            session.get_object_user_text("tag", TYPE_DISPLAY_NAME_KEY), "Paint"
+        )
+        body = _panel_body(result.details["panel_lines"])
+        self.assertIn("[正常]", body)
+        state = session.get_view_state("tag")
+        self.assertTrue(state.color_by_layer)
+        self.assertIn("塗橘", result.message)
 
     def test_unbound_missing_source(self):
         session = _session()
@@ -250,6 +264,12 @@ class HealthTests(unittest.TestCase):
         result = _run(session)
         self.assertTrue(result.ok, result.message)
         self.assertEqual(result.details["counts"]["orphaned"], 1)
+        self.assertEqual(
+            session.get_object_user_text("tag", TYPE_CATEGORY_KEY), BROKEN_DISPLAY
+        )
+        state = session.get_view_state("tag")
+        self.assertEqual(state.color, COLOR_BROKEN_RGB)
+        self.assertFalse(state.color_by_layer)
 
     def test_live_model_is_not_orphaned(self):
         session = _session()
@@ -279,6 +299,11 @@ class HealthTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(result.details["counts"]["stale"], 1)
         self.assertEqual(result.details["counts"]["healthy"], 0)
+        self.assertEqual(
+            session.get_object_user_text("tag", TYPE_CATEGORY_KEY), STALE_DISPLAY
+        )
+        state = session.get_view_state("tag")
+        self.assertEqual(state.color, COLOR_STALE_RGB)
 
     def test_never_infused_bound_tag_is_stale(self):
         session = _session()
@@ -348,6 +373,11 @@ class HealthTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(result.details["counts"]["orphaned"], 1)
         self.assertEqual(result.details["counts"]["healthy"], 0)
+        self.assertEqual(
+            session.get_object_user_text("tag", ITEM_NAME_KEY), BROKEN_DISPLAY
+        )
+        state = session.get_view_state("tag")
+        self.assertEqual(state.color, COLOR_BROKEN_RGB)
 
     def test_item_renamed_instance_is_stale_until_infuser(self):
         session = _session()
@@ -364,6 +394,11 @@ class HealthTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(result.details["counts"]["stale"], 1)
         self.assertEqual(result.details["counts"]["healthy"], 0)
+        self.assertEqual(
+            session.get_object_user_text("tag", ITEM_NAME_KEY), STALE_DISPLAY
+        )
+        state = session.get_view_state("tag")
+        self.assertEqual(state.color, COLOR_STALE_RGB)
 
     def test_locked_orphaned_still_reported(self):
         session = _session()
@@ -382,6 +417,10 @@ class HealthTests(unittest.TestCase):
         self.assertEqual(result.details["counts"]["orphaned"], 1)
         self.assertEqual(result.details["counts"]["locked_disconnected"], 1)
         self.assertEqual(result.details["issues"][0]["locked"], True)
+        self.assertIsNone(session.get_object_user_text("tag", TYPE_CATEGORY_KEY))
+        state = session.get_view_state("tag")
+        self.assertTrue(state.color_by_layer)
+        self.assertNotEqual(state.color, COLOR_BROKEN_RGB)
 
     def test_unknown_block_is_ignored(self):
         session = _session()
@@ -441,7 +480,7 @@ class HealthTests(unittest.TestCase):
         _stamp(session, "tag")
         result = _run(session)
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(result.details["counts"]["orphaned"], 1)
+        self.assertEqual(result.details["counts"]["missing_target"], 1)
 
     def test_index_healthy_with_target_layout(self):
         session = _session()
@@ -457,6 +496,144 @@ class HealthTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(result.details["counts"]["healthy"], 1)
 
+    def test_index_stale_when_sheet_code_changed(self):
+        session = _session()
+        _add_block(
+            session,
+            "tag",
+            "TAG_SECTION_DETAIL",
+            user_text=_filled_index(),
+        )
+        _stamp(session, "tag")
+        _add_view(session)
+        write_sheet_metadata(
+            session,
+            SHEET_ID,
+            {
+                "drawing_no": "IN 301",
+                "drawing_name": "立面",
+                "series": "IN",
+                "sequence": "301",
+                "page_position": 1,
+            },
+        )
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.details["counts"]["stale"], 1)
+        self.assertEqual(result.details["counts"]["healthy"], 0)
+        body = _panel_body(result.details["panel_lines"])
+        self.assertIn("[過期]", body)
+        colors = _panel_colors(result.details["panel_lines"], "[過期]")
+        self.assertEqual(colors, [COLOR_WARN])
+        self.assertEqual(
+            session.get_object_user_text("tag", SHEET_CODE_KEY), STALE_DISPLAY
+        )
+        state = session.get_view_state("tag")
+        self.assertEqual(state.color, COLOR_STALE_RGB)
+        self.assertFalse(state.color_by_layer)
+
+    def test_index_missing_target_when_layout_gone(self):
+        session = _session()
+        _add_block(
+            session,
+            "tag",
+            "TAG_SECTION_DETAIL",
+            user_text=_filled_index(
+                **{
+                    TARGET_LAYOUT_KEY: OTHER,
+                    SHEET_CODE_KEY: "IN",
+                    SHEET_REF_KEY: "101.01",
+                }
+            ),
+        )
+        _stamp(session, "tag")
+        session.add_object("other_frame", name="TargetFrame", layer="M2D")
+        session.set_block("other_frame", (0, 0, 0), name="Sample_Frame")
+        session.set_object_user_text("other_frame", SHEET_ID_KEY, TARGET_SHEET_ID)
+        session.add_object_to_layout_page(OTHER, "other_frame")
+        session.add_object("view", name="A-A", layer="LoopFlow::Anchor_Frame")
+        session.set_object_user_text("view", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
+        session.set_object_user_text("view", VIEW_ID_KEY, VIEW_ID)
+        session.set_bbox("view", (0, 0, 0), (100, 100, 0))
+        session.set_layout_details(
+            (
+                {
+                    "layout": PAGE,
+                    "page_number": 1,
+                    "detail_id": "dv-a",
+                    "dv_name": "A",
+                },
+                {
+                    "layout": OTHER,
+                    "page_number": 2,
+                    "detail_id": "dv-b",
+                    "dv_name": "B",
+                },
+            )
+        )
+        session.set_detail_model_point("dv-a", (50, 50, 0))
+        session.set_detail_model_point("dv-b", (50, 50, 0))
+        session.set_layout_pages([PAGE])
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.details["counts"]["missing_target"], 1)
+        self.assertEqual(result.details["counts"]["healthy"], 0)
+        self.assertEqual(result.details["counts"]["stale"], 0)
+        body = _panel_body(result.details["panel_lines"])
+        self.assertIn("[斷連]", body)
+        colors = _panel_colors(result.details["panel_lines"], "[斷連]")
+        self.assertEqual(colors, [COLOR_BROK])
+        self.assertEqual(
+            session.get_object_user_text("tag", SHEET_CODE_KEY), BROKEN_DISPLAY
+        )
+        state = session.get_view_state("tag")
+        self.assertEqual(state.color, COLOR_BROKEN_RGB)
+        self.assertFalse(state.color_by_layer)
+
+    def test_index_missing_target_when_detail_gone(self):
+        session = _session()
+        _add_block(
+            session,
+            "tag",
+            "TAG_SECTION_DETAIL",
+            user_text=_filled_index(
+                **{
+                    TARGET_LAYOUT_KEY: OTHER,
+                    SHEET_CODE_KEY: "IN",
+                    SHEET_REF_KEY: "101.01",
+                }
+            ),
+        )
+        _stamp(session, "tag")
+        session.add_object("other_frame", name="TargetFrame", layer="M2D")
+        session.set_block("other_frame", (0, 0, 0), name="Sample_Frame")
+        session.set_object_user_text("other_frame", SHEET_ID_KEY, TARGET_SHEET_ID)
+        session.add_object_to_layout_page(OTHER, "other_frame")
+        session.add_object("view", name="A-A", layer="LoopFlow::Anchor_Frame")
+        session.set_object_user_text("view", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
+        session.set_object_user_text("view", VIEW_ID_KEY, VIEW_ID)
+        session.set_bbox("view", (0, 0, 0), (100, 100, 0))
+        session.set_layout_details(
+            (
+                {
+                    "layout": PAGE,
+                    "page_number": 1,
+                    "detail_id": "dv-a",
+                    "dv_name": "A",
+                },
+            )
+        )
+        session.set_detail_model_point("dv-a", (50, 50, 0))
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.details["counts"]["missing_target"], 1)
+        self.assertEqual(result.details["counts"]["healthy"], 0)
+        body = _panel_body(result.details["panel_lines"])
+        self.assertIn("[斷連]", body)
+        self.assertEqual(
+            session.get_object_user_text("tag", SHEET_REF_KEY), BROKEN_DISPLAY
+        )
+
     def test_repeat_run_still_zero_write(self):
         session = _session()
         _add_block(
@@ -466,11 +643,9 @@ class HealthTests(unittest.TestCase):
             user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID, TYPE_CATEGORY_KEY: "PT"},
         )
         _stamp(session, "tag")
-        before = _snapshot(session)
         first = _run(session)
         second = _run(session)
         self.assertTrue(first.ok and second.ok)
-        self.assertEqual(session._object_meta, before["objects"])
         self.assertEqual(session.get_object_user_text("tag", TYPE_CATEGORY_KEY), "PT")
 
     def test_infused_dash_still_disconnected(self):
@@ -507,23 +682,21 @@ class HealthTests(unittest.TestCase):
 
 
 class PanelTests(unittest.TestCase):
-    def test_panel_lists_unbound_in_warn_color(self):
+    def test_panel_omits_unbound_tags(self):
         session = _session()
         _add_block(session, "tag", "TAG_HEIGHT_GRAB")
         captured = []
         result = _run(session, show_panel=captured.append)
         self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.details["counts"]["unbound"], 1)
         lines = result.details["panel_lines"]
         self.assertEqual(captured, [lines])
         self.assertEqual(lines[0][0], PANEL_TITLE)
         body = _panel_body(lines)
-        self.assertIn("[缺來源]", body)
-        self.assertIn("TAG_HEIGHT_GRAB", body)
-        self.assertIn(PAGE, body)
-        colors = _panel_colors(lines, "[缺來源]")
-        self.assertEqual(colors, [COLOR_WARN])
+        self.assertNotIn("[缺來源]", body)
+        self.assertNotIn("TAG_HEIGHT_GRAB", body)
 
-    def test_panel_lists_orphaned_in_red(self):
+    def test_panel_lists_orphaned_as_broken(self):
         session = _session()
         _add_block(
             session,
@@ -534,9 +707,25 @@ class PanelTests(unittest.TestCase):
         _stamp(session, "tag")
         result = _run(session)
         body = _panel_body(result.details["panel_lines"])
-        self.assertIn("[來源不在]", body)
-        colors = _panel_colors(result.details["panel_lines"], "[來源不在]")
+        self.assertIn("[斷連]", body)
+        colors = _panel_colors(result.details["panel_lines"], "[斷連]")
         self.assertEqual(colors, [COLOR_BROK])
+
+    def test_panel_lists_stale_in_orange(self):
+        session = _session()
+        _add_block(
+            session,
+            "tag",
+            "TAG_HEIGHT_GRAB",
+            user_text=_filled_height(),
+        )
+        _stamp(session, "tag", revision=1)
+        result = _run(session, registry=_payload(revision=3))
+        self.assertTrue(result.ok, result.message)
+        body = _panel_body(result.details["panel_lines"])
+        self.assertIn("[過期]", body)
+        colors = _panel_colors(result.details["panel_lines"], "[過期]")
+        self.assertEqual(colors, [COLOR_WARN])
 
     def test_panel_marks_locked_and_all_ok_green(self):
         session = _session()
@@ -560,12 +749,15 @@ class PanelTests(unittest.TestCase):
         )
         _stamp(clean, "tag")
         ok_result = _run(clean)
+        body = _panel_body(ok_result.details["panel_lines"])
+        self.assertIn("[正常]", body)
         greens = [
             row[0]
             for row in ok_result.details["panel_lines"]
             if row[1] == COLOR_OK
         ]
-        self.assertTrue(any("全部 Tag 來源正常" in text for text in greens))
+        self.assertTrue(any("[正常]" in text for text in greens))
+        self.assertNotIn("全部 Tag 來源正常", body)
 
     def test_uncovered_space_listed(self):
         session = _session()
@@ -599,7 +791,7 @@ class PanelTests(unittest.TestCase):
         ]
         self.assertTrue(any("Finish Tag" in text for text in greens))
 
-    def test_panel_does_not_paint_objects(self):
+    def test_panel_paints_broken_objects_red(self):
         session = _session()
         _add_block(
             session,
@@ -607,23 +799,42 @@ class PanelTests(unittest.TestCase):
             "TAG_HEIGHT_GRAB",
             user_text={SOURCE_OBJECT_ID_KEY: MISSING},
         )
-        before = session.get_view_state("tag")
         result = _run(session)
         after = session.get_view_state("tag")
         self.assertTrue(result.ok)
-        self.assertEqual(before.color, after.color)
-        self.assertEqual(before.color_by_layer, after.color_by_layer)
+        self.assertEqual(after.color, COLOR_BROKEN_RGB)
+        self.assertFalse(after.color_by_layer)
+        self.assertEqual(
+            session.get_object_user_text("tag", TYPE_CATEGORY_KEY), BROKEN_DISPLAY
+        )
 
     def test_panel_follows_layout_page_order(self):
         session = _session()
         session.set_layout_pages(["Z__1", "A__1"])
         session.set_current_layout_page("Z__1")
-        _add_block(session, "later", "TAG_HEIGHT_GRAB", page="A__1")
-        _add_block(session, "first", "TAG_ITEM", page="Z__1")
+        _add_block(
+            session,
+            "later",
+            "TAG_HEIGHT_GRAB",
+            page="A__1",
+            user_text=_filled_height(),
+        )
+        _add_block(
+            session,
+            "first",
+            "TAG_ITEM",
+            page="Z__1",
+            user_text=_filled_item(),
+        )
+        _stamp(session, "later")
+        _stamp(session, "first")
         result = _run(session)
         body = _panel_body(result.details["panel_lines"])
         self.assertLess(body.index("Z__1"), body.index("A__1"))
         self.assertIn("已掃描 2 個 Tag", body)
+        self.assertTrue(
+            any(row[1] == COLOR_RULE for row in result.details["panel_lines"])
+        )
 
     def test_empty_scan_does_not_claim_all_ok(self):
         session = _session()
@@ -635,7 +846,13 @@ class PanelTests(unittest.TestCase):
 
     def test_issue_rows_include_tag_id_for_zoom(self):
         session = _session()
-        _add_block(session, "tag", "TAG_HEIGHT_GRAB")
+        _add_block(
+            session,
+            "tag",
+            "TAG_HEIGHT_GRAB",
+            user_text={SOURCE_OBJECT_ID_KEY: MISSING},
+        )
+        _stamp(session, "tag")
         result = _run(session)
         clickable = [
             row for row in result.details["panel_lines"] if len(row) >= 4 and row[2]

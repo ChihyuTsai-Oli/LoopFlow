@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Callable, Mapping, Optional
 
 from loopflow.features.model_data.identity import _load_catalog
-from loopflow.features.model_data.verify import compare_apply_usertext
+from loopflow.features.model_data.verify import compare_apply_usertext, format_verify_popup, select_only
 from loopflow.features.registry.payload import assemble_payload
 from loopflow.features.registry.publisher import publish_registry
 from loopflow.foundation import results
@@ -38,7 +38,7 @@ def publish_from_session(
         if selected_only:
             return results.blocked(
                 "publish_registry",
-                "局部選取不得發布。請用全案 Verify 通過後再發布。",
+                "局部選取不得發布。請先跑 Nexus 選單 6 檢核通過後再發布。",
                 blocking=("partial_scan_cannot_publish",),
                 command_id=command_id,
                 details={"publish_ready": False},
@@ -57,7 +57,7 @@ def publish_from_session(
         if mismatches or "usertext_mismatch" in (verified.warnings or ()):
             return results.blocked(
                 "publish_registry",
-                "尚未通過 Verify，不能發布。",
+                format_verify_popup(verified, cannot_publish=True),
                 blocking=("verify_not_passed",),
                 command_id=command_id,
                 details=dict(verified.details or {}, publish_ready=False),
@@ -114,8 +114,12 @@ def publish_from_session(
         )
 
     if not guarded:
-        return action(session)
-    return run_guarded(session, action, command_id=command_id)
+        outcome = action(session)
+    else:
+        outcome = run_guarded(session, action, command_id=command_id)
+    if "verify_not_passed" in (outcome.blocking or ()):
+        select_only(session, (outcome.details or {}).get("mismatch_object_ids") or ())
+    return outcome
 
 
 def run_publish_exchange(

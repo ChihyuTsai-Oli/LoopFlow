@@ -16,6 +16,7 @@ if str(SRC) not in sys.path:
 
 from loopflow.command_catalog import get_command
 from loopflow.features.infuser.keys import (
+    BROKEN_DISPLAY,
     DETAIL_NO_KEY,
     DW_ID_KEY,
     ELEVATION_BASIS_KEY,
@@ -32,11 +33,13 @@ from loopflow.features.infuser.keys import (
     TYPE_DISPLAY_NAME_KEY,
     TYPE_SEQUENCE_KEY,
 )
+from loopflow.features.health.appearance import COLOR_BROKEN_RGB
 from loopflow.features.infuser.part import run_infuser_part
 from loopflow.features.infuser.reader import load_published_registry
 from loopflow.features.sheet.keys import DRAWING_NAME_KEY, DRAWING_NO_KEY, SCALE_KEY, SHEET_ID_KEY
 from loopflow.features.sheet.metadata import write_sheet_metadata
 from loopflow.features.tagger.keys import (
+    HEALTH_STATE_KEY,
     HOST_SHEET_ID_KEY,
     LAST_SYNCED_REVISION_KEY,
     LOCK_STATE_KEY,
@@ -329,7 +332,10 @@ class InjectTests(unittest.TestCase):
         result = _run(session)
         self.assertTrue(result.ok, result.message)
         self.assertIn("orphaned", result.warnings)
-        self.assertEqual(session.get_object_user_text("tag", ITEM_NAME_KEY), MISSING_DISPLAY)
+        self.assertEqual(session.get_object_user_text("tag", ITEM_NAME_KEY), BROKEN_DISPLAY)
+        state = session.get_view_state("tag")
+        self.assertEqual(state.color, COLOR_BROKEN_RGB)
+        self.assertFalse(state.color_by_layer)
 
     def test_item_bad_name_writes_dash(self):
         session = _session()
@@ -709,6 +715,122 @@ class InjectTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("tag", SHEET_CODE_KEY), "IN")
         self.assertEqual(session.get_object_user_text("tag", SHEET_REF_KEY), "101.01")
 
+    def test_index_missing_layout_does_not_remap(self):
+        index_page = "目錄"
+        session = _session()
+        session.set_layout_pages([PAGE, OTHER, index_page])
+        session.set_current_layout_page(index_page)
+        _add_block(
+            session,
+            "tag",
+            "TAG_SECTION_DETAIL",
+            page=index_page,
+            user_text={
+                TARGET_VIEW_ID_KEY: VIEW_ID,
+                TARGET_LAYOUT_KEY: OTHER,
+                SHEET_CODE_KEY: "IN",
+                SHEET_REF_KEY: "101.01",
+            },
+        )
+        session.add_object("other_frame", name="TargetFrame", layer="M2D")
+        session.set_block("other_frame", (0, 0, 0), name="Sample_Frame")
+        session.set_object_user_text("other_frame", SHEET_ID_KEY, TARGET_SHEET_ID)
+        session.add_object_to_layout_page(OTHER, "other_frame")
+        session.add_object("view", name="A-A", layer="LoopFlow::Anchor_Frame")
+        session.set_object_user_text("view", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
+        session.set_object_user_text("view", VIEW_ID_KEY, VIEW_ID)
+        session.set_bbox("view", (0, 0, 0), (100, 100, 0))
+        session.set_layout_details(
+            (
+                {
+                    "layout": PAGE,
+                    "page_number": 1,
+                    "detail_id": "dv-a",
+                    "dv_name": "A",
+                },
+                {
+                    "layout": OTHER,
+                    "page_number": 2,
+                    "detail_id": "dv-b",
+                    "dv_name": "B",
+                },
+                {
+                    "layout": index_page,
+                    "page_number": 3,
+                    "detail_id": "dv-host",
+                    "dv_name": "Host",
+                },
+            )
+        )
+        session.set_detail_model_point("dv-a", (50, 50, 0))
+        session.set_detail_model_point("dv-b", (50, 50, 0))
+        session.set_detail_model_point("dv-host", (50, 50, 0))
+        session.set_layout_pages([PAGE, index_page])
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertIn("missing_target", result.warnings or ())
+        self.assertIn("目標消失", result.message)
+        self.assertEqual(
+            session.get_object_user_text("tag", SHEET_CODE_KEY), BROKEN_DISPLAY
+        )
+        self.assertEqual(
+            session.get_object_user_text("tag", SHEET_REF_KEY), BROKEN_DISPLAY
+        )
+
+    def test_index_missing_detail_does_not_remap(self):
+        index_page = "目錄"
+        session = _session()
+        session.set_layout_pages([PAGE, OTHER, index_page])
+        session.set_current_layout_page(index_page)
+        _add_block(
+            session,
+            "tag",
+            "TAG_SECTION_DETAIL",
+            page=index_page,
+            user_text={
+                TARGET_VIEW_ID_KEY: VIEW_ID,
+                TARGET_LAYOUT_KEY: OTHER,
+                SHEET_CODE_KEY: "IN",
+                SHEET_REF_KEY: "101.01",
+            },
+        )
+        session.add_object("other_frame", name="TargetFrame", layer="M2D")
+        session.set_block("other_frame", (0, 0, 0), name="Sample_Frame")
+        session.set_object_user_text("other_frame", SHEET_ID_KEY, TARGET_SHEET_ID)
+        session.add_object_to_layout_page(OTHER, "other_frame")
+        session.add_object("view", name="A-A", layer="LoopFlow::Anchor_Frame")
+        session.set_object_user_text("view", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
+        session.set_object_user_text("view", VIEW_ID_KEY, VIEW_ID)
+        session.set_bbox("view", (0, 0, 0), (100, 100, 0))
+        session.set_layout_details(
+            (
+                {
+                    "layout": PAGE,
+                    "page_number": 1,
+                    "detail_id": "dv-a",
+                    "dv_name": "A",
+                },
+                {
+                    "layout": index_page,
+                    "page_number": 3,
+                    "detail_id": "dv-host",
+                    "dv_name": "Host",
+                },
+            )
+        )
+        session.set_detail_model_point("dv-a", (50, 50, 0))
+        session.set_detail_model_point("dv-host", (50, 50, 0))
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertIn("missing_target", result.warnings or ())
+        self.assertIn("目標消失", result.message)
+        self.assertEqual(
+            session.get_object_user_text("tag", SHEET_CODE_KEY), BROKEN_DISPLAY
+        )
+        self.assertEqual(
+            session.get_object_user_text("tag", SHEET_REF_KEY), BROKEN_DISPLAY
+        )
+
     def test_other_page_not_touched(self):
         session = _session()
         _add_block(
@@ -795,7 +917,31 @@ class SkipTests(unittest.TestCase):
         result = _run(session)
         self.assertTrue(result.ok)
         self.assertIn("orphaned", result.warnings)
-        self.assertEqual(session.get_object_user_text("tag", TYPE_CATEGORY_KEY), MISSING_DISPLAY)
+        self.assertEqual(session.get_object_user_text("tag", TYPE_CATEGORY_KEY), BROKEN_DISPLAY)
+        state = session.get_view_state("tag")
+        self.assertEqual(state.color, COLOR_BROKEN_RGB)
+
+    def test_broken_tag_is_not_refilled(self):
+        session = _session()
+        _add_block(
+            session,
+            "tag",
+            "TAG_HEIGHT_GRAB",
+            user_text={
+                SOURCE_OBJECT_ID_KEY: OBJECT_ID,
+                TYPE_CATEGORY_KEY: BROKEN_DISPLAY,
+                HEALTH_STATE_KEY: "broken",
+            },
+        )
+        result = _run(session)
+        self.assertTrue(result.ok)
+        self.assertIn("skipped_broken", result.warnings)
+        self.assertEqual(
+            session.get_object_user_text("tag", TYPE_CATEGORY_KEY), BROKEN_DISPLAY
+        )
+        self.assertNotEqual(
+            session.get_object_user_text("tag", TYPE_DISPLAY_NAME_KEY), "Paint"
+        )
 
     def test_unknown_block_zero_write(self):
         session = _session()
@@ -873,7 +1019,7 @@ class RegistryFileTests(unittest.TestCase):
         self.assertTrue(result.ok)
         self.assertIn("missing_registry", result.warnings)
         self.assertEqual(session.get_object_user_text("item", ITEM_NAME_KEY), "Chair-1")
-        self.assertEqual(session.get_object_user_text("height", TYPE_CATEGORY_KEY), MISSING_DISPLAY)
+        self.assertEqual(session.get_object_user_text("height", TYPE_CATEGORY_KEY), BROKEN_DISPLAY)
         self.assertFalse((root / "exchange" / PROJECT_ID / "Project_Registry.json").exists())
 
     def test_missing_registry_height_reads_live_object(self):

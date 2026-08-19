@@ -929,9 +929,9 @@ _PANEL_COLORS = {
     "head": (140, 190, 240),
     "dim": (120, 120, 120),
     "text": (220, 220, 220),
-    "ok": (90, 200, 120),
-    "warn": (255, 130, 46),
-    "brok": (255, 46, 97),
+    "ok": (0xAA, 0xDC, 0x78),
+    "warn": (0xEA, 0x93, 0x28),
+    "brok": (0xD8, 0x1C, 0x1C),
 }
 
 
@@ -976,17 +976,37 @@ def show_colored_log_panel(
             stack.Orientation = forms.Orientation.Vertical
             stack.Padding = drawing.Padding(12)
             stack.Spacing = 1
-            for row in lines:
+            self._row_panels = []
+            self._selected_index = None
+            self._row_bg = bg
+            self._selected_bg = drawing.Color.FromArgb(45, 85, 145)
+            for index, row in enumerate(lines):
                 text = str(row[0]) if row else ""
                 color_key = str(row[1]) if len(row) > 1 else "text"
                 tag_id = str(row[2]) if len(row) > 2 else ""
                 page_name = str(row[3]) if len(row) > 3 else ""
+                if color_key == "rule":
+                    bar = forms.Panel()
+                    bar.BackgroundColor = drawing.Color.FromArgb(90, 90, 90)
+                    bar.Height = 1
+                    wrap = forms.Panel()
+                    wrap.BackgroundColor = bg
+                    wrap.Padding = drawing.Padding(4, 6, 4, 6)
+                    wrap.Content = bar
+                    stack.Items.Add(forms.StackLayoutItem(wrap))
+                    self._row_panels.append((wrap, wrap, False))
+                    continue
                 label = forms.Label()
                 label.Text = text
                 label.TextColor = palette.get(color_key, palette["text"])
                 label.Font = log_font
                 label.BackgroundColor = bg
-                if on_select and tag_id:
+                panel = forms.Panel()
+                panel.BackgroundColor = bg
+                panel.Padding = drawing.Padding(4, 1, 4, 1)
+                panel.Content = label
+                clickable = bool(on_select and tag_id)
+                if clickable:
                     try:
                         label.Cursor = forms.Cursors.Pointer
                     except Exception:
@@ -997,14 +1017,18 @@ def show_colored_log_panel(
                         e,
                         selected_id=tag_id,
                         selected_page=page_name,
+                        selected_index=index,
                     ) -> None:
+                        self._highlight_row(selected_index)
                         try:
                             on_select(selected_id, selected_page)
                         except Exception:
                             pass
 
+                    panel.MouseDown += _clicked
                     label.MouseDown += _clicked
-                stack.Items.Add(forms.StackLayoutItem(label))
+                stack.Items.Add(forms.StackLayoutItem(panel))
+                self._row_panels.append((panel, label, clickable))
 
             scroll = forms.Scrollable()
             scroll.BackgroundColor = bg
@@ -1032,6 +1056,17 @@ def show_colored_log_panel(
             self.Content = layout
             self.AbortButton = close_btn
             self.DefaultButton = close_btn
+
+        def _highlight_row(self, selected_index: int) -> None:
+            self._selected_index = selected_index
+            for index, (panel, label, clickable) in enumerate(self._row_panels):
+                color = (
+                    self._selected_bg
+                    if clickable and index == selected_index
+                    else self._row_bg
+                )
+                panel.BackgroundColor = color
+                label.BackgroundColor = color
 
         def _on_close(self, sender, e) -> None:
             self.Close(True)
