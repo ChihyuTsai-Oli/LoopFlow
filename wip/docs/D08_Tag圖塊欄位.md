@@ -32,7 +32,17 @@
 6. 關閉 BlockEdit 並儲存定義。
 7. 做完一個圖塊，在該實例上看字是否還在；再用 Data Viewer 對不到新 key 屬正常（值要等 Layout ID／Infuser 寫入）。
 
-圖框改完後，可在測試頁跑一次 `LF_Tagger_Layout_ID`：圖號／圖名應出現在新欄 `lf_drawing_no`／`lf_drawing_name`。
+圖框改完後，可在測試頁跑一次 `LF_Tagger_Layout_ID`：圖號／圖名應出現在新欄 `lf_drawing_no`／`lf_drawing_name`。**比例不會被 Layout ID 填上**（見下節）。
+
+### 不要整批刪掉 UserText
+
+改公式後，Attribute User Text 請**改名**，不要全刪再跑指令：
+
+- `DWG_NO` → 可刪（Layout ID 會寫 `lf_drawing_no`）
+- `DWG_NAME` → 可刪（Layout ID 會寫 `lf_drawing_name`）
+- `03-A3 Scale` → **改名成** `lf_scale`，值留下。這欄是每張圖框自己填的，指令不寫。
+
+若已經刪光、畫面比例變成 `####`：選圖框 → Attribute User Text → 新增 Key `lf_scale` → Value 填你的比例（例如 `1:50`）。`####` 是 Rhino 找不到這個 key，不是 Layout ID 壞掉。
 
 ## 對照表（舊 → 新）
 
@@ -107,12 +117,12 @@
 |---|---|---|
 | `DWG_NO` | `lf_drawing_no` | Layout ID |
 | `DWG_NAME` | `lf_drawing_name` | Layout ID |
-| `03-A3 Scale` | `lf_scale` | 人工（指令不寫） |
+| `03-A3 Scale` | `lf_scale` | **人工，每張自己填**；Layout ID 不寫。缺 key 時畫面會變 `####` |
 
 ## 改完怎麼確認
 
 1. 仍用 `wip/tools/擷取tag_block文字.py` 選各圖塊實例，確認公式已是 `lf_*`，且沒有 `DWG_NO`、`DWG_NAME`、`Category`、`attr_mat_*` 等舊名（鎖定欄除外）。
-2. 測試檔插入**新**圖框 → 跑 Layout ID → 圖號／圖名有字。
+2. 測試檔插入**新**圖框 → 跑 Layout ID → 圖號／圖名有字。比例須自己在 `lf_scale` 填，畫面不可為 `####`。
 3. 舊專案裡已經插入的舊圖塊**不會自動變**；要換成新定義，或等 migration。驗證請用副本。
 4. 告訴 AI 結果。通過後才停止 Layout ID 雙寫 `DWG_NO`／`DWG_NAME`，並更新 `fixtures/legacy/tag_block_text/`。
 
