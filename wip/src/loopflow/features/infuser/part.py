@@ -33,6 +33,15 @@ from loopflow.features.tagger.keys import (
 from loopflow.features.tagger.templates import TagTemplate, TagTemplateSet, load_tag_templates
 from loopflow.features.viewer.inspect import check_document_schema
 from loopflow.foundation import results
+from loopflow.foundation.usertext import (
+    ELEVATION_BASIS_KEY as MODEL_ELEVATION_BASIS_KEY,
+    ELEVATION_DISPLAY_KEY as MODEL_ELEVATION_DISPLAY_KEY,
+    OBJECT_ID_KEY,
+    TYPE_CATEGORY_KEY as MODEL_TYPE_CATEGORY_KEY,
+    TYPE_ID_KEY,
+    TYPE_SEQUENCE_KEY as MODEL_TYPE_SEQUENCE_KEY,
+    read_text,
+)
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Infuser_Part"
@@ -48,6 +57,20 @@ def _display(value) -> str:
     return cleaned if cleaned is not None else infuser_keys.MISSING_DISPLAY
 
 
+def _norm_id(value) -> Optional[str]:
+    raw = text(value)
+    if raw is None:
+        return None
+    return raw.strip("{}").casefold() or None
+
+
+def _as_uuid(value) -> Optional[str]:
+    raw = _norm_id(value)
+    if raw is None or not UUID_V4_RE.match(raw):
+        return None
+    return raw
+
+
 def _object_index(payload: Optional[Mapping]) -> Tuple[Dict[str, dict], Tuple[str, ...]]:
     by_id = {}
     dupes = []
@@ -56,7 +79,7 @@ def _object_index(payload: Optional[Mapping]) -> Tuple[Dict[str, dict], Tuple[st
     for item in payload.get("objects") or ():
         if not isinstance(item, Mapping):
             continue
-        object_id = text(item.get("object_id"))
+        object_id = _as_uuid(item.get("object_id")) or _norm_id(item.get("object_id"))
         if object_id is None:
             continue
         if object_id in by_id:
@@ -65,6 +88,79 @@ def _object_index(payload: Optional[Mapping]) -> Tuple[Dict[str, dict], Tuple[st
             continue
         by_id[object_id] = dict(item)
     return by_id, tuple(dupes)
+
+
+def _types_by_id(payload: Optional[Mapping]) -> Dict[str, dict]:
+    found = {}
+    if not isinstance(payload, Mapping):
+        return found
+    for item in payload.get("types") or ():
+        if not isinstance(item, Mapping):
+            continue
+        type_id = text(item.get("type_id"))
+        if type_id is None:
+            continue
+        found[type_id] = dict(item)
+    return found
+
+
+def _enrich_row(row: Mapping, types_by_id: Mapping[str, dict]) -> dict:
+    body = dict(row)
+    if text(body.get("type_display_name")) is None:
+        record = types_by_id.get(str(body.get("type_id") or "").strip())
+        if record is not None and text(record.get("type_display_name")) is not None:
+            body["type_display_name"] = record.get("type_display_name")
+    return body
+
+
+def _live_uuid_index(session: RhinoSession, cache: dict) -> Dict[str, str]:
+    indexed = cache.get("live_by_uuid")
+    if indexed is not None:
+        return indexed
+    found = {}
+    for object_id in session.iter_object_ids(include_hidden=True, include_locked=True):
+        uid = _as_uuid(read_text(session, object_id, OBJECT_ID_KEY))
+        if uid is not None and uid not in found:
+            found[uid] = object_id
+    cache["live_by_uuid"] = found
+    return found
+
+
+def _row_from_live(
+    session: RhinoSession,
+    rhino_id: str,
+    types_by_id: Mapping[str, dict],
+) -> dict:
+    type_id = read_text(session, rhino_id, TYPE_ID_KEY)
+    record = types_by_id.get(str(type_id or "").strip())
+    return {
+        "object_id": read_text(session, rhino_id, OBJECT_ID_KEY),
+        "type_id": type_id,
+        "type_category": read_text(session, rhino_id, MODEL_TYPE_CATEGORY_KEY),
+        "type_sequence": read_text(session, rhino_id, MODEL_TYPE_SEQUENCE_KEY),
+        "type_display_name": None if record is None else record.get("type_display_name"),
+        "elevation_basis": read_text(session, rhino_id, MODEL_ELEVATION_BASIS_KEY),
+        "elevation_display": read_text(session, rhino_id, MODEL_ELEVATION_DISPLAY_KEY),
+    }
+
+
+def _lookup_object_row(
+    session: RhinoSession,
+    source_id: str,
+    objects: Mapping[str, dict],
+    types_by_id: Mapping[str, dict],
+    cache: dict,
+) -> Tuple[Optional[dict], bool]:
+    key = _as_uuid(source_id) or _norm_id(source_id)
+    if key is None:
+        return None, False
+    row = objects.get(key)
+    if row is not None:
+        return _enrich_row(row, types_by_id), False
+    live_id = _live_uuid_index(session, cache).get(key)
+    if live_id is None:
+        return None, False
+    return _enrich_row(_row_from_live(session, live_id, types_by_id), types_by_id), True
 
 
 def _host_sheet_id(
@@ -116,6 +212,33 @@ def _index_sheet_fields(session: RhinoSession, sheet_id: str) -> Optional[Dict[s
     }
 
 
+def _lookup_sheet_fields(
+    session: RhinoSession,
+    catalog: TagTemplateSet,
+    sheet_id: str,
+) -> Tuple[Optional[str], Optional[Dict[str, str]]]:
+    candidates = []
+    raw = text(sheet_id)
+    if raw:
+        candidates.append(raw)
+    normalized = _as_uuid(sheet_id)
+    if normalized and normalized not in candidates:
+        candidates.append(normalized)
+    for candidate in candidates:
+        fields = _index_sheet_fields(session, candidate)
+        if fields is not None:
+            return candidate, fields
+    wanted = _as_uuid(sheet_id)
+    if wanted is None:
+        return None, None
+    for sheet in list_active_sheets(session, catalog):
+        if _as_uuid(sheet.sheet_id) == wanted:
+            fields = _index_sheet_fields(session, sheet.sheet_id)
+            if fields is not None:
+                return sheet.sheet_id, fields
+    return None, None
+
+
 def _resolve_index_sheet(
     session: RhinoSession,
     catalog: TagTemplateSet,
@@ -123,14 +246,14 @@ def _resolve_index_sheet(
     cache: Dict[str, object],
 ) -> results.Result:
     existing = text(session.get_object_user_text(tag_id, TARGET_SHEET_ID_KEY))
-    if existing and UUID_V4_RE.match(existing):
-        fields = _index_sheet_fields(session, existing)
+    if _as_uuid(existing) is not None:
+        sheet_id, fields = _lookup_sheet_fields(session, catalog, existing)
         if fields is not None:
             return results.ok(
                 STAGE,
                 "已用目標 Sheet。",
                 command_id=COMMAND_ID,
-                details={"sheet_id": existing, "fields": fields},
+                details={"sheet_id": sheet_id, "fields": fields},
             )
         return results.blocked(
             STAGE,
@@ -138,8 +261,8 @@ def _resolve_index_sheet(
             ("missing_sheet",),
             command_id=COMMAND_ID,
         )
-    view_id = text(session.get_object_user_text(tag_id, TARGET_VIEW_ID_KEY))
-    if view_id is None or not UUID_V4_RE.match(view_id):
+    view_id = _as_uuid(session.get_object_user_text(tag_id, TARGET_VIEW_ID_KEY))
+    if view_id is None:
         return results.blocked(
             STAGE,
             "Index Tag 沒有目標 View。",
@@ -203,7 +326,7 @@ def _pages_for_views(session: RhinoSession) -> Dict[str, Tuple[str, ...]]:
         resolved = resolve_view_for_detail(session, item)
         if not resolved.ok:
             continue
-        view_id = resolved.details.get("view_id")
+        view_id = _as_uuid(resolved.details.get("view_id"))
         page_name = str(item.get("layout") or "")
         if not view_id or not page_name:
             continue
@@ -292,6 +415,7 @@ def infuse_page(
 ) -> dict:
     """注入一頁。回傳計數與警告，不組 Result。"""
     objects, dupes = _object_index(payload)
+    types_by_id = _types_by_id(payload)
     host_sheet_id = _host_sheet_id(session, catalog, page_name)
     cache = {}
     counts = {
@@ -344,6 +468,7 @@ def infuse_page(
             template,
             objects,
             dupes,
+            types_by_id,
             payload is not None,
             host_sheet_id,
             revision,
@@ -355,7 +480,17 @@ def infuse_page(
             continue
         if status == "unknown_template":
             notes.append("未知圖塊「%s」" % (block_name or "（未命名）"))
-    return {"counts": counts, "notes": notes, "host_sheet_id": host_sheet_id}
+    if cache.get("used_live_object"):
+        notes.append("有些 Height／Finish 是從模型現況讀的，尚未進 Registry。")
+    redraw = getattr(session, "redraw", None)
+    if callable(redraw):
+        redraw()
+    return {
+        "counts": counts,
+        "notes": notes,
+        "host_sheet_id": host_sheet_id,
+        "used_live_object": bool(cache.get("used_live_object")),
+    }
 
 
 def _infuse_tag(
@@ -364,6 +499,7 @@ def _infuse_tag(
     template: TagTemplate,
     objects: Mapping[str, dict],
     dupes: Sequence[str],
+    types_by_id: Mapping[str, dict],
     has_registry: bool,
     host_sheet_id: Optional[str],
     revision,
@@ -378,15 +514,20 @@ def _infuse_tag(
             _write_fields(session, tag_id, missing)
             _stamp(session, tag_id, host_sheet_id, revision)
             return "missing_source"
-        if source_id in dupes:
+        source_key = _as_uuid(source_id) or _norm_id(source_id)
+        if source_key in dupes:
             _write_fields(session, tag_id, missing)
             _stamp(session, tag_id, host_sheet_id, revision)
             return "ambiguous"
-        row = objects.get(source_id)
+        row, from_live = _lookup_object_row(
+            session, source_id, objects, types_by_id, cache
+        )
         if row is None:
             _write_fields(session, tag_id, missing)
             _stamp(session, tag_id, host_sheet_id, revision)
             return "orphaned" if has_registry else "missing_registry"
+        if from_live:
+            cache["used_live_object"] = True
         fields = _height_fields(row) if family == "height" else _finish_fields(row)
         _write_fields(session, tag_id, fields)
         _stamp(session, tag_id, host_sheet_id, revision)
@@ -455,7 +596,7 @@ def _summary(page_name: str, revision, counts: Mapping[str, int], notes: Sequenc
         ("unknown_template", "未知圖塊"),
         ("missing_source", "缺來源"),
         ("orphaned", "Registry 找不到物件"),
-        ("missing_registry", "沒有 Registry"),
+        ("missing_registry", "沒有 Registry（請先發布）"),
         ("ambiguous", "來源歧義"),
         ("invalid_block_name", "家具名稱不符"),
         ("missing_sheet", "缺目標圖號"),
@@ -489,6 +630,7 @@ def _result_from_counts(
         "invalid_block_name",
         "missing_sheet",
         "used_last_good",
+        "used_live_object",
         "missing_project_id",
     )
     for key in warning_keys:
@@ -586,12 +728,15 @@ def run_infuser_part(
 
     def action(current: RhinoSession) -> results.Result:
         outcome = infuse_page(current, page_name, loaded, payload, revision)
+        extra = dict(extra_warnings)
+        if outcome.get("used_live_object"):
+            extra["used_live_object"] = True
         result = _result_from_counts(
             page_name,
             revision,
             outcome["counts"],
             outcome["notes"],
-            extra=extra_warnings,
+            extra=extra,
         )
         if show_message and result.ok:
             show_message(result.message)

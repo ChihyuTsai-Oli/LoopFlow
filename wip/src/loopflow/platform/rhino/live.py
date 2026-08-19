@@ -1119,9 +1119,32 @@ class LiveSession:
             return ()
         viewport_id = page.MainViewport.Id
         ids = []
-        for obj in self._sc.doc.Objects:
-            if obj.Attributes.ViewportId == viewport_id:
-                ids.append(str(obj.Id))
+        seen = set()
+
+        def add(obj) -> None:
+            if obj is None:
+                return
+            try:
+                if obj.Attributes.ViewportId != viewport_id:
+                    return
+            except Exception:
+                return
+            key = str(obj.Id)
+            if key in seen:
+                return
+            seen.add(key)
+            ids.append(key)
+
+        try:
+            refs = self._sc.doc.Objects.FindByObjectType(
+                self._rhino.DocObjects.ObjectType.InstanceReference
+            )
+            for obj in refs or ():
+                add(obj)
+        except Exception:
+            pass
+        for obj in self._iter_rhino_objects():
+            add(obj)
         return tuple(ids)
 
     def rename_layout_page(self, page_name: str, new_name: str) -> bool:

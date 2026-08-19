@@ -50,6 +50,14 @@ from loopflow.features.tagger.keys import (
 )
 from loopflow.features.tagger.templates import load_tag_templates
 from loopflow.features.view.keys import SCHEMA_ID_KEY, VIEW_ID_KEY, VIEW_SCHEMA_ID
+from loopflow.foundation.usertext import (
+    ELEVATION_BASIS_KEY as MODEL_ELEVATION_BASIS_KEY,
+    ELEVATION_DISPLAY_KEY as MODEL_ELEVATION_DISPLAY_KEY,
+    OBJECT_ID_KEY,
+    TYPE_CATEGORY_KEY as MODEL_TYPE_CATEGORY_KEY,
+    TYPE_ID_KEY,
+    TYPE_SEQUENCE_KEY as MODEL_TYPE_SEQUENCE_KEY,
+)
 from loopflow.platform.rhino.memory import MemorySession
 
 PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
@@ -159,6 +167,23 @@ def _session() -> MemorySession:
     )
     session.set_document_modified(False)
     return session
+
+
+def _add_live_source(session, object_id=OBJECT_ID, **user_text):
+    rhino_id = "src-" + object_id[:8]
+    session.add_object(rhino_id, name="wall", layer="M3D::01_FIN")
+    defaults = {
+        OBJECT_ID_KEY: object_id,
+        TYPE_ID_KEY: "PT-01",
+        MODEL_TYPE_CATEGORY_KEY: "PT",
+        MODEL_TYPE_SEQUENCE_KEY: "01",
+        MODEL_ELEVATION_BASIS_KEY: "CH",
+        MODEL_ELEVATION_DISPLAY_KEY: "320",
+    }
+    defaults.update(user_text)
+    for key, value in defaults.items():
+        session.set_object_user_text(rhino_id, key, value)
+    return rhino_id
 
 
 def _add_block(session, object_id, block_name, page=PAGE, user_text=None):
@@ -296,6 +321,75 @@ class InjectTests(unittest.TestCase):
     def test_index_from_target_view(self):
         session = _session()
         _add_block(session, "tag", "TAG_ELEV_1", user_text={TARGET_VIEW_ID_KEY: VIEW_ID})
+        session.add_object("other_frame", name="TargetFrame", layer="M2D")
+        session.set_block("other_frame", (0, 0, 0), name="Sample_Frame")
+        session.set_object_user_text("other_frame", SHEET_ID_KEY, TARGET_SHEET_ID)
+        session.add_object_to_layout_page(OTHER, "other_frame")
+        session.add_object("view", name="A-A", layer="LoopFlow::Anchor_Frame")
+        session.set_object_user_text("view", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
+        session.set_object_user_text("view", VIEW_ID_KEY, VIEW_ID)
+        session.set_bbox("view", (0, 0, 0), (100, 100, 0))
+        session.set_layout_details(
+            (
+                {
+                    "layout": OTHER,
+                    "page_number": 2,
+                    "detail_id": "dv-1",
+                    "dv_name": "A-A",
+                },
+            )
+        )
+        session.set_detail_model_point("dv-1", (50, 50, 0))
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("tag", SHEET_CODE_KEY), "IN")
+        self.assertEqual(session.get_object_user_text("tag", SHEET_REF_KEY), "101.01")
+
+    def test_height_matches_uppercase_and_braced_uuid(self):
+        session = _session()
+        _add_block(
+            session,
+            "upper",
+            "TAG_HEIGHT_GRAB",
+            user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID.upper()},
+        )
+        _add_block(
+            session,
+            "braced",
+            "TAG_FINISH_LASER",
+            user_text={SOURCE_OBJECT_ID_KEY: "{%s}" % OBJECT_ID},
+        )
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("upper", TYPE_DISPLAY_NAME_KEY), "Paint")
+        self.assertEqual(session.get_object_user_text("braced", TYPE_DISPLAY_NAME_KEY), "Paint")
+
+    def test_height_reads_live_object_when_not_in_registry(self):
+        session = _session()
+        _add_live_source(session)
+        _add_block(
+            session,
+            "tag",
+            "TAG_HEIGHT_GRAB",
+            user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID},
+        )
+        result = _run(session, registry=_payload(objects=[]))
+        self.assertTrue(result.ok, result.message)
+        self.assertIn("used_live_object", result.warnings)
+        self.assertEqual(session.get_object_user_text("tag", ELEVATION_BASIS_KEY), "CH")
+        self.assertEqual(session.get_object_user_text("tag", ELEVATION_DISPLAY_KEY), "320")
+        self.assertEqual(session.get_object_user_text("tag", TYPE_CATEGORY_KEY), "PT")
+        self.assertEqual(session.get_object_user_text("tag", TYPE_SEQUENCE_KEY), "01")
+        self.assertEqual(session.get_object_user_text("tag", TYPE_DISPLAY_NAME_KEY), "Paint")
+
+    def test_index_from_uppercase_target_view(self):
+        session = _session()
+        _add_block(
+            session,
+            "tag",
+            "TAG_ELEV_1",
+            user_text={TARGET_VIEW_ID_KEY: VIEW_ID.upper()},
+        )
         session.add_object("other_frame", name="TargetFrame", layer="M2D")
         session.set_block("other_frame", (0, 0, 0), name="Sample_Frame")
         session.set_object_user_text("other_frame", SHEET_ID_KEY, TARGET_SHEET_ID)
@@ -485,6 +579,30 @@ class RegistryFileTests(unittest.TestCase):
         self.assertIn("missing_registry", result.warnings)
         self.assertEqual(session.get_object_user_text("item", ITEM_NAME_KEY), "Chair-1")
         self.assertEqual(session.get_object_user_text("height", TYPE_CATEGORY_KEY), MISSING_DISPLAY)
+        self.assertFalse((root / "exchange" / PROJECT_ID / "Project_Registry.json").exists())
+
+    def test_missing_registry_height_reads_live_object(self):
+        root = self._workfiles()
+        session = _session()
+        _add_live_source(session)
+        _add_block(
+            session,
+            "item",
+            "TAG_ITEM",
+            user_text={SOURCE_BLOCK_NAME_KEY: "FF-01__Chair-1"},
+        )
+        _add_block(session, "height", "TAG_HEIGHT_GRAB", user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID})
+        result = run_infuser_part(
+            session,
+            catalog=_catalog(),
+            environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
+        )
+        self.assertTrue(result.ok, result.message)
+        self.assertIn("missing_registry", result.warnings)
+        self.assertEqual(session.get_object_user_text("item", ITEM_NAME_KEY), "Chair-1")
+        self.assertEqual(session.get_object_user_text("height", TYPE_CATEGORY_KEY), "PT")
+        self.assertEqual(session.get_object_user_text("height", ELEVATION_DISPLAY_KEY), "320")
+        self.assertEqual(session.get_object_user_text("height", TYPE_DISPLAY_NAME_KEY), MISSING_DISPLAY)
         self.assertFalse((root / "exchange" / PROJECT_ID / "Project_Registry.json").exists())
 
     def test_reader_does_not_create_files(self):
