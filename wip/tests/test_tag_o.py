@@ -17,7 +17,14 @@ if str(SRC) not in sys.path:
 
 from loopflow.bootstrap import run_command
 from loopflow.command_catalog import get_command
-from loopflow.features.health.tag_o import run_tag_o
+from loopflow.features.health.tag_o import (
+    COLOR_BROK,
+    COLOR_OK,
+    COLOR_WARN,
+    PANEL_TITLE,
+    run_tag_o,
+)
+from loopflow.foundation.usertext import SPACE_FRAME_DISPLAY_KEY
 from loopflow.features.infuser.keys import TYPE_CATEGORY_KEY
 from loopflow.features.tagger.keys import (
     LAST_SYNCED_REVISION_KEY,
@@ -38,6 +45,7 @@ from test_infuser_part import (
     _add_block,
     _add_live_source,
     _catalog,
+    _object_row,
     _payload,
     _session,
     _snapshot,
@@ -378,6 +386,119 @@ class HealthTests(unittest.TestCase):
         self.assertTrue(first.ok and second.ok)
         self.assertEqual(session._object_meta, before["objects"])
         self.assertEqual(session.get_object_user_text("tag", TYPE_CATEGORY_KEY), "PT")
+
+
+class PanelTests(unittest.TestCase):
+    def test_panel_lists_unbound_in_warn_color(self):
+        session = _session()
+        _add_block(session, "tag", "TAG_HEIGHT_GRAB")
+        captured = []
+        result = _run(session, show_panel=captured.append)
+        self.assertTrue(result.ok, result.message)
+        lines = result.details["panel_lines"]
+        self.assertEqual(captured, [lines])
+        self.assertEqual(lines[0][0], PANEL_TITLE)
+        body = "\n".join(text for text, _color in lines)
+        self.assertIn("[缺來源]", body)
+        self.assertIn("TAG_HEIGHT_GRAB", body)
+        self.assertIn(PAGE, body)
+        colors = [color for text, color in lines if "[缺來源]" in text]
+        self.assertEqual(colors, [COLOR_WARN])
+
+    def test_panel_lists_orphaned_in_red(self):
+        session = _session()
+        _add_block(
+            session,
+            "tag",
+            "TAG_HEIGHT_GRAB",
+            user_text={SOURCE_OBJECT_ID_KEY: MISSING},
+        )
+        _stamp(session, "tag")
+        result = _run(session)
+        body = "\n".join(text for text, color in result.details["panel_lines"])
+        self.assertIn("[來源不在]", body)
+        colors = [
+            color
+            for text, color in result.details["panel_lines"]
+            if "[來源不在]" in text
+        ]
+        self.assertEqual(colors, [COLOR_BROK])
+
+    def test_panel_marks_locked_and_all_ok_green(self):
+        session = _session()
+        _add_block(
+            session,
+            "bad",
+            "TAG_HEIGHT_GRAB",
+            user_text={SOURCE_OBJECT_ID_KEY: MISSING, LOCK_STATE_KEY: "x"},
+        )
+        _stamp(session, "bad")
+        result = _run(session)
+        body = "\n".join(text for text, _color in result.details["panel_lines"])
+        self.assertIn("（鎖定）", body)
+
+        clean = _session()
+        _add_block(
+            clean,
+            "tag",
+            "TAG_HEIGHT_GRAB",
+            user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID},
+        )
+        _stamp(clean, "tag")
+        ok_result = _run(clean)
+        greens = [
+            text
+            for text, color in ok_result.details["panel_lines"]
+            if color == COLOR_OK
+        ]
+        self.assertTrue(any("全部 Tag 來源正常" in text for text in greens))
+
+    def test_uncovered_space_listed(self):
+        session = _session()
+        session.add_object("room", name="廊道框", layer="M3D::_Data::Space_Boundaries")
+        session.set_object_user_text("room", SPACE_FRAME_DISPLAY_KEY, "廊道")
+        result = _run(session)
+        self.assertIn("uncovered_space", result.warnings)
+        self.assertEqual(result.details["space_missing"], ("廊道",))
+        body = "\n".join(text for text, _color in result.details["panel_lines"])
+        self.assertIn("廊道", body)
+
+    def test_finish_tag_covers_space(self):
+        session = _session()
+        session.add_object("room", name="廊道框", layer="M3D::_Data::Space_Boundaries")
+        session.set_object_user_text("room", SPACE_FRAME_DISPLAY_KEY, "廊道")
+        payload = _payload(objects=[_object_row(space_display="廊道", space_id="hall")])
+        _add_block(
+            session,
+            "tag",
+            "TAG_FINISH_GRAB",
+            user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID},
+        )
+        _stamp(session, "tag")
+        result = _run(session, registry=payload)
+        self.assertNotIn("uncovered_space", result.warnings or ())
+        self.assertEqual(result.details["space_missing"], ())
+        greens = [
+            text
+            for text, color in result.details["panel_lines"]
+            if color == COLOR_OK
+        ]
+        self.assertTrue(any("Finish Tag" in text for text in greens))
+
+    def test_panel_does_not_paint_objects(self):
+        session = _session()
+        _add_block(
+            session,
+            "tag",
+            "TAG_HEIGHT_GRAB",
+            user_text={SOURCE_OBJECT_ID_KEY: MISSING},
+        )
+        before = session.get_view_state("tag")
+        result = _run(session)
+        after = session.get_view_state("tag")
+        self.assertTrue(result.ok)
+        self.assertEqual(before.color, after.color)
+        self.assertEqual(before.color_by_layer, after.color_by_layer)
 
 
 if __name__ == "__main__":

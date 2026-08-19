@@ -923,3 +923,91 @@ def show_readonly_text(message: str, title: str = "LF Data Viewer") -> None:
 
     dialog = _ReadonlyDialog()
     dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
+
+
+_PANEL_COLORS = {
+    "head": (140, 190, 240),
+    "dim": (120, 120, 120),
+    "text": (220, 220, 220),
+    "ok": (90, 200, 120),
+    "warn": (255, 130, 46),
+    "brok": (255, 46, 97),
+}
+
+
+def show_colored_log_panel(
+    lines: Sequence[Tuple[str, str]],
+    title: str = "TAG-O ~ Holy Cargo ~~",
+) -> None:
+    """1.0 風格深色色碼列表。無 Eto 時改成純文字訊息框。"""
+    try:
+        import Eto.Drawing as drawing  # type: ignore
+        import Eto.Forms as forms  # type: ignore
+        import Rhino  # type: ignore
+        import Rhino.UI  # type: ignore
+    except ImportError:
+        text = "\n".join(str(item[0]) for item in lines)
+        show_message(text, title)
+        return
+
+    bg = drawing.Color.FromArgb(30, 30, 30)
+    try:
+        log_font = drawing.Font("Consolas", 10)
+    except Exception:
+        log_font = _ui_font(drawing, 10)
+    ui_font = _ui_font(drawing, 11)
+    palette = {
+        key: drawing.Color.FromArgb(rgb[0], rgb[1], rgb[2])
+        for key, rgb in _PANEL_COLORS.items()
+    }
+
+    class _LogPanel(forms.Dialog[bool]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.Title = title
+            self.ClientSize = drawing.Size(520, 625)
+            self.Padding = drawing.Padding(0)
+            self.Resizable = True
+            self.BackgroundColor = bg
+
+            stack = forms.StackLayout()
+            stack.BackgroundColor = bg
+            stack.Orientation = forms.Orientation.Vertical
+            stack.Padding = drawing.Padding(12)
+            stack.Spacing = 1
+            for text, color_key in lines:
+                label = forms.Label()
+                label.Text = str(text)
+                label.TextColor = palette.get(color_key, palette["text"])
+                label.Font = log_font
+                label.BackgroundColor = bg
+                stack.Items.Add(forms.StackLayoutItem(label))
+
+            scroll = forms.Scrollable()
+            scroll.BackgroundColor = bg
+            scroll.Content = stack
+
+            close_btn = forms.Button()
+            close_btn.Text = "關閉"
+            close_btn.Font = ui_font
+            close_btn.Click += self._on_close
+
+            layout = forms.DynamicLayout()
+            layout.BackgroundColor = bg
+            layout.Padding = drawing.Padding(0, 0, 0, 10)
+            layout.Spacing = drawing.Size(0, 8)
+            layout.AddRow(scroll)
+            btn_row = forms.DynamicLayout()
+            btn_row.DefaultSpacing = drawing.Size(10, 0)
+            btn_row.AddRow(None, close_btn)
+            layout.AddRow(btn_row)
+
+            self.Content = layout
+            self.AbortButton = close_btn
+            self.DefaultButton = close_btn
+
+        def _on_close(self, sender, e) -> None:
+            self.Close(True)
+
+    dialog = _LogPanel()
+    dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)

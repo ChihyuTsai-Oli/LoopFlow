@@ -157,12 +157,12 @@ def run_infuser_all() -> Result:
 
 def run_tag_o() -> Result:
     from loopflow.features.health.tag_o import run_tag_o as run_health
-    from loopflow.platform.rhino.prompts import show_message
+    from loopflow.platform.rhino.prompts import show_colored_log_panel
 
     opened = _open_live_session()
     if not opened.ok:
         return opened
-    result = run_health(opened.details["session"], show_message=show_message)
+    result = run_health(opened.details["session"], show_panel=show_colored_log_panel)
     if not result.ok:
         return _present_failure(result)
     return result

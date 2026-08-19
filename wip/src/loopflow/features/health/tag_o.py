@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
 """LF_TAG-O：只讀檢查全檔 Layout 頁的 Tag 是否活著或斷連。
 
-不寫 UserText、不改顏色、不做 Repair。鎖定 Tag 仍判斷 stale／orphaned。
-`TAG_DW` 與 `TAG_ELEV_0` 無來源屬正常。家具不判 orphaned。
+以 1.0 風格色碼面板列出詳細結果。不寫 UserText、不改圖面顏色、不做 Repair。
+鎖定 Tag 仍判斷 stale／orphaned。`TAG_DW` 與 `TAG_ELEV_0` 無來源屬正常。
+家具不判 orphaned。
 """
 from __future__ import annotations
 
-from typing import Callable, Dict, List, Mapping, Optional, Sequence
+import os
+import time
+from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from loopflow.features.infuser.part import (
     PAGE_TAG_TEMPLATE_ID,
     PROJECT_ID_KEY,
     _as_uuid,
     _item_fields,
+    _iter_live_source_ids,
     _lookup_object_row,
     _object_index,
     _resolve_index_sheet,
@@ -34,11 +38,27 @@ from loopflow.features.tagger.keys import (
 from loopflow.features.tagger.templates import TagTemplate, TagTemplateSet, load_tag_templates
 from loopflow.features.viewer.inspect import check_document_schema
 from loopflow.foundation import results
+from loopflow.foundation.usertext import (
+    OBJECT_ID_KEY,
+    SPACE_DISPLAY_KEY,
+    SPACE_FRAME_DISPLAY_KEY,
+    read_text,
+)
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_TAG-O"
 STAGE = "health_check"
 ShowMessage = Callable[[str], None]
+ShowPanel = Callable[[Sequence[Tuple[str, str]]], None]
+
+COLOR_HEAD = "head"
+COLOR_DIM = "dim"
+COLOR_TEXT = "text"
+COLOR_OK = "ok"
+COLOR_WARN = "warn"
+COLOR_BROK = "brok"
+EXT_SPACE = "EXT"
+PANEL_TITLE = "TAG-O ~ Holy Cargo ~~"
 
 STATUS_HEALTHY = "healthy"
 STATUS_UNBOUND = "unbound"
@@ -53,6 +73,14 @@ PROBLEM_STATUSES = (
     STATUS_STALE,
     STATUS_AMBIGUOUS,
 )
+
+STATUS_LINE = {
+    STATUS_UNBOUND: ("缺來源", COLOR_WARN),
+    STATUS_ORPHANED: ("來源不在", COLOR_BROK),
+    STATUS_STALE: ("過期", COLOR_WARN),
+    STATUS_AMBIGUOUS: ("歧義", COLOR_WARN),
+    STATUS_UNCHECKED: ("未檢查", COLOR_DIM),
+}
 
 
 def _layout_page_names(session: RhinoSession):
@@ -257,6 +285,7 @@ def _inspect_block(
         "block_name": block_name,
         "template_id": template.template_id,
         "family": family,
+        "source_object_id": text(session.get_object_user_text(object_id, SOURCE_OBJECT_ID_KEY)),
     }
 
 
@@ -271,6 +300,7 @@ def inspect_pages(
     cache = {}
     counts = _empty_counts()
     issues: List[dict] = []
+    tags: List[dict] = []
     objects_fn = getattr(session, "objects_on_layout_page", None)
     registered = registered_title_frame_names(session)
     page_names = _layout_page_names(session)
@@ -295,6 +325,7 @@ def inspect_pages(
             if row["kind"] == "title_frame":
                 counts["skipped_title_frame"] += 1
                 continue
+            tags.append(row)
             if row["kind"] == "unchecked":
                 counts["unchecked"] += 1
                 issues.append(row)
@@ -310,15 +341,148 @@ def inspect_pages(
                 counts["locked"] += 1
                 if status in PROBLEM_STATUSES:
                     counts["locked_disconnected"] += 1
-            if status in PROBLEM_STATUSES or row["kind"] == "unchecked":
+            if status in PROBLEM_STATUSES:
                 issues.append(row)
     return {
         "counts": counts,
         "issues": tuple(issues),
+        "tags": tuple(tags),
         "page_names": page_names,
         "page_count": len(page_names),
         "registry_revision": revision,
     }
+
+
+def _listed_spaces(session: RhinoSession) -> Tuple[str, ...]:
+    found = []
+    for object_id in _iter_live_source_ids(session):
+        name = read_text(session, object_id, SPACE_FRAME_DISPLAY_KEY)
+        if name is None:
+            continue
+        if name == EXT_SPACE:
+            continue
+        if name not in found:
+            found.append(name)
+    return tuple(found)
+
+
+def inspect_space_coverage(
+    session: RhinoSession,
+    payload: Optional[Mapping],
+    tags: Sequence[Mapping],
+) -> Tuple[Tuple[str, ...], Optional[str]]:
+    spaces = _listed_spaces(session)
+    if not spaces:
+        return (), "沒有空間框，略過覆蓋檢查"
+    objects, _dupes = _object_index(payload)
+    types_by_id = _types_by_id(payload)
+    cache = {}
+    covered = []
+    for row in tags:
+        if row.get("family") != "finish":
+            continue
+        if row.get("status") in (STATUS_UNBOUND, STATUS_ORPHANED, STATUS_UNCHECKED):
+            continue
+        source_id = text(row.get("source_object_id"))
+        if source_id is None:
+            continue
+        obj_row, _from_live = _lookup_object_row(
+            session, source_id, objects, types_by_id, cache
+        )
+        space = text((obj_row or {}).get("space_display"))
+        if space is None:
+            space = _space_from_live(session, source_id)
+        if space and space != EXT_SPACE and space not in covered:
+            covered.append(space)
+    missing = tuple(name for name in spaces if name not in covered)
+    return missing, None
+
+
+def _space_from_live(session: RhinoSession, source_id: str) -> Optional[str]:
+    wanted = _as_uuid(source_id) or (str(source_id).strip("{}").casefold() or None)
+    if wanted is None:
+        return None
+    for object_id in _iter_live_source_ids(session):
+        uid = _as_uuid(read_text(session, object_id, OBJECT_ID_KEY))
+        if uid == wanted:
+            return read_text(session, object_id, SPACE_DISPLAY_KEY)
+    return None
+
+
+def _doc_label(session: RhinoSession) -> str:
+    getter = getattr(session, "document_path", None)
+    raw = getter() if callable(getter) else getattr(session, "_document_path", None)
+    if not raw:
+        return "（未存檔）"
+    return os.path.basename(str(raw))
+
+
+def build_panel_lines(
+    outcome: Mapping,
+    *,
+    doc_name: str,
+    notes: Sequence[str] = (),
+    now: Optional[str] = None,
+) -> Tuple[Tuple[str, str], ...]:
+    """組 1.0 風格色碼列表。顏色只在面板文字，不改圖面。"""
+    stamp = now or time.strftime("%Y-%m-%d  %H:%M:%S")
+    revision = outcome.get("registry_revision")
+    issues = list(outcome.get("issues") or ())
+    lines: List[Tuple[str, str]] = [
+        (PANEL_TITLE, COLOR_HEAD),
+        ("檔案：%s" % doc_name, COLOR_DIM),
+        ("掃描：%s" % stamp, COLOR_DIM),
+    ]
+    if revision not in (None, ""):
+        lines.append(("Registry revision %s" % revision, COLOR_DIM))
+    for note in notes:
+        lines.append((str(note), COLOR_DIM))
+    lines.append(("", COLOR_TEXT))
+
+    if issues:
+        lines.append(("── Tag 綁定狀態  （%s 項）──" % len(issues), COLOR_HEAD))
+    else:
+        lines.append(("── Tag 綁定狀態 ──", COLOR_HEAD))
+    if not issues:
+        lines.append(("  全部 Tag 來源正常", COLOR_OK))
+    else:
+        ranked = sorted(
+            issues,
+            key=lambda row: (
+                str(row.get("page_name") or ""),
+                row.get("status") != STATUS_ORPHANED,
+                str(row.get("block_name") or ""),
+            ),
+        )
+        names = [str(row.get("block_name") or "") for row in ranked]
+        width = max((len(name) for name in names), default=0)
+        for row in ranked:
+            status = row.get("status")
+            label, color = STATUS_LINE.get(status, (str(status or ""), COLOR_TEXT))
+            lock = "  （鎖定）" if row.get("locked") else ""
+            name = str(row.get("block_name") or "").ljust(width)
+            page = str(row.get("page_name") or "（未命名頁）")
+            lines.append(("  [%s]  %s  ->  %s%s" % (label, name, page, lock), color))
+
+    lines.append(("", COLOR_TEXT))
+    missing = tuple(outcome.get("space_missing") or ())
+    space_note = outcome.get("space_note")
+    if missing:
+        lines.append(
+            ("── 未被 Finish Tag 涵蓋的空間  （%s）──" % len(missing), COLOR_HEAD)
+        )
+    else:
+        lines.append(("── 未被 Finish Tag 涵蓋的空間 ──", COLOR_HEAD))
+    if space_note:
+        lines.append(("  ［說明］%s" % space_note, COLOR_DIM))
+    if not missing and not space_note:
+        lines.append(("  所有空間都有 Finish Tag", COLOR_OK))
+    for space in missing:
+        lines.append(("  %s" % space, COLOR_TEXT))
+
+    lines.append(("", COLOR_TEXT))
+    lines.append(("只讀檢查。不改 Tag、不改圖面顏色。Repair 尚未實作。", COLOR_DIM))
+    return tuple(lines)
 
 
 def _summary(counts: Mapping[str, int], revision, notes: Sequence[str]) -> str:
@@ -364,6 +528,7 @@ def run_tag_o(
     environ: Optional[Mapping[str, str]] = None,
     registry: Optional[Mapping] = None,
     show_message: Optional[ShowMessage] = None,
+    show_panel: Optional[ShowPanel] = None,
 ) -> results.Result:
     """全檔 Layout 頁只讀檢查。不寫入。"""
     schema = check_document_schema(session)
@@ -423,20 +588,38 @@ def run_tag_o(
 
     def action(current: RhinoSession) -> results.Result:
         outcome = inspect_pages(current, loaded, payload, revision)
+        missing, space_note = inspect_space_coverage(
+            current, payload, outcome.get("tags") or ()
+        )
         counts = outcome["counts"]
         warnings = []
         for key in PROBLEM_STATUSES + (STATUS_UNCHECKED,):
             if counts.get(key):
                 warnings.append(key)
+        if missing:
+            warnings.append("uncovered_space")
         for key in extra_warnings:
             if key not in warnings:
                 warnings.append(key)
+        panel_lines = build_panel_lines(
+            {
+                **outcome,
+                "space_missing": missing,
+                "space_note": space_note,
+            },
+            doc_name=_doc_label(current),
+            notes=notes,
+        )
         details = {
             "counts": dict(counts),
             "issues": outcome["issues"],
+            "tags": outcome.get("tags") or (),
             "page_count": outcome["page_count"],
             "page_names": outcome["page_names"],
             "registry_revision": revision,
+            "space_missing": missing,
+            "space_note": space_note,
+            "panel_lines": panel_lines,
         }
         message = _summary(counts, revision, notes)
         if warnings:
@@ -451,8 +634,11 @@ def run_tag_o(
             result = results.ok(
                 STAGE, message, command_id=COMMAND_ID, details=details
             )
-        if show_message and result.ok:
-            show_message(result.message)
+        if result.ok:
+            if show_panel:
+                show_panel(panel_lines)
+            elif show_message:
+                show_message(result.message)
         return result
 
     return run_guarded(session, action, command_id=COMMAND_ID)
