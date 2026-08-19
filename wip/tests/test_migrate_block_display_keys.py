@@ -209,6 +209,26 @@ class MigrateBlockDisplayKeysTests(unittest.TestCase):
         self.assertIsNone(session.get_object_user_text("h-1", LOCK_STATE_PREV_KEY))
         self.assertNotEqual(LOCK_STATE_KEY, LOCK_STATE_PREV_KEY)
 
+    def test_lock_key_alias_copied(self):
+        session = MemorySession()
+        _block(
+            session,
+            "h-1",
+            "Tag_Height_Grab",
+            **{"foo_不更新": "x"},
+        )
+        run_migrate_block_display_keys(session, confirm=lambda _lines: True)
+        self.assertEqual(session.get_object_user_text("h-1", LOCK_STATE_KEY), "x")
+        self.assertIsNone(session.get_object_user_text("h-1", "foo_不更新"))
+
+    def test_nothing_left_explains_lock_formula(self):
+        session = MemorySession()
+        _block(session, "h-1", "Tag_Height_Grab", **{"lf_type_category": "PT"})
+        result = run_migrate_block_display_keys(session, confirm=lambda _lines: True)
+        self.assertTrue(result.ok)
+        self.assertIn("BlockEdit", result.message)
+        self.assertIn("lf_00_lock_state", result.message)
+
 
 if __name__ == "__main__":
     unittest.main()

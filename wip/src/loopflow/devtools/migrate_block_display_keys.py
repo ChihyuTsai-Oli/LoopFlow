@@ -20,6 +20,7 @@ from loopflow.features.tagger.keys import (
     LOCK_LEGACY_KEY,
     LOCK_STATE_KEY,
     LOCK_STATE_PREV_KEY,
+    is_legacy_lock_key,
     is_legacy_lock_x,
     is_lock_true,
 )
@@ -86,9 +87,23 @@ def _frame_migrations(all_migrations: Dict[str, Tuple[Tuple[str, str], ...]]) ->
 
 def _keys(session: RhinoSession, object_id: str) -> Tuple[str, ...]:
     getter = getattr(session, "object_user_text_keys", None)
-    if not callable(getter):
-        return ()
-    return tuple(str(item) for item in (getter(object_id) or ()))
+    listed = []
+    seen = set()
+    if callable(getter):
+        for item in getter(object_id) or ():
+            key = str(item)
+            if key in seen:
+                continue
+            seen.add(key)
+            listed.append(key)
+    # Rhino 有時列表列不出含 > 的 key，但仍可用名字讀到值。
+    for key in (LOCK_LEGACY_KEY, LOCK_STATE_PREV_KEY):
+        if key in seen:
+            continue
+        if session.get_object_user_text(object_id, key) not in (None,):
+            listed.append(key)
+            seen.add(key)
+    return tuple(listed)
 
 
 def _clear_key(session: RhinoSession, object_id: str, key: str) -> None:
@@ -143,10 +158,16 @@ def plan_object(
             if stray in keys and stray not in seen:
                 steps.append(_step(object_id, block_name, stray, "", None))
     lock_old_keys = []
+    seen_lock = set()
     if LOCK_STATE_PREV_KEY != LOCK_STATE_KEY and LOCK_STATE_PREV_KEY in keys:
         lock_old_keys.append(LOCK_STATE_PREV_KEY)
-    if LOCK_LEGACY_KEY in keys:
-        lock_old_keys.append(LOCK_LEGACY_KEY)
+        seen_lock.add(LOCK_STATE_PREV_KEY)
+    for key in keys:
+        if key in seen_lock or key == LOCK_STATE_KEY:
+            continue
+        if is_legacy_lock_key(key):
+            seen_lock.add(key)
+            lock_old_keys.append(key)
     if block_name.casefold() in lock_allowed_blocks:
         new_value = _text(session.get_object_user_text(object_id, LOCK_STATE_KEY))
         copy_value = None
@@ -221,7 +242,11 @@ def run_migrate_block_display_keys(
     def _run(current: RhinoSession) -> results.Result:
         steps = collect_steps(current)
         if not steps:
-            return results.ok(STAGE, "沒有需要清除的舊顯示欄。", command_id=COMMAND_ID)
+            return results.ok(
+                STAGE,
+                "沒有需要清除的實例舊欄。若列表仍顯示 attr_Lock_不更新>寫入x或X，請用 BlockEdit 把鎖定公式改成 lf_00_lock_state。",
+                command_id=COMMAND_ID,
+            )
         ask = confirm
         if ask is None:
             from loopflow.platform.rhino.prompts import ask_confirm_list

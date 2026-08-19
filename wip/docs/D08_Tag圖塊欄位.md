@@ -144,6 +144,8 @@
 
 ## 改完怎麼確認
 
+Attribute User Text 列表上的 **Key 名字來自 Block 裡的文字公式**。清除腳本只刪實例上已經存下來的舊欄，**不會改公式**。若鎖定仍顯示 `attr_Lock_不更新>寫入x或X`，請先 BlockEdit 把那一行改成 `lf_00_lock_state`。Rhino 若剛才跑過舊版腳本，請先關掉再開再跑。
+
 1. 仍用 `wip/tools/擷取tag_block文字.py` 選各圖塊實例，確認公式已是 `lf_*`、提示已是英文，且沒有 `DWG_NO`、`DWG_NAME`、`Category`、`attr_mat_*`、`attr_Lock_不更新>寫入x或X` 等舊名。
 2. 測試檔插入**新**圖框 → 跑 Layout ID → 圖號／圖名有字。比例須自己在 `lf_scale` 填，畫面不可為 `####`。
 3. 舊專案裡已經插入的實例：公式隨 Block 定義更新；舊 UserText 名稱用 `LF_D08_Migrate_Display_Keys` 一次清掉。驗證請用副本。

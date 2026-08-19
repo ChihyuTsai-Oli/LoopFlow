@@ -9,6 +9,11 @@ _SRC = Path(__file__).resolve().parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
+# ScriptEditor 重跑同一支時會沿用記憶體裡的舊模組；先清掉再載入。
+for _name in list(sys.modules):
+    if _name == "loopflow" or _name.startswith("loopflow."):
+        del sys.modules[_name]
+
 from loopflow.devtools.migrate_block_display_keys import (  # noqa: E402
     run_migrate_block_display_keys,
 )
