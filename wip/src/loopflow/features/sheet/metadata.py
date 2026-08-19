@@ -16,7 +16,7 @@ from loopflow.features.sheet.keys import (
     TITLE_FRAME_REGISTRY_KEY,
     TITLE_FRAME_REGISTRY_SEPARATOR,
 )
-from loopflow.features.tagger.binding import UUID_V4_RE, text
+from loopflow.features.tagger.binding import canonical_uuid, text
 from loopflow.features.tagger.keys import LOCK_STATE_KEY, is_lock_true
 from loopflow.features.tagger.templates import TagTemplateSet
 from loopflow.platform.rhino.session import RhinoSession
@@ -56,7 +56,8 @@ class ActiveSheet:
 def document_key(sheet_id: str, field: str) -> str:
     if field not in METADATA_FIELDS:
         raise ValueError("未定義的 Sheet 欄位：%s" % field)
-    return "%s.%s.%s" % (DOCUMENT_NAMESPACE, sheet_id, field)
+    cid = canonical_uuid(sheet_id) or str(sheet_id).strip()
+    return "%s.%s.%s" % (DOCUMENT_NAMESPACE, cid, field)
 
 
 def get_sheet_field(session: RhinoSession, sheet_id: str, field: str) -> Optional[str]:
@@ -186,8 +187,8 @@ def list_active_sheets(
         frame_id = scan.usable_frame_id
         if frame_id is None:
             continue
-        sheet_id = text(session.get_object_user_text(frame_id, SHEET_ID_KEY))
-        if sheet_id is None or not UUID_V4_RE.match(sheet_id):
+        sheet_id = canonical_uuid(session.get_object_user_text(frame_id, SHEET_ID_KEY))
+        if sheet_id is None:
             continue
         sheets.append(
             ActiveSheet(

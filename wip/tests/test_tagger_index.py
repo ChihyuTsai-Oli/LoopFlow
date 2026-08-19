@@ -34,6 +34,7 @@ from loopflow.features.tagger.keys import (
     SOURCE_BLOCK_NAME_KEY,
     SOURCE_OBJECT_ID_KEY,
     TAG_ID_KEY,
+    TARGET_LAYOUT_KEY,
     TARGET_SHEET_ID_KEY,
     TARGET_VIEW_ID_KEY,
     TEMPLATE_ID_KEY,
@@ -148,6 +149,7 @@ class BindTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("tag", BINDING_MODE_KEY), "view")
         self.assertEqual(session.get_object_user_text("tag", TEMPLATE_ID_KEY), "TAG_SECTION_DETAIL")
         self.assertTrue(session.get_object_user_text("tag", TAG_ID_KEY))
+        self.assertIsNone(session.get_object_user_text("tag", TARGET_LAYOUT_KEY))
         self.assertIsNone(session.get_object_user_text("tag", TARGET_SHEET_ID_KEY))
         self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
         self.assertIsNone(session.get_object_user_text("tag", SOURCE_BLOCK_NAME_KEY))
@@ -230,6 +232,7 @@ class CommandTests(unittest.TestCase):
         result = _run(session)
         self.assertTrue(result.ok, result.message)
         self.assertEqual(session.get_object_user_text("tag", TARGET_VIEW_ID_KEY), VIEW_ID)
+        self.assertEqual(session.get_object_user_text("tag", TARGET_LAYOUT_KEY), "A1__Plan")
         self.assertTrue(session.get_view_state("tag").selected)
         self.assertEqual(listed_views(session)[0]["view_id"], VIEW_ID)
         self.assertIsNone(session.get_object_user_text("tag", SHEET_CODE_KEY))

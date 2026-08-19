@@ -37,7 +37,7 @@ from loopflow.features.sheet.naming import (
     parse_drawing_no,
 )
 from loopflow.features.tagger.binding import UUID_V4_RE, ensure_identity, new_id, text
-from loopflow.features.tagger.keys import is_tag_locked
+from loopflow.features.tagger.keys import TARGET_LAYOUT_KEY, is_tag_locked
 from loopflow.features.tagger.templates import TagTemplateSet, load_tag_templates
 from loopflow.features.viewer.inspect import check_document_schema
 from loopflow.foundation import results
@@ -366,6 +366,9 @@ def apply_sheet_rows(
         for row in reversed(list(rows)):
             if row.renames_page and rename_fn(row.page_name, row.plan.new_page_name):
                 renamed += 1
+                _remap_index_target_layouts(
+                    session, row.page_name, row.plan.new_page_name
+                )
     redraw = getattr(session, "redraw", None)
     if callable(redraw):
         redraw()
@@ -375,6 +378,31 @@ def apply_sheet_rows(
         "renamed_pages": renamed,
         "page_tags": tagged,
     }
+
+
+def _remap_index_target_layouts(session: RhinoSession, old_name: str, new_name: str) -> None:
+    """Layout 改名後，把 Index Tag 上記住的目標頁名一併改掉。"""
+    if not old_name or old_name == new_name:
+        return
+    objects_fn = getattr(session, "objects_on_layout_page", None)
+    pages_fn = getattr(session, "listed_layout_pages", None)
+    if not callable(objects_fn):
+        return
+    page_names = []
+    if callable(pages_fn):
+        page_names = [str(item.get("name") or "") for item in pages_fn() or ()]
+    for extra in (old_name, new_name):
+        if extra and extra not in page_names:
+            page_names.append(extra)
+    seen = set()
+    for page_name in page_names:
+        for object_id in objects_fn(page_name) or ():
+            if object_id in seen:
+                continue
+            seen.add(object_id)
+            stored = text(session.get_object_user_text(object_id, TARGET_LAYOUT_KEY))
+            if stored == old_name:
+                session.set_object_user_text(object_id, TARGET_LAYOUT_KEY, new_name)
 
 
 def _default_confirm(lines: Sequence[str]) -> bool:

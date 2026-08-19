@@ -45,6 +45,7 @@ from loopflow.features.tagger.keys import (
     LOCK_STATE_KEY,
     SOURCE_BLOCK_NAME_KEY,
     SOURCE_OBJECT_ID_KEY,
+    TARGET_LAYOUT_KEY,
     TARGET_SHEET_ID_KEY,
     TARGET_VIEW_ID_KEY,
 )
@@ -515,6 +516,161 @@ class InjectTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(session.get_object_user_text("tag", SHEET_REF_KEY), "101.01")
         self.assertIsNone(session.get_object_user_text("tag", DETAIL_NO_KEY))
+
+    def test_index_from_dc_page_name_with_letter_suffix(self):
+        session = _session()
+        page = "DC__201.a2"
+        session.set_layout_pages([PAGE, page])
+        _add_block(
+            session,
+            "tag",
+            "TAG_SECTION_DETAIL",
+            user_text={TARGET_VIEW_ID_KEY: VIEW_ID},
+        )
+        session.add_object("view", name="A-A", layer="LoopFlow::Anchor_Frame")
+        session.set_object_user_text("view", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
+        session.set_object_user_text("view", VIEW_ID_KEY, VIEW_ID)
+        session.set_bbox("view", (0, 0, 0), (100, 100, 0))
+        session.set_layout_details(
+            (
+                {
+                    "layout": page,
+                    "page_number": 2,
+                    "detail_id": "dv-1",
+                    "dv_name": "A-A",
+                },
+            )
+        )
+        session.set_detail_model_point("dv-1", (50, 50, 0))
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("tag", SHEET_CODE_KEY), "DC")
+        self.assertEqual(session.get_object_user_text("tag", SHEET_REF_KEY), "201.a2")
+
+    def test_index_from_dc_page_name_ending_with_letter(self):
+        session = _session()
+        page = "DC__201.2a"
+        session.set_layout_pages([PAGE, page])
+        _add_block(
+            session,
+            "tag",
+            "TAG_SECTION_DETAIL",
+            user_text={TARGET_VIEW_ID_KEY: VIEW_ID},
+        )
+        session.add_object("view", name="A-A", layer="LoopFlow::Anchor_Frame")
+        session.set_object_user_text("view", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
+        session.set_object_user_text("view", VIEW_ID_KEY, VIEW_ID)
+        session.set_bbox("view", (0, 0, 0), (100, 100, 0))
+        session.set_layout_details(
+            (
+                {
+                    "layout": page,
+                    "page_number": 2,
+                    "detail_id": "dv-1",
+                    "dv_name": "A-A",
+                },
+            )
+        )
+        session.set_detail_model_point("dv-1", (50, 50, 0))
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("tag", SHEET_CODE_KEY), "DC")
+        self.assertEqual(session.get_object_user_text("tag", SHEET_REF_KEY), "201.2a")
+
+    def test_index_falls_back_to_host_when_other_hits_are_unnumbered(self):
+        host = "DC__201.a2"
+        cover = "封面"
+        session = _session()
+        session.set_layout_pages([host, cover, PAGE, OTHER])
+        session.set_current_layout_page(host)
+        _add_block(
+            session,
+            "tag",
+            "TAG_SECTION_DETAIL",
+            page=host,
+            user_text={TARGET_VIEW_ID_KEY: VIEW_ID},
+        )
+        session.add_object("view", name="A-A", layer="LoopFlow::Anchor_Frame")
+        session.set_object_user_text("view", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
+        session.set_object_user_text("view", VIEW_ID_KEY, VIEW_ID)
+        session.set_bbox("view", (0, 0, 0), (100, 100, 0))
+        session.set_layout_details(
+            (
+                {
+                    "layout": host,
+                    "page_number": 1,
+                    "detail_id": "dv-host",
+                    "dv_name": "Host",
+                },
+                {
+                    "layout": cover,
+                    "page_number": 2,
+                    "detail_id": "dv-cover",
+                    "dv_name": "Cover",
+                },
+            )
+        )
+        session.set_detail_model_point("dv-host", (50, 50, 0))
+        session.set_detail_model_point("dv-cover", (50, 50, 0))
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertNotIn("missing_sheet", result.warnings or ())
+        self.assertEqual(session.get_object_user_text("tag", SHEET_CODE_KEY), "DC")
+        self.assertEqual(session.get_object_user_text("tag", SHEET_REF_KEY), "201.a2")
+
+    def test_index_uses_stored_layout_when_two_sheets_hit_view(self):
+        index_page = "目錄"
+        session = _session()
+        session.set_layout_pages([PAGE, OTHER, index_page])
+        session.set_current_layout_page(index_page)
+        _add_block(
+            session,
+            "tag",
+            "TAG_SECTION_DETAIL",
+            page=index_page,
+            user_text={
+                TARGET_VIEW_ID_KEY: VIEW_ID,
+                TARGET_LAYOUT_KEY: OTHER,
+            },
+        )
+        session.add_object("other_frame", name="TargetFrame", layer="M2D")
+        session.set_block("other_frame", (0, 0, 0), name="Sample_Frame")
+        session.set_object_user_text("other_frame", SHEET_ID_KEY, TARGET_SHEET_ID)
+        session.add_object_to_layout_page(OTHER, "other_frame")
+        session.add_object("view", name="A-A", layer="LoopFlow::Anchor_Frame")
+        session.set_object_user_text("view", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
+        session.set_object_user_text("view", VIEW_ID_KEY, VIEW_ID)
+        session.set_bbox("view", (0, 0, 0), (100, 100, 0))
+        session.set_layout_details(
+            (
+                {
+                    "layout": PAGE,
+                    "page_number": 1,
+                    "detail_id": "dv-a",
+                    "dv_name": "A",
+                },
+                {
+                    "layout": OTHER,
+                    "page_number": 2,
+                    "detail_id": "dv-b",
+                    "dv_name": "B",
+                },
+                {
+                    "layout": index_page,
+                    "page_number": 3,
+                    "detail_id": "dv-host",
+                    "dv_name": "Host",
+                },
+            )
+        )
+        session.set_detail_model_point("dv-a", (50, 50, 0))
+        session.set_detail_model_point("dv-b", (50, 50, 0))
+        session.set_detail_model_point("dv-host", (50, 50, 0))
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertNotIn("ambiguous", result.warnings or ())
+        self.assertEqual(session.get_object_user_text("tag", SHEET_CODE_KEY), "IN")
+        self.assertEqual(session.get_object_user_text("tag", SHEET_REF_KEY), "101.01")
 
     def test_other_page_not_touched(self):
         session = _session()

@@ -10,6 +10,9 @@ SOURCE_OBJECT_ID_KEY = "lf_source_object_id"
 SOURCE_BLOCK_NAME_KEY = "lf_source_block_name"
 TARGET_VIEW_ID_KEY = "lf_target_view_id"
 TARGET_SHEET_ID_KEY = "lf_target_sheet_id"
+# Index 綁定時記下所選 Detail 的 Layout 頁名，方便 Infuser 在改名後仍對到那一頁。
+# 不是 Sheet 身分；圖號仍來自目標 Sheet／頁名。Layout ID 改頁名時會同步更新。
+TARGET_LAYOUT_KEY = "lf_target_layout"
 HOST_SHEET_ID_KEY = "lf_host_sheet_id"
 LAST_SYNCED_REVISION_KEY = "lf_last_synced_revision"
 # `00` 讓 Rhino Attribute User Text 依字母排序時排在其他 lf_* 之前。

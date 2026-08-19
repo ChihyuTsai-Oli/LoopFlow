@@ -11,6 +11,7 @@ from loopflow.features.tagger.keys import (
     SOURCE_BLOCK_NAME_KEY,
     SOURCE_OBJECT_ID_KEY,
     TAG_ID_KEY,
+    TARGET_LAYOUT_KEY,
     TARGET_SHEET_ID_KEY,
     TARGET_VIEW_ID_KEY,
     TEMPLATE_ID_KEY,
@@ -29,6 +30,15 @@ def text(value) -> Optional[str]:
         return None
     stripped = str(value).strip()
     return stripped or None
+
+
+def canonical_uuid(value) -> Optional[str]:
+    """去 `{}`、不分大小寫後核對 UUID v4。"""
+    raw = text(value)
+    if raw is None:
+        return None
+    folded = raw.strip("{}").casefold()
+    return folded if UUID_V4_RE.match(folded) else None
 
 
 def new_id() -> str:
@@ -76,9 +86,11 @@ def write_view_binding(
     tag_id: str,
     template: TagTemplate,
     view_id: str,
+    layout: Optional[str] = None,
 ) -> None:
     ensure_identity(session, tag_id, template, "view")
     session.set_object_user_text(tag_id, TARGET_VIEW_ID_KEY, view_id)
+    session.set_object_user_text(tag_id, TARGET_LAYOUT_KEY, text(layout) or "")
     session.set_object_user_text(tag_id, TARGET_SHEET_ID_KEY, "")
     session.set_object_user_text(tag_id, SOURCE_OBJECT_ID_KEY, "")
     session.set_object_user_text(tag_id, SOURCE_BLOCK_NAME_KEY, "")

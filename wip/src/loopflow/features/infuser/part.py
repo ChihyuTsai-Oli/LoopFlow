@@ -23,6 +23,7 @@ from loopflow.features.sheet.naming import (
     load_naming_rules,
     parse_drawing_no,
     parse_page_name,
+    split_fields,
 )
 from loopflow.features.tagger.binding import UUID_V4_RE, text
 from loopflow.features.tagger.index import listed_details, resolve_view_for_detail
@@ -32,6 +33,7 @@ from loopflow.features.tagger.keys import (
     LAST_SYNCED_REVISION_KEY,
     SOURCE_BLOCK_NAME_KEY,
     SOURCE_OBJECT_ID_KEY,
+    TARGET_LAYOUT_KEY,
     TARGET_SHEET_ID_KEY,
     TARGET_VIEW_ID_KEY,
     is_tag_locked,
@@ -55,6 +57,7 @@ STAGE = "infuse_tags"
 PROJECT_ID_KEY = "lf_project_id"
 PAGE_TAG_TEMPLATE_ID = "TAG_ELEV_0"
 ITEM_NAME_PATTERN = re.compile(r"^([A-Za-z]+)-([0-9]+)__(.+)$")
+SERIES_TOKEN_RE = re.compile(r"^[A-Za-z][A-Za-z0-9]*$")
 ShowMessage = Callable[[str], None]
 
 
@@ -292,19 +295,94 @@ def _lookup_sheet_fields(
     return None, None
 
 
+def _loose_page_tokens(
+    page_name: str, rules
+) -> Tuple[Optional[str], Optional[str]]:
+    """Infuser 專用：第一段像系列、第二段原樣當圖號。不改 Layout ID 的遞增規則。"""
+    raw = str(page_name or "").strip()
+    if raw.startswith("//"):
+        raw = raw[2:].lstrip()
+    elif rules.baseline_mark and raw.startswith(rules.baseline_mark):
+        raw = raw[len(rules.baseline_mark) :].lstrip()
+    parts = split_fields(raw, rules)
+    if len(parts) >= 2 and SERIES_TOKEN_RE.match(parts[0] or "") and (parts[1] or "").strip():
+        return parts[0], parts[1]
+    if len(parts) == 1:
+        prefix, number = parse_drawing_no(parts[0])
+        if prefix is not None:
+            return prefix, number
+        body = parts[0]
+        if " " in body:
+            left, _, right = body.partition(" ")
+            left, right = left.strip(), right.strip()
+            if SERIES_TOKEN_RE.match(left) and right:
+                return left, right
+    return None, None
+
+
 def _fields_from_page_name(session: RhinoSession, page_name: str) -> Optional[Dict[str, str]]:
     rules = load_naming_rules(session)
     parsed = parse_page_name(page_name, rules)
-    if parsed.prefix is None and parsed.number is None:
+    prefix, number = parsed.prefix, parsed.number
+    if prefix is None or number is None:
+        prefix, number = _loose_page_tokens(page_name, rules)
+    if prefix is None and number is None:
         return None
     return {
-        infuser_keys.SHEET_CODE_KEY: _display(parsed.prefix),
+        infuser_keys.SHEET_CODE_KEY: _display(prefix),
         infuser_keys.SHEET_REF_KEY: (
-            format_sheet_ref(rules, parsed.number)
-            if parsed.number is not None
+            format_sheet_ref(rules, number)
+            if number is not None
             else infuser_keys.MISSING_DISPLAY
         ),
     }
+
+
+def _strip_page_marks(name: str) -> str:
+    raw = str(name or "").strip()
+    if raw.startswith("//"):
+        return raw[2:].lstrip()
+    if raw.startswith("**"):
+        return raw[2:].lstrip()
+    return raw
+
+
+def _page_matches_stored(current: str, stored: str) -> bool:
+    left = text(current)
+    right = text(stored)
+    if left is None or right is None:
+        return False
+    if left == right:
+        return True
+    body = _strip_page_marks(left)
+    hint = _strip_page_marks(right)
+    if body == hint:
+        return True
+    sep = "__"
+    return body.startswith(hint + sep) or hint.startswith(body + sep)
+
+
+def _match_stored_layout(stored: str, candidates: Sequence[str]) -> Optional[str]:
+    names = [name for name in candidates if text(name)]
+    exact = [name for name in names if name == stored]
+    if len(exact) == 1:
+        return exact[0]
+    fuzzy = [name for name in names if _page_matches_stored(name, stored)]
+    if len(fuzzy) == 1:
+        return fuzzy[0]
+    return None
+
+
+def _listed_page_names(session: RhinoSession) -> Tuple[str, ...]:
+    pages_fn = getattr(session, "listed_layout_pages", None)
+    if not callable(pages_fn):
+        return ()
+    names = []
+    for item in pages_fn() or ():
+        name = str(item.get("name") or "").strip()
+        if name:
+            names.append(name)
+    return tuple(names)
 
 
 def _sheet_ids_on_pages(
@@ -357,50 +435,19 @@ def _unique_page_name_fields(
     return None
 
 
-def _resolve_index_sheet(
+def _fields_from_pages(
     session: RhinoSession,
     catalog: TagTemplateSet,
-    tag_id: str,
-    cache: Dict[str, object],
-    host_page_name: Optional[str] = None,
+    page_names: Sequence[str],
 ) -> results.Result:
-    existing = text(session.get_object_user_text(tag_id, TARGET_SHEET_ID_KEY))
-    if _as_uuid(existing) is not None:
-        sheet_id, fields = _lookup_sheet_fields(session, catalog, existing)
-        if fields is not None:
-            return results.ok(
-                STAGE,
-                "已用目標 Sheet。",
-                command_id=COMMAND_ID,
-                details={"sheet_id": sheet_id, "fields": fields},
-            )
+    unique_pages = tuple(dict.fromkeys(name for name in page_names if text(name)))
+    if not unique_pages:
         return results.blocked(
             STAGE,
-            "目標 Sheet 沒有圖號資料。",
+            "目標 View 的頁沒有 Sheet metadata。請先跑 Layout ID。",
             ("missing_sheet",),
             command_id=COMMAND_ID,
         )
-    view_id = _as_uuid(session.get_object_user_text(tag_id, TARGET_VIEW_ID_KEY))
-    if view_id is None:
-        return results.blocked(
-            STAGE,
-            "Index Tag 沒有目標 View。",
-            ("missing_source",),
-            command_id=COMMAND_ID,
-        )
-    pages_by_view = cache.get("pages_by_view")
-    if pages_by_view is None:
-        pages_by_view = _pages_for_views(session)
-        cache["pages_by_view"] = pages_by_view
-    pages = pages_by_view.get(view_id) or ()
-    if not pages:
-        return results.blocked(
-            STAGE,
-            "目標 View 對不到 Layout 頁。",
-            ("missing_sheet",),
-            command_id=COMMAND_ID,
-        )
-    unique_pages = _prefer_target_pages(pages, host_page_name)
     sheet_by_page = {
         sheet.page_name: sheet.sheet_id for sheet in list_active_sheets(session, catalog)
     }
@@ -465,6 +512,74 @@ def _resolve_index_sheet(
         command_id=COMMAND_ID,
         details={"sheet_id": sheet_id, "fields": fields},
     )
+
+
+def _resolve_index_sheet(
+    session: RhinoSession,
+    catalog: TagTemplateSet,
+    tag_id: str,
+    cache: Dict[str, object],
+    host_page_name: Optional[str] = None,
+) -> results.Result:
+    existing = text(session.get_object_user_text(tag_id, TARGET_SHEET_ID_KEY))
+    if _as_uuid(existing) is not None:
+        sheet_id, fields = _lookup_sheet_fields(session, catalog, existing)
+        if fields is not None:
+            return results.ok(
+                STAGE,
+                "已用目標 Sheet。",
+                command_id=COMMAND_ID,
+                details={"sheet_id": sheet_id, "fields": fields},
+            )
+        return results.blocked(
+            STAGE,
+            "目標 Sheet 沒有圖號資料。",
+            ("missing_sheet",),
+            command_id=COMMAND_ID,
+        )
+    stored_layout = text(session.get_object_user_text(tag_id, TARGET_LAYOUT_KEY))
+    if stored_layout:
+        matched = _match_stored_layout(stored_layout, _listed_page_names(session))
+        if matched:
+            stored = _fields_from_pages(session, catalog, (matched,))
+            if stored.ok:
+                return stored
+    view_id = _as_uuid(session.get_object_user_text(tag_id, TARGET_VIEW_ID_KEY))
+    if view_id is None:
+        return results.blocked(
+            STAGE,
+            "Index Tag 沒有目標 View。",
+            ("missing_source",),
+            command_id=COMMAND_ID,
+        )
+    pages_by_view = cache.get("pages_by_view")
+    if pages_by_view is None:
+        pages_by_view = _pages_for_views(session)
+        cache["pages_by_view"] = pages_by_view
+    pages = tuple(dict.fromkeys(pages_by_view.get(view_id) or ()))
+    if stored_layout:
+        matched = _match_stored_layout(stored_layout, pages)
+        if matched:
+            stored = _fields_from_pages(session, catalog, (matched,))
+            if stored.ok:
+                return stored
+    if not pages:
+        return results.blocked(
+            STAGE,
+            "目標 View 對不到 Layout 頁。",
+            ("missing_sheet",),
+            command_id=COMMAND_ID,
+        )
+    preferred = _prefer_target_pages(pages, host_page_name)
+    resolved = _fields_from_pages(session, catalog, preferred)
+    if resolved.ok:
+        return resolved
+    host = text(host_page_name)
+    if host and host in pages:
+        host_result = _fields_from_pages(session, catalog, (host,))
+        if host_result.ok:
+            return host_result
+    return resolved
 
 
 def _pages_for_views(session: RhinoSession) -> Dict[str, Tuple[str, ...]]:

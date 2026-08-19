@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Callable, Optional, Sequence
 
-from loopflow.features.tagger.binding import UUID_V4_RE, write_view_binding
+from loopflow.features.tagger.binding import canonical_uuid, write_view_binding
 from loopflow.features.tagger.keys import (
     INDEX_TEMPLATE_IDS,
     is_tag_locked,
@@ -43,8 +43,8 @@ def listed_views(session: RhinoSession):
     for object_id in session.iter_object_ids(include_hidden=True, include_locked=True):
         if session.get_object_user_text(object_id, SCHEMA_ID_KEY) != VIEW_SCHEMA_ID:
             continue
-        view_id = session.get_object_user_text(object_id, VIEW_ID_KEY)
-        if not view_id or not UUID_V4_RE.match(view_id):
+        view_id = canonical_uuid(session.get_object_user_text(object_id, VIEW_ID_KEY))
+        if not view_id:
             continue
         name = session.object_name(object_id) or ""
         if not name:
@@ -151,8 +151,8 @@ def resolve_view_for_detail(session: RhinoSession, item: dict) -> results.Result
             ("ambiguous_view",),
             command_id=COMMAND_ID,
         )
-    view_id = session.get_object_user_text(frames[0], VIEW_ID_KEY)
-    if not view_id or not UUID_V4_RE.match(view_id):
+    view_id = canonical_uuid(session.get_object_user_text(frames[0], VIEW_ID_KEY))
+    if not view_id:
         return results.blocked(
             "bind_tag",
             "目標 View 沒有合法的 lf_view_id。請先跑註冊 View。",
@@ -190,8 +190,9 @@ def bind_index_view(
     tag_id: str,
     view_id: str,
     catalog: TagTemplateSet,
+    layout: Optional[str] = None,
 ) -> results.Result:
-    """把已登記 View 的 lf_view_id 寫進 Index Tag。測試可直接呼叫。"""
+    """把已登記 View 的 lf_view_id 與所選 Layout 頁名寫進 Index Tag。測試可直接呼叫。"""
     if not session.is_block_instance(tag_id):
         return results.blocked(
             "bind_tag",
@@ -224,14 +225,15 @@ def bind_index_view(
             command_id=COMMAND_ID,
             details={"template_id": template.template_id},
         )
-    if not view_id or not UUID_V4_RE.match(view_id):
+    bound_view = canonical_uuid(view_id)
+    if not bound_view:
         return results.blocked(
             "bind_tag",
             "目標 View 沒有合法的 lf_view_id。請先跑註冊 View。",
             ("missing_view",),
             command_id=COMMAND_ID,
         )
-    write_view_binding(session, tag_id, template, view_id)
+    write_view_binding(session, tag_id, template, bound_view, layout=layout)
     return results.ok(
         "bind_tag",
         "已綁定目標 View。",
@@ -240,7 +242,8 @@ def bind_index_view(
             "tag_id": tag_id,
             "template_id": template.template_id,
             "binding_mode": "view",
-            "target_view_id": view_id,
+            "target_view_id": bound_view,
+            "target_layout": layout,
         },
     )
 
@@ -351,7 +354,9 @@ def run_tagger_index(
         if not mapped.ok:
             return mapped
         view_id = mapped.details["view_id"]
-        bound = bind_index_view(current, tag_id, view_id, loaded)
+        bound = bind_index_view(
+            current, tag_id, view_id, loaded, layout=chosen.get("layout")
+        )
         if bound.ok:
             extra = dict(bound.details)
             extra["frame_id"] = mapped.details.get("frame_id")

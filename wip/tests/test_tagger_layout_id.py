@@ -31,6 +31,7 @@ from loopflow.features.tagger.keys import (
     LOCK_LEGACY_HINT,
     LOCK_STATE_KEY,
     TAG_ID_KEY,
+    TARGET_LAYOUT_KEY,
     TARGET_SHEET_ID_KEY,
     TEMPLATE_ID_KEY,
 )
@@ -356,6 +357,24 @@ class LayoutIdCommandTests(unittest.TestCase):
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertFalse(result.ok)
         self.assertIn("missing_document_schema", result.blocking)
+
+    def test_rename_updates_index_target_layout(self):
+        session = _session([START_IN, "天花詳圖"])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame")
+        _add_block(session, "frame-2", "天花詳圖", "Sample_Frame")
+        _add_block(
+            session,
+            "index-tag",
+            START_IN,
+            "TAG_SECTION_DETAIL",
+            **{TARGET_LAYOUT_KEY: "天花詳圖"},
+        )
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(
+            session.get_object_user_text("index-tag", TARGET_LAYOUT_KEY),
+            PAGE_IN_2,
+        )
 
     def test_no_layout_blocks(self):
         session = _session()

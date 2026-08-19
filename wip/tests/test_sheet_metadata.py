@@ -148,6 +148,20 @@ class SheetApiTests(unittest.TestCase):
         self.assertEqual(sheet_state(session, SHEET_A, 1), "current")
         self.assertEqual(sheet_state(session, SHEET_A, 2), "stale")
 
+    def test_uppercase_sheet_id_still_active(self):
+        session = _session()
+        catalog = _catalog()
+        page = "IN__201__立面圖"
+        session.set_layout_pages([page])
+        session.add_object("frame-a")
+        session.set_block("frame-a", (0, 0, 0), name="Sample_Frame")
+        session.set_object_user_text("frame-a", SHEET_ID_KEY, SHEET_A.upper())
+        session.add_object_to_layout_page(page, "frame-a")
+        write_sheet_metadata(session, SHEET_A, {"drawing_no": "IN 201", "page_position": 1})
+        active = list_active_sheets(session, catalog)
+        self.assertEqual([sheet.sheet_id for sheet in active], [SHEET_A])
+        self.assertEqual(active[0].metadata.get("drawing_no"), "IN 201")
+
     def test_orphan_metadata_is_not_active(self):
         session = _session()
         catalog = _catalog()

@@ -78,7 +78,7 @@ Grab：在 **Layout** 先選 Tag 圖塊，再在目標 Detail 內點一下進入
 
 Laser：在 **Layout** 先選 Height／Finish 的 Laser Tag，再在目標 Detail 內點一下剖面位置。用該點所在 View 框上已寫死的 `lf_view_transform` 射出 3D 射線，打到帶 `_07_UUID` 的物件後寫 `lf_source_object_id`。不靠名稱／bbox 重算。Esc、點在 Detail 外、鎖定（同上）、Grab／Item／`TAG_DW`／Index／圖框、0 或 ≥2 個重疊 View、沒打到、來源無 UUID，都不寫入。多個近距離命中時讓使用者選一個，清單只顯示圖層名（有物件名稱才附上），不顯示 GUID。圖塊名不分大小寫。不填 Infuser 顯示欄。本批不接 Extract 來源索引。舊鎖定欄 `x`／`X` **家中 Rhino 8 已測（2026-08-18）**。
 
-Index：在 **Layout** 選 `TAG_SECTION_DETAIL` 或 `TAG_ELEV_1`～`4`，再從可搜尋清單選全檔任一 Layout 的 Detail（顯示頁名＋Detail 名，不顯示 GUID；點選時跳頁並 zoom）。用該 Detail 模型空間中心對已登記 View 框，恰好一個才寫 `lf_target_view_id`。Esc、鎖定（同上）、Grab／Laser／`TAG_ELEV_0`／圖框／`TAG_DW`、模型空間、沒有 Detail、0 或 ≥2 個 View、取消清單，都不寫入。不寫 Detail GUID、不寫圖號顯示欄、不寫 `lf_sheet_id`。圖塊名不分大小寫。不進 Nexus。舊鎖定欄 `x`／`X` **家中 Rhino 8 已測（2026-08-18）**。
+Index：在 **Layout** 選 `TAG_SECTION_DETAIL` 或 `TAG_ELEV_1`～`4`，再從可搜尋清單選全檔任一 Layout 的 Detail（顯示頁名＋Detail 名，不顯示 GUID；點選時跳頁並 zoom）。用該 Detail 模型空間中心對已登記 View 框，恰好一個才寫 `lf_target_view_id` 與所選頁名 `lf_target_layout`。Esc、鎖定（同上）、Grab／Laser／`TAG_ELEV_0`／圖框／`TAG_DW`、模型空間、沒有 Detail、0 或 ≥2 個 View、取消清單，都不寫入。不寫 Detail GUID、不寫圖號顯示欄、不寫 `lf_sheet_id`。圖塊名不分大小寫。不進 Nexus。舊鎖定欄 `x`／`X` **家中 Rhino 8 已測（2026-08-18）**。
 
 Layout ID：跑全檔 Layout。系列第一頁寫 `**圖類別__圖號__圖名`（例如 `**IN__201__立面圖`、`**IN__A01__平面`），後面的頁只寫圖名。`//S__901__結構平面圖` 不編號但仍寫圖框，執行後保留 `//`。圖號只要尾端是數字就放行；`101.9` 下一頁為 `101.10`。核對清單確認才寫入；取消整批零寫入。Layout 起點頁名保留 `**`，接續頁為三欄無星號；圖框 `lf_drawing_no` 寫空格格式（不含 `**`／`//`），並寫 `lf_drawing_name`、`lf_sheet_id`。不寫 `lf_scale`。不寫舊欄 `DWG_NO`／`DWG_NAME`。`TAG_ELEV_0` 寫目前頁編號。未登錄 Block 勾選真正的圖框（預設全不勾）。只改圖名：改第三欄再跑。要改編號：該頁再加 `**` 再跑。圖框已就緒但缺 `**`（也沒有可寫入的 `//`）時停止，警告只顯示命名規則與 Sample。詳細命名與操作見 `工作流程.md` §9。一頁沒有圖框或有兩個圖框則跳過。不進 Nexus。**家中 Rhino 8 已測（2026-08-18）。**
 
@@ -86,7 +86,7 @@ Layout ID：跑全檔 Layout。系列第一頁寫 `**圖類別__圖號__圖名`�
 
 圖目錄：開 Eto 面板。選獨立 Point 作為圖號（紅 `LoopFlow::Drawing_Number`）與圖名（綠 `LoopFlow::Drawing_Name`）定位點；選 Sheet 為頁序／圖號／圖名／頁名四欄，Shift 連選、Ctrl 加選或取消，反白即選取。Build 預覽後寫 `lf_catalog_sheet_id` 並在 `LoopFlow::Drawing_Text`（`#CDB38B`）產生文字，左下角對齊定位點。Refresh 只改內容，已移動的文字留在原處。成功不另彈確認窗；失敗才彈窗。「清除定位點並還原圖層」會還原選取前的圖層並刪除目錄文字。匯出 TXT 為 `圖名, 圖號`（UTF-8）。定位點綁 `sheet_id` 不綁目前圖號；空位可不綁。`LoopFlow` 與其子圖層不列印（列印寬度設為 `No Print`／`PlotWeight = -1`）。選到 Block、逐頁數量不符、同列失敗、Sheet 多於空位、metadata 過期、Esc／取消，都不寫入。missing／orphan Sheet 略過並報告。新 Layout 不會自動納入。不進 Nexus。**家中 Rhino 8 已測（2026-08-18）。**
 
-Infuser Part：在 **Layout** 跑 `LF_Infuser_Part`，只處理**目前這一頁**的 Tag（含標在 Detail 圖上的）。Height／Finish 先對 Registry 寫高程與 Type 顯示欄（UUID 不分大小寫）；對不到再讀模型上同一 `_07_UUID` 的現況（同 UUID 多筆取最齊的）。家具從 `FF-01__Chair-1` 拆三段；Index 從目標 Sheet（或唯一對到的 View／頁名）寫 `lf_sheet_code`／`lf_sheet_ref`，同一 View 也打到本頁時用其他頁。`lf_detail_no` 是手填（A、B、1），不注入。會寫 `lf_host_sheet_id` 與 `lf_last_synced_revision`。鎖定、`TAG_DW`、圖框、`TAG_ELEV_0`、比例、Detail 編號與備註都不改。缺值畫面為 `-`。沒有正式 Registry 時改讀 last-good，Height／Finish 仍可從模型讀；檔案壞掉則整批不寫。結束會彈出摘要。**未在 Rhino 8 實機驗證**。`LF_Infuser_All` 尚未實作。
+Infuser Part：在 **Layout** 跑 `LF_Infuser_Part`，只處理**目前這一頁**的 Tag（含標在 Detail 圖上的）。Height／Finish 先對 Registry 寫高程與 Type 顯示欄（UUID 不分大小寫）；對不到再讀模型上同一 `_07_UUID` 的現況（同 UUID 多筆取最齊的）。家具從 `FF-01__Chair-1` 拆三段；Index 先用 `lf_target_layout` 對目標頁，沒有才從 View 反查，寫 `lf_sheet_code`／`lf_sheet_ref`。同一 View 也打到本頁時用其他頁；其他頁拆不出圖號再改回本頁。`lf_detail_no` 是手填（A、B、1），不注入。會寫 `lf_host_sheet_id` 與 `lf_last_synced_revision`。鎖定、`TAG_DW`、圖框、`TAG_ELEV_0`、比例、Detail 編號與備註都不改。缺值畫面為 `-`。沒有正式 Registry 時改讀 last-good，Height／Finish 仍可從模型讀；檔案壞掉則整批不寫。結束會彈出摘要。**未在 Rhino 8 實機驗證**。`LF_Infuser_All` 尚未實作。
 
 左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。正式工具列在 G02 封裝時才建立。
 
