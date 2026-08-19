@@ -12,8 +12,6 @@ from typing import Callable, Optional, Sequence, Tuple
 from loopflow.features.sheet.keys import (
     DRAWING_NAME_KEY,
     DRAWING_NO_KEY,
-    LEGACY_DRAWING_NAME_KEY,
-    LEGACY_DRAWING_NO_KEY,
     SHEET_CODE_KEY,
     SHEET_ID_KEY,
 )
@@ -360,8 +358,6 @@ def apply_sheet_rows(
         )
         session.set_object_user_text(row.frame_id, DRAWING_NO_KEY, row.plan.drawing_no or "")
         session.set_object_user_text(row.frame_id, DRAWING_NAME_KEY, row.plan.drawing_name or "")
-        session.set_object_user_text(row.frame_id, LEGACY_DRAWING_NO_KEY, row.plan.drawing_no or "")
-        session.set_object_user_text(row.frame_id, LEGACY_DRAWING_NAME_KEY, row.plan.drawing_name or "")
         scan = scan_by_page.get(row.page_name)
         if scan is not None:
             sheet_code = format_sheet_ref(rules, row.plan.number or "")

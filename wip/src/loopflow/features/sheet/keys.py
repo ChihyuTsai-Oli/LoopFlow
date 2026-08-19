@@ -16,7 +16,7 @@ DRAWING_NO_KEY = "lf_drawing_no"
 DRAWING_NAME_KEY = "lf_drawing_name"
 SCALE_KEY = "lf_scale"
 SHEET_CODE_KEY = "lf_sheet_code"
-# 現行圖框文字欄仍讀這兩個舊 key；D08 改讀 lf_* 後停止雙寫。
+# 1.x 圖框文字欄；D08 後日常指令不再寫。只供 migration 辨識。
 LEGACY_DRAWING_NO_KEY = "DWG_NO"
 LEGACY_DRAWING_NAME_KEY = "DWG_NAME"
 

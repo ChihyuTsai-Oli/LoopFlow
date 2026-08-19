@@ -151,8 +151,8 @@ Attribute User Text 列表上的 **Key 名字來自 Block 裡的文字公式**�
 1. 仍用 `wip/tools/擷取tag_block文字.py` 選各圖塊實例，確認公式已是 `lf_*`、提示已是英文，且沒有 `DWG_NO`、`DWG_NAME`、`Category`、`attr_mat_*`、`attr_Lock_不更新>寫入x或X` 等舊名。
 2. 測試檔插入**新**圖框 → 跑 Layout ID → 圖號／圖名有字。比例須自己在 `lf_scale` 填，畫面不可為 `####`。
 3. 舊專案裡已經插入的實例：公式隨 Block 定義更新；舊 UserText 名稱用 `LF_D08_Migrate_Display_Keys` 一次清掉。驗證請用副本。
-4. 圖塊定義的公式改完後，各張圖上已插入的實例仍帶舊 UserText。不要逐個刪。跑開發指令 `LF_D08_Migrate_Display_Keys`：先把舊值抄到 `lf_*`（已有新欄不覆蓋，所以比例會留下來），再刪舊名字。圖框上 1.x 殘留的 `Category`／`REF_ID` 會刪掉，不抄成 Index 欄。鎖定欄若寫 `x`／`X` 會抄到 `lf_00_lock_state` 後刪舊名字；畫面上的提示文字（`x為不更新`）只刪不抄。取消則什麼都不改。清完後先不要跑 Layout ID，否則會把 `DWG_NO`／`DWG_NAME` 寫回來。
-5. 告訴 AI 結果。通過後才停止 Layout ID 雙寫 `DWG_NO`／`DWG_NAME`，並更新 `fixtures/legacy/tag_block_text/`。**圖塊資產已於 2026-08-19 公司通過**；雙寫與 fixtures 仍待收尾。
+4. 圖塊定義的公式改完後，各張圖上已插入的實例仍帶舊 UserText。不要逐個刪。跑開發指令 `LF_D08_Migrate_Display_Keys`：先把舊值抄到 `lf_*`（已有新欄不覆蓋，所以比例會留下來），再刪舊名字。圖框上 1.x 殘留的 `Category`／`REF_ID` 會刪掉，不抄成 Index 欄。鎖定欄若寫 `x`／`X` 會抄到 `lf_00_lock_state` 後刪舊名字；畫面上的提示文字（`x為不更新`）只刪不抄。取消則什麼都不改。
+5. 圖塊資產已於 2026-08-19 公司通過。Layout ID 已停止雙寫 `DWG_NO`／`DWG_NAME`。`fixtures/legacy/tag_block_text/` 保留 1.x 畫面證據，不改成 2.0 公式。
 
 ## 不要做
 
