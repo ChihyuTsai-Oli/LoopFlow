@@ -2,8 +2,8 @@
 """LF_TAG-O：只讀檢查全檔 Layout 頁的 Tag 是否活著或斷連。
 
 以 1.0 風格色碼面板列出詳細結果。不寫 UserText、不改圖面顏色、不做 Repair。
-鎖定 Tag 仍判斷 stale／orphaned。`TAG_DW` 與 `TAG_ELEV_0` 無來源屬正常。
-家具不判 orphaned。
+只檢查 D08 Tag 圖塊；未知圖塊不列入。鎖定 Tag 仍判斷 stale／orphaned。
+`TAG_DW` 與 `TAG_ELEV_0` 無來源屬正常。家具跟綁定實例：改名要更新，刪除為 orphaned。
 """
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ from loopflow.features.infuser.part import (
     PROJECT_ID_KEY,
     _as_uuid,
     _item_fields,
+    _item_source_name,
     _iter_live_source_ids,
     _lookup_object_row,
     _object_index,
@@ -50,7 +51,7 @@ from loopflow.platform.rhino.session import RhinoSession, run_guarded
 COMMAND_ID = "LF_TAG-O"
 STAGE = "health_check"
 ShowMessage = Callable[[str], None]
-ShowPanel = Callable[[Sequence[Tuple[str, str]]], None]
+ShowPanel = Callable[[Sequence[tuple]], None]
 
 COLOR_HEAD = "head"
 COLOR_DIM = "dim"
@@ -204,13 +205,17 @@ def _classify_object_tag(
 
 
 def _classify_item_tag(session: RhinoSession, tag_id: str, template: TagTemplate) -> str:
-    parsed = _item_fields(
-        session.get_object_user_text(tag_id, SOURCE_BLOCK_NAME_KEY),
-        template.source_block_name_pattern,
-    )
-    if parsed.ok:
-        return STATUS_HEALTHY
-    return STATUS_UNBOUND
+    source_name, source_status = _item_source_name(session, tag_id)
+    if source_status == "orphaned":
+        return STATUS_ORPHANED
+    parsed = _item_fields(source_name, template.source_block_name_pattern)
+    if not parsed.ok:
+        return STATUS_UNBOUND
+    fields = (parsed.details or {}).get("fields") or {}
+    for key, value in fields.items():
+        if _read_binding(session, tag_id, key) != text(value):
+            return STATUS_STALE
+    return STATUS_HEALTHY
 
 
 def _classify_index_tag(
@@ -263,15 +268,7 @@ def _inspect_block(
                 "page_name": page_name,
                 "block_name": block_name,
             }
-        return {
-            "kind": "unchecked",
-            "status": STATUS_UNCHECKED,
-            "locked": False,
-            "reason": "unknown_template",
-            "tag_id": object_id,
-            "page_name": page_name,
-            "block_name": block_name,
-        }
+        return None
     if template.role == "title_frame":
         return {
             "kind": "title_frame",
@@ -496,15 +493,15 @@ def build_panel_lines(
     doc_name: str,
     notes: Sequence[str] = (),
     now: Optional[str] = None,
-) -> Tuple[Tuple[str, str], ...]:
-    """組 1.0 風格色碼列表。顏色只在面板文字，不改圖面。"""
+) -> Tuple[tuple, ...]:
+    """組 1.0 風格色碼列表。顏色只在面板文字，不改圖面。點選斷連列可跳頁。"""
     stamp = now or time.strftime("%Y-%m-%d  %H:%M:%S")
     revision = outcome.get("registry_revision")
     issues = list(outcome.get("issues") or ())
     counts = outcome.get("counts") or {}
     scanned = counts.get("scanned", 0)
     page_names = tuple(outcome.get("page_names") or ())
-    lines: List[Tuple[str, str]] = [
+    lines: List[tuple] = [
         (PANEL_TITLE, COLOR_HEAD),
         ("檔案：%s" % doc_name, COLOR_DIM),
         ("掃描：%s" % stamp, COLOR_DIM),
@@ -538,7 +535,15 @@ def build_panel_lines(
             lock = "  （鎖定）" if row.get("locked") else ""
             name = str(row.get("block_name") or "").ljust(width)
             page = str(row.get("page_name") or "（未命名頁）")
-            lines.append(("  [%s]  %s  ->  %s%s" % (label, name, page, lock), color))
+            lines.append(
+                (
+                    "  [%s]  %s  ->  %s%s" % (label, name, page, lock),
+                    color,
+                    str(row.get("tag_id") or ""),
+                    page,
+                )
+            )
+        lines.append(("點選項目可跳到該 Tag（略拉開以看見圖框）", COLOR_DIM))
 
     lines.append(("", COLOR_TEXT))
     missing = tuple(outcome.get("space_missing") or ())

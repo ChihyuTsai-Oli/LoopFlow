@@ -36,6 +36,7 @@ class MemorySession:
         self._unassigned_paper_ids: List[str] = []
         self._detail_model_points: Dict[str, tuple] = {}
         self.zoomed_layout_details: List[dict] = []
+        self.zoomed_layout_objects: List[dict] = []
         self._modified = False
         self._model_unit = model_unit
         self._document_text = dict(document_text or {})
@@ -537,6 +538,19 @@ class MemorySession:
 
     def zoom_to_object(self, object_id: str) -> None:
         self.zoomed_object_ids.append(object_id)
+
+    def activate_layout_page(self, page_name: str) -> bool:
+        name = str(page_name or "").strip()
+        if name not in self._layout_pages:
+            return False
+        self.set_current_layout_page(name)
+        return True
+
+    def zoom_to_layout_object(self, page_name: str, object_id: str) -> None:
+        self.activate_layout_page(page_name)
+        self.zoomed_layout_objects.append(
+            {"layout": str(page_name or ""), "object_id": str(object_id or "")}
+        )
 
     def set_layout_active(self, value: bool) -> None:
         self._layout_active = bool(value)

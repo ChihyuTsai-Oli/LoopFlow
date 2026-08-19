@@ -624,6 +624,22 @@ def _missing_object_fields(family: str) -> Dict[str, str]:
     return {key: infuser_keys.MISSING_DISPLAY for key in keys}
 
 
+def _item_source_name(session: RhinoSession, tag_id: str) -> Tuple[Optional[str], str]:
+    """家具來源：有實例就讀現況名稱；實例不在則 orphaned。舊資料只記名稱時沿用。"""
+    instance_id = text(session.get_object_user_text(tag_id, SOURCE_OBJECT_ID_KEY))
+    stored = text(session.get_object_user_text(tag_id, SOURCE_BLOCK_NAME_KEY))
+    if instance_id:
+        if not session.is_block_instance(instance_id):
+            return None, "orphaned"
+        name = text(session.block_definition_name(instance_id))
+        if name is None:
+            return None, "orphaned"
+        return name, "ok"
+    if stored:
+        return stored, "ok"
+    return None, "missing_source"
+
+
 def _item_fields(block_name: Optional[str], pattern: Optional[str]) -> results.Result:
     name = text(block_name)
     if name is None:
@@ -710,8 +726,6 @@ def infuse_page(
             if is_title_frame(session, object_id, catalog, registered):
                 counts["skipped_title_frame"] += 1
                 continue
-            counts["unknown_template"] += 1
-            notes.append("未知圖塊「%s」" % (block_name or "（未命名）"))
             continue
         skip = _skip_reason(template)
         if skip == "title_frame":
@@ -743,8 +757,6 @@ def infuse_page(
         counts[status] = counts.get(status, 0) + 1
         if status == "updated":
             continue
-        if status == "unknown_template":
-            notes.append("未知圖塊「%s」" % (block_name or "（未命名）"))
     if cache.get("used_live_object"):
         notes.append("有些 Height／Finish 是從模型現況讀的，尚未進 Registry。")
     if redraw:
@@ -800,8 +812,17 @@ def _infuse_tag(
         _stamp(session, tag_id, host_sheet_id, revision)
         return "updated"
     if family == "item":
+        source_name, source_status = _item_source_name(session, tag_id)
+        if source_status != "ok":
+            _write_fields(
+                session,
+                tag_id,
+                {key: infuser_keys.MISSING_DISPLAY for key in infuser_keys.ITEM_RENDER_KEYS},
+            )
+            _stamp(session, tag_id, host_sheet_id, revision)
+            return "orphaned" if source_status == "orphaned" else "missing_source"
         parsed = _item_fields(
-            session.get_object_user_text(tag_id, SOURCE_BLOCK_NAME_KEY),
+            source_name,
             template.source_block_name_pattern,
         )
         if not parsed.ok:
@@ -814,6 +835,8 @@ def _infuse_tag(
             reason = (parsed.blocking or ("missing_source",))[0]
             return reason if reason in ("missing_source", "invalid_block_name") else "missing_source"
         _write_fields(session, tag_id, parsed.details["fields"])
+        if source_name:
+            session.set_object_user_text(tag_id, SOURCE_BLOCK_NAME_KEY, source_name)
         _stamp(session, tag_id, host_sheet_id, revision)
         return "updated"
     if template.template_id in INDEX_TEMPLATE_IDS or family == "index":

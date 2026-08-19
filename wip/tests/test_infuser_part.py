@@ -287,6 +287,50 @@ class InjectTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("tag", ITEM_CODE_KEY), "01")
         self.assertEqual(session.get_object_user_text("tag", ITEM_NAME_KEY), "Chair-1")
 
+    def test_item_reads_live_block_name_after_rename(self):
+        session = _session()
+        session.add_object("chair", name="Chair", layer="M3D::FF")
+        session.set_block("chair", (1, 0, 0), name="FF-01__Chair-1")
+        _add_block(
+            session,
+            "tag",
+            "TAG_ITEM",
+            user_text={
+                SOURCE_BLOCK_NAME_KEY: "FF-01__Chair-1",
+                SOURCE_OBJECT_ID_KEY: "chair",
+            },
+        )
+        first = _run(session)
+        self.assertTrue(first.ok, first.message)
+        self.assertEqual(session.get_object_user_text("tag", ITEM_NAME_KEY), "Chair-1")
+        session.set_block("chair", (1, 0, 0), name="FF-01__Chair-2")
+        second = _run(session)
+        self.assertTrue(second.ok, second.message)
+        self.assertEqual(session.get_object_user_text("tag", ITEM_NAME_KEY), "Chair-2")
+        self.assertEqual(
+            session.get_object_user_text("tag", SOURCE_BLOCK_NAME_KEY),
+            "FF-01__Chair-2",
+        )
+
+    def test_item_deleted_instance_writes_dash(self):
+        session = _session()
+        session.add_object("chair", name="Chair", layer="M3D::FF")
+        session.set_block("chair", (1, 0, 0), name="FF-01__Chair-1")
+        _add_block(
+            session,
+            "tag",
+            "TAG_ITEM",
+            user_text={
+                SOURCE_BLOCK_NAME_KEY: "FF-01__Chair-1",
+                SOURCE_OBJECT_ID_KEY: "chair",
+            },
+        )
+        session.delete_object("chair")
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertIn("orphaned", result.warnings)
+        self.assertEqual(session.get_object_user_text("tag", ITEM_NAME_KEY), MISSING_DISPLAY)
+
     def test_item_bad_name_writes_dash(self):
         session = _session()
         _add_block(session, "tag", "TAG_ITEM", user_text={SOURCE_BLOCK_NAME_KEY: "Chair"})
@@ -759,7 +803,7 @@ class SkipTests(unittest.TestCase):
         before = dict(session._object_meta["tag"]["user_text"])
         result = _run(session)
         self.assertTrue(result.ok)
-        self.assertIn("unknown_template", result.warnings)
+        self.assertNotIn("unknown_template", result.warnings or ())
         self.assertEqual(session._object_meta["tag"]["user_text"], before)
 
     def test_ambiguous_duplicate_object_id(self):

@@ -118,7 +118,7 @@ class BindTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY), OBJECT_ID)
         self.assertEqual(session.get_object_user_text("tag", TEMPLATE_ID_KEY), "Tag_Height_Grab")
 
-    def test_item_writes_block_name_not_object_uuid(self):
+    def test_item_writes_block_name_and_instance_id(self):
         session = _session()
         session.add_object("chair", name="Chair", layer="M3D::FF")
         session.set_block("chair", (1, 0, 0), name="FF-01__Chair-1")
@@ -128,7 +128,7 @@ class BindTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(session.get_object_user_text("item", SOURCE_BLOCK_NAME_KEY), "FF-01__Chair-1")
         self.assertEqual(session.get_object_user_text("item", BINDING_MODE_KEY), "block_name")
-        self.assertIsNone(session.get_object_user_text("item", SOURCE_OBJECT_ID_KEY))
+        self.assertEqual(session.get_object_user_text("item", SOURCE_OBJECT_ID_KEY), "chair")
 
     def test_item_rejects_bad_block_name(self):
         session = _session()

@@ -162,7 +162,18 @@ def run_tag_o() -> Result:
     opened = _open_live_session()
     if not opened.ok:
         return opened
-    result = run_health(opened.details["session"], show_panel=show_colored_log_panel)
+    session = opened.details["session"]
+
+    def _panel(lines) -> None:
+        zoom = getattr(session, "zoom_to_layout_object", None)
+
+        def _select(tag_id: str, page_name: str) -> None:
+            if callable(zoom):
+                zoom(page_name, tag_id)
+
+        show_colored_log_panel(lines, on_select=_select)
+
+    result = run_health(session, show_panel=_panel)
     if not result.ok:
         return _present_failure(result)
     return result

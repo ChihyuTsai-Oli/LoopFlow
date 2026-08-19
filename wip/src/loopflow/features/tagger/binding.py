@@ -75,10 +75,11 @@ def write_block_binding(
     tag_id: str,
     template: TagTemplate,
     block_name: str,
+    instance_id: Optional[str] = None,
 ) -> None:
     ensure_identity(session, tag_id, template, "block_name")
     session.set_object_user_text(tag_id, SOURCE_BLOCK_NAME_KEY, block_name)
-    session.set_object_user_text(tag_id, SOURCE_OBJECT_ID_KEY, "")
+    session.set_object_user_text(tag_id, SOURCE_OBJECT_ID_KEY, instance_id or "")
 
 
 def write_view_binding(

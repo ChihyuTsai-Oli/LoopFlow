@@ -493,6 +493,67 @@ class LiveSession:
             pass
         self._redraw_views()
 
+    def activate_layout_page(self, page_name: str) -> bool:
+        page = self._page_view(page_name)
+        if page is None:
+            return False
+        try:
+            self._sc.doc.Views.ActiveView = page
+            page.SetPageAsActive()
+        except Exception:
+            return False
+        self._redraw_views()
+        return True
+
+    def zoom_to_layout_object(self, page_name: str, object_id: str) -> None:
+        """切到該 Layout 並拉近 Tag，但留出圖框周圍，不放到滿畫面。"""
+        if not self.activate_layout_page(page_name):
+            return
+        page = self._page_view(page_name)
+        try:
+            self._rs.UnselectAllObjects()
+            self._rs.SelectObject(object_id)
+        except Exception:
+            pass
+        box = self.object_bbox(object_id)
+        if box:
+            cx = (box[0] + box[3]) / 2.0
+            cy = (box[1] + box[4]) / 2.0
+            cz = (box[2] + box[5]) / 2.0
+            tag_w = max(box[3] - box[0], 1.0)
+            tag_h = max(box[4] - box[1], 1.0)
+            page_w = 0.0
+            page_h = 0.0
+            if page is not None:
+                try:
+                    page_w = float(getattr(page, "PageWidth", 0) or 0)
+                    page_h = float(getattr(page, "PageHeight", 0) or 0)
+                except Exception:
+                    page_w = page_h = 0.0
+            half_w = max(tag_w * 4.0, page_w * 0.22 if page_w else tag_w * 8.0)
+            half_h = max(tag_h * 4.0, page_h * 0.22 if page_h else tag_h * 8.0)
+            corners = (
+                (cx - half_w, cy - half_h, cz - 1.0),
+                (cx + half_w, cy + half_h, cz + 1.0),
+            )
+            try:
+                self._rs.ZoomBoundingBox(corners, None, False)
+            except Exception:
+                try:
+                    if page is not None:
+                        page.MainViewport.ZoomExtentsSelected()
+                        page.MainViewport.Magnify(0.4, False)
+                except Exception:
+                    pass
+        else:
+            try:
+                if page is not None:
+                    page.MainViewport.ZoomExtentsSelected()
+                    page.MainViewport.Magnify(0.4, False)
+            except Exception:
+                pass
+        self._redraw_views()
+
     def object_name(self, object_id: str) -> Optional[str]:
         value = self._rs.ObjectName(object_id)
         if value in (None, ""):

@@ -125,7 +125,7 @@ def bind_tag(
                 command_id=COMMAND_ID,
                 details={"source_block_name": source_name},
             )
-        write_block_binding(session, tag_id, template, source_name)
+        write_block_binding(session, tag_id, template, source_name, source_id)
         return results.ok(
             "bind_tag",
             "已綁定家具圖塊名稱。",

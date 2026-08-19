@@ -102,6 +102,14 @@ def _filled_index(**extra):
     return fields
 
 
+def _panel_body(lines):
+    return "\n".join(row[0] for row in lines)
+
+
+def _panel_colors(lines, needle):
+    return [row[1] for row in lines if needle in row[0]]
+
+
 def _run(session, **kwargs):
     kwargs.setdefault("catalog", _catalog())
     kwargs.setdefault("registry", _payload())
@@ -324,6 +332,39 @@ class HealthTests(unittest.TestCase):
         self.assertEqual(result.details["counts"]["unbound"], 1)
         self.assertEqual(result.details["counts"]["orphaned"], 0)
 
+    def test_item_deleted_instance_is_orphaned(self):
+        session = _session()
+        session.add_object("chair", name="Chair", layer="M3D::FF")
+        session.set_block("chair", (1, 0, 0), name="FF-01__Chair-1")
+        _add_block(
+            session,
+            "tag",
+            "TAG_ITEM",
+            user_text=_filled_item(lf_source_object_id="chair"),
+        )
+        _stamp(session, "tag")
+        session.delete_object("chair")
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.details["counts"]["orphaned"], 1)
+        self.assertEqual(result.details["counts"]["healthy"], 0)
+
+    def test_item_renamed_instance_is_stale_until_infuser(self):
+        session = _session()
+        session.add_object("chair", name="Chair", layer="M3D::FF")
+        session.set_block("chair", (1, 0, 0), name="FF-01__Chair-2")
+        _add_block(
+            session,
+            "tag",
+            "TAG_ITEM",
+            user_text=_filled_item(lf_source_object_id="chair"),
+        )
+        _stamp(session, "tag")
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.details["counts"]["stale"], 1)
+        self.assertEqual(result.details["counts"]["healthy"], 0)
+
     def test_locked_orphaned_still_reported(self):
         session = _session()
         _add_block(
@@ -342,15 +383,15 @@ class HealthTests(unittest.TestCase):
         self.assertEqual(result.details["counts"]["locked_disconnected"], 1)
         self.assertEqual(result.details["issues"][0]["locked"], True)
 
-    def test_unknown_block_is_unchecked_not_healthy(self):
+    def test_unknown_block_is_ignored(self):
         session = _session()
         _add_block(session, "tag", "Random_Block")
         result = _run(session)
         self.assertTrue(result.ok, result.message)
-        self.assertIn("unchecked", result.warnings)
-        self.assertEqual(result.details["counts"]["unchecked"], 1)
-        self.assertEqual(result.details["counts"]["healthy"], 0)
+        self.assertNotIn("unchecked", result.warnings or ())
+        self.assertEqual(result.details["counts"]["unchecked"], 0)
         self.assertEqual(result.details["counts"]["scanned"], 0)
+        self.assertEqual(result.details["issues"], ())
 
     def test_title_frame_not_counted_as_pass(self):
         session = _session()
@@ -475,11 +516,11 @@ class PanelTests(unittest.TestCase):
         lines = result.details["panel_lines"]
         self.assertEqual(captured, [lines])
         self.assertEqual(lines[0][0], PANEL_TITLE)
-        body = "\n".join(text for text, _color in lines)
+        body = _panel_body(lines)
         self.assertIn("[缺來源]", body)
         self.assertIn("TAG_HEIGHT_GRAB", body)
         self.assertIn(PAGE, body)
-        colors = [color for text, color in lines if "[缺來源]" in text]
+        colors = _panel_colors(lines, "[缺來源]")
         self.assertEqual(colors, [COLOR_WARN])
 
     def test_panel_lists_orphaned_in_red(self):
@@ -492,13 +533,9 @@ class PanelTests(unittest.TestCase):
         )
         _stamp(session, "tag")
         result = _run(session)
-        body = "\n".join(text for text, color in result.details["panel_lines"])
+        body = _panel_body(result.details["panel_lines"])
         self.assertIn("[來源不在]", body)
-        colors = [
-            color
-            for text, color in result.details["panel_lines"]
-            if "[來源不在]" in text
-        ]
+        colors = _panel_colors(result.details["panel_lines"], "[來源不在]")
         self.assertEqual(colors, [COLOR_BROK])
 
     def test_panel_marks_locked_and_all_ok_green(self):
@@ -511,7 +548,7 @@ class PanelTests(unittest.TestCase):
         )
         _stamp(session, "bad")
         result = _run(session)
-        body = "\n".join(text for text, _color in result.details["panel_lines"])
+        body = _panel_body(result.details["panel_lines"])
         self.assertIn("（鎖定）", body)
 
         clean = _session()
@@ -524,9 +561,9 @@ class PanelTests(unittest.TestCase):
         _stamp(clean, "tag")
         ok_result = _run(clean)
         greens = [
-            text
-            for text, color in ok_result.details["panel_lines"]
-            if color == COLOR_OK
+            row[0]
+            for row in ok_result.details["panel_lines"]
+            if row[1] == COLOR_OK
         ]
         self.assertTrue(any("全部 Tag 來源正常" in text for text in greens))
 
@@ -537,7 +574,7 @@ class PanelTests(unittest.TestCase):
         result = _run(session)
         self.assertIn("uncovered_space", result.warnings)
         self.assertEqual(result.details["space_missing"], ("廊道",))
-        body = "\n".join(text for text, _color in result.details["panel_lines"])
+        body = _panel_body(result.details["panel_lines"])
         self.assertIn("廊道", body)
 
     def test_finish_tag_covers_space(self):
@@ -556,9 +593,9 @@ class PanelTests(unittest.TestCase):
         self.assertNotIn("uncovered_space", result.warnings or ())
         self.assertEqual(result.details["space_missing"], ())
         greens = [
-            text
-            for text, color in result.details["panel_lines"]
-            if color == COLOR_OK
+            row[0]
+            for row in result.details["panel_lines"]
+            if row[1] == COLOR_OK
         ]
         self.assertTrue(any("Finish Tag" in text for text in greens))
 
@@ -584,17 +621,33 @@ class PanelTests(unittest.TestCase):
         _add_block(session, "later", "TAG_HEIGHT_GRAB", page="A__1")
         _add_block(session, "first", "TAG_ITEM", page="Z__1")
         result = _run(session)
-        body = "\n".join(text for text, _color in result.details["panel_lines"])
+        body = _panel_body(result.details["panel_lines"])
         self.assertLess(body.index("Z__1"), body.index("A__1"))
         self.assertIn("已掃描 2 個 Tag", body)
 
     def test_empty_scan_does_not_claim_all_ok(self):
         session = _session()
         result = _run(session)
-        body = "\n".join(text for text, _color in result.details["panel_lines"])
+        body = _panel_body(result.details["panel_lines"])
         self.assertIn("已掃描 0 個 Tag", body)
         self.assertIn("沒有掃到可檢查的 Tag", body)
         self.assertNotIn("全部 Tag 來源正常", body)
+
+    def test_issue_rows_include_tag_id_for_zoom(self):
+        session = _session()
+        _add_block(session, "tag", "TAG_HEIGHT_GRAB")
+        result = _run(session)
+        clickable = [
+            row for row in result.details["panel_lines"] if len(row) >= 4 and row[2]
+        ]
+        self.assertEqual(clickable[0][2], "tag")
+        self.assertEqual(clickable[0][3], PAGE)
+        session.zoom_to_layout_object(PAGE, "tag")
+        self.assertEqual(
+            session.zoomed_layout_objects[-1],
+            {"layout": PAGE, "object_id": "tag"},
+        )
+        self.assertEqual(session.current_layout_page_name(), PAGE)
 
 
 if __name__ == "__main__":

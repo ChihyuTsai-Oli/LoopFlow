@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from typing import Optional, Sequence, Tuple
+from typing import Callable, Optional, Sequence, Tuple
 
 
 def _ui_font(drawing, size: float = 11.0):
@@ -936,10 +936,11 @@ _PANEL_COLORS = {
 
 
 def show_colored_log_panel(
-    lines: Sequence[Tuple[str, str]],
+    lines: Sequence[tuple],
     title: str = "TAG-O ~ Holy Cargo ~~",
+    on_select: Optional[Callable[[str, str], None]] = None,
 ) -> None:
-    """1.0 風格深色色碼列表。無 Eto 時改成純文字訊息框。"""
+    """1.0 風格深色色碼列表。點選斷連列可跳到該 Tag。無 Eto 時改成純文字訊息框。"""
     try:
         import Eto.Drawing as drawing  # type: ignore
         import Eto.Forms as forms  # type: ignore
@@ -975,12 +976,34 @@ def show_colored_log_panel(
             stack.Orientation = forms.Orientation.Vertical
             stack.Padding = drawing.Padding(12)
             stack.Spacing = 1
-            for text, color_key in lines:
+            for row in lines:
+                text = str(row[0]) if row else ""
+                color_key = str(row[1]) if len(row) > 1 else "text"
+                tag_id = str(row[2]) if len(row) > 2 else ""
+                page_name = str(row[3]) if len(row) > 3 else ""
                 label = forms.Label()
-                label.Text = str(text)
+                label.Text = text
                 label.TextColor = palette.get(color_key, palette["text"])
                 label.Font = log_font
                 label.BackgroundColor = bg
+                if on_select and tag_id:
+                    try:
+                        label.Cursor = forms.Cursors.Pointer
+                    except Exception:
+                        pass
+
+                    def _clicked(
+                        sender,
+                        e,
+                        selected_id=tag_id,
+                        selected_page=page_name,
+                    ) -> None:
+                        try:
+                            on_select(selected_id, selected_page)
+                        except Exception:
+                            pass
+
+                    label.MouseDown += _clicked
                 stack.Items.Add(forms.StackLayoutItem(label))
 
             scroll = forms.Scrollable()
