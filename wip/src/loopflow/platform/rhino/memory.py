@@ -87,7 +87,13 @@ class MemorySession:
                 ids.remove(object_id)
         self._modified = True
 
-    def iter_object_ids(self, *, include_hidden: bool = True, include_locked: bool = True):
+    def iter_object_ids(
+        self,
+        *,
+        include_hidden: bool = True,
+        include_locked: bool = True,
+        include_linked: bool = False,
+    ):
         ids: List[str] = []
         for state in self._objects.values():
             if state.hidden and not include_hidden:

@@ -1111,13 +1111,38 @@ class LiveSession:
             for page in self._ordered_page_views()
         )
 
+    def _layout_viewport_ids(self, page):
+        """紙空間＋此頁所有 Detail 視窗。標在圖上的 Tag 屬於 Detail，不是頁 MainViewport。"""
+        ids = set()
+        try:
+            ids.add(page.MainViewport.Id)
+        except Exception:
+            pass
+        details = ()
+        try:
+            details = page.GetDetailViews() or ()
+        except Exception:
+            details = ()
+        for detail in details:
+            for attr in ("Viewport", "MainViewport"):
+                viewport = getattr(detail, attr, None)
+                if viewport is None:
+                    continue
+                vid = getattr(viewport, "Id", None)
+                if vid is not None:
+                    ids.add(vid)
+            did = getattr(detail, "Id", None)
+            if did is not None:
+                ids.add(did)
+        return ids
+
     def objects_on_layout_page(self, page_name: str):
         if self._rhino is None:
             return ()
         page = self._page_view(page_name)
         if page is None:
             return ()
-        viewport_id = page.MainViewport.Id
+        viewport_ids = self._layout_viewport_ids(page)
         ids = []
         seen = set()
 
@@ -1125,7 +1150,7 @@ class LiveSession:
             if obj is None:
                 return
             try:
-                if obj.Attributes.ViewportId != viewport_id:
+                if obj.Attributes.ViewportId not in viewport_ids:
                     return
             except Exception:
                 return

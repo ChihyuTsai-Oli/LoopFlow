@@ -17,7 +17,13 @@ from loopflow.features.sheet.metadata import (
     list_active_sheets,
     registered_title_frame_names,
 )
-from loopflow.features.sheet.naming import format_sheet_ref, load_naming_rules, parse_drawing_no
+from loopflow.features.sheet.keys import SHEET_ID_KEY
+from loopflow.features.sheet.naming import (
+    format_sheet_ref,
+    load_naming_rules,
+    parse_drawing_no,
+    parse_page_name,
+)
 from loopflow.features.tagger.binding import UUID_V4_RE, text
 from loopflow.features.tagger.index import listed_details, resolve_view_for_detail
 from loopflow.features.tagger.keys import (
@@ -113,15 +119,52 @@ def _enrich_row(row: Mapping, types_by_id: Mapping[str, dict]) -> dict:
     return body
 
 
-def _live_uuid_index(session: RhinoSession, cache: dict) -> Dict[str, str]:
+def _iter_live_source_ids(session: RhinoSession) -> Sequence[str]:
+    objects_fn = getattr(session, "_iter_rhino_objects", None)
+    if callable(objects_fn):
+        ids = []
+        try:
+            for obj in objects_fn(include_linked=True) or ():
+                try:
+                    ids.append(str(obj.Id))
+                except Exception:
+                    continue
+        except TypeError:
+            ids = []
+        if ids:
+            return tuple(ids)
+    try:
+        return tuple(
+            session.iter_object_ids(
+                include_hidden=True, include_locked=True, include_linked=True
+            )
+        )
+    except TypeError:
+        return tuple(session.iter_object_ids(include_hidden=True, include_locked=True))
+
+
+def _live_row_score(row: Mapping) -> int:
+    keys = (
+        "type_id",
+        "type_category",
+        "type_sequence",
+        "type_display_name",
+        "elevation_basis",
+        "elevation_display",
+    )
+    return sum(1 for key in keys if text(row.get(key)) is not None)
+
+
+def _live_ids_by_uuid(session: RhinoSession, cache: dict) -> Dict[str, List[str]]:
     indexed = cache.get("live_by_uuid")
     if indexed is not None:
         return indexed
-    found = {}
-    for object_id in session.iter_object_ids(include_hidden=True, include_locked=True):
+    found: Dict[str, List[str]] = {}
+    for object_id in _iter_live_source_ids(session):
         uid = _as_uuid(read_text(session, object_id, OBJECT_ID_KEY))
-        if uid is not None and uid not in found:
-            found[uid] = object_id
+        if uid is None:
+            continue
+        found.setdefault(uid, []).append(object_id)
     cache["live_by_uuid"] = found
     return found
 
@@ -157,10 +200,20 @@ def _lookup_object_row(
     row = objects.get(key)
     if row is not None:
         return _enrich_row(row, types_by_id), False
-    live_id = _live_uuid_index(session, cache).get(key)
-    if live_id is None:
+    live_ids = _live_ids_by_uuid(session, cache).get(key) or ()
+    if not live_ids:
         return None, False
-    return _enrich_row(_row_from_live(session, live_id, types_by_id), types_by_id), True
+    best = None
+    best_score = -1
+    for live_id in live_ids:
+        candidate = _enrich_row(_row_from_live(session, live_id, types_by_id), types_by_id)
+        score = _live_row_score(candidate)
+        if score > best_score:
+            best = candidate
+            best_score = score
+    if best is None:
+        return None, False
+    return best, True
 
 
 def _host_sheet_id(
@@ -239,6 +292,45 @@ def _lookup_sheet_fields(
     return None, None
 
 
+def _fields_from_page_name(session: RhinoSession, page_name: str) -> Optional[Dict[str, str]]:
+    rules = load_naming_rules(session)
+    parsed = parse_page_name(page_name, rules)
+    if parsed.prefix is None and parsed.number is None:
+        return None
+    return {
+        infuser_keys.SHEET_CODE_KEY: _display(parsed.prefix),
+        infuser_keys.SHEET_REF_KEY: (
+            format_sheet_ref(rules, parsed.number)
+            if parsed.number is not None
+            else infuser_keys.MISSING_DISPLAY
+        ),
+    }
+
+
+def _sheet_ids_on_pages(
+    session: RhinoSession,
+    catalog: TagTemplateSet,
+    page_names: Sequence[str],
+) -> Tuple[str, ...]:
+    registered = registered_title_frame_names(session)
+    objects_fn = getattr(session, "objects_on_layout_page", None)
+    if not callable(objects_fn):
+        return ()
+    found = []
+    for page_name in page_names:
+        for object_id in objects_fn(page_name) or ():
+            if not session.is_block_instance(object_id):
+                continue
+            if not is_title_frame(session, object_id, catalog, registered):
+                continue
+            sheet_id = text(session.get_object_user_text(object_id, SHEET_ID_KEY))
+            if _as_uuid(sheet_id) is None:
+                continue
+            if sheet_id not in found:
+                found.append(sheet_id)
+    return tuple(found)
+
+
 def _resolve_index_sheet(
     session: RhinoSession,
     catalog: TagTemplateSet,
@@ -297,12 +389,36 @@ def _resolve_index_sheet(
             command_id=COMMAND_ID,
         )
     if len(unique_sheets) != 1:
-        return results.blocked(
-            STAGE,
-            "目標 View 的頁沒有 Sheet metadata。請先跑 Layout ID。",
-            ("missing_sheet",),
-            command_id=COMMAND_ID,
-        )
+        extra = _sheet_ids_on_pages(session, catalog, unique_pages)
+        extra_unique = tuple(dict.fromkeys(extra))
+        if len(extra_unique) > 1:
+            return results.blocked(
+                STAGE,
+                "目標 View 對到兩個以上 Sheet，不猜測。",
+                ("ambiguous_sheet",),
+                command_id=COMMAND_ID,
+            )
+        if len(extra_unique) == 1:
+            unique_sheets = extra_unique
+        else:
+            parsed_fields = []
+            for page_name in unique_pages:
+                fields = _fields_from_page_name(session, page_name)
+                if fields is not None and fields not in parsed_fields:
+                    parsed_fields.append(fields)
+            if len(parsed_fields) == 1:
+                return results.ok(
+                    STAGE,
+                    "已從目標頁名讀到圖號。",
+                    command_id=COMMAND_ID,
+                    details={"sheet_id": None, "fields": parsed_fields[0]},
+                )
+            return results.blocked(
+                STAGE,
+                "目標 View 的頁沒有 Sheet metadata。請先跑 Layout ID。",
+                ("missing_sheet",),
+                command_id=COMMAND_ID,
+            )
     sheet_id = unique_sheets[0]
     fields = _index_sheet_fields(session, sheet_id)
     if fields is None:

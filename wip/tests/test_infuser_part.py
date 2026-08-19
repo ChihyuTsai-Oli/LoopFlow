@@ -414,6 +414,51 @@ class InjectTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("tag", SHEET_CODE_KEY), "IN")
         self.assertEqual(session.get_object_user_text("tag", SHEET_REF_KEY), "101.01")
 
+    def test_height_prefers_live_object_with_type_fields(self):
+        session = _session()
+        session.add_object("curve", name="section-2d", layer="LoopFlow_Extract")
+        session.set_object_user_text("curve", OBJECT_ID_KEY, OBJECT_ID)
+        _add_live_source(session)
+        _add_block(
+            session,
+            "tag",
+            "TAG_HEIGHT_LASER",
+            user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID},
+        )
+        result = _run(session, registry=_payload(objects=[]))
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("tag", ELEVATION_DISPLAY_KEY), "320")
+        self.assertEqual(session.get_object_user_text("tag", TYPE_CATEGORY_KEY), "PT")
+        self.assertEqual(session.get_object_user_text("tag", TYPE_DISPLAY_NAME_KEY), "Paint")
+
+    def test_index_from_target_view_page_name_without_frame(self):
+        session = _session()
+        _add_block(
+            session,
+            "tag",
+            "TAG_SECTION_DETAIL",
+            user_text={TARGET_VIEW_ID_KEY: VIEW_ID},
+        )
+        session.add_object("view", name="A-A", layer="LoopFlow::Anchor_Frame")
+        session.set_object_user_text("view", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
+        session.set_object_user_text("view", VIEW_ID_KEY, VIEW_ID)
+        session.set_bbox("view", (0, 0, 0), (100, 100, 0))
+        session.set_layout_details(
+            (
+                {
+                    "layout": OTHER,
+                    "page_number": 2,
+                    "detail_id": "dv-1",
+                    "dv_name": "A-A",
+                },
+            )
+        )
+        session.set_detail_model_point("dv-1", (50, 50, 0))
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("tag", SHEET_CODE_KEY), "IN")
+        self.assertEqual(session.get_object_user_text("tag", SHEET_REF_KEY), "202")
+
     def test_other_page_not_touched(self):
         session = _session()
         _add_block(
