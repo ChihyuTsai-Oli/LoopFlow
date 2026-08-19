@@ -247,7 +247,7 @@ IN__201.02__立面圖2
 <h3 id="使用者怎麼跑-Layout-ID">使用者怎麼跑 Layout ID</h3>
 <ol><li>每個系列的第一頁改成 <code>**圖類別__圖號__圖名</code>。同一系列後面的頁只寫圖名即可（或維持 Rhino 預設名）。不參與系列的頁用 <code>//圖類別__圖號__圖名</code>。</li><li>跑 <code>LF_Tagger_Layout_ID</code>。若跳出圖塊清單，<strong>只勾真正的圖框</strong>（例如 <code>_Frame_A3_shop_drawing</code>）；<code>tag_*</code> 註記不要勾。預設全不勾。</li><li>若圖框已就緒但還沒有 <code>**</code> 起點（也沒有可寫入的 <code>//</code>），會停止並<strong>只顯示</strong>命名規則與 Sample，彈窗不列未編號頁。改頁名後再跑。</li><li>核對清單會列出每頁的圖號、圖名、是否改頁名、是否系列起點／手動頁。確認才寫入；取消整批零寫入。</li><li>寫入後同一輪會做三件事：<ul><li>Layout 頁名整理成三欄（起點保留 <code>**</code>，手動頁保留 <code>//</code>）</li><li>圖框寫入 <code>lf_drawing_no</code>／<code>lf_drawing_name</code>（並暫時同步舊欄 <code>DWG_NO</code>／<code>DWG_NAME</code>，讓現有圖框上的字立刻更新）</li><li>文件寫入 Sheet metadata  </li></ul></li></ol>
 <p>比例 <code>lf_scale</code> 由人工維護，指令不碰。</p>
-<ol><li>圖框畫面上的字目前仍讀舊欄 <code>DWG_NO</code>／<code>DWG_NAME</code>，所以 Layout ID 會把同一組值雙寫上去。D08 把 Block 文字欄改指 <code>lf_*</code> 之後，就只留新 key。Infuser 不負責圖框圖號。</li><li>插頁、改頁序後必須再跑一次，圖號才會按尾數重排。沒重跑時圖目錄等 consumer 應回報過期，不得安靜輸出舊值。</li></ol>
+<ol><li>圖框畫面上的字在 D08 完成前仍讀舊欄 <code>DWG_NO</code>／<code>DWG_NAME</code>，所以 Layout ID 會把同一組值雙寫上去。D08 操作見 <code>D08_Tag圖塊欄位.md</code>：改完後圖框讀 <code>lf_drawing_no</code>／<code>lf_drawing_name</code>／<code>lf_scale</code>，就只留新 key。Infuser 不負責圖框圖號。</li><li>插頁、改頁序後必須再跑一次，圖號才會按尾數重排。沒重跑時圖目錄等 consumer 應回報過期，不得安靜輸出舊值。</li></ol>
 <p>一頁沒有圖框、或有兩個以上圖框，該頁跳過並報告，不改頁名。<code>//</code> 格式不對（不是合法三欄）也跳過該頁，不擋其他頁。<code>TAG_ELEV_0</code> 寫目前頁的編號（例如 <code>201</code>）。其餘 Tag 不碰。</p>
 <h3 id="五條要記住的規則-與警告視窗相同">五條要記住的規則（與警告視窗相同）</h3>
 <ol><li><code>**</code> 作為自動編號起點，勿刪。</li><li><code>**</code> 之間的頁面為同一系列。</li><li><code>**</code> 頁面之外的 Layout 名稱，只需要填寫圖名。</li><li><code>//</code> 頁面不參與自動編號，但仍需使用相同命名格式規範。</li><li>圖號、圖名的編號與命名可以從 Layout 列表手動調整；經由自動編號寫入圖框中，<strong>不可直接修改圖框內容</strong>。</li></ol>
@@ -265,7 +265,7 @@ IN__201.02__立面圖2
 <h2 id="11-同步顯示資料-Infuser">11. 同步顯示資料（Infuser）</h2>
 <p>使用者可選同步當前頁（Part）或全部頁（All）。Infuser 從指定 Registry revision 與 Sheet metadata 把資料<strong>注入</strong> Tag Block 顯示欄：</p>
 <ul><li>不覆寫 locked Tag。</li><li>不覆寫 <code>TAG_DW</code>、比例、Detail 編號及其他人工欄位。</li><li>缺來源、過期、歧義與未知 template 回報明確狀態，不以顏色作唯一真相。</li><li>Part 完成就是合法停點，不要求每次全案同步。</li><li>第一輪 Infuser 不必等 TAG-O；TAG-O 做完後，下一輪 Infuser 依其判斷更新、跳過或警告。</li></ul>
-<p>畫面要看得到注入結果，須先完成 D08（Tag 圖塊文字欄改讀 <code>lf_*</code>）。</p>
+<p>畫面要看得到注入結果，須先完成 D08（Tag 圖塊文字欄改讀 <code>lf_*</code>）。逐步操作見 <code>D08_Tag圖塊欄位.md</code>。</p>
 <h2 id="12-Health-與-Repair-TAG-O">12. Health 與 Repair（TAG-O）</h2>
 <p>TAG-O 在 Infuser 注入之後，<strong>只讀</strong>檢查 identity、binding、revision、template 與覆蓋範圍：資料還活著，還是斷連（unbound／orphaned／stale）。含 locked Tag；<code>TAG_DW</code> 無來源屬正常，不判 unbound。沒有 Infuser 注入結果則實機測不出東西。</p>
 <p>Repair 是獨立動作：先顯示影響與預覽，使用者確認後才執行。不得偷偷重綁、換 ID、刪 Drawing 或覆寫人工內容。提示顏色必須可還原原始顏色。</p>
