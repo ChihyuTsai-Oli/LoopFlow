@@ -44,6 +44,7 @@ _READY = {
     "LF_Anchor_Frame": "E01",
     "LF_Catalog": "E05",
     "LF_Infuser_Part": "D06",
+    "LF_Infuser_All": "D07",
 }
 
 _COMMANDS = {

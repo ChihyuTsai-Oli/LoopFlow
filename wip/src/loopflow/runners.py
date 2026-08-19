@@ -142,6 +142,19 @@ def run_infuser_part() -> Result:
     return result
 
 
+def run_infuser_all() -> Result:
+    from loopflow.features.infuser.all import run_infuser_all as run_all
+    from loopflow.platform.rhino.prompts import show_message
+
+    opened = _open_live_session()
+    if not opened.ok:
+        return opened
+    result = run_all(opened.details["session"], show_message=show_message)
+    if not result.ok:
+        return _present_failure(result)
+    return result
+
+
 RUNNERS: Dict[str, Runner] = {
     "LF_Nexus": run_nexus,
     "LF_Open_Dictionary": run_open_dictionary,
@@ -156,6 +169,7 @@ RUNNERS: Dict[str, Runner] = {
     "LF_Anchor_Frame": run_anchor_frame,
     "LF_Catalog": run_catalog,
     "LF_Infuser_Part": run_infuser_part,
+    "LF_Infuser_All": run_infuser_all,
 }
 
 

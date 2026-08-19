@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import copy
-import io
 import json
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
 from pathlib import Path
 
 WIP = Path(__file__).resolve().parents[1]
@@ -16,7 +14,6 @@ SRC = WIP / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from loopflow.bootstrap import run_command
 from loopflow.command_catalog import get_command
 from loopflow.features.infuser.keys import (
     DETAIL_NO_KEY,
@@ -210,14 +207,10 @@ def _run(session, **kwargs):
 
 
 class CatalogTests(unittest.TestCase):
-    def test_part_is_ready_and_all_is_not(self):
+    def test_part_is_ready(self):
         part = get_command("LF_Infuser_Part")
         self.assertEqual(part["status"], "ready")
         self.assertEqual(part["task"], "D06")
-        self.assertEqual(get_command("LF_Infuser_All")["status"], "not_implemented")
-        with redirect_stdout(io.StringIO()):
-            result = run_command("LF_Infuser_All")
-        self.assertEqual(result.status, "not_implemented")
 
 
 class GuardTests(unittest.TestCase):

@@ -674,6 +674,8 @@ def infuse_page(
     catalog: TagTemplateSet,
     payload: Optional[Mapping],
     revision,
+    *,
+    redraw: bool = True,
 ) -> dict:
     """注入一頁。回傳計數與警告，不組 Result。"""
     objects, dupes = _object_index(payload)
@@ -745,9 +747,10 @@ def infuse_page(
             notes.append("未知圖塊「%s」" % (block_name or "（未命名）"))
     if cache.get("used_live_object"):
         notes.append("有些 Height／Finish 是從模型現況讀的，尚未進 Registry。")
-    redraw = getattr(session, "redraw", None)
-    if callable(redraw):
-        redraw()
+    if redraw:
+        redraw_fn = getattr(session, "redraw", None)
+        if callable(redraw_fn):
+            redraw_fn()
     return {
         "counts": counts,
         "notes": notes,
@@ -885,6 +888,9 @@ def _result_from_counts(
     counts: Mapping[str, int],
     notes: Sequence[str],
     extra: Optional[dict] = None,
+    *,
+    command_id: str = COMMAND_ID,
+    headline: Optional[str] = None,
 ) -> results.Result:
     warnings = []
     warning_keys = (
@@ -913,15 +919,19 @@ def _result_from_counts(
     if extra:
         details.update(extra)
     message = _summary(page_name, revision, counts, notes)
+    if headline:
+        lines = message.splitlines()
+        lines[0] = headline
+        message = "\n".join(lines)
     if warnings:
         return results.ok_with_warnings(
             STAGE,
             message,
             tuple(warnings),
-            command_id=COMMAND_ID,
+            command_id=command_id,
             details=details,
         )
-    return results.ok(STAGE, message, command_id=COMMAND_ID, details=details)
+    return results.ok(STAGE, message, command_id=command_id, details=details)
 
 
 def run_infuser_part(
