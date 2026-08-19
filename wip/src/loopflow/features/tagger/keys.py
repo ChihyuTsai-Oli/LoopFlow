@@ -10,7 +10,9 @@ SOURCE_OBJECT_ID_KEY = "lf_source_object_id"
 SOURCE_BLOCK_NAME_KEY = "lf_source_block_name"
 TARGET_VIEW_ID_KEY = "lf_target_view_id"
 TARGET_SHEET_ID_KEY = "lf_target_sheet_id"
-LOCK_STATE_KEY = "lf_lock_state"
+# `00` 讓 Rhino Attribute User Text 依字母排序時排在其他 lf_* 之前。
+LOCK_STATE_KEY = "lf_00_lock_state"
+LOCK_STATE_PREV_KEY = "lf_lock_state"
 LOCK_LEGACY_KEY = "attr_Lock_不更新>寫入x或X"
 LOCK_LEGACY_HINT = "x為不更新"
 LOCK_CANONICAL_HINT = "x to lock"
@@ -41,7 +43,7 @@ def is_legacy_lock_x(value) -> bool:
 
 def is_legacy_lock_key(key: str) -> bool:
     text = str(key or "")
-    if not text or text == LOCK_STATE_KEY:
+    if not text or text in (LOCK_STATE_KEY, LOCK_STATE_PREV_KEY):
         return False
     if text == LOCK_LEGACY_KEY:
         return True
@@ -56,10 +58,11 @@ def _object_user_text_keys(session, object_id):
 
 
 def is_tag_locked(session, object_id) -> bool:
-    """canonical true／1，或 lf_lock_state／舊 lock 欄寫 x／X。只讀不寫舊 key。"""
-    lock_value = session.get_object_user_text(object_id, LOCK_STATE_KEY)
-    if is_lock_true(lock_value) or is_legacy_lock_x(lock_value):
-        return True
+    """canonical true／1 或 x／X。只讀不寫舊 key。"""
+    for key in (LOCK_STATE_KEY, LOCK_STATE_PREV_KEY):
+        lock_value = session.get_object_user_text(object_id, key)
+        if is_lock_true(lock_value) or is_legacy_lock_x(lock_value):
+            return True
     seen = set()
     for key in _object_user_text_keys(session, object_id):
         seen.add(key)

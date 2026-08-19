@@ -20,6 +20,7 @@ from loopflow.features.tagger.keys import (
     LOCK_LEGACY_HINT,
     LOCK_LEGACY_KEY,
     LOCK_STATE_KEY,
+    LOCK_STATE_PREV_KEY,
 )
 from loopflow.platform.rhino.memory import MemorySession
 
@@ -194,6 +195,19 @@ class MigrateBlockDisplayKeysTests(unittest.TestCase):
         run_migrate_block_display_keys(session, confirm=lambda _lines: True)
         self.assertIsNone(session.get_object_user_text("item-1", LOCK_LEGACY_KEY))
         self.assertIsNone(session.get_object_user_text("item-1", LOCK_STATE_KEY))
+
+    def test_previous_lock_key_copied_to_sort_key(self):
+        session = MemorySession()
+        _block(
+            session,
+            "h-1",
+            "Tag_Height_Grab",
+            **{LOCK_STATE_PREV_KEY: "x", "attr_mat_key": "PT"},
+        )
+        run_migrate_block_display_keys(session, confirm=lambda _lines: True)
+        self.assertEqual(session.get_object_user_text("h-1", LOCK_STATE_KEY), "x")
+        self.assertIsNone(session.get_object_user_text("h-1", LOCK_STATE_PREV_KEY))
+        self.assertNotEqual(LOCK_STATE_KEY, LOCK_STATE_PREV_KEY)
 
 
 if __name__ == "__main__":

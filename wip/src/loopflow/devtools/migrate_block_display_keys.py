@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """D08 開發輔助：全檔圖塊把舊顯示欄抄到 lf_* 後刪掉舊 key。
 
-不是產品指令。已有的 lf_* 不覆蓋。鎖定欄若寫 x／X 會抄到 lf_lock_state
+不是產品指令。已有的 lf_* 不覆蓋。鎖定欄若寫 x／X 會抄到 lf_00_lock_state
 後刪舊名字；提示文字只刪不抄。責任見 `wip/docs/D08_Tag圖塊欄位.md`。
 """
 from __future__ import annotations
@@ -19,7 +19,9 @@ from loopflow.features.sheet.keys import (
 from loopflow.features.tagger.keys import (
     LOCK_LEGACY_KEY,
     LOCK_STATE_KEY,
+    LOCK_STATE_PREV_KEY,
     is_legacy_lock_x,
+    is_lock_true,
 )
 from loopflow.features.tagger.templates import DEFAULT_PATH
 from loopflow.foundation import results
@@ -140,19 +142,30 @@ def plan_object(
         for stray in FRAME_STRAY_KEYS:
             if stray in keys and stray not in seen:
                 steps.append(_step(object_id, block_name, stray, "", None))
-    if (
-        block_name.casefold() in lock_allowed_blocks
-        and LOCK_LEGACY_KEY in keys
-        and LOCK_LEGACY_KEY not in seen
-    ):
-        old_value = _text(session.get_object_user_text(object_id, LOCK_LEGACY_KEY))
+    lock_old_keys = []
+    if LOCK_STATE_PREV_KEY != LOCK_STATE_KEY and LOCK_STATE_PREV_KEY in keys:
+        lock_old_keys.append(LOCK_STATE_PREV_KEY)
+    if LOCK_LEGACY_KEY in keys:
+        lock_old_keys.append(LOCK_LEGACY_KEY)
+    if block_name.casefold() in lock_allowed_blocks:
         new_value = _text(session.get_object_user_text(object_id, LOCK_STATE_KEY))
-        copy_value = (
-            old_value if new_value is None and is_legacy_lock_x(old_value) else None
-        )
-        steps.append(
-            _step(object_id, block_name, LOCK_LEGACY_KEY, LOCK_STATE_KEY, copy_value)
-        )
+        copy_value = None
+        if new_value is None:
+            for old_key in lock_old_keys:
+                old_value = _text(session.get_object_user_text(object_id, old_key))
+                if is_lock_true(old_value) or is_legacy_lock_x(old_value):
+                    copy_value = old_value
+                    break
+        copied = False
+        for old_key in lock_old_keys:
+            if old_key in seen:
+                continue
+            step_copy = copy_value if not copied else None
+            if step_copy is not None:
+                copied = True
+            steps.append(
+                _step(object_id, block_name, old_key, LOCK_STATE_KEY, step_copy)
+            )
     return steps
 
 
@@ -183,7 +196,7 @@ def _preview_lines(steps: Sequence[dict]) -> List[str]:
         "將處理 %s 個圖塊上的 %s 個舊欄。" % (len(by_object), len(steps)),
         "人工值會先抄到 lf_*（已有新欄不覆蓋），然後刪掉舊名字。",
         "圖框上的 Category／REF_ID 會刪掉，不抄到 Index 欄。",
-        "鎖定欄若寫 x／X 會抄到 lf_lock_state；提示文字只刪不抄。",
+        "鎖定欄若寫 x／X 會抄到 lf_00_lock_state；提示文字只刪不抄。",
         "文件 metadata 與 lf_sheet_id 不碰。",
         "",
     ]

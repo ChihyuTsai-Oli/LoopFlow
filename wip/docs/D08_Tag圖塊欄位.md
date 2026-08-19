@@ -27,7 +27,7 @@
 
 `CH`、`000`、`PT`、`00`、`MT`、`FF`、`DW` 維持原樣。
 
-鎖定欄這次也改：公式改讀 `lf_lock_state`，畫面上仍輸入 `x`／`X` 表示鎖定。空著或只看到 `x to lock` 都不算鎖定。
+鎖定欄這次也改：公式改讀 `lf_00_lock_state`（數字 `00` 讓這一欄在 Rhino Attribute User Text 依字母排序時排最上面），畫面上仍輸入 `x`／`X` 表示鎖定。空著或只看到 `x to lock` 都不算鎖定。
 
 ## 在 Rhino 怎麼改一個欄位
 
@@ -66,7 +66,7 @@
 
 | 舊公式 | 新公式 |
 |---|---|
-| `%<UserText("block", "attr_Lock_不更新>寫入x或X", "", "x為不更新")>%` | `%<UserText("block", "lf_lock_state", "", "x to lock")>%` |
+| `%<UserText("block", "attr_Lock_不更新>寫入x或X", "", "x為不更新")>%` | `%<UserText("block", "lf_00_lock_state", "", "x to lock")>%` |
 | `%<UserText("block", "attr_ch_key", "", "CH")>%` | `%<UserText("block", "lf_elevation_basis", "", "CH")>%` |
 | `%<UserText("block", "attr_ch_val", "", "000")>%` | `%<UserText("block", "lf_elevation_display", "", "000")>%` |
 | `%<UserText("block", "attr_mat_key", "", "PT")>%` | `%<UserText("block", "lf_type_category", "", "PT")>%` |
@@ -80,7 +80,7 @@
 
 | 舊公式 | 新公式 |
 |---|---|
-| `%<UserText("block", "attr_Lock_不更新>寫入x或X", "", "x為不更新")>%` | `%<UserText("block", "lf_lock_state", "", "x to lock")>%` |
+| `%<UserText("block", "attr_Lock_不更新>寫入x或X", "", "x為不更新")>%` | `%<UserText("block", "lf_00_lock_state", "", "x to lock")>%` |
 | `%<UserText("block", "attr_mat_key", "", "MT")>%` | `%<UserText("block", "lf_type_category", "", "MT")>%` |
 | `%<UserText("block", "attr_mat_val", "", "00")>%` | `%<UserText("block", "lf_type_sequence", "", "00")>%` |
 | `%<UserText("block", "attr_note", "", "材質名稱")>%` | `%<UserText("block", "lf_type_display_name", "", "Type name")>%` |
@@ -90,7 +90,7 @@
 
 | 舊公式 | 新公式 |
 |---|---|
-| `%<UserText("block", "attr_Lock_不更新>寫入x或X", "", "x為不更新")>%` | `%<UserText("block", "lf_lock_state", "", "x to lock")>%` |
+| `%<UserText("block", "attr_Lock_不更新>寫入x或X", "", "x為不更新")>%` | `%<UserText("block", "lf_00_lock_state", "", "x to lock")>%` |
 | `%<UserText("block", "attr_item_key", "", "FF")>%` | `%<UserText("block", "lf_item_category", "", "FF")>%` |
 | `%<UserText("block", "attr_item_val", "", "編號")>%` | `%<UserText("block", "lf_item_code", "", "Code")>%` |
 | `%<UserText("block", "attr_note", "", "家具")>%` | `%<UserText("block", "lf_item_name", "", "Furniture")>%` |
@@ -112,7 +112,7 @@
 
 | 舊公式 | 新公式 |
 |---|---|
-| `%<UserText("block", "attr_Lock_不更新>寫入x或X", "", "x為不更新")>%` | `%<UserText("block", "lf_lock_state", "", "x to lock")>%` |
+| `%<UserText("block", "attr_Lock_不更新>寫入x或X", "", "x為不更新")>%` | `%<UserText("block", "lf_00_lock_state", "", "x to lock")>%` |
 | `%<UserText("block","Category","","")>%` | `%<UserText("block", "lf_sheet_code", "", "")>%` |
 | `%<UserText("block","REF_ID","","")>%` | `%<UserText("block", "lf_sheet_ref", "", "")>%` |
 | `%<UserText("block","Detail_NO","","")>%` | `%<UserText("block", "lf_detail_no", "", "")>%` |
@@ -123,7 +123,7 @@
 
 | 舊公式 | 新公式 | 誰寫入 |
 |---|---|---|
-| `%<UserText("block", "attr_Lock_不更新>寫入x或X", "", "x為不更新")>%` | `%<UserText("block", "lf_lock_state", "", "x to lock")>%` | 人工（`x`／`X` 鎖定） |
+| `%<UserText("block", "attr_Lock_不更新>寫入x或X", "", "x為不更新")>%` | `%<UserText("block", "lf_00_lock_state", "", "x to lock")>%` | 人工（`x`／`X` 鎖定） |
 | `%<UserText("block","Category","","")>%` | `%<UserText("block", "lf_sheet_code", "", "")>%` | Layout ID（目前頁編號） |
 | `%<UserText("block","1-Elev_num","","")>%` | `%<UserText("block", "lf_dir_num", "", "")>%` | 人工 |
 | `%<UserText("block","2-Elev","","")>%` | `%<UserText("block", "lf_dir_elev", "", "")>%` | 人工 |
@@ -147,7 +147,7 @@
 1. 仍用 `wip/tools/擷取tag_block文字.py` 選各圖塊實例，確認公式已是 `lf_*`、提示已是英文，且沒有 `DWG_NO`、`DWG_NAME`、`Category`、`attr_mat_*`、`attr_Lock_不更新>寫入x或X` 等舊名。
 2. 測試檔插入**新**圖框 → 跑 Layout ID → 圖號／圖名有字。比例須自己在 `lf_scale` 填，畫面不可為 `####`。
 3. 舊專案裡已經插入的實例：公式隨 Block 定義更新；舊 UserText 名稱用 `LF_D08_Migrate_Display_Keys` 一次清掉。驗證請用副本。
-4. 圖塊定義的公式改完後，各張圖上已插入的實例仍帶舊 UserText。不要逐個刪。跑開發指令 `LF_D08_Migrate_Display_Keys`：先把舊值抄到 `lf_*`（已有新欄不覆蓋，所以比例會留下來），再刪舊名字。圖框上 1.x 殘留的 `Category`／`REF_ID` 會刪掉，不抄成 Index 欄。鎖定欄若寫 `x`／`X` 會抄到 `lf_lock_state` 後刪舊名字；畫面上的提示文字（`x為不更新`）只刪不抄。取消則什麼都不改。清完後先不要跑 Layout ID，否則會把 `DWG_NO`／`DWG_NAME` 寫回來。
+4. 圖塊定義的公式改完後，各張圖上已插入的實例仍帶舊 UserText。不要逐個刪。跑開發指令 `LF_D08_Migrate_Display_Keys`：先把舊值抄到 `lf_*`（已有新欄不覆蓋，所以比例會留下來），再刪舊名字。圖框上 1.x 殘留的 `Category`／`REF_ID` 會刪掉，不抄成 Index 欄。鎖定欄若寫 `x`／`X` 會抄到 `lf_00_lock_state` 後刪舊名字；畫面上的提示文字（`x為不更新`）只刪不抄。取消則什麼都不改。清完後先不要跑 Layout ID，否則會把 `DWG_NO`／`DWG_NAME` 寫回來。
 5. 告訴 AI 結果。通過後才停止 Layout ID 雙寫 `DWG_NO`／`DWG_NAME`，並更新 `fixtures/legacy/tag_block_text/`。
 
 ## 不要做

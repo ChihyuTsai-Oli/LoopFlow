@@ -22,6 +22,7 @@ from loopflow.features.tagger.keys import (
     LOCK_LEGACY_HINT,
     LOCK_LEGACY_KEY,
     LOCK_STATE_KEY,
+    LOCK_STATE_PREV_KEY,
     SOURCE_BLOCK_NAME_KEY,
     SOURCE_OBJECT_ID_KEY,
     TAG_ID_KEY,
@@ -196,6 +197,13 @@ class BindTests(unittest.TestCase):
     def test_canonical_x_lock_zero_write(self):
         session = _session()
         session.set_object_user_text("tag", LOCK_STATE_KEY, "x")
+        result = bind_tag(session, "tag", "wall", _catalog())
+        self.assertEqual(result.blocking, ("tag_locked",))
+        self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
+
+    def test_previous_lock_key_x_zero_write(self):
+        session = _session()
+        session.set_object_user_text("tag", LOCK_STATE_PREV_KEY, "x")
         result = bind_tag(session, "tag", "wall", _catalog())
         self.assertEqual(result.blocking, ("tag_locked",))
         self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
