@@ -331,11 +331,38 @@ def _sheet_ids_on_pages(
     return tuple(found)
 
 
+def _prefer_target_pages(
+    pages: Sequence[str],
+    host_page_name: Optional[str],
+) -> Tuple[str, ...]:
+    unique = tuple(dict.fromkeys(pages))
+    host = text(host_page_name)
+    if host is None:
+        return unique
+    others = tuple(name for name in unique if name != host)
+    return others if others else unique
+
+
+def _unique_page_name_fields(
+    session: RhinoSession,
+    page_names: Sequence[str],
+) -> Optional[Dict[str, str]]:
+    parsed_fields = []
+    for page_name in page_names:
+        fields = _fields_from_page_name(session, page_name)
+        if fields is not None and fields not in parsed_fields:
+            parsed_fields.append(fields)
+    if len(parsed_fields) == 1:
+        return parsed_fields[0]
+    return None
+
+
 def _resolve_index_sheet(
     session: RhinoSession,
     catalog: TagTemplateSet,
     tag_id: str,
     cache: Dict[str, object],
+    host_page_name: Optional[str] = None,
 ) -> results.Result:
     existing = text(session.get_object_user_text(tag_id, TARGET_SHEET_ID_KEY))
     if _as_uuid(existing) is not None:
@@ -373,7 +400,7 @@ def _resolve_index_sheet(
             ("missing_sheet",),
             command_id=COMMAND_ID,
         )
-    unique_pages = tuple(dict.fromkeys(pages))
+    unique_pages = _prefer_target_pages(pages, host_page_name)
     sheet_by_page = {
         sheet.page_name: sheet.sheet_id for sheet in list_active_sheets(session, catalog)
     }
@@ -401,17 +428,13 @@ def _resolve_index_sheet(
         if len(extra_unique) == 1:
             unique_sheets = extra_unique
         else:
-            parsed_fields = []
-            for page_name in unique_pages:
-                fields = _fields_from_page_name(session, page_name)
-                if fields is not None and fields not in parsed_fields:
-                    parsed_fields.append(fields)
-            if len(parsed_fields) == 1:
+            parsed = _unique_page_name_fields(session, unique_pages)
+            if parsed is not None:
                 return results.ok(
                     STAGE,
                     "已從目標頁名讀到圖號。",
                     command_id=COMMAND_ID,
-                    details={"sheet_id": None, "fields": parsed_fields[0]},
+                    details={"sheet_id": None, "fields": parsed},
                 )
             return results.blocked(
                 STAGE,
@@ -422,6 +445,14 @@ def _resolve_index_sheet(
     sheet_id = unique_sheets[0]
     fields = _index_sheet_fields(session, sheet_id)
     if fields is None:
+        parsed = _unique_page_name_fields(session, unique_pages)
+        if parsed is not None:
+            return results.ok(
+                STAGE,
+                "已從目標頁名讀到圖號。",
+                command_id=COMMAND_ID,
+                details={"sheet_id": sheet_id, "fields": parsed},
+            )
         return results.blocked(
             STAGE,
             "目標 Sheet 沒有圖號資料。",
@@ -590,6 +621,7 @@ def infuse_page(
             revision,
             catalog,
             cache,
+            page_name,
         )
         counts[status] = counts.get(status, 0) + 1
         if status == "updated":
@@ -621,6 +653,7 @@ def _infuse_tag(
     revision,
     catalog: TagTemplateSet,
     cache: dict,
+    host_page_name: Optional[str] = None,
 ) -> str:
     family = template.family
     if family in ("height", "finish"):
@@ -666,7 +699,9 @@ def _infuse_tag(
         _stamp(session, tag_id, host_sheet_id, revision)
         return "updated"
     if template.template_id in INDEX_TEMPLATE_IDS or family == "index":
-        resolved = _resolve_index_sheet(session, catalog, tag_id, cache)
+        resolved = _resolve_index_sheet(
+            session, catalog, tag_id, cache, host_page_name
+        )
         if not resolved.ok:
             _write_fields(
                 session,

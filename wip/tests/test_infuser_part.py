@@ -459,6 +459,63 @@ class InjectTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("tag", SHEET_CODE_KEY), "IN")
         self.assertEqual(session.get_object_user_text("tag", SHEET_REF_KEY), "202")
 
+    def test_index_prefers_target_page_when_host_detail_also_hits_view(self):
+        session = _session()
+        _add_block(
+            session,
+            "tag",
+            "TAG_SECTION_DETAIL",
+            user_text={
+                TARGET_VIEW_ID_KEY: VIEW_ID,
+                DETAIL_NO_KEY: "A",
+            },
+        )
+        session.add_object("other_frame", name="TargetFrame", layer="M2D")
+        session.set_block("other_frame", (0, 0, 0), name="Sample_Frame")
+        session.set_object_user_text("other_frame", SHEET_ID_KEY, TARGET_SHEET_ID)
+        session.add_object_to_layout_page(OTHER, "other_frame")
+        session.add_object("view", name="A-A", layer="LoopFlow::Anchor_Frame")
+        session.set_object_user_text("view", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
+        session.set_object_user_text("view", VIEW_ID_KEY, VIEW_ID)
+        session.set_bbox("view", (0, 0, 0), (100, 100, 0))
+        session.set_layout_details(
+            (
+                {
+                    "layout": PAGE,
+                    "page_number": 1,
+                    "detail_id": "dv-host",
+                    "dv_name": "Host",
+                },
+                {
+                    "layout": OTHER,
+                    "page_number": 2,
+                    "detail_id": "dv-1",
+                    "dv_name": "A-A",
+                },
+            )
+        )
+        session.set_detail_model_point("dv-host", (50, 50, 0))
+        session.set_detail_model_point("dv-1", (50, 50, 0))
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertNotIn("ambiguous", result.warnings or ())
+        self.assertEqual(session.get_object_user_text("tag", SHEET_CODE_KEY), "IN")
+        self.assertEqual(session.get_object_user_text("tag", SHEET_REF_KEY), "101.01")
+        self.assertEqual(session.get_object_user_text("tag", DETAIL_NO_KEY), "A")
+
+    def test_index_does_not_write_detail_no(self):
+        session = _session()
+        _add_block(
+            session,
+            "tag",
+            "TAG_ELEV_1",
+            user_text={TARGET_SHEET_ID_KEY: TARGET_SHEET_ID},
+        )
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("tag", SHEET_REF_KEY), "101.01")
+        self.assertIsNone(session.get_object_user_text("tag", DETAIL_NO_KEY))
+
     def test_other_page_not_touched(self):
         session = _session()
         _add_block(

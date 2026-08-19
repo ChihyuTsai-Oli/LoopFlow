@@ -1143,12 +1143,29 @@ class LiveSession:
         if page is None:
             return ()
         viewport_ids = self._layout_viewport_ids(page)
+        try:
+            import System  # type: ignore
+
+            viewport_ids.discard(System.Guid.Empty)
+        except Exception:
+            pass
+        page_space = getattr(
+            getattr(self._rhino, "DocObjects", None), "ActiveSpace", None
+        )
+        page_space = getattr(page_space, "PageSpace", None)
         ids = []
         seen = set()
 
         def add(obj) -> None:
             if obj is None:
                 return
+            try:
+                if page_space is not None:
+                    space = obj.Attributes.Space
+                    if space is not None and space != page_space:
+                        return
+            except Exception:
+                pass
             try:
                 if obj.Attributes.ViewportId not in viewport_ids:
                     return
