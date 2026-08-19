@@ -986,21 +986,25 @@ def show_colored_log_panel(
             scroll = forms.Scrollable()
             scroll.BackgroundColor = bg
             scroll.Content = stack
+            # 內容變高時出現捲軸，而不是把對話框撐開、捲不動。
+            scroll.ExpandContentWidth = True
+            scroll.ExpandContentHeight = False
 
             close_btn = forms.Button()
             close_btn.Text = "關閉"
             close_btn.Font = ui_font
             close_btn.Click += self._on_close
 
+            btn_row = forms.DynamicLayout()
+            btn_row.DefaultSpacing = drawing.Size(10, 0)
+            btn_row.AddRow(None, close_btn)
+
             layout = forms.DynamicLayout()
             layout.BackgroundColor = bg
             layout.Padding = drawing.Padding(0, 0, 0, 10)
             layout.Spacing = drawing.Size(0, 8)
-            layout.AddRow(scroll)
-            btn_row = forms.DynamicLayout()
-            btn_row.DefaultSpacing = drawing.Size(10, 0)
-            btn_row.AddRow(None, close_btn)
-            layout.AddRow(btn_row)
+            layout.Add(scroll, True, True)
+            layout.Add(btn_row, True, False)
 
             self.Content = layout
             self.AbortButton = close_btn

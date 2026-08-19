@@ -575,8 +575,9 @@ class LiveSession:
         except Exception:
             pass
         for page in self._ordered_page_views():
-            if page.MainViewport.Id == viewport_id:
-                return str(getattr(page, "PageName", "") or "")
+            if viewport_id in self._layout_viewport_ids(page):
+                name = str(getattr(page, "PageName", "") or "")
+                return name or None
         return None
 
     def add_text(
@@ -1114,8 +1115,16 @@ class LiveSession:
     def _layout_viewport_ids(self, page):
         """紙空間＋此頁所有 Detail 視窗。標在圖上的 Tag 屬於 Detail，不是頁 MainViewport。"""
         ids = set()
+        for attr in ("Id",):
+            pid = getattr(page, attr, None)
+            if pid is not None:
+                ids.add(pid)
         try:
             ids.add(page.MainViewport.Id)
+        except Exception:
+            pass
+        try:
+            ids.add(page.ActiveViewport.Id)
         except Exception:
             pass
         details = ()
@@ -1187,6 +1196,34 @@ class LiveSession:
             pass
         for obj in self._iter_rhino_objects():
             add(obj)
+        return tuple(ids)
+
+    def paper_space_object_ids(self):
+        """所有紙空間物件，含 ViewportId 為空、對不到任一 Layout 視窗者。"""
+        rhino = self._rhino
+        if rhino is None:
+            return ()
+        page_space = getattr(
+            getattr(rhino, "DocObjects", None), "ActiveSpace", None
+        )
+        page_space = getattr(page_space, "PageSpace", None)
+        ids = []
+        seen = set()
+        for obj in self._iter_rhino_objects(include_linked=True):
+            if obj is None:
+                continue
+            try:
+                if page_space is not None:
+                    space = obj.Attributes.Space
+                    if space is not None and space != page_space:
+                        continue
+            except Exception:
+                continue
+            key = str(obj.Id)
+            if key in seen:
+                continue
+            seen.add(key)
+            ids.append(key)
         return tuple(ids)
 
     def rename_layout_page(self, page_name: str, new_name: str) -> bool:

@@ -33,6 +33,7 @@ class MemorySession:
         self._layout_details: list = []
         self._layout_pages: List[str] = []
         self._page_objects: Dict[str, List[str]] = {}
+        self._unassigned_paper_ids: List[str] = []
         self._detail_model_points: Dict[str, tuple] = {}
         self.zoomed_layout_details: List[dict] = []
         self._modified = False
@@ -599,6 +600,27 @@ class MemorySession:
 
     def objects_on_layout_page(self, page_name: str):
         return tuple(self._page_objects.get(str(page_name), ()))
+
+    def add_unassigned_paper_object(self, object_id: str) -> None:
+        key = str(object_id)
+        if key not in self._unassigned_paper_ids:
+            self._unassigned_paper_ids.append(key)
+
+    def paper_space_object_ids(self):
+        ids: List[str] = []
+        seen = set()
+        for page_ids in self._page_objects.values():
+            for object_id in page_ids:
+                if object_id in seen:
+                    continue
+                seen.add(object_id)
+                ids.append(object_id)
+        for object_id in self._unassigned_paper_ids:
+            if object_id in seen:
+                continue
+            seen.add(object_id)
+            ids.append(object_id)
+        return tuple(ids)
 
     def rename_layout_page(self, page_name: str, new_name: str) -> bool:
         old = str(page_name)

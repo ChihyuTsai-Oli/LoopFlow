@@ -22,10 +22,23 @@ from loopflow.features.health.tag_o import (
     COLOR_OK,
     COLOR_WARN,
     PANEL_TITLE,
+    UNASSIGNED_PAGE,
     run_tag_o,
 )
 from loopflow.foundation.usertext import SPACE_FRAME_DISPLAY_KEY
-from loopflow.features.infuser.keys import TYPE_CATEGORY_KEY
+from loopflow.features.infuser.keys import (
+    ELEVATION_BASIS_KEY,
+    ELEVATION_DISPLAY_KEY,
+    ITEM_CATEGORY_KEY,
+    ITEM_CODE_KEY,
+    ITEM_NAME_KEY,
+    MISSING_DISPLAY,
+    SHEET_CODE_KEY,
+    SHEET_REF_KEY,
+    TYPE_CATEGORY_KEY,
+    TYPE_DISPLAY_NAME_KEY,
+    TYPE_SEQUENCE_KEY,
+)
 from loopflow.features.tagger.keys import (
     LAST_SYNCED_REVISION_KEY,
     LOCK_STATE_KEY,
@@ -52,6 +65,41 @@ from test_infuser_part import (
 )
 
 MISSING = "ffffffff-ffff-4fff-8fff-ffffffffffff"
+
+
+def _filled_height(**extra):
+    fields = {
+        SOURCE_OBJECT_ID_KEY: OBJECT_ID,
+        ELEVATION_BASIS_KEY: "CH",
+        ELEVATION_DISPLAY_KEY: "000",
+        TYPE_CATEGORY_KEY: "PT",
+        TYPE_SEQUENCE_KEY: "01",
+        TYPE_DISPLAY_NAME_KEY: "Paint",
+    }
+    fields.update(extra)
+    return fields
+
+
+def _filled_item(**extra):
+    fields = {
+        SOURCE_BLOCK_NAME_KEY: "FF-01__Chair-1",
+        ITEM_CATEGORY_KEY: "FF",
+        ITEM_CODE_KEY: "01",
+        ITEM_NAME_KEY: "Chair-1",
+    }
+    fields.update(extra)
+    return fields
+
+
+def _filled_index(**extra):
+    fields = {
+        TARGET_VIEW_ID_KEY: VIEW_ID,
+        TARGET_LAYOUT_KEY: PAGE,
+        SHEET_CODE_KEY: "IN",
+        SHEET_REF_KEY: "201",
+    }
+    fields.update(extra)
+    return fields
 
 
 def _run(session, **kwargs):
@@ -107,7 +155,7 @@ class GuardTests(unittest.TestCase):
             session,
             "tag",
             "TAG_HEIGHT_GRAB",
-            user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID},
+            user_text=_filled_height(),
         )
         before = _snapshot(session)
         result = _run(session)
@@ -142,7 +190,7 @@ class GuardTests(unittest.TestCase):
             session,
             "tag",
             "TAG_HEIGHT_GRAB",
-            user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID},
+            user_text=_filled_height(),
         )
         before = _snapshot(session)
         result = run_tag_o(
@@ -161,7 +209,7 @@ class HealthTests(unittest.TestCase):
             session,
             "tag",
             "TAG_HEIGHT_GRAB",
-            user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID},
+            user_text=_filled_height(),
         )
         _stamp(session, "tag")
         before = _snapshot(session)
@@ -202,7 +250,7 @@ class HealthTests(unittest.TestCase):
             session,
             "tag",
             "TAG_HEIGHT_GRAB",
-            user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID},
+            user_text=_filled_height(),
         )
         _stamp(session, "tag")
         result = _run(session, registry=_payload(objects=[]))
@@ -216,7 +264,7 @@ class HealthTests(unittest.TestCase):
             session,
             "tag",
             "TAG_HEIGHT_GRAB",
-            user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID},
+            user_text=_filled_height(),
         )
         _stamp(session, "tag", revision=1)
         result = _run(session, registry=_payload(revision=3))
@@ -230,7 +278,7 @@ class HealthTests(unittest.TestCase):
             session,
             "tag",
             "TAG_HEIGHT_GRAB",
-            user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID},
+            user_text=_filled_height(),
         )
         result = _run(session)
         self.assertTrue(result.ok, result.message)
@@ -260,7 +308,7 @@ class HealthTests(unittest.TestCase):
             session,
             "tag",
             "TAG_ITEM",
-            user_text={SOURCE_BLOCK_NAME_KEY: "FF-01__Chair-1"},
+            user_text=_filled_item(),
         )
         _stamp(session, "tag")
         result = _run(session, registry=_payload(objects=[]))
@@ -318,7 +366,7 @@ class HealthTests(unittest.TestCase):
             session,
             "here",
             "TAG_HEIGHT_GRAB",
-            user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID},
+            user_text=_filled_height(),
         )
         _stamp(session, "here")
         _add_block(
@@ -326,7 +374,7 @@ class HealthTests(unittest.TestCase):
             "there",
             "TAG_ITEM",
             page=OTHER,
-            user_text={SOURCE_BLOCK_NAME_KEY: "FF-01__Chair-1"},
+            user_text=_filled_item(),
         )
         _stamp(session, "there")
         result = _run(session)
@@ -360,10 +408,7 @@ class HealthTests(unittest.TestCase):
             session,
             "tag",
             "TAG_SECTION_DETAIL",
-            user_text={
-                TARGET_VIEW_ID_KEY: VIEW_ID,
-                TARGET_LAYOUT_KEY: PAGE,
-            },
+            user_text=_filled_index(),
         )
         _stamp(session, "tag")
         _add_view(session)
@@ -386,6 +431,38 @@ class HealthTests(unittest.TestCase):
         self.assertTrue(first.ok and second.ok)
         self.assertEqual(session._object_meta, before["objects"])
         self.assertEqual(session.get_object_user_text("tag", TYPE_CATEGORY_KEY), "PT")
+
+    def test_infused_dash_still_disconnected(self):
+        session = _session()
+        _add_block(
+            session,
+            "tag",
+            "TAG_HEIGHT_GRAB",
+            user_text=_filled_height(
+                **{
+                    ELEVATION_BASIS_KEY: MISSING_DISPLAY,
+                    ELEVATION_DISPLAY_KEY: MISSING_DISPLAY,
+                    TYPE_CATEGORY_KEY: MISSING_DISPLAY,
+                    TYPE_SEQUENCE_KEY: MISSING_DISPLAY,
+                    TYPE_DISPLAY_NAME_KEY: MISSING_DISPLAY,
+                }
+            ),
+        )
+        _stamp(session, "tag")
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.details["counts"]["stale"], 1)
+        self.assertEqual(result.details["counts"]["healthy"], 0)
+
+    def test_unassigned_paper_tag_is_scanned(self):
+        session = _session()
+        session.add_object("loose", name="TAG_HEIGHT_GRAB", layer="M2D::Tags")
+        session.set_block("loose", (0, 0, 0), name="TAG_HEIGHT_GRAB")
+        session.add_unassigned_paper_object("loose")
+        result = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.details["counts"]["unbound"], 1)
+        self.assertEqual(result.details["issues"][0]["page_name"], UNASSIGNED_PAGE)
 
 
 class PanelTests(unittest.TestCase):
@@ -442,7 +519,7 @@ class PanelTests(unittest.TestCase):
             clean,
             "tag",
             "TAG_HEIGHT_GRAB",
-            user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID},
+            user_text=_filled_height(),
         )
         _stamp(clean, "tag")
         ok_result = _run(clean)
@@ -472,7 +549,7 @@ class PanelTests(unittest.TestCase):
             session,
             "tag",
             "TAG_FINISH_GRAB",
-            user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID},
+            user_text=_filled_height(),
         )
         _stamp(session, "tag")
         result = _run(session, registry=payload)
@@ -499,6 +576,25 @@ class PanelTests(unittest.TestCase):
         self.assertTrue(result.ok)
         self.assertEqual(before.color, after.color)
         self.assertEqual(before.color_by_layer, after.color_by_layer)
+
+    def test_panel_follows_layout_page_order(self):
+        session = _session()
+        session.set_layout_pages(["Z__1", "A__1"])
+        session.set_current_layout_page("Z__1")
+        _add_block(session, "later", "TAG_HEIGHT_GRAB", page="A__1")
+        _add_block(session, "first", "TAG_ITEM", page="Z__1")
+        result = _run(session)
+        body = "\n".join(text for text, _color in result.details["panel_lines"])
+        self.assertLess(body.index("Z__1"), body.index("A__1"))
+        self.assertIn("已掃描 2 個 Tag", body)
+
+    def test_empty_scan_does_not_claim_all_ok(self):
+        session = _session()
+        result = _run(session)
+        body = "\n".join(text for text, _color in result.details["panel_lines"])
+        self.assertIn("已掃描 0 個 Tag", body)
+        self.assertIn("沒有掃到可檢查的 Tag", body)
+        self.assertNotIn("全部 Tag 來源正常", body)
 
 
 if __name__ == "__main__":

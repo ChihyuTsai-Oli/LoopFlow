@@ -22,6 +22,7 @@ from loopflow.features.infuser.part import (
     _resolve_index_sheet,
     _types_by_id,
 )
+from loopflow.features.infuser import keys as infuser_keys
 from loopflow.features.infuser.reader import load_published_registry
 from loopflow.features.sheet.metadata import is_title_frame, registered_title_frame_names
 from loopflow.features.tagger.binding import text
@@ -59,6 +60,7 @@ COLOR_WARN = "warn"
 COLOR_BROK = "brok"
 EXT_SPACE = "EXT"
 PANEL_TITLE = "TAG-O ~ Holy Cargo ~~"
+UNASSIGNED_PAGE = "（未分頁）"
 
 STATUS_HEALTHY = "healthy"
 STATUS_UNBOUND = "unbound"
@@ -93,6 +95,53 @@ def _layout_page_names(session: RhinoSession):
         if name and name not in names:
             names.append(name)
     return tuple(names)
+
+
+def _binding_text(value) -> Optional[str]:
+    """來源／顯示欄：空值與 Infuser 寫的 '-' 都算沒有。"""
+    raw = text(value)
+    if raw is None or raw == infuser_keys.MISSING_DISPLAY:
+        return None
+    return raw
+
+
+def _read_binding(session: RhinoSession, object_id: str, key: str) -> Optional[str]:
+    return _binding_text(session.get_object_user_text(object_id, key))
+
+
+def _display_keys(template: TagTemplate):
+    family = template.family
+    if family == "height":
+        return infuser_keys.HEIGHT_RENDER_KEYS
+    if family == "finish":
+        return infuser_keys.FINISH_RENDER_KEYS
+    if family == "item":
+        return infuser_keys.ITEM_RENDER_KEYS
+    if template.template_id in INDEX_TEMPLATE_IDS or family == "index":
+        return infuser_keys.INDEX_RENDER_KEYS
+    return ()
+
+
+def _display_is_empty(session: RhinoSession, tag_id: str, template: TagTemplate) -> bool:
+    keys = _display_keys(template)
+    if not keys:
+        return False
+    return all(_read_binding(session, tag_id, key) is None for key in keys)
+
+
+def _issue_sort_key(issue: Mapping, page_names: Sequence[str]):
+    page = str(issue.get("page_name") or "")
+    try:
+        page_index = list(page_names).index(page)
+    except ValueError:
+        page_index = len(page_names) + (0 if page == UNASSIGNED_PAGE else 1)
+    orphaned = 0 if issue.get("status") == STATUS_ORPHANED else 1
+    return (
+        page_index,
+        orphaned,
+        str(issue.get("block_name") or ""),
+        str(issue.get("tag_id") or ""),
+    )
 
 
 def _revision_int(value) -> Optional[int]:
@@ -140,7 +189,7 @@ def _classify_object_tag(
     types_by_id: Mapping[str, dict],
     cache: dict,
 ) -> str:
-    source_id = text(session.get_object_user_text(tag_id, SOURCE_OBJECT_ID_KEY))
+    source_id = _read_binding(session, tag_id, SOURCE_OBJECT_ID_KEY)
     if source_id is None:
         return STATUS_UNBOUND
     source_key = _as_uuid(source_id) or (source_id.strip("{}").casefold() or None)
@@ -172,7 +221,7 @@ def _classify_index_tag(
     host_page_name: Optional[str],
 ) -> str:
     has_hint = any(
-        text(session.get_object_user_text(tag_id, key))
+        _read_binding(session, tag_id, key)
         for key in (TARGET_VIEW_ID_KEY, TARGET_LAYOUT_KEY, TARGET_SHEET_ID_KEY)
     )
     if not has_hint:
@@ -267,6 +316,13 @@ def _inspect_block(
     if (
         status == STATUS_HEALTHY
         and reason not in ("manual", "elev_0")
+        and _display_is_empty(session, object_id, template)
+    ):
+        status = STATUS_STALE
+        reason = STATUS_STALE
+    elif (
+        status == STATUS_HEALTHY
+        and reason not in ("manual", "elev_0")
         and _is_stale(
             session.get_object_user_text(object_id, LAST_SYNCED_REVISION_KEY),
             registry_revision,
@@ -285,7 +341,7 @@ def _inspect_block(
         "block_name": block_name,
         "template_id": template.template_id,
         "family": family,
-        "source_object_id": text(session.get_object_user_text(object_id, SOURCE_OBJECT_ID_KEY)),
+        "source_object_id": _read_binding(session, object_id, SOURCE_OBJECT_ID_KEY),
     }
 
 
@@ -302,47 +358,64 @@ def inspect_pages(
     issues: List[dict] = []
     tags: List[dict] = []
     objects_fn = getattr(session, "objects_on_layout_page", None)
+    extra_fn = getattr(session, "paper_space_object_ids", None)
+    page_of = getattr(session, "layout_page_name_of", None)
     registered = registered_title_frame_names(session)
     page_names = _layout_page_names(session)
+    seen = set()
+    targets: List[Tuple[str, str]] = []
 
     for page_name in page_names:
         page_ids = tuple(objects_fn(page_name) or ()) if callable(objects_fn) else ()
         for object_id in page_ids:
-            row = _inspect_block(
-                session,
-                object_id,
-                page_name,
-                catalog,
-                registered,
-                objects,
-                dupes,
-                types_by_id,
-                cache,
-                revision,
-            )
-            if row is None:
+            if object_id in seen:
                 continue
-            if row["kind"] == "title_frame":
-                counts["skipped_title_frame"] += 1
-                continue
-            tags.append(row)
-            if row["kind"] == "unchecked":
-                counts["unchecked"] += 1
-                issues.append(row)
-                continue
-            counts["scanned"] += 1
-            status = row["status"]
-            counts[status] = counts.get(status, 0) + 1
-            if row.get("reason") == "manual":
-                counts["skipped_manual"] += 1
-            elif row.get("reason") == "elev_0":
-                counts["skipped_elev_0"] += 1
-            if row["locked"]:
-                counts["locked"] += 1
-                if status in PROBLEM_STATUSES:
-                    counts["locked_disconnected"] += 1
+            seen.add(object_id)
+            targets.append((page_name, object_id))
+    extra_ids = tuple(extra_fn() or ()) if callable(extra_fn) else ()
+    for object_id in extra_ids:
+        if object_id in seen:
+            continue
+        seen.add(object_id)
+        host = page_of(object_id) if callable(page_of) else None
+        targets.append((str(host or UNASSIGNED_PAGE), object_id))
+
+    for page_name, object_id in targets:
+        row = _inspect_block(
+            session,
+            object_id,
+            page_name,
+            catalog,
+            registered,
+            objects,
+            dupes,
+            types_by_id,
+            cache,
+            revision,
+        )
+        if row is None:
+            continue
+        if row["kind"] == "title_frame":
+            counts["skipped_title_frame"] += 1
+            continue
+        tags.append(row)
+        if row["kind"] == "unchecked":
+            counts["unchecked"] += 1
+            issues.append(row)
+            continue
+        counts["scanned"] += 1
+        status = row["status"]
+        counts[status] = counts.get(status, 0) + 1
+        if row.get("reason") == "manual":
+            counts["skipped_manual"] += 1
+        elif row.get("reason") == "elev_0":
+            counts["skipped_elev_0"] += 1
+        if row["locked"]:
+            counts["locked"] += 1
             if status in PROBLEM_STATUSES:
-                issues.append(row)
+                counts["locked_disconnected"] += 1
+        if status in PROBLEM_STATUSES:
+            issues.append(row)
     return {
         "counts": counts,
         "issues": tuple(issues),
@@ -428,10 +501,14 @@ def build_panel_lines(
     stamp = now or time.strftime("%Y-%m-%d  %H:%M:%S")
     revision = outcome.get("registry_revision")
     issues = list(outcome.get("issues") or ())
+    counts = outcome.get("counts") or {}
+    scanned = counts.get("scanned", 0)
+    page_names = tuple(outcome.get("page_names") or ())
     lines: List[Tuple[str, str]] = [
         (PANEL_TITLE, COLOR_HEAD),
         ("檔案：%s" % doc_name, COLOR_DIM),
         ("掃描：%s" % stamp, COLOR_DIM),
+        ("已掃描 %s 個 Tag" % scanned, COLOR_DIM),
     ]
     if revision not in (None, ""):
         lines.append(("Registry revision %s" % revision, COLOR_DIM))
@@ -444,15 +521,14 @@ def build_panel_lines(
     else:
         lines.append(("── Tag 綁定狀態 ──", COLOR_HEAD))
     if not issues:
-        lines.append(("  全部 Tag 來源正常", COLOR_OK))
+        if scanned == 0:
+            lines.append(("  沒有掃到可檢查的 Tag", COLOR_DIM))
+        else:
+            lines.append(("  全部 Tag 來源正常", COLOR_OK))
     else:
         ranked = sorted(
             issues,
-            key=lambda row: (
-                str(row.get("page_name") or ""),
-                row.get("status") != STATUS_ORPHANED,
-                str(row.get("block_name") or ""),
-            ),
+            key=lambda row: _issue_sort_key(row, page_names),
         )
         names = [str(row.get("block_name") or "") for row in ranked]
         width = max((len(name) for name in names), default=0)
