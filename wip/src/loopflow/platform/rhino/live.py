@@ -1060,6 +1060,16 @@ class LiveSession:
         view = self._sc.doc.Views.ActiveView
         return isinstance(view, rhino.Display.RhinoPageView)
 
+    def current_layout_page_name(self):
+        rhino = self._rhino
+        if rhino is None:
+            return None
+        view = self._sc.doc.Views.ActiveView
+        if not isinstance(view, rhino.Display.RhinoPageView):
+            return None
+        name = str(getattr(view, "PageName", None) or "").strip()
+        return name or None
+
     def listed_layout_details(self):
         rhino = self._rhino
         if rhino is None:

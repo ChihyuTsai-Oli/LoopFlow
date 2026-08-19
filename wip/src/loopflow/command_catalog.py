@@ -43,6 +43,7 @@ _READY = {
     "LF_Tagger_Layout_ID": "D04",
     "LF_Anchor_Frame": "E01",
     "LF_Catalog": "E05",
+    "LF_Infuser_Part": "D06",
 }
 
 _COMMANDS = {

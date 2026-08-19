@@ -10,6 +10,8 @@ SOURCE_OBJECT_ID_KEY = "lf_source_object_id"
 SOURCE_BLOCK_NAME_KEY = "lf_source_block_name"
 TARGET_VIEW_ID_KEY = "lf_target_view_id"
 TARGET_SHEET_ID_KEY = "lf_target_sheet_id"
+HOST_SHEET_ID_KEY = "lf_host_sheet_id"
+LAST_SYNCED_REVISION_KEY = "lf_last_synced_revision"
 # `00` 讓 Rhino Attribute User Text 依字母排序時排在其他 lf_* 之前。
 LOCK_STATE_KEY = "lf_00_lock_state"
 LOCK_STATE_PREV_KEY = "lf_lock_state"

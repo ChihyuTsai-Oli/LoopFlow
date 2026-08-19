@@ -48,6 +48,9 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Anchor_Frame.py"
 LF_Catalog
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Catalog.py"
 
+LF_Infuser_Part
+_-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Infuser_Part.py"
+
 LF_D08_Migrate_Display_Keys
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Display_Keys.py"
 ```
@@ -67,6 +70,7 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Disp
 | Layout ID | `LF_Tagger_Layout_ID` | — |
 | 註冊 View | `LF_Anchor_Frame` | — |
 | 圖目錄 | `LF_Catalog` | — |
+| Infuser Part | `LF_Infuser_Part` | — |
 
 開發期輔助（**不是產品指令**，不進正式工具列）：`LF_D08_Migrate_Display_Keys` 全檔把圖塊舊顯示欄抄到 `lf_*` 後刪舊名字。鎖定欄若寫 `x`／`X` 會抄到 `lf_00_lock_state` 後刪舊名字；提示文字只刪不抄。圖塊公式改完後跑一次即可，不必逐張刪 UserText。
 
@@ -81,6 +85,8 @@ Layout ID：跑全檔 Layout。系列第一頁寫 `**圖類別__圖號__圖名`�
 註冊 View：在 **2D 模型空間**框選剖面物件與恰好一個 Text Dot，再輸入外擴距離（預設 50）。框畫在 `LoopFlow::Anchor_Frame`。寫入 `lf_view_id`、Clipping Plane 物件 ID 與固定 2D↔3D transform。名稱對不到或對到兩個以上 Clipping Plane、沒有 Text Dot、沒有幾何、Esc，都不寫入。不進 Nexus。本批不射線。
 
 圖目錄：開 Eto 面板。選獨立 Point 作為圖號（紅 `LoopFlow::Drawing_Number`）與圖名（綠 `LoopFlow::Drawing_Name`）定位點；選 Sheet 為頁序／圖號／圖名／頁名四欄，Shift 連選、Ctrl 加選或取消，反白即選取。Build 預覽後寫 `lf_catalog_sheet_id` 並在 `LoopFlow::Drawing_Text`（`#CDB38B`）產生文字，左下角對齊定位點。Refresh 只改內容，已移動的文字留在原處。成功不另彈確認窗；失敗才彈窗。「清除定位點並還原圖層」會還原選取前的圖層並刪除目錄文字。匯出 TXT 為 `圖名, 圖號`（UTF-8）。定位點綁 `sheet_id` 不綁目前圖號；空位可不綁。`LoopFlow` 與其子圖層不列印（列印寬度設為 `No Print`／`PlotWeight = -1`）。選到 Block、逐頁數量不符、同列失敗、Sheet 多於空位、metadata 過期、Esc／取消，都不寫入。missing／orphan Sheet 略過並報告。新 Layout 不會自動納入。不進 Nexus。**家中 Rhino 8 已測（2026-08-18）。**
+
+Infuser Part：在 **Layout** 跑 `LF_Infuser_Part`，只處理**目前這一頁**的 Tag。Height／Finish 從 Registry 寫高程與 Type 顯示欄；家具從 `FF-01__Chair-1` 拆三段；Index 從目標 Sheet（或唯一對到的 View）寫 `lf_sheet_code`／`lf_sheet_ref`。會寫 `lf_host_sheet_id` 與 `lf_last_synced_revision`。鎖定、`TAG_DW`、圖框、`TAG_ELEV_0`、比例、Detail 編號與備註都不改。缺值畫面為 `-`。沒有正式 Registry 時改讀 last-good；檔案壞掉則整批不寫。結束會彈出摘要。**未在 Rhino 8 實機驗證**。`LF_Infuser_All` 尚未實作。
 
 左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。正式工具列在 G02 封裝時才建立。
 
@@ -120,4 +126,4 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Test_Random_M3D_
 |---|---|---|
 | `LF_Help` | 開啟 GitHub 說明頁，分中／英文版 | GitHub 說明頁尚未建立。**頁面建好後才實作**入口與按鈕，本階段不登錄為可跑指令 |
 
-Infuser／TAG-O／Extract／Duplicate Layout／Worksession 已在 `資料契約.md` 登錄 ID，但 2.0 尚未實作；按了只會回報尚未實作。它們進入可跑狀態時再列入本文件上方清單。Cabinet／三支 2D 工具不屬 2.0。
+Infuser All／TAG-O／Extract／Duplicate Layout／Worksession 已在 `資料契約.md` 登錄 ID，但 2.0 尚未實作；按了只會回報尚未實作。它們進入可跑狀態時再列入本文件上方清單。Cabinet／三支 2D 工具不屬 2.0。

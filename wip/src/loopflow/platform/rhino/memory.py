@@ -29,6 +29,7 @@ class MemorySession:
         self._clipping_planes: Dict[str, dict] = {}
         self._ray_hits: list = []
         self._layout_active = True
+        self._current_layout_page: Optional[str] = None
         self._layout_details: list = []
         self._layout_pages: List[str] = []
         self._page_objects: Dict[str, List[str]] = {}
@@ -535,6 +536,20 @@ class MemorySession:
 
     def is_layout_active(self) -> bool:
         return bool(self._layout_active)
+
+    def set_current_layout_page(self, page_name: Optional[str]) -> None:
+        name = str(page_name or "").strip() or None
+        self._current_layout_page = name
+        if name:
+            self._layout_active = True
+            if name not in self._layout_pages:
+                self._layout_pages.append(name)
+                self._page_objects.setdefault(name, [])
+
+    def current_layout_page_name(self):
+        if not self._layout_active:
+            return None
+        return self._current_layout_page
 
     def set_layout_details(self, items) -> None:
         self._layout_details = [dict(item) for item in items]

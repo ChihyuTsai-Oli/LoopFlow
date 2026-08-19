@@ -53,6 +53,7 @@ STAGES = (
     "bind_tag",
     "register_view",
     "probe_view",
+    "infuse_tags",
 )
 
 

@@ -158,6 +158,9 @@ class RhinoSession(Protocol):
     def is_layout_active(self) -> bool:
         ...
 
+    def current_layout_page_name(self) -> Optional[str]:
+        ...
+
     def listed_layout_details(self) -> Sequence[dict]:
         ...
 

@@ -129,6 +129,19 @@ def run_catalog() -> Result:
     return _present_failure(run_catalog_command(opened.details["session"]))
 
 
+def run_infuser_part() -> Result:
+    from loopflow.features.infuser.part import run_infuser_part as run_part
+    from loopflow.platform.rhino.prompts import show_message
+
+    opened = _open_live_session()
+    if not opened.ok:
+        return opened
+    result = run_part(opened.details["session"], show_message=show_message)
+    if not result.ok:
+        return _present_failure(result)
+    return result
+
+
 RUNNERS: Dict[str, Runner] = {
     "LF_Nexus": run_nexus,
     "LF_Open_Dictionary": run_open_dictionary,
@@ -142,6 +155,7 @@ RUNNERS: Dict[str, Runner] = {
     "LF_Tagger_Layout_ID": run_tagger_layout_id,
     "LF_Anchor_Frame": run_anchor_frame,
     "LF_Catalog": run_catalog,
+    "LF_Infuser_Part": run_infuser_part,
 }
 
 

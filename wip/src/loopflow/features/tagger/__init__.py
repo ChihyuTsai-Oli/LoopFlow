@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tag 綁定。Grab／Laser 寫來源；Index 寫目標 View；Infuser 另開任務。
+"""Tag 綁定。Grab／Laser 寫來源；Index 寫目標 View；顯示欄由 Infuser 寫。
 
 Layout ID 在 `layout_id` 模組，不在此套件入口轉出，以免與 Sheet metadata 循環 import。
 """
