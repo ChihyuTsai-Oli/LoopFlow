@@ -9,6 +9,12 @@ import json
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
+from loopflow.features.sheet.keys import (
+    DRAWING_NAME_KEY,
+    DRAWING_NO_KEY,
+    SCALE_KEY,
+    SHEET_ID_KEY,
+)
 from loopflow.features.tagger.keys import LOCK_LEGACY_KEY
 from loopflow.features.tagger.templates import DEFAULT_PATH
 from loopflow.foundation import results
@@ -17,6 +23,11 @@ from loopflow.platform.rhino.session import RhinoSession, run_guarded
 STAGE = "d08_migrate_display_keys"
 COMMAND_ID = "LF_D08_Migrate_Display_Keys"
 FRAME_LEGACY_KEYS = frozenset(("DWG_NO", "DWG_NAME", "03-A3 Scale"))
+FRAME_CANONICAL_KEYS = frozenset(
+    (DRAWING_NO_KEY, DRAWING_NAME_KEY, SCALE_KEY, SHEET_ID_KEY)
+)
+# 1.x 圖框常順便寫 Index 欄；圖框不該有這些，只刪不抄到 lf_sheet_code。
+FRAME_STRAY_KEYS = ("Category", "REF_ID", "Detail_NO")
 Confirm = Callable[[Sequence[str]], bool]
 
 
@@ -54,9 +65,9 @@ def load_template_migrations(path: Optional[Path] = None) -> Dict[str, Tuple[Tup
 
 def _frame_migrations(all_migrations: Dict[str, Tuple[Tuple[str, str], ...]]) -> Tuple[Tuple[str, str], ...]:
     return all_migrations.get("sample_frame") or (
-        ("DWG_NO", "lf_drawing_no"),
-        ("DWG_NAME", "lf_drawing_name"),
-        ("03-A3 Scale", "lf_scale"),
+        ("DWG_NO", DRAWING_NO_KEY),
+        ("DWG_NAME", DRAWING_NAME_KEY),
+        ("03-A3 Scale", SCALE_KEY),
     )
 
 
@@ -71,6 +82,22 @@ def _clear_key(session: RhinoSession, object_id: str, key: str) -> None:
     session.set_object_user_text(object_id, key, "")
 
 
+def _is_title_frame(block_name: str, keys: set) -> bool:
+    if block_name.casefold() == "sample_frame":
+        return True
+    return bool(keys & FRAME_LEGACY_KEYS) or bool(keys & FRAME_CANONICAL_KEYS)
+
+
+def _step(object_id, block_name, old_key, new_key, copy_value) -> dict:
+    return {
+        "object_id": object_id,
+        "block_name": block_name,
+        "old_key": old_key,
+        "new_key": new_key,
+        "copy_value": copy_value,
+    }
+
+
 def plan_object(
     session: RhinoSession,
     object_id: str,
@@ -82,29 +109,25 @@ def plan_object(
     block_name = session.block_definition_name(object_id) or ""
     keys = set(_keys(session, object_id))
     migrations = all_migrations.get(block_name.casefold())
+    is_frame = _is_title_frame(block_name, keys)
+    if migrations is None and is_frame:
+        migrations = _frame_migrations(all_migrations)
     if migrations is None:
-        if keys & FRAME_LEGACY_KEYS:
-            migrations = _frame_migrations(all_migrations)
-        else:
-            return []
+        return []
     steps = []
+    seen = set()
     for old_key, new_key in migrations:
-        if old_key == LOCK_LEGACY_KEY:
-            continue
-        if old_key not in keys:
+        if old_key == LOCK_LEGACY_KEY or old_key not in keys:
             continue
         old_value = _text(session.get_object_user_text(object_id, old_key))
         new_value = _text(session.get_object_user_text(object_id, new_key))
         copy_value = old_value if new_value is None and old_value is not None else None
-        steps.append(
-            {
-                "object_id": object_id,
-                "block_name": block_name,
-                "old_key": old_key,
-                "new_key": new_key,
-                "copy_value": copy_value,
-            }
-        )
+        steps.append(_step(object_id, block_name, old_key, new_key, copy_value))
+        seen.add(old_key)
+    if is_frame:
+        for stray in FRAME_STRAY_KEYS:
+            if stray in keys and stray not in seen:
+                steps.append(_step(object_id, block_name, stray, "", None))
     return steps
 
 
@@ -134,6 +157,7 @@ def _preview_lines(steps: Sequence[dict]) -> List[str]:
     lines = [
         "將處理 %s 個圖塊上的 %s 個舊欄。" % (len(by_object), len(steps)),
         "人工值會先抄到 lf_*（已有新欄不覆蓋），然後刪掉舊名字。",
+        "圖框上的 Category／REF_ID 會刪掉，不抄到 Index 欄。",
         "鎖定欄不刪。文件 metadata 與 lf_sheet_id 不碰。",
         "",
     ]

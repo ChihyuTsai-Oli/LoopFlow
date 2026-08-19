@@ -113,6 +113,44 @@ class MigrateBlockDisplayKeysTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("elev-0", LOCK_LEGACY_KEY), LOCK_LEGACY_HINT)
         self.assertEqual(collect_steps(session), [])
 
+    def test_title_frame_drops_category_and_ref_without_copying(self):
+        session = MemorySession()
+        _block(
+            session,
+            "frame-1",
+            "_Frame_A3_shop_drawing",
+            **{
+                "Category": "IN",
+                "REF_ID": "201.01",
+                "lf_drawing_no": "IN 201.01",
+                "lf_drawing_name": "立面",
+                "lf_scale": "1 : 100",
+                "lf_sheet_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            }
+        )
+        run_migrate_block_display_keys(session, confirm=lambda _lines: True)
+        self.assertEqual(session.get_object_user_text("frame-1", "lf_drawing_no"), "IN 201.01")
+        self.assertEqual(session.get_object_user_text("frame-1", "lf_scale"), "1 : 100")
+        self.assertIsNone(session.get_object_user_text("frame-1", "Category"))
+        self.assertIsNone(session.get_object_user_text("frame-1", "REF_ID"))
+        self.assertIsNone(session.get_object_user_text("frame-1", "lf_sheet_code"))
+        self.assertIsNone(session.get_object_user_text("frame-1", "lf_sheet_ref"))
+
+    def test_index_tag_still_copies_category(self):
+        session = MemorySession()
+        _block(
+            session,
+            "idx-1",
+            "TAG_SECTION_DETAIL",
+            **{"Category": "IN", "REF_ID": "201.01", "Detail_NO": "01"},
+        )
+        run_migrate_block_display_keys(session, confirm=lambda _lines: True)
+        self.assertEqual(session.get_object_user_text("idx-1", "lf_sheet_code"), "IN")
+        self.assertEqual(session.get_object_user_text("idx-1", "lf_sheet_ref"), "201.01")
+        self.assertEqual(session.get_object_user_text("idx-1", "lf_detail_no"), "01")
+        self.assertIsNone(session.get_object_user_text("idx-1", "Category"))
+
 
 if __name__ == "__main__":
     unittest.main()
+
