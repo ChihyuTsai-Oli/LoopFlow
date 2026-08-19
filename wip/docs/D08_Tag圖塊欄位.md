@@ -123,8 +123,9 @@
 
 1. 仍用 `wip/tools/擷取tag_block文字.py` 選各圖塊實例，確認公式已是 `lf_*`，且沒有 `DWG_NO`、`DWG_NAME`、`Category`、`attr_mat_*` 等舊名（鎖定欄除外）。
 2. 測試檔插入**新**圖框 → 跑 Layout ID → 圖號／圖名有字。比例須自己在 `lf_scale` 填，畫面不可為 `####`。
-3. 舊專案裡已經插入的舊圖塊**不會自動變**；要換成新定義，或等 migration。驗證請用副本。
-4. 告訴 AI 結果。通過後才停止 Layout ID 雙寫 `DWG_NO`／`DWG_NAME`，並更新 `fixtures/legacy/tag_block_text/`。
+3. 舊專案裡已經插入的實例：公式隨 Block 定義更新；舊 UserText 名稱用 `LF_D08_Migrate_Display_Keys` 一次清掉。驗證請用副本。
+4. 圖塊定義的公式改完後，各張圖上已插入的實例仍帶舊 UserText。不要逐個刪。跑開發指令 `LF_D08_Migrate_Display_Keys`：先把舊值抄到 `lf_*`（已有新欄不覆蓋，所以比例會留下來），再刪舊名字。鎖定欄不刪。取消則什麼都不改。清完後先不要跑 Layout ID，否則會把 `DWG_NO`／`DWG_NAME` 寫回來。
+5. 告訴 AI 結果。通過後才停止 Layout ID 雙寫 `DWG_NO`／`DWG_NAME`，並更新 `fixtures/legacy/tag_block_text/`。
 
 ## 不要做
 

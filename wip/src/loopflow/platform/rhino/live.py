@@ -524,6 +524,9 @@ class LiveSession:
         return tuple(str(item) for item in keys)
 
     def set_object_user_text(self, object_id: str, key: str, value: str) -> None:
+        if value in (None, ""):
+            self._rs.SetUserText(object_id, key)
+            return
         self._rs.SetUserText(object_id, key, value)
 
     def redraw(self) -> None:
