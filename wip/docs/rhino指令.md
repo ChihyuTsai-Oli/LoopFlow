@@ -54,6 +54,9 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Infuser_Part.py"
 LF_Infuser_All
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Infuser_All.py"
 
+LF_TAG-O
+_-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_TAG-O.py"
+
 LF_D08_Migrate_Display_Keys
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Display_Keys.py"
 ```
@@ -75,6 +78,7 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Disp
 | 圖目錄 | `LF_Catalog` | — |
 | Infuser Part | `LF_Infuser_Part` | — |
 | Infuser All | `LF_Infuser_All` | — |
+| TAG-O | `LF_TAG-O` | — |
 
 開發期輔助（**不是產品指令**，不進正式工具列）：`LF_D08_Migrate_Display_Keys` 全檔把圖塊舊顯示欄抄到 `lf_*` 後刪舊名字。鎖定欄若寫 `x`／`X` 會抄到 `lf_00_lock_state` 後刪舊名字；提示文字只刪不抄。圖塊公式改完後跑一次即可，不必逐張刪 UserText。
 
@@ -93,6 +97,8 @@ Layout ID：跑全檔 Layout。系列第一頁寫 `**圖類別__圖號__圖名`�
 Infuser Part：在 **Layout** 跑 `LF_Infuser_Part`，只處理**目前這一頁**的 Tag（含標在 Detail 圖上的）。Height／Finish 先對 Registry 寫高程與 Type 顯示欄（UUID 不分大小寫）；對不到再讀模型上同一 `_07_UUID` 的現況（同 UUID 多筆取最齊的）。家具從 `FF-01__Chair-1` 拆三段；Index 先用 `lf_target_layout` 對目標頁，沒有才從 View 反查，寫 `lf_sheet_code`／`lf_sheet_ref`。同一 View 也打到本頁時用其他頁；其他頁拆不出圖號再改回本頁。`lf_detail_no` 是手填（A、B、1），不注入。會寫 `lf_host_sheet_id` 與 `lf_last_synced_revision`。鎖定、`TAG_DW`、圖框、`TAG_ELEV_0`、比例、Detail 編號與備註都不改。缺值畫面為 `-`。沒有正式 Registry 時改讀 last-good，Height／Finish 仍可從模型讀；檔案壞掉則整批不寫。結束會彈出摘要。**公司 Rhino 8 已測（2026-08-19）。**
 
 Infuser All：跑 `LF_Infuser_All`，規則與 Part 相同，一次處理**全檔所有 Layout 頁**。不限目前頁，模型空間也可跑。結束彈出全檔摘要。**公司 Rhino 8 已測（2026-08-19）。**
+
+TAG-O：跑 `LF_TAG-O`，只讀檢查**全檔 Layout 頁**的 Tag 是活著還是斷連（缺來源／來源不在／過期／歧義）。模型空間也可跑。鎖定的 Tag 仍會判斷。門窗與 `TAG_ELEV_0` 沒有來源算正常。家具不因模型裡找不到實例而判為斷連。未知圖塊列為未檢查，不算通過。結束彈出摘要。**不改任何 UserText、不改顏色**。Repair 尚未實作。**未在 Rhino 8 實機驗證**。
 
 左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。正式工具列在 G02 封裝時才建立。
 
@@ -132,4 +138,4 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Test_Random_M3D_
 |---|---|---|
 | `LF_Help` | 開啟 GitHub 說明頁，分中／英文版 | GitHub 說明頁尚未建立。**頁面建好後才實作**入口與按鈕，本階段不登錄為可跑指令 |
 
-TAG-O／Extract／Duplicate Layout／Worksession 已在 `資料契約.md` 登錄 ID，但 2.0 尚未實作；按了只會回報尚未實作。它們進入可跑狀態時再列入本文件上方清單。Cabinet／三支 2D 工具不屬 2.0。
+Extract／Duplicate Layout／Worksession 已在 `資料契約.md` 登錄 ID，但 2.0 尚未實作；按了只會回報尚未實作。它們進入可跑狀態時再列入本文件上方清單。Cabinet／三支 2D 工具不屬 2.0。

@@ -45,6 +45,7 @@ _READY = {
     "LF_Catalog": "E05",
     "LF_Infuser_Part": "D06",
     "LF_Infuser_All": "D07",
+    "LF_TAG-O": "D05",
 }
 
 _COMMANDS = {

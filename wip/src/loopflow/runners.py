@@ -155,6 +155,19 @@ def run_infuser_all() -> Result:
     return result
 
 
+def run_tag_o() -> Result:
+    from loopflow.features.health.tag_o import run_tag_o as run_health
+    from loopflow.platform.rhino.prompts import show_message
+
+    opened = _open_live_session()
+    if not opened.ok:
+        return opened
+    result = run_health(opened.details["session"], show_message=show_message)
+    if not result.ok:
+        return _present_failure(result)
+    return result
+
+
 RUNNERS: Dict[str, Runner] = {
     "LF_Nexus": run_nexus,
     "LF_Open_Dictionary": run_open_dictionary,
@@ -170,6 +183,7 @@ RUNNERS: Dict[str, Runner] = {
     "LF_Catalog": run_catalog,
     "LF_Infuser_Part": run_infuser_part,
     "LF_Infuser_All": run_infuser_all,
+    "LF_TAG-O": run_tag_o,
 }
 
 
