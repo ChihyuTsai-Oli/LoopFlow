@@ -26,6 +26,7 @@ from loopflow.features.infuser.keys import (
 )
 from loopflow.features.sheet.duplicate import (
     COMMAND_ID,
+    MANUAL_BLANK,
     next_copy_page_name,
     run_duplicate_layout,
 )
@@ -46,6 +47,7 @@ from loopflow.features.tagger.keys import (
 from loopflow.platform.rhino.memory import MemorySession
 
 PAGE = "**IN__201__立面圖"
+PAGE2 = "IN__202__平面圖"
 SHEET_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 OTHER_SHEET = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
 TAG_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
@@ -195,7 +197,7 @@ def _run(session, page=PAGE, count=1):
     messages = []
     result = run_duplicate_layout(
         session,
-        pick_page=lambda _current, _names: page,
+        pick_pages=lambda _current, _names: page,
         pick_count=lambda _current: count,
         show_message=messages.append,
     )
@@ -221,7 +223,7 @@ class DuplicateLayoutTests(unittest.TestCase):
         before = _snapshot(session)
         result = run_duplicate_layout(
             session,
-            pick_page=lambda _current, _names: None,
+            pick_pages=lambda _current, _names: None,
             pick_count=lambda _current: 1,
         )
         self.assertFalse(result.ok)
@@ -233,7 +235,7 @@ class DuplicateLayoutTests(unittest.TestCase):
         before = _snapshot(session)
         result = run_duplicate_layout(
             session,
-            pick_page=lambda _current, _names: PAGE,
+            pick_pages=lambda _current, _names: PAGE,
             pick_count=lambda _current: None,
         )
         self.assertFalse(result.ok)
@@ -282,7 +284,8 @@ class DuplicateLayoutTests(unittest.TestCase):
         self.assertIsNone(session.get_object_user_text(grab, SOURCE_OBJECT_ID_KEY))
         self.assertIsNone(session.get_object_user_text(grab, HOST_SHEET_ID_KEY))
         self.assertEqual(session.get_object_user_text(grab, ELEVATION_DISPLAY_KEY), "?")
-        self.assertIsNone(session.get_object_user_text(grab, REMARKS_MANUAL_KEY))
+        self.assertEqual(session.get_object_user_text(grab, REMARKS_MANUAL_KEY), MANUAL_BLANK)
+        self.assertIn(REMARKS_MANUAL_KEY, session.object_user_text_keys(grab))
         self.assertEqual(session.get_object_user_text(grab, LOCK_STATE_KEY), "true")
         self.assertEqual(session.get_object_user_text(grab, "attr_Lock_不更新>寫入x或X"), "X")
         self.assertEqual(session.get_object_user_text(grab, HEALTH_STATE_KEY), HEALTH_STATE_BROKEN)
@@ -305,7 +308,8 @@ class DuplicateLayoutTests(unittest.TestCase):
         index = _on_page(session, copied, "TAG_SECTION_DETAIL")
         self.assertIsNone(session.get_object_user_text(index, TARGET_VIEW_ID_KEY))
         self.assertIsNone(session.get_object_user_text(index, TARGET_LAYOUT_KEY))
-        self.assertIsNone(session.get_object_user_text(index, DETAIL_NO_KEY))
+        self.assertEqual(session.get_object_user_text(index, DETAIL_NO_KEY), MANUAL_BLANK)
+        self.assertIn(DETAIL_NO_KEY, session.object_user_text_keys(index))
         self.assertEqual(session.get_object_user_text(index, "lf_sheet_code"), "?")
         self.assertEqual(session.get_object_user_text(index, HEALTH_STATE_KEY), HEALTH_STATE_BROKEN)
         index_state = session.get_view_state(index)
@@ -313,8 +317,9 @@ class DuplicateLayoutTests(unittest.TestCase):
         self.assertFalse(index_state.color_by_layer)
 
         elev0 = _on_page(session, copied, "TAG_ELEV_0")
-        self.assertIsNone(session.get_object_user_text(elev0, "lf_dir_num"))
-        self.assertIsNone(session.get_object_user_text(elev0, "lf_dir_elev"))
+        self.assertEqual(session.get_object_user_text(elev0, "lf_dir_num"), MANUAL_BLANK)
+        self.assertEqual(session.get_object_user_text(elev0, "lf_dir_elev"), MANUAL_BLANK)
+        self.assertIn("lf_dir_num", session.object_user_text_keys(elev0))
         self.assertEqual(session.get_object_user_text(elev0, "lf_sheet_code"), "?")
 
         cat_ids = [
@@ -389,6 +394,56 @@ class DuplicateLayoutTests(unittest.TestCase):
             [PAGE, "IN__201__立面圖_Copy1", "IN__201__立面圖_Copy2"],
         )
 
+    def test_empty_selection_is_cancel(self):
+        session = _session()
+        before = _snapshot(session)
+        result = run_duplicate_layout(
+            session,
+            pick_pages=lambda _current, _names: (),
+            pick_count=lambda _current: 1,
+        )
+        self.assertFalse(result.ok)
+        self.assertEqual(result.status, "cancelled")
+        self.assertEqual(_snapshot(session), before)
+
+    def test_two_source_pages_use_one_copy_count(self):
+        session = _session()
+        session.add_object(
+            "frame2",
+            user_text={SHEET_ID_KEY: OTHER_SHEET, SCALE_KEY: "1:100"},
+        )
+        session.set_block("frame2", (0.0, 0.0, 0.0), "Sample_Frame")
+        session.add_object_to_layout_page(PAGE2, "frame2")
+        result, _ = _run(session, page=(PAGE, PAGE2), count=2)
+        self.assertTrue(result.ok, result.message)
+        names = [item["name"] for item in session.listed_layout_pages()]
+        self.assertEqual(
+            names,
+            [
+                PAGE,
+                PAGE2,
+                "IN__201__立面圖_Copy1",
+                "IN__201__立面圖_Copy2",
+                "IN__202__平面圖_Copy1",
+                "IN__202__平面圖_Copy2",
+            ],
+        )
+        self.assertEqual((result.details or {}).get("count"), 4)
+        self.assertEqual(
+            (result.details or {}).get("sources"),
+            (PAGE, PAGE2),
+        )
+
+    def test_empty_page_in_selection_writes_nothing(self):
+        session = _session()
+        session.set_layout_pages([PAGE, "Blank"])
+        before = _snapshot(session)
+        result, _ = _run(session, page=(PAGE, "Blank"), count=1)
+        self.assertFalse(result.ok)
+        self.assertEqual(result.status, "blocked")
+        self.assertIn("empty_layout", result.blocking)
+        self.assertEqual(_snapshot(session), before)
+
     def test_source_does_not_use_clipboard(self):
         source = (SRC / "loopflow" / "features" / "sheet" / "duplicate.py").read_text(
             encoding="utf-8"
@@ -398,6 +453,7 @@ class DuplicateLayoutTests(unittest.TestCase):
             self.assertNotIn("CopyToClipboard", text)
             self.assertNotIn("_-Paste", text)
         self.assertIn("ask_popup_integer", source)
+        self.assertIn("ask_layout_pages_choice", source)
         self.assertNotIn("ask_integer(", source)
 
     def test_command_id(self):

@@ -18,7 +18,7 @@ DEFAULT_PATH = (
 
 @dataclass(frozen=True)
 class TagField:
-    """manifest 顯示欄。Duplicate 依 `clear_on_duplicate` 清除或保留。"""
+    """manifest 顯示欄。Duplicate 依 `clear_on_duplicate` 清除、寫空白或保留。"""
 
     key: str
     usertext: str

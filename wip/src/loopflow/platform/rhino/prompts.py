@@ -109,6 +109,114 @@ def ask_popup_choice(
     return str(value)
 
 
+def ask_layout_pages_choice(
+    items: Sequence[str],
+    title: str = "複製 Layout",
+) -> Optional[Tuple[str, ...]]:
+    """加高清單，可 Ctrl／Shift 複選 Layout。取消或確定但沒選＝None。"""
+    names = [str(item).strip() for item in items if str(item).strip()]
+    if not names:
+        return None
+    try:
+        import Eto.Drawing as drawing  # type: ignore
+        import Eto.Forms as forms  # type: ignore
+        import Rhino  # type: ignore
+        import Rhino.UI  # type: ignore
+    except ImportError:
+        return None
+
+    class _PageSelectDialog(forms.Dialog[bool]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.Title = title
+            self.Padding = drawing.Padding(10)
+            self.Resizable = True
+            self.Width = 480
+            self.Height = 600
+            self.selected_names: list = []
+            ui_font = _ui_font(drawing, 11)
+
+            layout = forms.DynamicLayout()
+            layout.Spacing = drawing.Size(5, 8)
+
+            hint = forms.Label()
+            hint.Text = "可按住 Ctrl 或 Shift 一次選多頁。"
+            hint.Font = ui_font
+            layout.AddRow(hint)
+
+            self.grid = forms.GridView()
+            self.grid.ShowHeader = False
+            self.grid.AllowMultipleSelection = True
+            self.grid.Height = 480
+            column = forms.GridColumn()
+            column.HeaderText = "Layout"
+            column.Editable = False
+            column.Expand = True
+            column.DataCell = forms.TextBoxCell(0)
+            self.grid.Columns.Add(column)
+            self.grid.DataStore = [[name] for name in names]
+            self.grid.MouseDoubleClick += self._on_ok
+            layout.AddRow(self.grid)
+            layout.Add(None)
+
+            btn_ok = forms.Button()
+            btn_ok.Text = "確定（Enter）"
+            btn_ok.Font = ui_font
+            btn_ok.Click += self._on_ok
+            btn_cancel = forms.Button()
+            btn_cancel.Text = "取消（Esc）"
+            btn_cancel.Font = ui_font
+            btn_cancel.Click += self._on_cancel
+            btn_layout = forms.DynamicLayout()
+            btn_layout.DefaultSpacing = drawing.Size(10, 0)
+            btn_layout.AddRow(None, btn_cancel, btn_ok)
+            layout.AddRow(btn_layout)
+
+            self.Content = layout
+            self.AbortButton = btn_cancel
+            self.DefaultButton = btn_ok
+
+        def _selected(self):
+            rows = []
+            try:
+                rows = list(self.grid.SelectedItems or ())
+            except Exception:
+                rows = []
+            if not rows:
+                try:
+                    rows = [row.DataItem for row in self.grid.SelectedRows]
+                except Exception:
+                    rows = []
+            chosen = []
+            seen = set()
+            for item in rows:
+                if isinstance(item, (list, tuple)) and item:
+                    name = str(item[0])
+                else:
+                    name = str(item or "")
+                if name and name not in seen:
+                    seen.add(name)
+                    chosen.append(name)
+            return chosen
+
+        def _on_ok(self, sender, e) -> None:
+            chosen = self._selected()
+            if not chosen:
+                self.Close(False)
+                return
+            self.selected_names = chosen
+            self.Close(True)
+
+        def _on_cancel(self, sender, e) -> None:
+            self.Close(False)
+
+    dialog = _PageSelectDialog()
+    result = dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
+    if result and dialog.selected_names:
+        return tuple(dialog.selected_names)
+    return None
+
+
 def ask_integer(
     message: str,
     default: int = 1,

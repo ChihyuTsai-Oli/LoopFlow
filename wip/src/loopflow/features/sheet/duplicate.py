@@ -37,6 +37,8 @@ STAGE = "duplicate_layout"
 COPY_SUFFIX = "_Copy"
 MIN_COPIES = 1
 MAX_COPIES = 100
+# 手填欄寫一個空白以留下 UserText key，避免圖塊公式顯示 ####。
+MANUAL_BLANK = " "
 # 除 TAG_DW 外，來源綁定一律清除；template_id 與 lock 保留。斷連樣式事後再套。
 BINDING_CLEAR_KEYS = (
     SOURCE_OBJECT_ID_KEY,
@@ -48,7 +50,8 @@ BINDING_CLEAR_KEYS = (
     LAST_SYNCED_REVISION_KEY,
 )
 ShowMessage = Callable[[str], None]
-PickPage = Callable[[RhinoSession, Sequence[str]], Optional[str]]
+PickPages = Callable[[RhinoSession, Sequence[str]], Optional[Sequence[str]]]
+PickPage = PickPages
 PickCount = Callable[[RhinoSession], Optional[int]]
 
 
@@ -125,6 +128,27 @@ def _clear_key(session: RhinoSession, object_id: str, key: str) -> None:
     session.set_object_user_text(object_id, key, "")
 
 
+def _blank_manual_key(session: RhinoSession, object_id: str, key: str) -> None:
+    session.set_object_user_text(object_id, key, MANUAL_BLANK)
+
+
+def _normalize_page_names(chosen) -> Optional[Tuple[str, ...]]:
+    if chosen is None:
+        return None
+    if isinstance(chosen, str):
+        name = chosen.strip()
+        return (name,) if name else None
+    names: List[str] = []
+    seen = set()
+    for item in chosen:
+        name = str(item or "").strip()
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        names.append(name)
+    return tuple(names) or None
+
+
 def _render_keys(template: TagTemplate) -> Tuple[str, ...]:
     keys = []
     for field in template.fields:
@@ -146,7 +170,11 @@ def _sanitize_tag(
     for key in BINDING_CLEAR_KEYS:
         _clear_key(session, object_id, key)
     for field in template.fields:
-        if field.clear_on_duplicate and field.usertext:
+        if not field.clear_on_duplicate or not field.usertext:
+            continue
+        if field.owner == "manual":
+            _blank_manual_key(session, object_id, field.usertext)
+        else:
             _clear_key(session, object_id, field.usertext)
     # 不改 lock／畫面上的 x；整顆改斷連樣式（自動欄 ?、塗紅）。
     queue_appearance(cache, object_id, _render_keys(template), MODE_BROKEN)
@@ -261,10 +289,12 @@ def _rollback_pages(session: RhinoSession, page_names: Sequence[str]) -> None:
         deleter(name)
 
 
-def _default_pick_page(_session: RhinoSession, names: Sequence[str]) -> Optional[str]:
-    from loopflow.platform.rhino.prompts import ask_popup_choice
+def _default_pick_pages(
+    _session: RhinoSession, names: Sequence[str]
+) -> Optional[Sequence[str]]:
+    from loopflow.platform.rhino.prompts import ask_layout_pages_choice
 
-    return ask_popup_choice("選擇要複製的 Layout：", list(names), COMMAND_ID)
+    return ask_layout_pages_choice(list(names), COMMAND_ID)
 
 
 def _default_pick_count(_session: RhinoSession) -> Optional[int]:
@@ -273,13 +303,13 @@ def _default_pick_count(_session: RhinoSession) -> Optional[int]:
     return ask_popup_integer("要複製幾份？", 1, MIN_COPIES, MAX_COPIES, COMMAND_ID)
 
 
-def _summary(source: str, created: Sequence[str]) -> str:
-    lines = [
-        "已複製 %s 份 Layout。" % len(created),
-        "來源：%s" % source,
-    ]
-    for name in created:
-        lines.append("  • %s" % name)
+def _summary(created_by_source: Sequence[Tuple[str, Sequence[str]]]) -> str:
+    total = sum(len(created) for _source, created in created_by_source)
+    lines = ["已複製 %s 份 Layout。" % total]
+    for source, created in created_by_source:
+        lines.append("來源：%s" % source)
+        for name in created:
+            lines.append("  • %s" % name)
     lines.append("請重新綁定新頁 Tag，並視需要跑 Layout ID。")
     return "\n".join(lines)
 
@@ -352,7 +382,7 @@ def duplicate_layout_pages(
         activate(source_name)
     return results.ok(
         STAGE,
-        _summary(source_name, created),
+        _summary(((source_name, tuple(created)),)),
         command_id=COMMAND_ID,
         details={
             "source": source_name,
@@ -366,7 +396,8 @@ def duplicate_layout_pages(
 def run_duplicate_layout(
     session: RhinoSession,
     *,
-    pick_page: Optional[PickPage] = None,
+    pick_pages: Optional[PickPages] = None,
+    pick_page: Optional[PickPages] = None,
     pick_count: Optional[PickCount] = None,
     show_message: Optional[ShowMessage] = None,
 ) -> results.Result:
@@ -386,21 +417,32 @@ def run_duplicate_layout(
                 ("no_layouts",),
                 command_id=COMMAND_ID,
             )
-        chosen = (pick_page or _default_pick_page)(current, names)
+        picker = pick_pages or pick_page or _default_pick_pages
+        chosen = _normalize_page_names(picker(current, names))
         if chosen is None:
             return results.cancelled(STAGE, "已取消複製 Layout。", command_id=COMMAND_ID)
-        if chosen not in names:
+        missing = [name for name in chosen if name not in names]
+        if missing:
             return results.blocked(
                 STAGE,
-                "找不到 Layout「%s」。" % chosen,
+                "找不到 Layout「%s」。" % "、".join(missing),
                 ("missing_layout",),
                 command_id=COMMAND_ID,
             )
         objects_fn = getattr(current, "objects_on_layout_page", None)
-        if not callable(objects_fn) or not tuple(objects_fn(chosen) or ()):
+        empty = [
+            name
+            for name in chosen
+            if not callable(objects_fn) or not tuple(objects_fn(name) or ())
+        ]
+        if empty:
+            if len(chosen) == 1:
+                message = "來源 Layout 沒有物件。"
+            else:
+                message = "來源 Layout 沒有物件：%s。整批未複製。" % "、".join(empty)
             return results.blocked(
                 STAGE,
-                "來源 Layout 沒有物件。",
+                message,
                 ("empty_layout",),
                 command_id=COMMAND_ID,
             )
@@ -418,12 +460,38 @@ def run_duplicate_layout(
                 ("invalid_count",),
                 command_id=COMMAND_ID,
             )
-        outcome = duplicate_layout_pages(current, chosen, copies, catalog)
-        if outcome.ok:
-            apply_queued_appearances(current, (outcome.details or {}).get("appearances"))
-            if callable(show_message):
-                show_message(outcome.message)
-        return outcome
+        created_all: List[str] = []
+        created_by_source: List[Tuple[str, Sequence[str]]] = []
+        appearances: List[object] = []
+        try:
+            for name in chosen:
+                outcome = duplicate_layout_pages(current, name, copies, catalog)
+                if not outcome.ok:
+                    _rollback_pages(current, created_all)
+                    return outcome
+                page_created = tuple((outcome.details or {}).get("created") or ())
+                created_by_source.append((name, page_created))
+                created_all.extend(page_created)
+                appearances.extend((outcome.details or {}).get("appearances") or ())
+        except Exception:
+            _rollback_pages(current, created_all)
+            raise
+        combined = results.ok(
+            STAGE,
+            _summary(created_by_source),
+            command_id=COMMAND_ID,
+            details={
+                "source": chosen[0],
+                "sources": chosen,
+                "created": tuple(created_all),
+                "count": len(created_all),
+                "appearances": tuple(appearances),
+            },
+        )
+        apply_queued_appearances(current, appearances)
+        if callable(show_message):
+            show_message(combined.message)
+        return combined
 
     guarded = run_guarded(session, _action, command_id=COMMAND_ID)
     if guarded.ok:
