@@ -282,33 +282,45 @@ def _preview_status(row: SheetRow) -> str:
 
 
 def preview_table_rows(
-    rows: Sequence[SheetRow], skipped: Sequence[dict]
+    rows: Sequence[SheetRow],
+    skipped: Sequence[dict],
+    page_order: Sequence[str] = (),
 ) -> Tuple[Tuple[str, str, str], ...]:
-    """核對清單列，順序與 Layout 列表（頁序）相同。確認前不寫入。"""
-    entries = []
+    """核對清單列，順序跟 Layout 列表相同。確認前不寫入。"""
+    cells_by_name = {}
     for row in rows:
-        entries.append(
-            (
-                int(row.page_number or 0),
-                row.page_name or "（未命名頁）",
-                (
-                    row.page_name or "（未命名頁）",
-                    row.plan.new_page_name or row.page_name or "",
-                    _preview_status(row),
-                ),
-            )
+        name = row.page_name or "（未命名頁）"
+        cells_by_name[name] = (
+            name,
+            row.plan.new_page_name or row.page_name or "",
+            _preview_status(row),
         )
     for item in skipped:
         name = str(item.get("page_name") or "（未命名頁）")
-        entries.append(
-            (
-                int(item.get("page_number") or 0),
-                name,
-                (name, "", "跳過：%s" % (item.get("reason") or "")),
-            )
-        )
-    entries.sort(key=lambda item: (item[0], item[1]))
-    return tuple(cells for _number, _name, cells in entries)
+        cells_by_name[name] = (name, "", "跳過：%s" % (item.get("reason") or ""))
+    if page_order:
+        table = []
+        seen = set()
+        for name in page_order:
+            if name in cells_by_name and name not in seen:
+                table.append(cells_by_name[name])
+                seen.add(name)
+        for name, cells in cells_by_name.items():
+            if name not in seen:
+                table.append(cells)
+        return tuple(table)
+    entries = []
+    for row in rows:
+        name = row.page_name or "（未命名頁）"
+        number = row.page_number if row.page_number is not None else 0
+        entries.append((int(number), cells_by_name[name]))
+    for item in skipped:
+        name = str(item.get("page_name") or "（未命名頁）")
+        raw = item.get("page_number")
+        number = 0 if raw in (None, "") else int(raw)
+        entries.append((number, cells_by_name[name]))
+    entries.sort(key=lambda item: item[0])
+    return tuple(cells for _number, cells in entries)
 
 
 def preview_lines(rows: Sequence[SheetRow], skipped: Sequence[dict]) -> Tuple[str, ...]:
@@ -516,7 +528,8 @@ def run_tagger_layout_id(
             unknown = unregistered_block_names(scans)
         if not rows:
             return _no_writable_pages_result(skipped, unknown)
-        if not confirmer(preview_table_rows(rows, skipped)):
+        page_order = tuple(scan.page_name for scan in scans if scan.page_name)
+        if not confirmer(preview_table_rows(rows, skipped, page_order=page_order)):
             return results.cancelled(
                 STAGE,
                 "已取消 Layout ID，未寫入。",

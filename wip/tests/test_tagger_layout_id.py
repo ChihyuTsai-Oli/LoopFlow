@@ -35,7 +35,7 @@ from loopflow.features.tagger.keys import (
     TARGET_SHEET_ID_KEY,
     TEMPLATE_ID_KEY,
 )
-from loopflow.features.sheet.naming import STATUS_BASELINE, STATUS_NUMBERED, PagePlan
+from loopflow.features.sheet.naming import STATUS_BASELINE, STATUS_MANUAL, STATUS_NUMBERED, PagePlan
 from loopflow.features.tagger.layout_id import (
     SERIES_START_HELP,
     SheetRow,
@@ -507,6 +507,40 @@ class LayoutIdCommandTests(unittest.TestCase):
             ["**IN__101__一樓", "封面", "天花"],
         )
         self.assertIn("跳過", table[1][2])
+
+    def test_preview_uses_layout_list_order_not_name_sort(self):
+        manual = SheetRow(
+            page_name="//IN__001.01__目錄1",
+            page_number=1,
+            frame_id="frame-2",
+            sheet_id=None,
+            plan=PagePlan(
+                page_name="//IN__001.01__目錄1",
+                page_number=1,
+                status=STATUS_MANUAL,
+                drawing_no="IN 001.01",
+                drawing_name="目錄1",
+                new_page_name="//IN__001.01__目錄1",
+            ),
+            previous_drawing_no=None,
+            previous_drawing_name=None,
+        )
+        skipped = (
+            {
+                "page_name": "Preset",
+                "page_number": 1,
+                "reason": "頁序中還沒有系列起點，未編號",
+            },
+        )
+        table = preview_table_rows(
+            (manual,),
+            skipped,
+            page_order=("Preset", "//IN__001.01__目錄1", "//IN__001.02__目錄2"),
+        )
+        self.assertEqual(
+            [row[0] for row in table],
+            ["Preset", "//IN__001.01__目錄1"],
+        )
 
 
 if __name__ == "__main__":

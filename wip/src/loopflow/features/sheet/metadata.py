@@ -165,10 +165,18 @@ def scan_layout_pages(
             if block_name and catalog.by_block_name(block_name) is None:
                 if block_name not in unknown:
                     unknown.append(block_name)
+        raw_number = page.get("page_number")
+        if raw_number in (None, ""):
+            page_number = index + 1
+        else:
+            try:
+                page_number = int(raw_number)
+            except (TypeError, ValueError):
+                page_number = index + 1
         scans.append(
             PageScan(
                 page_name=page_name,
-                page_number=int(page.get("page_number") or (index + 1)),
+                page_number=page_number,
                 frame_ids=tuple(frame_ids),
                 locked_frame_ids=tuple(locked_ids),
                 unregistered_blocks=tuple(unknown),
