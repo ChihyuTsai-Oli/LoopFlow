@@ -455,6 +455,12 @@ class DuplicateLayoutTests(unittest.TestCase):
         self.assertIn("ask_popup_integer", source)
         self.assertIn("ask_layout_pages_choice", source)
         self.assertNotIn("ask_integer(", source)
+        prompts = (SRC / "loopflow" / "platform" / "rhino" / "prompts.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("forms.GridView", prompts)
+        self.assertIn("def ask_layout_pages_choice", prompts)
+        self.assertIn("forms.Scrollable", prompts)
 
     def test_command_id(self):
         self.assertEqual(COMMAND_ID, "LF_Duplicate_Layout")

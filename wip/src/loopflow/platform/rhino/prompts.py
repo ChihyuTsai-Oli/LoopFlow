@@ -113,7 +113,10 @@ def ask_layout_pages_choice(
     items: Sequence[str],
     title: str = "複製 Layout",
 ) -> Optional[Tuple[str, ...]]:
-    """加高清單，可 Ctrl／Shift 複選 Layout。取消或確定但沒選＝None。"""
+    """加高可捲動反白列，Ctrl／Shift 複選 Layout。不用 GridView（會空白並閃退）。
+
+    取消或確定但沒選＝None。
+    """
     names = [str(item).strip() for item in items if str(item).strip()]
     if not names:
         return None
@@ -133,39 +136,45 @@ def ask_layout_pages_choice(
             self.Resizable = True
             self.Width = 480
             self.Height = 600
-            self.selected_names: list = []
-            ui_font = _ui_font(drawing, 11)
+            self.font = _ui_font(drawing, 11)
+            self.names = names
+            self.selected = set()
+            self.last_index = None
+            self.row_labels = []
+            self._last_click = None
+            self._selected_bg = drawing.Color.FromArgb(61, 124, 198)
+            self._selected_fg = drawing.Colors.White
+            self._normal_bg = drawing.Colors.White
+            self._normal_fg = drawing.Colors.Black
 
             layout = forms.DynamicLayout()
-            layout.Spacing = drawing.Size(5, 8)
-
+            layout.Spacing = drawing.Size(6, 6)
             hint = forms.Label()
-            hint.Text = "可按住 Ctrl 或 Shift 一次選多頁。"
-            hint.Font = ui_font
+            hint.Text = "可按住 Ctrl 或 Shift 一次選多頁。選取列會反白。"
+            hint.Font = self.font
             layout.AddRow(hint)
 
-            self.grid = forms.GridView()
-            self.grid.ShowHeader = False
-            self.grid.AllowMultipleSelection = True
-            self.grid.Height = 480
-            column = forms.GridColumn()
-            column.HeaderText = "Layout"
-            column.Editable = False
-            column.Expand = True
-            column.DataCell = forms.TextBoxCell(0)
-            self.grid.Columns.Add(column)
-            self.grid.DataStore = [[name] for name in names]
-            self.grid.MouseDoubleClick += self._on_ok
-            layout.AddRow(self.grid)
-            layout.Add(None)
+            scroll = forms.Scrollable()
+            scroll.Border = forms.BorderType.Line
+            scroll.Height = 480
+            table = forms.TableLayout()
+            table.Spacing = drawing.Size(0, 0)
+            table.Padding = drawing.Padding(0, 2, 0, 2)
+            for index, name in enumerate(self.names):
+                table.Rows.Add(self._make_data_row(index, name))
+            spacer = forms.TableRow()
+            spacer.ScaleHeight = True
+            table.Rows.Add(spacer)
+            scroll.Content = table
+            layout.AddRow(scroll)
 
             btn_ok = forms.Button()
             btn_ok.Text = "確定（Enter）"
-            btn_ok.Font = ui_font
+            btn_ok.Font = self.font
             btn_ok.Click += self._on_ok
             btn_cancel = forms.Button()
             btn_cancel.Text = "取消（Esc）"
-            btn_cancel.Font = ui_font
+            btn_cancel.Font = self.font
             btn_cancel.Click += self._on_cancel
             btn_layout = forms.DynamicLayout()
             btn_layout.DefaultSpacing = drawing.Size(10, 0)
@@ -175,36 +184,78 @@ def ask_layout_pages_choice(
             self.Content = layout
             self.AbortButton = btn_cancel
             self.DefaultButton = btn_ok
+            self._refresh_rows()
 
-        def _selected(self):
-            rows = []
+        def _make_data_row(self, index: int, name: str):
+            table_row = forms.TableRow()
+            table_row.ScaleHeight = False
+            handler = self._make_click(index)
+            label = forms.Label()
+            label.Text = name
+            label.Font = self.font
             try:
-                rows = list(self.grid.SelectedItems or ())
+                label.Wrap = getattr(forms.WrapMode, "None")
             except Exception:
-                rows = []
-            if not rows:
-                try:
-                    rows = [row.DataItem for row in self.grid.SelectedRows]
-                except Exception:
-                    rows = []
-            chosen = []
-            seen = set()
-            for item in rows:
-                if isinstance(item, (list, tuple)) and item:
-                    name = str(item[0])
+                pass
+            panel = forms.Panel()
+            panel.Padding = drawing.Padding(8, 5, 8, 5)
+            panel.Content = label
+            panel.MouseDown += handler
+            label.MouseDown += handler
+            self.row_labels.append((panel, label))
+            table_row.Cells.Add(forms.TableCell(panel, True))
+            return table_row
+
+        def _refresh_rows(self) -> None:
+            for index, (panel, label) in enumerate(self.row_labels):
+                selected = index in self.selected
+                bg = self._selected_bg if selected else self._normal_bg
+                fg = self._selected_fg if selected else self._normal_fg
+                panel.BackgroundColor = bg
+                label.BackgroundColor = bg
+                label.TextColor = fg
+
+        def _make_click(self, index: int):
+            def _on_click(sender, e) -> None:
+                now = time.monotonic()
+                last = self._last_click
+                if last is not None and last[0] == index and (now - last[1]) < 0.08:
+                    return
+                self._last_click = (index, now)
+                shift, ctrl = _mouse_modifiers(e)
+                if shift and self.last_index is not None:
+                    start = min(self.last_index, index)
+                    end = max(self.last_index, index)
+                    if ctrl:
+                        for item in range(start, end + 1):
+                            self.selected.add(item)
+                    else:
+                        self.selected = set(range(start, end + 1))
+                    self.last_index = index
+                elif ctrl:
+                    if index in self.selected:
+                        self.selected.discard(index)
+                    else:
+                        self.selected.add(index)
+                    self.last_index = index
                 else:
-                    name = str(item or "")
-                if name and name not in seen:
-                    seen.add(name)
-                    chosen.append(name)
-            return chosen
+                    self.selected = {index}
+                    self.last_index = index
+                self._refresh_rows()
+
+            return _on_click
+
+        def _chosen_names(self):
+            return tuple(
+                self.names[index]
+                for index in sorted(self.selected)
+                if 0 <= index < len(self.names)
+            )
 
         def _on_ok(self, sender, e) -> None:
-            chosen = self._selected()
-            if not chosen:
+            if not self.selected:
                 self.Close(False)
                 return
-            self.selected_names = chosen
             self.Close(True)
 
         def _on_cancel(self, sender, e) -> None:
@@ -212,8 +263,10 @@ def ask_layout_pages_choice(
 
     dialog = _PageSelectDialog()
     result = dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
-    if result and dialog.selected_names:
-        return tuple(dialog.selected_names)
+    if result:
+        chosen = dialog._chosen_names()
+        if chosen:
+            return chosen
     return None
 
 
