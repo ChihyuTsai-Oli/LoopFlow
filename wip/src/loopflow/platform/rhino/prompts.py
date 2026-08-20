@@ -52,8 +52,8 @@ def _apply_dialog_button_size(button, drawing) -> None:
         pass
 
 
-def _ok_cancel_row(forms, drawing, on_ok, on_cancel):
-    """右下：左 OK、右 Cancel，固定系統鈕大小。回傳 (列, OK, Cancel)。"""
+def _ok_cancel_buttons(forms, drawing, on_ok, on_cancel):
+    """固定大小的 OK／Cancel。"""
     btn_ok = forms.Button()
     btn_ok.Text = "OK"
     _apply_dialog_button_size(btn_ok, drawing)
@@ -62,6 +62,12 @@ def _ok_cancel_row(forms, drawing, on_ok, on_cancel):
     btn_cancel.Text = "Cancel"
     _apply_dialog_button_size(btn_cancel, drawing)
     btn_cancel.Click += on_cancel
+    return btn_ok, btn_cancel
+
+
+def _ok_cancel_row(forms, drawing, on_ok, on_cancel):
+    """右下：左 OK、右 Cancel，固定系統鈕大小。回傳 (列, OK, Cancel)。"""
+    btn_ok, btn_cancel = _ok_cancel_buttons(forms, drawing, on_ok, on_cancel)
     row = forms.DynamicLayout()
     row.DefaultSpacing = drawing.Size(10, 0)
     row.AddRow(None, btn_ok, btn_cancel)
@@ -186,7 +192,7 @@ def ask_layout_pages_choice(
             self.Title = title
             self.Padding = _dialog_padding(drawing)
             self.Resizable = True
-            self.Width = 480
+            self.Width = 320
             self.Height = 600
             self.names = names
             self.selected = set()
@@ -535,7 +541,7 @@ def ask_pick_title_frames(
             self.Title = title
             self.Padding = _dialog_padding(drawing)
             self.Resizable = True
-            self.Width = 480
+            self.Width = 320
             self.Height = 520
             self.boxes = []
 
@@ -637,8 +643,8 @@ def ask_pick_catalog_sheets(
             self.Title = title
             self.Padding = _dialog_padding(drawing)
             self.Resizable = True
-            self.Width = 780
-            self.Height = 560
+            self.Width = 560
+            self.Height = 500
             self.rows = rows
             self.selected = set()
             self.last_index = None
@@ -661,7 +667,11 @@ def ask_pick_catalog_sheets(
 
             scroll = forms.Scrollable()
             scroll.Border = forms.BorderType.Line
-            scroll.Height = 380
+            try:
+                scroll.ExpandContentWidth = True
+                scroll.ExpandContentHeight = False
+            except Exception:
+                pass
             table = forms.TableLayout()
             table.Spacing = drawing.Size(0, 0)
             table.Padding = drawing.Padding(0, 2, 0, 2)
@@ -672,23 +682,23 @@ def ask_pick_catalog_sheets(
             spacer.ScaleHeight = True
             table.Rows.Add(spacer)
             scroll.Content = table
-            layout.AddRow(scroll)
+            layout.Add(scroll, True, True)
 
             btn_all = forms.Button()
             btn_all.Text = "全選"
+            btn_all.Height = DIALOG_BUTTON_HEIGHT
             btn_all.Click += self._on_select_all
             btn_clear = forms.Button()
             btn_clear.Text = "清除選取"
+            btn_clear.Height = DIALOG_BUTTON_HEIGHT
             btn_clear.Click += self._on_clear
-            extra = forms.DynamicLayout()
-            extra.DefaultSpacing = drawing.Size(10, 0)
-            extra.AddRow(btn_all, btn_clear, None)
-            layout.AddRow(extra)
-
-            btn_layout, btn_ok, btn_cancel = _ok_cancel_row(
+            btn_ok, btn_cancel = _ok_cancel_buttons(
                 forms, drawing, self._on_ok, self._on_cancel
             )
-            layout.AddRow(btn_layout)
+            bottom = forms.DynamicLayout()
+            bottom.DefaultSpacing = drawing.Size(10, 0)
+            bottom.AddRow(btn_all, btn_clear, None, btn_ok, btn_cancel)
+            layout.Add(bottom, True, False)
 
             self.Content = layout
             self.AbortButton = btn_cancel
@@ -708,7 +718,7 @@ def ask_pick_catalog_sheets(
                 header_panel = forms.Panel()
                 header_panel.Padding = _dialog_row_padding(drawing)
                 header_panel.Content = label
-                row.Cells.Add(forms.TableCell(header_panel, index >= 2))
+                row.Cells.Add(forms.TableCell(header_panel, index == 3))
             return row
 
         def _make_data_row(self, index: int, row: Tuple[str, str, str, str, str]):
@@ -729,7 +739,7 @@ def ask_pick_catalog_sheets(
                 panel.MouseDown += handler
                 label.MouseDown += handler
                 labels.append((panel, label))
-                table_row.Cells.Add(forms.TableCell(panel, col >= 2))
+                table_row.Cells.Add(forms.TableCell(panel, col == 3))
             self.row_labels.append(labels)
             return table_row
 

@@ -1156,17 +1156,17 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
             self.Padding = _dialog_padding(drawing)
             self.Resizable = True
             self.Width = 420
-            self.Height = 460
+            self.Height = 400
 
             layout = forms.DynamicLayout()
             layout.Spacing = _dialog_spacing(drawing)
 
             reminder = forms.Label()
             reminder.Text = PANEL_REMINDER
-            layout.AddRow(reminder)
+            layout.Add(reminder, True, False)
 
             self.count_label = forms.Label()
-            layout.AddRow(self.count_label)
+            layout.Add(self.count_label, True, False)
 
             buttons = (
                 ("選取圖號定位點", self._on_pick_number),
@@ -1182,14 +1182,13 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
                 button.Text = caption
                 button.Height = 28
                 button.Click += handler
-                layout.AddRow(button)
+                layout.Add(button, True, False)
 
             close_btn = forms.Button()
             close_btn.Text = "關閉"
             close_btn.Height = 28
             close_btn.Click += self._on_close
-            layout.AddRow(close_btn)
-            layout.Add(None)
+            layout.Add(close_btn, True, False)
             self.Content = layout
             self.AbortButton = close_btn
             self._refresh_counts()
