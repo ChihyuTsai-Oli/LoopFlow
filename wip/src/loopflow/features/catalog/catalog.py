@@ -1123,7 +1123,11 @@ def _default_ask_path(default: Optional[str]) -> Optional[str]:
 
 
 def _show_catalog_panel(session: RhinoSession) -> results.Result:
-    from loopflow.platform.rhino.prompts import show_failure_popup
+    from loopflow.platform.rhino.prompts import (
+        _dialog_padding,
+        _dialog_spacing,
+        show_failure_popup,
+    )
 
     try:
         import Eto.Drawing as drawing  # type: ignore
@@ -1149,28 +1153,19 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
         def __init__(self) -> None:
             super().__init__()
             self.Title = "LF_Catalog 圖目錄"
-            self.Padding = drawing.Padding(12)
+            self.Padding = _dialog_padding(drawing)
             self.Resizable = True
             self.Width = 420
             self.Height = 460
-            font = None
-            try:
-                from loopflow.platform.rhino.prompts import _ui_font
-
-                font = _ui_font(drawing, 11)
-            except Exception:
-                font = drawing.Font(drawing.Fonts.Sans, 11)
 
             layout = forms.DynamicLayout()
-            layout.Spacing = drawing.Size(8, 8)
+            layout.Spacing = _dialog_spacing(drawing)
 
             reminder = forms.Label()
             reminder.Text = PANEL_REMINDER
-            reminder.Font = font
             layout.AddRow(reminder)
 
             self.count_label = forms.Label()
-            self.count_label.Font = font
             layout.AddRow(self.count_label)
 
             buttons = (

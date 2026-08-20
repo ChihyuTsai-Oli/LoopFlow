@@ -19,6 +19,25 @@ def _ui_font(drawing, size: float = 11.0):
 # 對齊 Nexus／rs.ListBox 的 Windows 系統鈕。
 DIALOG_BUTTON_WIDTH = 75
 DIALOG_BUTTON_HEIGHT = 23
+# 對齊 Index 綁定：系統預設字、外框 10、區塊間距 5。
+DIALOG_PADDING = 10
+DIALOG_SPACING = 5
+DIALOG_ROW_PAD_X = 8
+DIALOG_ROW_PAD_Y = 2
+
+
+def _dialog_padding(drawing):
+    return drawing.Padding(DIALOG_PADDING)
+
+
+def _dialog_spacing(drawing):
+    return drawing.Size(DIALOG_SPACING, DIALOG_SPACING)
+
+
+def _dialog_row_padding(drawing):
+    return drawing.Padding(
+        DIALOG_ROW_PAD_X, DIALOG_ROW_PAD_Y, DIALOG_ROW_PAD_X, DIALOG_ROW_PAD_Y
+    )
 
 
 def _apply_dialog_button_size(button, drawing) -> None:
@@ -165,11 +184,10 @@ def ask_layout_pages_choice(
         def __init__(self) -> None:
             super().__init__()
             self.Title = title
-            self.Padding = drawing.Padding(10)
+            self.Padding = _dialog_padding(drawing)
             self.Resizable = True
             self.Width = 480
             self.Height = 600
-            self.font = _ui_font(drawing, 11)
             self.names = names
             self.selected = set()
             self.last_index = None
@@ -181,10 +199,9 @@ def ask_layout_pages_choice(
             self._normal_fg = drawing.Colors.Black
 
             layout = forms.DynamicLayout()
-            layout.Spacing = drawing.Size(6, 6)
+            layout.Spacing = _dialog_spacing(drawing)
             hint = forms.Label()
             hint.Text = "可按住 Ctrl 或 Shift 一次選多頁。選取列會反白。"
-            hint.Font = self.font
             layout.AddRow(hint)
 
             scroll = forms.Scrollable()
@@ -221,13 +238,12 @@ def ask_layout_pages_choice(
             handler = self._make_click(index)
             label = forms.Label()
             label.Text = name
-            label.Font = self.font
             try:
                 label.Wrap = getattr(forms.WrapMode, "None")
             except Exception:
                 pass
             panel = forms.Panel()
-            panel.Padding = drawing.Padding(8, 5, 8, 5)
+            panel.Padding = _dialog_row_padding(drawing)
             panel.Content = label
             panel.MouseDown += handler
             label.MouseDown += handler
@@ -358,7 +374,7 @@ def ask_layout_detail_choice(
         def __init__(self) -> None:
             super().__init__()
             self.Title = title
-            self.Padding = drawing.Padding(10)
+            self.Padding = _dialog_padding(drawing)
             self.Resizable = True
             self.Width = 450
             self.Height = 500
@@ -367,7 +383,7 @@ def ask_layout_detail_choice(
             self.filtered_data = list(items)
 
             layout = forms.DynamicLayout()
-            layout.Spacing = drawing.Size(5, 5)
+            layout.Spacing = _dialog_spacing(drawing)
 
             self.search_box = forms.TextBox()
             self.search_box.PlaceholderText = "輸入圖名或圖號搜尋"
@@ -456,25 +472,23 @@ def ask_confirm_list(
         def __init__(self) -> None:
             super().__init__()
             self.Title = title
-            self.Padding = drawing.Padding(12)
+            self.Padding = _dialog_padding(drawing)
             self.Resizable = True
             self.Width = 760
             self.Height = 560
-            font = _ui_font(drawing, 10)
 
             layout = forms.DynamicLayout()
-            layout.Spacing = drawing.Size(8, 8)
+            layout.Spacing = _dialog_spacing(drawing)
 
             scroll = forms.Scrollable()
             scroll.Border = forms.BorderType.Line
             scroll.Height = 430
             inner = forms.DynamicLayout()
-            inner.Padding = drawing.Padding(10, 8, 10, 8)
-            inner.Spacing = drawing.Size(0, 4)
+            inner.Padding = _dialog_row_padding(drawing)
+            inner.Spacing = drawing.Size(0, DIALOG_ROW_PAD_Y)
             for line in lines:
                 label = forms.Label()
                 label.Text = str(line)
-                label.Font = font
                 inner.AddRow(label)
             inner.Add(None)
             scroll.Content = inner
@@ -519,34 +533,31 @@ def ask_pick_title_frames(
         def __init__(self) -> None:
             super().__init__()
             self.Title = title
-            self.Padding = drawing.Padding(10)
+            self.Padding = _dialog_padding(drawing)
             self.Resizable = True
             self.Width = 480
             self.Height = 520
             self.boxes = []
-            font = _ui_font(drawing, 11)
 
             layout = forms.DynamicLayout()
-            layout.Spacing = drawing.Size(6, 6)
+            layout.Spacing = _dialog_spacing(drawing)
             note = forms.Label()
             note.Text = (
                 "這些圖塊還沒登錄為圖框。請勾選真正的圖框；"
                 "沒勾選的會略過，不會寫入圖號。"
             )
-            note.Font = font
             layout.AddRow(note)
 
             scroll = forms.Scrollable()
             scroll.Border = forms.BorderType.Line
             scroll.Height = 360
             inner = forms.DynamicLayout()
-            inner.Padding = drawing.Padding(6, 4, 6, 4)
-            inner.Spacing = drawing.Size(0, 6)
+            inner.Padding = _dialog_row_padding(drawing)
+            inner.Spacing = drawing.Size(0, DIALOG_ROW_PAD_Y)
             for name in names:
                 box = forms.CheckBox()
                 box.Text = str(name)
                 box.Checked = False
-                box.Font = font
                 inner.AddRow(box)
                 self.boxes.append(box)
             inner.Add(None)
@@ -624,11 +635,10 @@ def ask_pick_catalog_sheets(
         def __init__(self) -> None:
             super().__init__()
             self.Title = title
-            self.Padding = drawing.Padding(10)
+            self.Padding = _dialog_padding(drawing)
             self.Resizable = True
             self.Width = 780
             self.Height = 560
-            self.font = _ui_font(drawing, 11)
             self.rows = rows
             self.selected = set()
             self.last_index = None
@@ -641,13 +651,12 @@ def ask_pick_catalog_sheets(
             self._header_fg = drawing.Color.FromArgb(90, 90, 90)
 
             layout = forms.DynamicLayout()
-            layout.Spacing = drawing.Size(6, 6)
+            layout.Spacing = _dialog_spacing(drawing)
             note = forms.Label()
             note.Text = (
                 "Shift 連選、Ctrl 加選或取消選取。選取列會反白。"
                 "未選的不納入；新增頁不會自動加入既有目錄。"
             )
-            note.Font = self.font
             layout.AddRow(note)
 
             scroll = forms.Scrollable()
@@ -695,10 +704,9 @@ def ask_pick_catalog_sheets(
             for index, caption in enumerate(("頁序", "圖號", "圖名", "頁名")):
                 label = forms.Label()
                 label.Text = caption
-                label.Font = self.font
                 label.TextColor = self._header_fg
                 header_panel = forms.Panel()
-                header_panel.Padding = drawing.Padding(8, 5, 8, 5)
+                header_panel.Padding = _dialog_row_padding(drawing)
                 header_panel.Content = label
                 row.Cells.Add(forms.TableCell(header_panel, index >= 2))
             return row
@@ -711,13 +719,12 @@ def ask_pick_catalog_sheets(
             for col, text in enumerate(row[:4]):
                 label = forms.Label()
                 label.Text = text
-                label.Font = self.font
                 try:
                     label.Wrap = getattr(forms.WrapMode, "None")
                 except Exception:
                     pass
                 panel = forms.Panel()
-                panel.Padding = drawing.Padding(8, 5, 8, 5)
+                panel.Padding = _dialog_row_padding(drawing)
                 panel.Content = label
                 panel.MouseDown += handler
                 label.MouseDown += handler
