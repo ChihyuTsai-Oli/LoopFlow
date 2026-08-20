@@ -17,6 +17,7 @@ from loopflow.platform.rhino.live import LIVE_VERIFIED_IN_RHINO, open_session, r
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.session import (
     is_loopflow_layer,
+    is_section_cut_layer,
     loopflow_layer_chain,
     run_guarded,
 )
@@ -162,6 +163,14 @@ class LoopFlowLayerTests(unittest.TestCase):
         self.assertEqual(session.layer_print_color("LoopFlow_Extract::Visible"), (190, 190, 190))
         self.assertEqual(session.layer_print_color("LoopFlow_Extract"), (0, 0, 0))
         self.assertEqual(session.layer_print_color("LoopFlow_Extract::Curve_#FF0000"), (0, 0, 0))
+
+    def test_section_cut_layer_excludes_visible_background(self):
+        self.assertTrue(is_section_cut_layer("A-A::Hatch"))
+        self.assertTrue(is_section_cut_layer("A-A::Curve"))
+        self.assertTrue(is_section_cut_layer("LoopFlow_Extract::Curve_#BEBEBE"))
+        self.assertFalse(is_section_cut_layer("A-A::Visible"))
+        self.assertFalse(is_section_cut_layer("LoopFlow_Extract::Visible"))
+        self.assertFalse(is_section_cut_layer("M3D::01_Wall"))
 
 
 class ColorHelperTests(unittest.TestCase):

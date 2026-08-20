@@ -350,6 +350,14 @@ def is_section_or_extract_layer(path: str) -> bool:
     return "VISIBLE" in terminal or "HATCH" in terminal or "CURVE" in terminal
 
 
+def is_section_cut_layer(path: str) -> bool:
+    """剖面交線／填充（Hatch、Curve），不含 Visible 背景線。"""
+    terminal = str(path or "").rsplit("::", 1)[-1].upper()
+    if "VISIBLE" in terminal:
+        return False
+    return "HATCH" in terminal or "CURVE" in terminal
+
+
 def loopflow_layer_chain(path: str) -> Tuple[str, ...]:
     if not is_loopflow_layer(path):
         return ()

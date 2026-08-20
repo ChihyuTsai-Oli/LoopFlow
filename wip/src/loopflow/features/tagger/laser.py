@@ -101,7 +101,7 @@ def debug_ray_end(origin, direction, length: float = DEBUG_RAY_LENGTH) -> Tuple[
 
 
 def apply_live_view_origins(session: RhinoSession, frame_id: str, payload: dict) -> dict:
-    """2D 用框內線稿中心（不是外框），3D 用現況剖面交線中心（含 Mesh）。"""
+    """2D 用框內剖面 Hatch／Curve 中心（不含 Visible 背景），3D 用現況剖面交線中心（含 Mesh）。"""
     updated = dict(payload)
     content_fn = getattr(session, "drawing_content_bbox", None)
     content_box = content_fn(frame_id) if callable(content_fn) else None

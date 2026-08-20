@@ -11,6 +11,7 @@ from loopflow.foundation import results
 from loopflow.platform.rhino.session import (
     apply_extract_layer_print,
     capture_snapshot,
+    is_section_cut_layer,
     is_section_or_extract_layer,
     restore_snapshot,
     silence_loopflow_layers,
@@ -1203,11 +1204,12 @@ class LiveSession:
         )
 
     def drawing_content_bbox(self, frame_id: str):
-        """框內 2D Hatch／曲線的 bbox（不含外框、文字、標註），對齊 1.x Laser。"""
+        """框內剖面 Hatch／Curve 的 bbox。不含外框、文字、標註，也不含 Visible 背景。"""
         rhino = self._rhino
         frame_box = self.object_bbox(frame_id)
         if rhino is None or not frame_box:
             return None
+        cut_box = rhino.Geometry.BoundingBox.Empty
         hatch_box = rhino.Geometry.BoundingBox.Empty
         curve_box = rhino.Geometry.BoundingBox.Empty
         annotation = getattr(rhino.Geometry, "AnnotationBase", None)
@@ -1227,6 +1229,10 @@ class LiveSession:
             is_curve = isinstance(geom, rhino.Geometry.Curve)
             if not is_hatch and not is_curve:
                 continue
+            path = self._object_layer_path(item)
+            terminal = str(path or "").rsplit("::", 1)[-1].upper()
+            if "VISIBLE" in terminal:
+                continue
             try:
                 item_box = geom.GetBoundingBox(True)
             except Exception:
@@ -1239,11 +1245,13 @@ class LiveSession:
                 and frame_box[1] - 1e-9 <= float(center.Y) <= frame_box[4] + 1e-9
             ):
                 continue
+            if is_section_cut_layer(path):
+                cut_box.Union(item_box)
             if is_hatch:
                 hatch_box.Union(item_box)
             else:
                 curve_box.Union(item_box)
-        chosen = hatch_box if hatch_box.IsValid else curve_box
+        chosen = cut_box if cut_box.IsValid else (hatch_box if hatch_box.IsValid else curve_box)
         if not chosen.IsValid:
             return None
         return (
