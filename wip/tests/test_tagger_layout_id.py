@@ -449,17 +449,64 @@ class LayoutIdCommandTests(unittest.TestCase):
             previous_drawing_name="地坪",
         )
         table = preview_table_rows((new_row, existing), ())
+        self.assertEqual(table[0][0], "IN__101.01__地坪")
+        self.assertEqual(table[0][1], "**IN__101.01__地坪改")
+        self.assertIn("系列起點", table[0][2])
+        self.assertIn("圖名 地坪 → 地坪改", table[0][2])
         self.assertEqual(
-            table[0],
+            table[1],
             ("地坪_Copy1", "IN__101.02__地坪_Copy1", ""),
         )
-        self.assertEqual(table[1][0], "IN__101.01__地坪")
-        self.assertEqual(table[1][1], "**IN__101.01__地坪改")
-        self.assertIn("系列起點", table[1][2])
-        self.assertIn("圖名 地坪 → 地坪改", table[1][2])
-        self.assertNotIn("[→]", table[0][2])
-        self.assertNotIn("新頁", table[0][2])
-        self.assertNotIn("頁名 →", table[1][2])
+        self.assertNotIn("[→]", table[1][2])
+        self.assertNotIn("新頁", table[1][2])
+        self.assertNotIn("頁名 →", table[0][2])
+
+    def test_preview_follows_layout_page_order(self):
+        first = SheetRow(
+            page_name="**IN__101__一樓",
+            page_number=1,
+            frame_id="frame-1",
+            sheet_id="sheet-1",
+            plan=PagePlan(
+                page_name="**IN__101__一樓",
+                page_number=1,
+                status=STATUS_BASELINE,
+                drawing_no="IN 101",
+                drawing_name="一樓",
+                new_page_name="**IN__101__一樓",
+            ),
+            previous_drawing_no="IN 101",
+            previous_drawing_name="一樓",
+        )
+        third = SheetRow(
+            page_name="天花",
+            page_number=3,
+            frame_id="frame-3",
+            sheet_id=None,
+            plan=PagePlan(
+                page_name="天花",
+                page_number=3,
+                status=STATUS_NUMBERED,
+                drawing_no="IN 102",
+                drawing_name="天花",
+                new_page_name="IN__102__天花",
+            ),
+            previous_drawing_no=None,
+            previous_drawing_name=None,
+        )
+        skipped = (
+            {
+                "page_name": "封面",
+                "page_number": 2,
+                "reason": "這一頁沒有圖框",
+            },
+        )
+        table = preview_table_rows((third, first), skipped)
+        self.assertEqual(
+            [row[0] for row in table],
+            ["**IN__101__一樓", "封面", "天花"],
+        )
+        self.assertIn("跳過", table[1][2])
 
 
 if __name__ == "__main__":

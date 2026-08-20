@@ -261,39 +261,54 @@ def build_sheet_rows(
 PREVIEW_HEADERS = ("原始名稱", "修改後名稱", "狀態")
 
 
+def _preview_status(row: SheetRow) -> str:
+    marks = []
+    if row.plan.status == STATUS_BASELINE:
+        marks.append("系列起點")
+    if row.plan.status == STATUS_MANUAL:
+        marks.append("手動頁，不編號")
+    if row.plan.status == STATUS_DUPLICATE_BASELINE:
+        marks.append("重複的系列起點，已接續目前系列")
+    if row.previous_drawing_no and row.previous_drawing_no != row.plan.drawing_no:
+        marks.append("圖號 %s → %s" % (row.previous_drawing_no, row.plan.drawing_no))
+    if (
+        row.previous_drawing_name
+        and row.previous_drawing_name != (row.plan.drawing_name or "")
+    ):
+        marks.append(
+            "圖名 %s → %s" % (row.previous_drawing_name, row.plan.drawing_name or "（空）")
+        )
+    return "；".join(marks)
+
+
 def preview_table_rows(
     rows: Sequence[SheetRow], skipped: Sequence[dict]
 ) -> Tuple[Tuple[str, str, str], ...]:
-    """核對清單列：原始頁名、寫入後頁名、狀態。確認前不寫入。"""
-    table = []
+    """核對清單列，順序與 Layout 列表（頁序）相同。確認前不寫入。"""
+    entries = []
     for row in rows:
-        marks = []
-        if row.plan.status == STATUS_BASELINE:
-            marks.append("系列起點")
-        if row.plan.status == STATUS_MANUAL:
-            marks.append("手動頁，不編號")
-        if row.plan.status == STATUS_DUPLICATE_BASELINE:
-            marks.append("重複的系列起點，已接續目前系列")
-        if row.previous_drawing_no and row.previous_drawing_no != row.plan.drawing_no:
-            marks.append("圖號 %s → %s" % (row.previous_drawing_no, row.plan.drawing_no))
-        if (
-            row.previous_drawing_name
-            and row.previous_drawing_name != (row.plan.drawing_name or "")
-        ):
-            marks.append(
-                "圖名 %s → %s" % (row.previous_drawing_name, row.plan.drawing_name or "（空）")
-            )
-        table.append(
+        entries.append(
             (
+                int(row.page_number or 0),
                 row.page_name or "（未命名頁）",
-                row.plan.new_page_name or row.page_name or "",
-                "；".join(marks),
+                (
+                    row.page_name or "（未命名頁）",
+                    row.plan.new_page_name or row.page_name or "",
+                    _preview_status(row),
+                ),
             )
         )
     for item in skipped:
         name = str(item.get("page_name") or "（未命名頁）")
-        table.append((name, "", "跳過：%s" % (item.get("reason") or "")))
-    return tuple(table)
+        entries.append(
+            (
+                int(item.get("page_number") or 0),
+                name,
+                (name, "", "跳過：%s" % (item.get("reason") or "")),
+            )
+        )
+    entries.sort(key=lambda item: (item[0], item[1]))
+    return tuple(cells for _number, _name, cells in entries)
 
 
 def preview_lines(rows: Sequence[SheetRow], skipped: Sequence[dict]) -> Tuple[str, ...]:
