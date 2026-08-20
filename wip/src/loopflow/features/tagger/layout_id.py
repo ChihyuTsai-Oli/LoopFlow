@@ -79,7 +79,7 @@ SERIES_START_HELP = (
     "//S__901__結構平面圖"
 )
 
-ConfirmPlan = Callable[[Sequence[str]], bool]
+ConfirmPlan = Callable[[Sequence[Sequence[str]]], bool]
 AskRegister = Callable[[Sequence[str]], Sequence[str]]
 
 
@@ -258,18 +258,18 @@ def build_sheet_rows(
     return tuple(rows), tuple(skipped)
 
 
-def preview_lines(rows: Sequence[SheetRow], skipped: Sequence[dict]) -> Tuple[str, ...]:
-    """核對清單。使用者確認前不寫入任何資料。"""
-    lines = []
+PREVIEW_HEADERS = ("頁序", "圖號", "圖名", "頁名", "狀態")
+
+
+def preview_table_rows(
+    rows: Sequence[SheetRow], skipped: Sequence[dict]
+) -> Tuple[Tuple[str, str, str, str, str], ...]:
+    """核對清單列。與選取 Sheet 相同欄位對齊；確認前不寫入。"""
+    table = []
     for row in rows:
         marks = []
         if row.is_new_sheet:
-            drawing_no = row.plan.drawing_no or ""
-            drawing_name = row.plan.drawing_name or "（未命名）"
-            if drawing_no:
-                marks.append("→ %s %s" % (drawing_no, drawing_name))
-            else:
-                marks.append("→ %s" % drawing_name)
+            marks.append("[→]")
         if row.plan.status == STATUS_BASELINE:
             marks.append("系列起點")
         if row.plan.status == STATUS_MANUAL:
@@ -287,20 +287,38 @@ def preview_lines(rows: Sequence[SheetRow], skipped: Sequence[dict]) -> Tuple[st
             )
         if row.renames_page and not row.is_new_sheet:
             marks.append("頁名 → %s" % row.plan.new_page_name)
-        suffix = "　[%s]" % "；".join(marks) if marks else ""
-        lines.append(
-            "%02d　%s　%s%s"
-            % (
-                row.page_number,
+        table.append(
+            (
+                "%02d" % row.page_number,
                 row.plan.drawing_no or "",
                 row.plan.drawing_name or "（未命名）",
-                suffix,
+                row.plan.new_page_name or row.page_name or "",
+                "；".join(marks),
             )
         )
     for item in skipped:
-        lines.append(
-            "--　%s　跳過：%s" % (item.get("page_name") or "（未命名頁）", item.get("reason") or "")
+        table.append(
+            (
+                "--",
+                "",
+                "",
+                str(item.get("page_name") or "（未命名頁）"),
+                "跳過：%s" % (item.get("reason") or ""),
+            )
         )
+    return tuple(table)
+
+
+def preview_lines(rows: Sequence[SheetRow], skipped: Sequence[dict]) -> Tuple[str, ...]:
+    """核對清單純文字（測試與無表格式介面）。"""
+    lines = []
+    for page_number, drawing_no, drawing_name, page_name, status in preview_table_rows(
+        rows, skipped
+    ):
+        cells = [page_number, drawing_no, drawing_name, page_name]
+        if status:
+            cells.append(status)
+        lines.append("　".join(cells))
     return tuple(lines)
 
 
@@ -410,10 +428,12 @@ def _remap_index_target_layouts(session: RhinoSession, old_name: str, new_name: 
                 session.set_object_user_text(object_id, TARGET_LAYOUT_KEY, new_name)
 
 
-def _default_confirm(lines: Sequence[str]) -> bool:
-    from loopflow.platform.rhino.prompts import ask_confirm_list
+def _default_confirm(table_rows: Sequence[Sequence[str]]) -> bool:
+    from loopflow.platform.rhino.prompts import ask_confirm_table
 
-    return ask_confirm_list(lines, title="Layout ID 核對清單")
+    return ask_confirm_table(
+        PREVIEW_HEADERS, table_rows, title="Layout ID 核對清單"
+    )
 
 
 def _default_ask_register(names: Sequence[str]) -> Sequence[str]:
@@ -496,7 +516,7 @@ def run_tagger_layout_id(
             unknown = unregistered_block_names(scans)
         if not rows:
             return _no_writable_pages_result(skipped, unknown)
-        if not confirmer(preview_lines(rows, skipped)):
+        if not confirmer(preview_table_rows(rows, skipped)):
             return results.cancelled(
                 STAGE,
                 "已取消 Layout ID，未寫入。",

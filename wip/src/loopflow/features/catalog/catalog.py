@@ -1125,6 +1125,7 @@ def _default_ask_path(default: Optional[str]) -> Optional[str]:
 def _show_catalog_panel(session: RhinoSession) -> results.Result:
     from loopflow.platform.rhino.prompts import (
         CATALOG_BUTTON_HEIGHT,
+        DIALOG_SPACING,
         _dialog_padding,
         _dialog_spacing,
         _lock_control_height,
@@ -1158,7 +1159,7 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
             self.Padding = _dialog_padding(drawing)
             self.Resizable = True
             self.Width = 420
-            self.Height = 345
+            self.Height = 345 + CATALOG_BUTTON_HEIGHT + DIALOG_SPACING
 
             layout = forms.DynamicLayout()
             layout.Spacing = _dialog_spacing(drawing)

@@ -39,7 +39,7 @@ from loopflow.features.sheet.naming import STATUS_BASELINE, STATUS_NUMBERED, Pag
 from loopflow.features.tagger.layout_id import (
     SERIES_START_HELP,
     SheetRow,
-    preview_lines,
+    preview_table_rows,
     run_tagger_layout_id,
 )
 from loopflow.platform.rhino.memory import MemorySession
@@ -448,11 +448,20 @@ class LayoutIdCommandTests(unittest.TestCase):
             previous_drawing_no="IN 101.01",
             previous_drawing_name="地坪",
         )
-        lines = preview_lines((new_row, existing), ())
-        self.assertIn("[→ IN 101.02 地坪_Copy1]", lines[0])
-        self.assertNotIn("新頁", lines[0])
-        self.assertNotIn("頁名 →", lines[0])
-        self.assertIn("[系列起點；圖名 地坪 → 地坪改；頁名 → **IN__101.01__地坪改]", lines[1])
+        table = preview_table_rows((new_row, existing), ())
+        self.assertEqual(
+            table[0],
+            ("04", "IN 101.02", "地坪_Copy1", "IN__101.02__地坪_Copy1", "[→]"),
+        )
+        self.assertEqual(table[1][0], "03")
+        self.assertEqual(table[1][1], "IN 101.01")
+        self.assertEqual(table[1][2], "地坪改")
+        self.assertEqual(table[1][3], "**IN__101.01__地坪改")
+        self.assertIn("系列起點", table[1][4])
+        self.assertIn("圖名 地坪 → 地坪改", table[1][4])
+        self.assertIn("頁名 → **IN__101.01__地坪改", table[1][4])
+        self.assertNotIn("新頁", table[0][4])
+        self.assertNotIn("頁名 →", table[0][4])
 
 
 if __name__ == "__main__":

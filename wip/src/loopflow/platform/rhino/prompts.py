@@ -545,6 +545,112 @@ def ask_confirm_list(
     return bool(dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow))
 
 
+def ask_confirm_table(
+    headers: Sequence[str],
+    rows: Sequence[Sequence[str]],
+    title: str = "LoopFlow",
+) -> bool:
+    """欄位對齊的核對表，版面比照選取 Sheet。無 Eto 時回 False，不寫入。"""
+    captions = [str(item) for item in headers]
+    table_rows = [tuple(str(cell) for cell in row) for row in rows]
+    if not captions:
+        return False
+    try:
+        import Eto.Drawing as drawing  # type: ignore
+        import Eto.Forms as forms  # type: ignore
+        import Rhino  # type: ignore
+        import Rhino.UI  # type: ignore
+    except ImportError:
+        return False
+
+    last_col = len(captions) - 1
+
+    class _ConfirmTableDialog(forms.Dialog[bool]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.Title = title
+            self.Padding = _dialog_padding(drawing)
+            self.Resizable = True
+            self.Width = 640
+            self.Height = 560
+            self._header_fg = drawing.Color.FromArgb(90, 90, 90)
+
+            layout = forms.DynamicLayout()
+            layout.Spacing = _dialog_spacing(drawing)
+
+            scroll = forms.Scrollable()
+            scroll.Border = forms.BorderType.Line
+            try:
+                scroll.ExpandContentWidth = True
+                scroll.ExpandContentHeight = False
+            except Exception:
+                pass
+            table = forms.TableLayout()
+            table.Spacing = drawing.Size(0, 0)
+            table.Padding = drawing.Padding(0, 2, 0, 2)
+            table.Rows.Add(self._make_header_row())
+            for row in table_rows:
+                table.Rows.Add(self._make_data_row(row))
+            spacer = forms.TableRow()
+            spacer.ScaleHeight = True
+            table.Rows.Add(spacer)
+            scroll.Content = table
+            layout.Add(scroll, True, True)
+
+            btn_layout, btn_ok, btn_cancel = _ok_cancel_row(
+                forms, drawing, self._on_ok, self._on_cancel
+            )
+            layout.Add(btn_layout, True, False)
+
+            self.Content = layout
+            self.AbortButton = btn_cancel
+            self.DefaultButton = btn_ok
+
+        def _cell_padding(self, col: int):
+            if col == 2:
+                return _sheet_col_padding(drawing, 2)
+            return _dialog_row_padding(drawing)
+
+        def _make_header_row(self):
+            row = forms.TableRow()
+            row.ScaleHeight = False
+            for index, caption in enumerate(captions):
+                label = forms.Label()
+                label.Text = caption
+                label.TextColor = self._header_fg
+                header_panel = forms.Panel()
+                header_panel.Padding = self._cell_padding(index)
+                header_panel.Content = label
+                row.Cells.Add(forms.TableCell(header_panel, index == last_col))
+            return row
+
+        def _make_data_row(self, cells: Sequence[str]):
+            table_row = forms.TableRow()
+            table_row.ScaleHeight = False
+            padded = list(cells) + [""] * max(0, len(captions) - len(cells))
+            for col, text in enumerate(padded[: len(captions)]):
+                label = forms.Label()
+                label.Text = text
+                try:
+                    label.Wrap = getattr(forms.WrapMode, "None")
+                except Exception:
+                    pass
+                panel = forms.Panel()
+                panel.Padding = self._cell_padding(col)
+                panel.Content = label
+                table_row.Cells.Add(forms.TableCell(panel, col == last_col))
+            return table_row
+
+        def _on_ok(self, sender, e) -> None:
+            self.Close(True)
+
+        def _on_cancel(self, sender, e) -> None:
+            self.Close(False)
+
+    dialog = _ConfirmTableDialog()
+    return bool(dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow))
+
+
 def ask_pick_title_frames(
     names: Sequence[str],
     title: str = "Layout ID",
