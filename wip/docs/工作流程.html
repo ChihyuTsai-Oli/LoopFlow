@@ -279,7 +279,7 @@ IN__201.02__立面圖2
 <p>操作來回：Infuser 注入 → TAG-O 確認活著或斷連 → 下一輪 Infuser。斷連 Tag Infuser 不灌回；再綁定後跑 Infuser 可恢復。不必刪 Tag。</p>
 <h2 id="13-Sync-Worksession-獨立指令">13. Sync Worksession（獨立指令）</h2>
 <p><strong>目前可跑 <code>LF_Sync_Worksession</code>。尚未 Rhino 8 實機。</strong> 不要開 Document。</p>
-<p>須先把目前檔案存到磁碟。第一次執行開始監看<strong>同資料夾</strong>的 <code>.3dm</code>（略過名稱含 <code>~</code> 或 <code>tmp</code> 的暫存檔）。偵測到變動後等待 0.5 秒，在 Rhino idle 時執行 Worksession Refresh，讓出圖端看到最新 3D 參照。只 Refresh，不 Attach／Detach、不改 <code>.rws</code>。Refresh 失敗會延遲再試，<strong>不拆掉上一份有效參照</strong>。再跑一次停止監看。若檔案已另存到別的資料夾，再跑會改監看新位置。未存檔會說明並停止。</p>
+<p>須先把目前檔案存到磁碟。第一次執行會<strong>彈窗</strong>並開始監看<strong>同資料夾</strong>的 <code>.3dm</code>（略過名稱含 <code>~</code> 或 <code>tmp</code> 的暫存檔）。偵測到變動後等待 0.5 秒，在 Rhino idle 時執行 Worksession Refresh，讓出圖端看到最新 3D 參照。只 Refresh，不 Attach／Detach、不改 <code>.rws</code>。Refresh 失敗會延遲再試，<strong>不拆掉上一份有效參照</strong>。再跑一次會彈窗並停止監看。若檔案已另存到別的資料夾，再跑會改監看新位置。未存檔會說明並停止。</p>
 <h2 id="14-Document-獨立指令">14. Document（獨立指令）</h2>
 <p><strong>尚未實作。</strong> Sync Worksession 之後再開。指令 <code>LF_Document</code> 開啟 GitHub 上的 LoopFlow 文件頁，不改模型。舊名 <code>LF_Help</code> 不登錄。</p>
 <h2 id="變更循環">變更循環</h2>

@@ -116,7 +116,7 @@ Extract：在 **2D 模型空間**跑 `LF_Extract_CP`。勾選 Clipping Drawing �
 
 Duplicate Layout：跑 `LF_Duplicate_Layout`。加高可捲動清單可複選來源 Layout（Ctrl／Shift 反白；不用 GridView），**彈窗**輸入一份份數（1～100）套用到所有選頁。以 Rhino API 複製整頁（含 Detail、圖框、Tag），**不改系統剪貼簿**。新頁名保留三欄，圖名加 `_CopyN`，不加 `**`／`//`。新頁發新的 `sheet_id`／`drawing_id`／`tag_id`／`catalog_id`。除 `TAG_DW` 外，綁定會清掉；手填欄（備註、Detail 編號、立面方向）寫一個空白以留下 key；自動欄改 `?`、整顆塗紅（斷連樣式），**不改 lock／畫面上的 `x`**。`TAG_DW` 編號／寬／高保留。圖框比例保留，圖號／圖名先清（之後跑 Layout ID）。Esc／取消、沒有 Layout、任一選頁沒物件，都不寫入。失敗會刪掉已建的半成品頁。再跑可再複製。不進 Nexus。**家中 Rhino 8 已測（2026-08-20）。**
 
-Sync Worksession：跑 `LF_Sync_Worksession`。須先存檔。第一次開始監看目前檔案同資料夾的 `.3dm`（略過 `~`／`tmp` 暫存名），偵測到變動後等 0.5 秒、Rhino idle 時執行 Worksession Refresh。只 Refresh，不 Attach／Detach、不改 `.rws`。失敗延遲再試，不拆上一份參照。再跑一次停止。另存到別的資料夾後再跑會改監看新位置。未存檔說明並停止。不進 Nexus。**待關 Rhino 再開再測。**
+Sync Worksession：跑 `LF_Sync_Worksession`。須先存檔。第一次**彈窗**「已開始監看」並監看目前檔案同資料夾的 `.3dm`（略過 `~`／`tmp` 暫存名），偵測到變動後等 0.5 秒、Rhino idle 時執行 Worksession Refresh。只 Refresh，不 Attach／Detach、不改 `.rws`。失敗延遲再試，不拆上一份參照。再跑一次**彈窗**停止。另存到別的資料夾後再跑會改監看新位置。未存檔說明並停止。不進 Nexus。**待關 Rhino 再開再測。**
 
 左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。正式工具列在 G02 封裝時才建立。
 

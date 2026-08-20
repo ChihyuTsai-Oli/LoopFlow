@@ -42,6 +42,13 @@ def same_directory(left: str, right: str) -> bool:
     )
 
 
+def is_active_monitor(existing: Any) -> bool:
+    """不依賴 class 身分：ScriptEditor 重跑後 isinstance 會失效。"""
+    return bool(getattr(existing, "active", False)) and callable(
+        getattr(existing, "stop", None)
+    )
+
+
 def refresh_due(
     needs_refresh: bool,
     last_change: float,
@@ -90,20 +97,26 @@ class WorksessionMonitor:
         self.active = True
 
     def stop(self) -> None:
-        if self._stop_watch is not None:
-            try:
-                self._stop_watch()
-            except Exception:
-                pass
-            self._stop_watch = None
-        if self._stop_idle is not None:
-            try:
-                self._stop_idle()
-            except Exception:
-                pass
-            self._stop_idle = None
+        self._release(self._stop_watch)
+        self._stop_watch = None
+        self._release(self._stop_idle)
+        self._stop_idle = None
         self.active = False
         self.needs_refresh = False
+
+    @staticmethod
+    def _release(handle: Any) -> None:
+        if handle is None:
+            return
+        try:
+            if callable(handle):
+                handle()
+                return
+            stop = getattr(handle, "stop", None)
+            if callable(stop):
+                stop()
+        except Exception:
+            pass
 
     def on_file_changed(self, name: str) -> None:
         if not self.active or is_temp_model_name(name):
@@ -196,7 +209,7 @@ def run_sync_worksession(
     delay = DEFAULT_DELAY_SECONDS if delay_seconds is None else float(delay_seconds)
     directory = watch_directory(host.document_path())
     existing = bag.get(STICKY_KEY)
-    running = isinstance(existing, WorksessionMonitor) and existing.active
+    running = is_active_monitor(existing)
 
     if running:
         if directory and not same_directory(existing.directory, directory):

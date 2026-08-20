@@ -15,6 +15,7 @@ from loopflow.features.worksession.sync import (
     COMMAND_ID,
     DEFAULT_DELAY_SECONDS,
     STICKY_KEY,
+    is_active_monitor,
     is_temp_model_name,
     refresh_due,
     run_sync_worksession,
@@ -202,6 +203,25 @@ class WorksessionCommandTests(unittest.TestCase):
 
     def test_default_delay_matches_legacy(self):
         self.assertEqual(DEFAULT_DELAY_SECONDS, 0.5)
+
+    def test_duck_typed_sticky_monitor_can_stop(self):
+        class ForeignMonitor:
+            def __init__(self) -> None:
+                self.active = True
+                self.directory = r"E:\proj"
+                self.stopped = False
+
+            def stop(self) -> None:
+                self.stopped = True
+                self.active = False
+
+        host = FakeHost(path=r"E:\proj\sheet.3dm")
+        foreign = ForeignMonitor()
+        self.assertTrue(is_active_monitor(foreign))
+        result = run_sync_worksession(host, {STICKY_KEY: foreign})
+        self.assertTrue(result.ok)
+        self.assertEqual(result.details["action"], "stopped")
+        self.assertTrue(foreign.stopped)
 
 
 if __name__ == "__main__":

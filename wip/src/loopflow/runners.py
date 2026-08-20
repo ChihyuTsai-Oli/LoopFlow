@@ -220,6 +220,9 @@ def run_sync_worksession() -> Result:
     )
     if not result.ok:
         return _present_failure(result)
+    from loopflow.platform.rhino.prompts import show_message
+
+    show_message(result.message)
     return result
 
 
