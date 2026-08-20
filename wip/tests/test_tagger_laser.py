@@ -299,6 +299,40 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(captured[0][0], expected_origin)
         self.assertEqual(captured[0][1], expected_dir)
 
+    def test_minus_y_elevation_shoots_toward_model(self):
+        session = _session()
+        payload = build_transform(
+            origin_2d=(10, 5, 0),
+            origin_3d_local=(10, 5),
+            scale_x=1,
+            scale_y=-1,
+            plane={
+                "origin": (0, 0, 0),
+                "x_axis": (1, 0, 0),
+                "y_axis": (0, 0, 1),
+                "z_axis": (0, -1, 0),
+            },
+        )
+        session.set_object_user_text("frame", VIEW_TRANSFORM_KEY, encode_transform(payload))
+        session.set_bbox("wall", (0, 80, 0), (10, 100, 10))
+        captured = []
+
+        def probe(_session, origin, direction):
+            captured.append((origin, direction))
+            return (
+                {
+                    "object_id": "wall",
+                    "dist": 90.0,
+                    "hit_type": "FRONTAL",
+                    "layer": "M3D",
+                    "name": "Wall",
+                },
+            )
+
+        result = _run(session, probe=probe)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(captured[0][1], (0.0, 1.0, 0.0))
+
     def test_default_probe_uses_injected_ray_hits(self):
         session = _session()
         result = _run(session)

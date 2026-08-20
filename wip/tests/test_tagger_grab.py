@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import io
+import json
 import sys
 import unittest
 from contextlib import redirect_stdout
@@ -15,6 +16,7 @@ ENTRY = SRC / "entrypoints" / "LF_Tagger_Grab.py"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+from loopflow.features.drawing import keys as drawing_keys
 from loopflow.features.tagger.grab import bind_tag, run_tagger_grab
 from loopflow.features.tagger.keys import (
     BINDING_MODE_KEY,
@@ -235,6 +237,46 @@ class BindTests(unittest.TestCase):
         session.set_object_user_text("wall", OBJECT_ID_KEY, "")
         result = bind_tag(session, "tag", "wall", _catalog())
         self.assertEqual(result.blocking, ("missing_object_id",))
+        self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
+
+    def test_drawing_source_ids_uuid_binds(self):
+        session = _session()
+        session.add_object(
+            "drawing",
+            name="Extracted",
+            layer="LoopFlow_Extract::Visible",
+            user_text={drawing_keys.SOURCE_OBJECT_IDS_KEY: json.dumps([OBJECT_ID])},
+        )
+        result = bind_tag(session, "tag", "drawing", _catalog())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY), OBJECT_ID)
+
+    def test_drawing_source_ids_object_lookup_binds(self):
+        session = _session()
+        session.add_object(
+            "drawing",
+            name="Extracted",
+            layer="LoopFlow_Extract::Visible",
+            user_text={drawing_keys.SOURCE_OBJECT_IDS_KEY: json.dumps(["wall"])},
+        )
+        result = bind_tag(session, "tag", "drawing", _catalog())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY), OBJECT_ID)
+
+    def test_drawing_source_ids_ambiguous_zero_write(self):
+        session = _session()
+        session.add_object(
+            "drawing",
+            name="Extracted",
+            layer="LoopFlow_Extract::Visible",
+            user_text={
+                drawing_keys.SOURCE_OBJECT_IDS_KEY: json.dumps(
+                    [OBJECT_ID, "cccccccc-cccc-4ccc-8ccc-cccccccccccc"]
+                )
+            },
+        )
+        result = bind_tag(session, "tag", "drawing", _catalog())
+        self.assertEqual(result.blocking, ("ambiguous_source",))
         self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
 
     def test_laser_and_index_refused(self):

@@ -151,6 +151,7 @@ class ContractFixtureTests(unittest.TestCase):
 class ExtractTests(unittest.TestCase):
     def test_lists_section_roots_and_curve_hex_layer(self):
         session = _session()
+        session.ensure_layer("//_M2D::Visible")
         self.assertEqual(listed_section_roots(session), ("A-A",))
         self.assertEqual(
             target_layer_for(drawing_keys.KIND_CURVE, (255, 0, 0)),

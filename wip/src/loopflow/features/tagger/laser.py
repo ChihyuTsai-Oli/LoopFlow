@@ -11,7 +11,12 @@ from loopflow.features.tagger.keys import (
 )
 from loopflow.features.tagger.templates import TagTemplate, TagTemplateSet, load_tag_templates
 from loopflow.features.view.keys import SCHEMA_ID_KEY, VIEW_SCHEMA_ID, VIEW_TRANSFORM_KEY
-from loopflow.features.view.transform import bbox_center_2d, decode_transform, ray_from_transform
+from loopflow.features.view.transform import (
+    bbox_center_2d,
+    decode_transform,
+    facing_direction,
+    ray_from_transform,
+)
 from loopflow.features.viewer.inspect import check_document_schema
 from loopflow.foundation import results
 from loopflow.foundation.usertext import OBJECT_ID_KEY, read_text
@@ -309,7 +314,10 @@ def run_tagger_laser(
         if live_origin is not None:
             payload = dict(payload)
             payload["origin_2d"] = [live_origin[0], live_origin[1], live_origin[2]]
-        origin, direction = ray_from_transform(payload, point_2d)
+        origin, _stored_dir = ray_from_transform(payload, point_2d)
+        center_fn = getattr(current, "uuid_objects_bbox_center", None)
+        model_center = center_fn() if callable(center_fn) else None
+        direction = facing_direction(payload, model_center)
         hits = cluster_hits(probe_fn(current, origin, direction))
         if not hits:
             return results.blocked(

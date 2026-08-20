@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import re
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 
 from loopflow.features.tagger.binding import (
-    UUID_V4_RE,
+    canonical_uuid,
     write_block_binding,
     write_object_binding,
 )
@@ -55,6 +55,29 @@ def _default_pick_block(_session: RhinoSession) -> Optional[str]:
     return pick_source_through_detail("選取家具圖塊來源（Esc 取消）", GRAB_BLOCK_FILTER)
 
 
+def resolve_grab_object_uuid(session: RhinoSession, source_id: str) -> Tuple[Optional[str], Optional[str]]:
+    """圖 A 讀 `_07_UUID`；圖 B 改從 `lf_source_object_ids` 解出唯一 UUID。"""
+    from loopflow.features.drawing.extract import source_object_ids
+
+    direct = canonical_uuid(read_text(session, source_id, OBJECT_ID_KEY))
+    if direct:
+        return direct, None
+    found = []
+    for item in source_object_ids(session, source_id):
+        resolved = None
+        if session.get_view_state(item) is not None:
+            resolved = canonical_uuid(read_text(session, item, OBJECT_ID_KEY))
+        if resolved is None:
+            resolved = canonical_uuid(item)
+        if resolved and resolved not in found:
+            found.append(resolved)
+    if len(found) == 1:
+        return found[0], None
+    if len(found) > 1:
+        return None, "ambiguous_source"
+    return None, "missing_object_id"
+
+
 def bind_tag(
     session: RhinoSession,
     tag_id: str,
@@ -87,8 +110,15 @@ def bind_tag(
             command_id=COMMAND_ID,
         )
     if template.template_id in GRAB_OBJECT_TEMPLATE_IDS:
-        object_uuid = read_text(session, source_id, OBJECT_ID_KEY)
-        if object_uuid is None or not UUID_V4_RE.match(object_uuid):
+        object_uuid, reason = resolve_grab_object_uuid(session, source_id)
+        if reason == "ambiguous_source":
+            return results.blocked(
+                "bind_tag",
+                "來源對到兩個以上 3D 物件，已停止，不猜測。",
+                ("ambiguous_source",),
+                command_id=COMMAND_ID,
+            )
+        if object_uuid is None:
             return results.blocked(
                 "bind_tag",
                 "來源物件尚未寫入 UUID。請先跑 Nexus 寫入模型 Metadata。",

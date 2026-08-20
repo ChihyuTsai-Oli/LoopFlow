@@ -61,6 +61,8 @@ def listed_section_roots(session: RhinoSession) -> Tuple[str, ...]:
         if _layer_kind(path) is None:
             continue
         root = str(path).split("::", 1)[0]
+        if str(root).startswith("//"):
+            continue
         if root and root not in roots:
             roots.append(root)
     return tuple(roots)

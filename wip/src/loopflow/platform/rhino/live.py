@@ -11,6 +11,7 @@ from loopflow.foundation import results
 from loopflow.platform.rhino.session import (
     apply_extract_layer_print,
     capture_snapshot,
+    is_section_or_extract_layer,
     restore_snapshot,
     silence_loopflow_layers,
 )
@@ -1021,6 +1022,60 @@ class LiveSession:
             "z_axis": (float(z_axis.X), float(z_axis.Y), float(z_axis.Z)),
         }
 
+    def _object_uuid_text(self, obj):
+        if obj is None:
+            return None
+        try:
+            attrs = obj.Attributes
+        except Exception:
+            return None
+        for key in ("_07_UUID", "_12_UUID", "lf_object_id"):
+            try:
+                value = attrs.GetUserString(key)
+            except Exception:
+                value = None
+            if value and str(value).strip():
+                return str(value).strip()
+        return None
+
+    def _object_layer_path(self, obj):
+        try:
+            layer_index = getattr(obj.Attributes, "LayerIndex", -1)
+            if layer_index >= 0:
+                layer = self._sc.doc.Layers[layer_index]
+                return str(layer.FullPath or layer.Name or "")
+        except Exception:
+            return ""
+        return ""
+
+    def uuid_objects_bbox_center(self):
+        """帶 UUID 的 3D 模型 bbox 中心（含 worksession；不含剖面／Extract 線稿）。"""
+        xs, ys, zs = [], [], []
+        for obj in self._iter_rhino_objects(include_linked=True):
+            if not self._object_uuid_text(obj):
+                continue
+            if is_section_or_extract_layer(self._object_layer_path(obj)):
+                continue
+            geom = getattr(obj, "Geometry", None)
+            if geom is None:
+                continue
+            try:
+                box = geom.GetBoundingBox(True)
+            except Exception:
+                continue
+            if box is None or not getattr(box, "IsValid", False):
+                continue
+            xs.extend((float(box.Min.X), float(box.Max.X)))
+            ys.extend((float(box.Min.Y), float(box.Max.Y)))
+            zs.extend((float(box.Min.Z), float(box.Max.Z)))
+        if not xs:
+            return None
+        return (
+            (min(xs) + max(xs)) * 0.5,
+            (min(ys) + max(ys)) * 0.5,
+            (min(zs) + max(zs)) * 0.5,
+        )
+
     def _breps_from_obj(self, obj, xform=None):
         rhino = self._rhino
         if rhino is None or obj is None:
@@ -1038,6 +1093,29 @@ class LiveSession:
             if brep:
                 brep.Transform(xform)
                 breps.append(brep)
+        elif isinstance(geom, rhino.Geometry.Mesh):
+            mesh = geom.Duplicate()
+            mesh.Transform(xform)
+            brep = None
+            try:
+                brep = rhino.Geometry.Brep.CreateFromMesh(mesh, False)
+            except Exception:
+                brep = None
+            if brep:
+                breps.append(brep)
+        elif hasattr(rhino.Geometry, "SubD") and isinstance(geom, rhino.Geometry.SubD):
+            brep = None
+            try:
+                create = getattr(rhino.Geometry.Brep, "CreateFromSubD", None)
+                if callable(create):
+                    brep = create(geom, 1)
+                elif hasattr(geom, "ToBrep"):
+                    brep = geom.ToBrep()
+            except Exception:
+                brep = None
+            if brep:
+                brep.Transform(xform)
+                breps.append(brep)
         elif isinstance(obj, rhino.DocObjects.InstanceObject):
             definition = obj.InstanceDefinition
             if definition:
@@ -1045,6 +1123,39 @@ class LiveSession:
                 for child in definition.GetObjects():
                     breps.extend(self._breps_from_obj(child, nested))
         return breps
+
+    def _meshes_from_obj(self, obj, xform=None):
+        rhino = self._rhino
+        if rhino is None or obj is None:
+            return []
+        if xform is None:
+            xform = rhino.Geometry.Transform.Identity
+        meshes = []
+        geom = obj.Geometry if hasattr(obj, "Geometry") else obj
+        if isinstance(geom, rhino.Geometry.Mesh):
+            mesh = geom.Duplicate()
+            mesh.Transform(xform)
+            meshes.append(mesh)
+        elif hasattr(rhino.Geometry, "SubD") and isinstance(geom, rhino.Geometry.SubD):
+            mesh = None
+            try:
+                create = getattr(rhino.Geometry.Mesh, "CreateFromSubD", None)
+                if callable(create):
+                    mesh = create(geom, 0)
+                elif hasattr(geom, "ToMesh"):
+                    mesh = geom.ToMesh()
+            except Exception:
+                mesh = None
+            if mesh:
+                mesh.Transform(xform)
+                meshes.append(mesh)
+        elif isinstance(obj, rhino.DocObjects.InstanceObject):
+            definition = obj.InstanceDefinition
+            if definition:
+                nested = xform * obj.InstanceXform
+                for child in definition.GetObjects():
+                    meshes.extend(self._meshes_from_obj(child, nested))
+        return meshes
 
     def clipping_plane_section_bbox_local(self, object_id: str):
         """把 3D 模型與 CP 的交線轉到 CP 局部座標，回傳 2D bbox。"""
@@ -1154,6 +1265,38 @@ class LiveSession:
                 continue
         return best
 
+    def _mesh_hit_normal(self, mesh, hit_pt):
+        if mesh is None or hit_pt is None:
+            return None
+        try:
+            mp = mesh.ClosestMeshPoint(hit_pt, 0.0)
+        except Exception:
+            mp = None
+        if mp is None:
+            return None
+        try:
+            normals = mesh.FaceNormals
+            if getattr(normals, "Count", 0) == 0:
+                mesh.FaceNormals.ComputeFaceNormals()
+                normals = mesh.FaceNormals
+            return normals[mp.FaceIndex]
+        except Exception:
+            return None
+
+    def _hit_type_from_normal(self, ray, normal):
+        hit_type = "GRAZING"
+        if normal is None:
+            return hit_type
+        try:
+            dot_val = ray.Direction * normal
+        except Exception:
+            dot_val = 0.0
+        if dot_val < -0.5:
+            return "FRONTAL"
+        if dot_val > 0.5:
+            return "BACKFACE"
+        return hit_type
+
     def shoot_ray_hits(self, origin, direction):
         """沿方向射線，回傳帶 UUID 的命中（含 worksession 連結檔）。"""
         rhino = self._rhino
@@ -1171,37 +1314,36 @@ class LiveSession:
             if layer_index >= 0 and not self._sc.doc.Layers[layer_index].IsVisible:
                 continue
             object_id = str(obj.Id)
-            uuid_value = (
-                obj.Attributes.GetUserString("_07_UUID")
-                or obj.Attributes.GetUserString("_12_UUID")
-                or obj.Attributes.GetUserString("lf_object_id")
-            )
-            if not uuid_value or not str(uuid_value).strip():
+            if not self._object_uuid_text(obj):
                 continue
+            hit_pt = None
+            normal = None
             breps = self._breps_from_obj(obj)
-            if not breps:
+            if breps:
+                try:
+                    shot = rhino.Geometry.Intersect.Intersection.RayShoot(ray, breps, 1)
+                except Exception:
+                    shot = None
+                if shot:
+                    hit_pt = shot[0]
+                    normal = self._hit_normal(breps, hit_pt)
+            if hit_pt is None:
+                for mesh in self._meshes_from_obj(obj):
+                    try:
+                        t = rhino.Geometry.Intersect.Intersection.MeshRay(mesh, ray)
+                    except Exception:
+                        t = -1.0
+                    if t is None or float(t) < 0:
+                        continue
+                    hit_pt = ray.PointAt(float(t))
+                    normal = self._mesh_hit_normal(mesh, hit_pt)
+                    break
+            if hit_pt is None:
                 continue
-            try:
-                shot = rhino.Geometry.Intersect.Intersection.RayShoot(ray, breps, 1)
-            except Exception:
-                continue
-            if not shot:
-                continue
-            hit_pt = shot[0]
             dist = rhino.Geometry.Point3d(
                 float(origin[0]), float(origin[1]), float(origin[2])
             ).DistanceTo(hit_pt)
-            normal = self._hit_normal(breps, hit_pt)
-            hit_type = "GRAZING"
-            if normal is not None:
-                try:
-                    dot_val = ray.Direction * normal
-                except Exception:
-                    dot_val = 0.0
-                if dot_val < -0.5:
-                    hit_type = "FRONTAL"
-                elif dot_val > 0.5:
-                    hit_type = "BACKFACE"
+            hit_type = self._hit_type_from_normal(ray, normal)
             layer = ""
             if layer_index >= 0:
                 try:

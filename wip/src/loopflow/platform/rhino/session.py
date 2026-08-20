@@ -342,6 +342,14 @@ def is_extract_layer(path: str) -> bool:
     return text == EXTRACT_LAYER_ROOT or text.startswith(EXTRACT_LAYER_ROOT + "::")
 
 
+def is_section_or_extract_layer(path: str) -> bool:
+    """Extract 產出或 Clipping Drawing 的 Visible／Hatch／Curve 子層。"""
+    if is_extract_layer(path):
+        return True
+    terminal = str(path or "").rsplit("::", 1)[-1].upper()
+    return "VISIBLE" in terminal or "HATCH" in terminal or "CURVE" in terminal
+
+
 def loopflow_layer_chain(path: str) -> Tuple[str, ...]:
     if not is_loopflow_layer(path):
         return ()

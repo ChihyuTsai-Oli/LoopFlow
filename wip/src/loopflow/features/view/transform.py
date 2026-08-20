@@ -43,6 +43,34 @@ def _ortho_ok(a, b) -> bool:
     return abs(sum(x * y for x, y in zip(a, b))) < 1e-6
 
 
+def _dot(a, b) -> float:
+    return sum(float(x) * float(y) for x, y in zip(a, b))
+
+
+def facing_direction(payload: Mapping, model_center) -> Tuple[float, float, float]:
+    """射線朝向帶 UUID 的 3D 模型所在側；幾乎共面維持原 CP 法線。"""
+    z_axis = (
+        float(payload["cp_z_axis"][0]),
+        float(payload["cp_z_axis"][1]),
+        float(payload["cp_z_axis"][2]),
+    )
+    center = _vec(model_center, 3)
+    origin = _vec(payload.get("cp_origin"), 3)
+    if center is None or origin is None:
+        return z_axis
+    rel = (
+        center[0] - origin[0],
+        center[1] - origin[1],
+        center[2] - origin[2],
+    )
+    side = _dot(rel, z_axis)
+    if abs(side) < 1e-6:
+        return z_axis
+    if side < 0:
+        return (-z_axis[0], -z_axis[1], -z_axis[2])
+    return z_axis
+
+
 def bbox_center_2d(box) -> Optional[Tuple[float, float, float]]:
     values = _vec(box, 6)
     if values is None:

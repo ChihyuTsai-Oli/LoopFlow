@@ -86,9 +86,9 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Disp
 
 開發期輔助（**不是產品指令**，不進正式工具列）：`LF_D08_Migrate_Display_Keys` 全檔把圖塊舊顯示欄抄到 `lf_*` 後刪舊名字。鎖定欄若寫 `x`／`X` 會抄到 `lf_00_lock_state` 後刪舊名字；提示文字只刪不抄。圖塊公式改完後跑一次即可，不必逐張刪 UserText。
 
-Grab：在 **Layout** 先選 Tag 圖塊，再在目標 Detail 內點一下進入模型空間，然後選來源（剖面 2D 線、3D 物件或家具圖塊）。Height／Finish 綁物件 `_07_UUID`；家具 Item 綁 Block 名稱（`FF-01__Chair-1`）**以及該實例**，之後 Infuser／TAG-O 才能跟改名與刪除。Esc、點在 Detail 外、鎖定（`lf_00_lock_state=true`／`1`，或鎖定欄寫 `x`／`X`）、`TAG_DW`、Laser／Index／圖框圖塊都不寫入。結束後回到 Layout。不填 Infuser 顯示欄。來源沒有 UUID 時不猜測對應的 3D 物件。舊鎖定欄 `x`／`X` **家中 Rhino 8 已測（2026-08-18）**。
+Grab：在 **Layout** 先選 Tag 圖塊，再在目標 Detail 內點一下進入模型空間，然後選來源（剖面 2D 線、3D 物件或家具圖塊）。Height／Finish 綁物件 `_07_UUID`；圖 B 已清掉 UUID 時改讀 `lf_source_object_ids`（恰好一個 UUID 或一個 3D 物件才綁；兩個以上停止、不猜測）。家具 Item 綁 Block 名稱（`FF-01__Chair-1`）**以及該實例**，之後 Infuser／TAG-O 才能跟改名與刪除。Esc、點在 Detail 外、鎖定（`lf_00_lock_state=true`／`1`，或鎖定欄寫 `x`／`X`）、`TAG_DW`、Laser／Index／圖框圖塊都不寫入。結束後回到 Layout。不填 Infuser 顯示欄。來源沒有 UUID 且索引也解不出時不猜測。舊鎖定欄 `x`／`X` **家中 Rhino 8 已測（2026-08-18）**。
 
-Laser：在 **Layout** 先選 Height／Finish 的 Laser Tag，再在目標 Detail 內點一下剖面位置。點須落在已登記的 Anchor Frame 內；用框的現況中心與寫死的 `scale_x`／`scale_y`／CP 三軸射出 3D 射線，打到帶 `_07_UUID` 的物件後寫 `lf_source_object_id`。沒有框時提示請先執行 Anchor Frame。框與圖一起平移不必重跑 Anchor Frame。Esc、點在 Detail 外、鎖定（同上）、Grab／Item／`TAG_DW`／Index／圖框、0 或 ≥2 個重疊 View、沒打到、來源無 UUID，都不寫入。多個近距離命中時讓使用者選一個，清單只顯示圖層名（有物件名稱才附上），不顯示 GUID。圖塊名不分大小寫。不填 Infuser 顯示欄。本批不接 Extract 來源索引。舊鎖定欄 `x`／`X` **家中 Rhino 8 已測（2026-08-18）**。
+Laser：在 **Layout** 先選 Height／Finish 的 Laser Tag，再在目標 Detail 內點一下剖面位置。點須落在已登記的 Anchor Frame 內；用框的現況中心與寫死的 `scale_x`／`scale_y`／CP 三軸，射向帶 `_07_UUID` 的 3D 模型所在那一側（含 Mesh／SubD 與圖塊裡的燈具／壁面設備），寫 `lf_source_object_id`。沒有框時提示請先執行 Anchor Frame。框與圖一起平移不必重跑 Anchor Frame。Esc、點在 Detail 外、鎖定（同上）、Grab／Item／`TAG_DW`／Index／圖框、0 或 ≥2 個重疊 View、沒打到、來源無 UUID，都不寫入。多個近距離命中時讓使用者選一個，清單只顯示圖層名（有物件名稱才附上），不顯示 GUID。圖塊名不分大小寫。不填 Infuser 顯示欄。本批不接 Extract 來源索引。舊鎖定欄 `x`／`X` **家中 Rhino 8 已測（2026-08-18）**。
 
 Index：在 **Layout** 選 `TAG_SECTION_DETAIL` 或 `TAG_ELEV_1`～`4`，再從可搜尋清單選全檔任一 Layout 的 Detail（顯示頁名＋Detail 名，不顯示 GUID；點選時跳頁並 zoom）。用該 Detail 模型空間中心對已登記 View 框，恰好一個才寫 `lf_target_view_id` 與所選頁名 `lf_target_layout`。Esc、鎖定（同上）、Grab／Laser／`TAG_ELEV_0`／圖框／`TAG_DW`、模型空間、沒有 Detail、0 或 ≥2 個 View、取消清單，都不寫入。不寫 Detail GUID、不寫圖號顯示欄、不寫 `lf_sheet_id`。圖塊名不分大小寫。不進 Nexus。舊鎖定欄 `x`／`X` **家中 Rhino 8 已測（2026-08-18）**。
 
@@ -104,7 +104,7 @@ Infuser All：跑 `LF_Infuser_All`，規則與 Part 相同，一次處理**全�
 
 TAG-O：跑 `LF_TAG-O`，開 **TAG-O ~ Holy Cargo ~~** 深色面板（可捲動），依 Layout 頁序列出已綁定 Tag，頁與頁之間灰線。`[正常]` 綠 `#AADC78`；`[過期]` 橘 `#EA9328`（自動欄 `!`、整顆塗橘）；`[斷連]` 紅 `#D81C1C`（自動欄 `?`、整顆塗紅）。來源不在、目標頁／Detail 消失都顯示斷連。未綁定不列出。**點選項目會反白該列、切到該 Layout 並拉近，留出圖框周圍。** 只檢查 D08 Tag 圖塊。家具改名而未注入為過期，刪除綁定實例為斷連。並列出沒被 Finish Tag 涵蓋的空間。模型空間也可跑。鎖定的 Tag 仍列出並標「鎖定」，但不改文字與顏色。門窗與 `TAG_ELEV_0` 不列入。沒掃到 Tag 時不顯示「全部正常」。只檢查與上色，不自動修復；使用者依此自行修改。斷連再綁定後跑 Infuser 可恢復，不必刪 Tag。**家中 Rhino 8 已測（2026-08-19）。**
 
-Extract：在 **2D 模型空間**跑 `LF_Extract_CP`。勾選 Clipping Drawing 的剖面根圖層（底下有 Visible／Hatch／Curve）。複製到 `LoopFlow_Extract::Visible`、`::Hatch`、`::Curve_#RRGGBB`，可列印；Visible／Hatch 列印色灰 `#BEBEBE`，其餘黑。抽出線只留 Drawing 的 `lf_*`，不含 3D 的 `_01`～`_14`。寫 `lf_drawing_id`、來源 `lf_view_id`（圖層前綴與框名完整相同，`LF_立面` 不會對到 `LF_立面2`）、來源 revision 與 `lf_source_object_ids`。同一 View／同一剖面若已有抽出，選取代／新增／略過。已人工修改（`lf_provenance_state=modified`）不會被取代覆蓋。Esc／取消、Layout 頁、找不到剖面圖層、兩個框完整同名，都不寫入。來源剖面圖層鎖定狀態會還原。不進 Nexus。**未在 Rhino 8 實機驗證。**
+Extract：在 **2D 模型空間**跑 `LF_Extract_CP`。勾選 Clipping Drawing 的剖面根圖層（底下有 Visible／Hatch／Curve）。根名稱以 `//` 開頭的不列入。複製到 `LoopFlow_Extract::Visible`、`::Hatch`、`::Curve_#RRGGBB`，可列印；Visible／Hatch 列印色灰 `#BEBEBE`，其餘黑。抽出線只留 Drawing 的 `lf_*`，不含 3D 的 `_01`～`_14`。寫 `lf_drawing_id`、來源 `lf_view_id`（圖層前綴與框名完整相同，`LF_立面` 不會對到 `LF_立面2`）、來源 revision 與 `lf_source_object_ids`。同一 View／同一剖面若已有抽出，選取代／新增／略過。已人工修改（`lf_provenance_state=modified`）不會被取代覆蓋。Esc／取消、Layout 頁、找不到剖面圖層、兩個框完整同名，都不寫入。來源剖面圖層鎖定狀態會還原。不進 Nexus。**未在 Rhino 8 實機驗證。**
 
 左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。正式工具列在 G02 封裝時才建立。
 

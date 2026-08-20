@@ -9,6 +9,7 @@ from loopflow.foundation import results
 from loopflow.platform.rhino.session import (
     apply_extract_layer_print,
     capture_snapshot,
+    is_section_or_extract_layer,
     restore_snapshot,
     silence_loopflow_layers,
 )
@@ -592,6 +593,29 @@ class MemorySession:
             max(box[3] for box in boxes),
             max(box[4] for box in boxes),
             max(box[5] for box in boxes),
+        )
+
+    def uuid_objects_bbox_center(self):
+        boxes = []
+        for object_id in self.iter_object_ids(include_hidden=True, include_locked=True):
+            uuid_value = (
+                self.get_object_user_text(object_id, "_07_UUID")
+                or self.get_object_user_text(object_id, "_12_UUID")
+                or self.get_object_user_text(object_id, "lf_object_id")
+            )
+            if not uuid_value:
+                continue
+            if is_section_or_extract_layer(self.object_layer(object_id) or ""):
+                continue
+            box = self.object_bbox(object_id)
+            if box:
+                boxes.append(box)
+        if not boxes:
+            return None
+        return (
+            (min(box[0] for box in boxes) + max(box[3] for box in boxes)) * 0.5,
+            (min(box[1] for box in boxes) + max(box[4] for box in boxes)) * 0.5,
+            (min(box[2] for box in boxes) + max(box[5] for box in boxes)) * 0.5,
         )
 
     def add_closed_polyline(self, points, *, layer: str, name: str) -> str:
