@@ -205,6 +205,24 @@ def run_duplicate_layout() -> Result:
     return result
 
 
+def run_sync_worksession() -> Result:
+    from loopflow.features.worksession.sync import run_sync_worksession as run_sync
+    from loopflow.foundation.config import DEFAULT_CONFIG
+    from loopflow.platform.rhino.worksession import LiveWorksessionHost, sticky_store
+
+    opened = _open_live_session()
+    if not opened.ok:
+        return opened
+    result = run_sync(
+        LiveWorksessionHost(),
+        sticky_store(),
+        delay_seconds=DEFAULT_CONFIG.worksession_refresh_delay,
+    )
+    if not result.ok:
+        return _present_failure(result)
+    return result
+
+
 RUNNERS: Dict[str, Runner] = {
     "LF_Nexus": run_nexus,
     "LF_Open_Dictionary": run_open_dictionary,
@@ -223,6 +241,7 @@ RUNNERS: Dict[str, Runner] = {
     "LF_TAG-O": run_tag_o,
     "LF_Extract_CP": run_extract_cp,
     "LF_Duplicate_Layout": run_duplicate_layout,
+    "LF_Sync_Worksession": run_sync_worksession,
 }
 
 

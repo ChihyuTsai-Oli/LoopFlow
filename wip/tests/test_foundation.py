@@ -197,6 +197,7 @@ class VersionConfigLogTests(unittest.TestCase):
 
         self.assertFalse(hasattr(DEFAULT_CONFIG, "registry_filename"))
         self.assertEqual(DEFAULT_CONFIG.log_filename, "loopflow.log")
+        self.assertEqual(DEFAULT_CONFIG.worksession_refresh_delay, 0.5)
 
     def test_log_write_uses_injected_path(self):
         from loopflow.foundation.logging import append_log

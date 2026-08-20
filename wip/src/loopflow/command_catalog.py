@@ -49,6 +49,7 @@ _READY = {
     "LF_TAG-O": "D05",
     "LF_Extract_CP": "E02",
     "LF_Duplicate_Layout": "E03",
+    "LF_Sync_Worksession": "E04",
 }
 
 _COMMANDS = {

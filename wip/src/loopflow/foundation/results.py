@@ -57,6 +57,7 @@ STAGES = (
     "health_check",
     "extract_drawing",
     "duplicate_layout",
+    "sync_worksession",
 )
 
 
