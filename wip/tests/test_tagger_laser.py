@@ -26,6 +26,7 @@ from loopflow.features.tagger.keys import (
     TEMPLATE_ID_KEY,
 )
 from loopflow.features.tagger.laser import (
+    apply_live_view_origins,
     bind_laser_hit,
     choice_labels,
     cluster_hits,
@@ -39,7 +40,12 @@ import loopflow.features.tagger.laser as laser_mod
 
 laser_mod.DRAW_DEBUG_RAY = False
 from loopflow.features.tagger.templates import load_tag_templates
-from loopflow.features.view.keys import SCHEMA_ID_KEY, VIEW_SCHEMA_ID, VIEW_TRANSFORM_KEY
+from loopflow.features.view.keys import (
+    CLIPPING_PLANE_ID_KEY,
+    SCHEMA_ID_KEY,
+    VIEW_SCHEMA_ID,
+    VIEW_TRANSFORM_KEY,
+)
 from loopflow.features.view.transform import build_transform, encode_transform, ray_from_transform
 from loopflow.foundation.usertext import OBJECT_ID_KEY
 from loopflow.platform.rhino.memory import MemorySession
@@ -390,6 +396,36 @@ class CommandTests(unittest.TestCase):
         updated = _transform()
         updated["origin_2d"] = [50.0, 5.0, 0.0]
         expected_origin, expected_dir = ray_from_transform(updated, POINT_2D)
+        self.assertEqual(captured[0][0], origin_behind_plane(expected_origin, expected_dir))
+        self.assertEqual(captured[0][1], expected_dir)
+
+    def test_keeps_registered_3d_origin_when_live_section_bbox_moves(self):
+        session = _session()
+        session.set_object_user_text("frame", CLIPPING_PLANE_ID_KEY, "cp")
+        session.add_clipping_plane(
+            "cp",
+            name="View",
+            section_bbox_local=(100.0, 200.0, 300.0, 400.0),
+        )
+        payload = apply_live_view_origins(session, "frame", _transform())
+        self.assertEqual(payload["origin_3d_local"], [10.0, 5.0])
+        captured = []
+
+        def probe(_session, origin, direction):
+            captured.append((origin, direction))
+            return (
+                {
+                    "object_id": "wall",
+                    "dist": 100.0,
+                    "hit_type": "FRONTAL",
+                    "layer": "M3D",
+                    "name": "Wall",
+                },
+            )
+
+        result = _run(session, probe=probe)
+        self.assertTrue(result.ok, result.message)
+        expected_origin, expected_dir = ray_from_transform(_transform(), POINT_2D)
         self.assertEqual(captured[0][0], origin_behind_plane(expected_origin, expected_dir))
         self.assertEqual(captured[0][1], expected_dir)
 

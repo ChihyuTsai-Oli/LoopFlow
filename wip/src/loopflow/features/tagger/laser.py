@@ -12,14 +12,12 @@ from loopflow.features.tagger.keys import (
 )
 from loopflow.features.tagger.templates import TagTemplate, TagTemplateSet, load_tag_templates
 from loopflow.features.view.keys import (
-    CLIPPING_PLANE_ID_KEY,
     SCHEMA_ID_KEY,
     VIEW_SCHEMA_ID,
     VIEW_TRANSFORM_KEY,
 )
 from loopflow.features.view.transform import (
     bbox_center_2d,
-    bbox_center_local,
     decode_transform,
     ray_from_transform,
 )
@@ -101,19 +99,13 @@ def debug_ray_end(origin, direction, length: float = DEBUG_RAY_LENGTH) -> Tuple[
 
 
 def apply_live_view_origins(session: RhinoSession, frame_id: str, payload: dict) -> dict:
-    """2D 用框內剖面 Hatch／Curve 中心（不含 Visible 背景），3D 用現況剖面交線中心（含 Mesh）。"""
+    """2D 用框內剖面現況中心；3D 維持登記時寫死的 cp 與 origin_3d_local。"""
     updated = dict(payload)
     content_fn = getattr(session, "drawing_content_bbox", None)
     content_box = content_fn(frame_id) if callable(content_fn) else None
     live_2d = bbox_center_2d(content_box) or bbox_center_2d(session.object_bbox(frame_id))
     if live_2d is not None:
         updated["origin_2d"] = [live_2d[0], live_2d[1], live_2d[2]]
-    cp_id = session.get_object_user_text(frame_id, CLIPPING_PLANE_ID_KEY)
-    section_fn = getattr(session, "clipping_plane_section_bbox_local", None)
-    if cp_id and callable(section_fn):
-        live_3d = bbox_center_local(section_fn(cp_id))
-        if live_3d is not None:
-            updated["origin_3d_local"] = [live_3d[0], live_3d[1]]
     return updated
 
 
