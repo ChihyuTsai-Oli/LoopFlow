@@ -1232,19 +1232,63 @@ class LiveSession:
             pass
         return object_id
 
+    def _first_model_view(self):
+        rhino = self._rhino
+        if rhino is None:
+            return None
+        for view in self._sc.doc.Views:
+            if not isinstance(view, rhino.Display.RhinoPageView):
+                return view
+        return None
+
+    def _enter_model_space_for_add(self):
+        """Layout 上 Add 一定進圖紙，Space 屬性無效。暫時進 Detail 或模型視圖；回傳還原函式。"""
+        rhino = self._rhino
+        doc = self._sc.doc
+        previous = doc.Views.ActiveView
+        if rhino is None or not isinstance(previous, rhino.Display.RhinoPageView):
+            return lambda: None
+        page = previous
+        details = tuple(page.GetDetailViews() or ())
+        if details:
+            page.SetActiveDetail(details[0].Id)
+
+            def restore_detail() -> None:
+                page.SetPageAsActive()
+
+            return restore_detail
+        model_view = self._first_model_view()
+        if model_view is None:
+            return lambda: None
+        doc.Views.ActiveView = model_view
+
+        def restore_view() -> None:
+            doc.Views.ActiveView = previous
+            page.SetPageAsActive()
+
+        return restore_view
+
     def draw_laser_debug_ray(self, plane_point, start, end) -> None:
         """測試用：清掉舊線後，把射線畫進 3D 模型空間（不要畫在 Layout 上）。"""
         rhino = self._rhino
         layer = "LoopFlow::Debug_Laser"
         self.ensure_layer(layer)
         self.set_layer_appearance(layer, (255, 0, 255))
-        for object_id in tuple(self.objects_on_layer(layer) or ()):
-            self.delete_object(object_id)
         if rhino is None:
             return
         layer_index = self._layer_index(layer)
         if layer_index < 0:
             return
+        layer_obj = self._sc.doc.Layers[layer_index]
+        try:
+            old_objects = self._sc.doc.Objects.FindByLayer(layer_obj) or ()
+        except Exception:
+            old_objects = ()
+        for obj in tuple(old_objects):
+            try:
+                self._sc.doc.Objects.Delete(obj, True)
+            except Exception:
+                pass
 
         def _model_attrs(name):
             attrs = rhino.DocObjects.ObjectAttributes()
@@ -1262,12 +1306,22 @@ class LiveSession:
         plane_pt = rhino.Geometry.Point3d(
             float(plane_point[0]), float(plane_point[1]), float(plane_point[2])
         )
-        self._sc.doc.Objects.AddLine(start_pt, end_pt, _model_attrs("Laser_Ray"))
-        self._sc.doc.Objects.AddPoint(plane_pt, _model_attrs("Laser_Plane"))
+        restore = lambda: None
         try:
-            self._sc.doc.Views.Redraw()
-        except Exception:
-            pass
+            self.set_redraw_enabled(False)
+            restore = self._enter_model_space_for_add()
+            self._sc.doc.Objects.AddLine(start_pt, end_pt, _model_attrs("Laser_Ray"))
+            self._sc.doc.Objects.AddPoint(plane_pt, _model_attrs("Laser_Plane"))
+        finally:
+            try:
+                restore()
+            except Exception:
+                pass
+            self.set_redraw_enabled(True)
+            try:
+                self._sc.doc.Views.Redraw()
+            except Exception:
+                pass
 
     def _hit_normal(self, breps, hit_pt):
         rhino = self._rhino
