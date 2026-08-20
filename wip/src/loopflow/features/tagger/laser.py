@@ -11,11 +11,16 @@ from loopflow.features.tagger.keys import (
     is_tag_locked,
 )
 from loopflow.features.tagger.templates import TagTemplate, TagTemplateSet, load_tag_templates
-from loopflow.features.view.keys import SCHEMA_ID_KEY, VIEW_SCHEMA_ID, VIEW_TRANSFORM_KEY
+from loopflow.features.view.keys import (
+    CLIPPING_PLANE_ID_KEY,
+    SCHEMA_ID_KEY,
+    VIEW_SCHEMA_ID,
+    VIEW_TRANSFORM_KEY,
+)
 from loopflow.features.view.transform import (
     bbox_center_2d,
+    bbox_center_local,
     decode_transform,
-    facing_direction,
     ray_from_transform,
 )
 from loopflow.features.viewer.inspect import check_document_schema
@@ -95,8 +100,25 @@ def debug_ray_end(origin, direction, length: float = DEBUG_RAY_LENGTH) -> Tuple[
     )
 
 
+def apply_live_view_origins(session: RhinoSession, frame_id: str, payload: dict) -> dict:
+    """2D 用框內線稿中心（不是外框），3D 用現況剖面交線中心（含 Mesh）。"""
+    updated = dict(payload)
+    content_fn = getattr(session, "drawing_content_bbox", None)
+    content_box = content_fn(frame_id) if callable(content_fn) else None
+    live_2d = bbox_center_2d(content_box) or bbox_center_2d(session.object_bbox(frame_id))
+    if live_2d is not None:
+        updated["origin_2d"] = [live_2d[0], live_2d[1], live_2d[2]]
+    cp_id = session.get_object_user_text(frame_id, CLIPPING_PLANE_ID_KEY)
+    section_fn = getattr(session, "clipping_plane_section_bbox_local", None)
+    if cp_id and callable(section_fn):
+        live_3d = bbox_center_local(section_fn(cp_id))
+        if live_3d is not None:
+            updated["origin_3d_local"] = [live_3d[0], live_3d[1]]
+    return updated
+
+
 def draw_debug_ray(session: RhinoSession, plane_point, origin, direction) -> None:
-    """測試用：在 3D 畫出實際射線。測完把 DRAW_DEBUG_RAY 改 False。"""
+    """測試用：在 3D 畫出實際射線，先留下供對位。"""
     if not DRAW_DEBUG_RAY:
         return
     drawer = getattr(session, "draw_laser_debug_ray", None)
@@ -364,14 +386,8 @@ def run_tagger_laser(
                 command_id=COMMAND_ID,
                 details={"frame_id": frames[0]},
             )
-        live_origin = bbox_center_2d(current.object_bbox(frames[0]))
-        if live_origin is not None:
-            payload = dict(payload)
-            payload["origin_2d"] = [live_origin[0], live_origin[1], live_origin[2]]
-        origin, _stored_dir = ray_from_transform(payload, point_2d)
-        center_fn = getattr(current, "uuid_objects_bbox_center", None)
-        model_center = center_fn() if callable(center_fn) else None
-        direction = facing_direction(payload, model_center)
+        payload = apply_live_view_origins(current, frames[0], payload)
+        origin, direction = ray_from_transform(payload, point_2d)
         probe_origin = origin_behind_plane(origin, direction)
         draw_debug_ray(current, origin, probe_origin, direction)
         hits = cluster_hits(probe_fn(current, probe_origin, direction))

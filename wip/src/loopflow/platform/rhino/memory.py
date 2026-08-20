@@ -30,6 +30,7 @@ class MemorySession:
         self._text_dots: Dict[str, dict] = {}
         self._document_path: Optional[str] = None
         self._clipping_planes: Dict[str, dict] = {}
+        self._drawing_content_bboxes: Dict[str, tuple] = {}
         self._ray_hits: list = []
         self._layout_active = True
         self._current_layout_page: Optional[str] = None
@@ -577,6 +578,12 @@ class MemorySession:
         if not box or len(box) < 4:
             return None
         return tuple(float(v) for v in box)
+
+    def drawing_content_bbox(self, frame_id: str):
+        return self._drawing_content_bboxes.get(str(frame_id))
+
+    def set_drawing_content_bbox(self, frame_id: str, box) -> None:
+        self._drawing_content_bboxes[str(frame_id)] = tuple(float(v) for v in box)
 
     def objects_bbox(self, object_ids):
         boxes = []

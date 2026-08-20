@@ -1159,6 +1159,8 @@ class LiveSession:
         for item in self._iter_rhino_objects(include_linked=True):
             if getattr(item, "IsHidden", False):
                 continue
+            if is_section_or_extract_layer(self._object_layer_path(item)):
+                continue
             layer_index = getattr(item.Attributes, "LayerIndex", -1)
             if layer_index >= 0 and not self._sc.doc.Layers[layer_index].IsVisible:
                 continue
@@ -1174,6 +1176,21 @@ class LiveSession:
                 for curve in curves:
                     curve.Transform(to_local)
                     box.Union(curve.GetBoundingBox(True))
+            for mesh in self._meshes_from_obj(item):
+                try:
+                    polylines = rhino.Geometry.Intersect.Intersection.MeshPlane(mesh, cp_plane)
+                except Exception:
+                    continue
+                if not polylines:
+                    continue
+                for polyline in polylines:
+                    try:
+                        for index in range(len(polyline)):
+                            point = rhino.Geometry.Point3d(polyline[index])
+                            point.Transform(to_local)
+                            box.Union(point)
+                    except Exception:
+                        continue
         if not box.IsValid:
             return None
         return (
@@ -1183,6 +1200,59 @@ class LiveSession:
             float(box.Max.Y),
             float(box.Min.Z),
             float(box.Max.Z),
+        )
+
+    def drawing_content_bbox(self, frame_id: str):
+        """框內 2D Hatch／曲線的 bbox（不含外框、文字、標註），對齊 1.x Laser。"""
+        rhino = self._rhino
+        frame_box = self.object_bbox(frame_id)
+        if rhino is None or not frame_box:
+            return None
+        hatch_box = rhino.Geometry.BoundingBox.Empty
+        curve_box = rhino.Geometry.BoundingBox.Empty
+        annotation = getattr(rhino.Geometry, "AnnotationBase", None)
+        for item in self._iter_rhino_objects(include_linked=False):
+            if str(item.Id) == str(frame_id):
+                continue
+            if getattr(item, "IsReference", False):
+                continue
+            geom = getattr(item, "Geometry", None)
+            if geom is None:
+                continue
+            if isinstance(geom, (rhino.Geometry.TextEntity, rhino.Geometry.TextDot)):
+                continue
+            if annotation is not None and isinstance(geom, annotation):
+                continue
+            is_hatch = isinstance(geom, rhino.Geometry.Hatch)
+            is_curve = isinstance(geom, rhino.Geometry.Curve)
+            if not is_hatch and not is_curve:
+                continue
+            try:
+                item_box = geom.GetBoundingBox(True)
+            except Exception:
+                continue
+            if item_box is None or not getattr(item_box, "IsValid", False):
+                continue
+            center = item_box.Center
+            if not (
+                frame_box[0] - 1e-9 <= float(center.X) <= frame_box[3] + 1e-9
+                and frame_box[1] - 1e-9 <= float(center.Y) <= frame_box[4] + 1e-9
+            ):
+                continue
+            if is_hatch:
+                hatch_box.Union(item_box)
+            else:
+                curve_box.Union(item_box)
+        chosen = hatch_box if hatch_box.IsValid else curve_box
+        if not chosen.IsValid:
+            return None
+        return (
+            float(chosen.Min.X),
+            float(chosen.Min.Y),
+            float(chosen.Min.Z),
+            float(chosen.Max.X),
+            float(chosen.Max.Y),
+            float(chosen.Max.Z),
         )
 
     def objects_bbox(self, object_ids):

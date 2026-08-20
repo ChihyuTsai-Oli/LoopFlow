@@ -29,7 +29,7 @@ from loopflow.features.view.keys import (
     VIEW_TRANSFORM_KEY,
 )
 from loopflow.features.view.register import match_clipping_planes, register_view, run_anchor_frame
-from loopflow.features.view.transform import decode_transform, facing_direction, map_2d_to_cp_local
+from loopflow.features.view.transform import decode_transform, map_2d_to_cp_local
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
 
@@ -315,59 +315,6 @@ class CommandTests(unittest.TestCase):
         self.assertTrue(FILTER_CURVE)
         self.assertIn("GetObjects(message, filter_code, preselect=True)", text)
         self.assertNotIn("GetObjects(message, True", text)
-
-
-class FacingDirectionTests(unittest.TestCase):
-    def test_flips_when_model_is_behind_stored_normal(self):
-        from loopflow.features.view.transform import build_transform
-
-        payload = build_transform(
-            origin_2d=(0, 0, 0),
-            origin_3d_local=(0, 0),
-            scale_x=1,
-            scale_y=1,
-            plane={
-                "origin": (0, 0, 0),
-                "x_axis": (1, 0, 0),
-                "y_axis": (0, 0, 1),
-                "z_axis": (0, -1, 0),
-            },
-        )
-        self.assertEqual(facing_direction(payload, (0, 100, 0)), (0.0, 1.0, 0.0))
-
-    def test_keeps_normal_when_model_already_in_front(self):
-        from loopflow.features.view.transform import build_transform
-
-        payload = build_transform(
-            origin_2d=(0, 0, 0),
-            origin_3d_local=(0, 0),
-            scale_x=1,
-            scale_y=1,
-            plane={
-                "origin": (0, 0, 0),
-                "x_axis": (0, 0, 1),
-                "y_axis": (0, 1, 0),
-                "z_axis": (1, 0, 0),
-            },
-        )
-        self.assertEqual(facing_direction(payload, (80, 0, 0)), (1.0, 0.0, 0.0))
-
-    def test_minus_x_elevation_flips_toward_model(self):
-        from loopflow.features.view.transform import build_transform
-
-        payload = build_transform(
-            origin_2d=(0, 0, 0),
-            origin_3d_local=(0, 0),
-            scale_x=1,
-            scale_y=1,
-            plane={
-                "origin": (0, 0, 0),
-                "x_axis": (0, 0, 1),
-                "y_axis": (0, 1, 0),
-                "z_axis": (-1, 0, 0),
-            },
-        )
-        self.assertEqual(facing_direction(payload, (80, 0, 0)), (1.0, 0.0, 0.0))
 
 
 if __name__ == "__main__":

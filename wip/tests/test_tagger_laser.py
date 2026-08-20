@@ -332,7 +332,7 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(captured[0][0], origin_behind_plane(expected_origin, expected_dir))
         self.assertEqual(captured[0][1], expected_dir)
 
-    def test_minus_y_elevation_shoots_toward_model(self):
+    def test_minus_y_elevation_uses_clipping_plane_normal(self):
         session = _session()
         payload = build_transform(
             origin_2d=(10, 5, 0),
@@ -364,9 +364,34 @@ class CommandTests(unittest.TestCase):
 
         result = _run(session, probe=probe)
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(captured[0][1], (0.0, 1.0, 0.0))
+        self.assertEqual(captured[0][1], (0.0, -1.0, 0.0))
         plane_origin, _stored = ray_from_transform(payload, POINT_2D)
-        self.assertEqual(captured[0][0], origin_behind_plane(plane_origin, (0.0, 1.0, 0.0)))
+        self.assertEqual(captured[0][0], origin_behind_plane(plane_origin, (0.0, -1.0, 0.0)))
+
+    def test_maps_from_drawing_content_center_not_frame(self):
+        session = _session()
+        session.set_drawing_content_bbox("frame", (0, 0, 0, 100, 10, 0))
+        captured = []
+
+        def probe(_session, origin, direction):
+            captured.append((origin, direction))
+            return (
+                {
+                    "object_id": "wall",
+                    "dist": 100.0,
+                    "hit_type": "FRONTAL",
+                    "layer": "M3D",
+                    "name": "Wall",
+                },
+            )
+
+        result = _run(session, probe=probe)
+        self.assertTrue(result.ok, result.message)
+        updated = _transform()
+        updated["origin_2d"] = [50.0, 5.0, 0.0]
+        expected_origin, expected_dir = ray_from_transform(updated, POINT_2D)
+        self.assertEqual(captured[0][0], origin_behind_plane(expected_origin, expected_dir))
+        self.assertEqual(captured[0][1], expected_dir)
 
     def test_default_probe_uses_injected_ray_hits(self):
         session = _session()
