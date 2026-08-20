@@ -8,6 +8,7 @@
 - 巨集路徑指向這台開發機的 repo 位置；換機只改路徑，不改指令名稱。程式與契約不得寫死任何電腦的絕對路徑。
 - 改程式後須**完全關掉 Rhino 再開**。
 - 不要按 1.x 工具列上的同名按鈕。
+- **現在不要改入口檔名。** G02 才把正式指令登錄成無底線名稱（見下方對照）。
 
 ## 目前可跑的指令
 
@@ -97,6 +98,32 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Disp
 | Document | `LF_Document` | — |
 
 開發期輔助（**不是產品指令**，不進正式工具列）：`LF_D08_Migrate_Display_Keys` 全檔把圖塊舊顯示欄抄到 `lf_*` 後刪舊名字。鎖定欄若寫 `x`／`X` 會抄到 `lf_00_lock_state` 後刪舊名字；提示文字只刪不抄。圖塊公式改完後跑一次即可，不必逐張刪 UserText。
+
+## 正式指令名稱（G02）
+
+封裝後使用者在 Rhino 命令列輸入的是**無底線**名稱。開發期 ID、入口檔名與契約維持底線（例如 `LF_Open_Dictionary`）。精簡清單見 `指令名稱.txt`。現在不要改程式。`LF_D08_Migrate_Display_Keys` 不登錄。
+
+| 開發期 ID | 正式指令 |
+|---|---|
+| `LF_Open_Dictionary` | `LFOpenDictionary` |
+| `LF_Open_Dictionary_Export` | `LFOpenDictionaryExport` |
+| `LF_Nexus` | `LFNexus` |
+| `LF_Export_Type_Layers` | `LFExportTypeLayers` |
+| `LF_Publish_Exchange` | `LFPublishExchange` |
+| `LF_Data_Viewer` | `LFDataViewer` |
+| `LF_Tagger_Grab` | `LFTaggerGrab` |
+| `LF_Tagger_Laser` | `LFTaggerLaser` |
+| `LF_Tagger_Index` | `LFTaggerIndex` |
+| `LF_Tagger_Layout_ID` | `LFTaggerLayoutID` |
+| `LF_Anchor_Frame` | `LFAnchorFrame` |
+| `LF_Catalog` | `LFCatalog` |
+| `LF_Infuser_Part` | `LFInfuserPart` |
+| `LF_Infuser_All` | `LFInfuserAll` |
+| `LF_TAG-O` | `LFTagO` |
+| `LF_Extract_CP` | `LFExtractCP` |
+| `LF_Duplicate_Layout` | `LFDuplicateLayout` |
+| `LF_Sync_Worksession` | `LFSyncWorksession` |
+| `LF_Document` | `LFDocument` |
 
 Grab：在 **Layout** 先選 Tag 圖塊，再在目標 Detail 內點一下進入模型空間，然後選來源（剖面 2D 線、3D 物件或家具圖塊）。Height／Finish 綁物件 `_07_UUID`；圖 B 已清掉 UUID 時改讀 `lf_source_object_ids`（恰好一個 UUID 或一個 3D 物件才綁；兩個以上停止、不猜測）。家具 Item 綁 Block 名稱（`FF-01__Chair-1`）**以及該實例**，之後 Infuser／TAG-O 才能跟改名與刪除。Esc、點在 Detail 外、鎖定（`lf_00_lock_state=true`／`1`，或鎖定欄寫 `x`／`X`）、`TAG_DW`、Laser／Index／圖框圖塊都不寫入。結束後回到 Layout。不填 Infuser 顯示欄。來源沒有 UUID 且索引也解不出時不猜測。舊鎖定欄 `x`／`X` **家中 Rhino 8 已測（2026-08-18）**。
 
