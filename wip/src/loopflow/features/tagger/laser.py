@@ -27,7 +27,7 @@ from loopflow.foundation.usertext import OBJECT_ID_KEY, read_text
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Tagger_Laser"
-DRAW_DEBUG_RAY = True
+DRAW_DEBUG_RAY = False
 DEBUG_RAY_LENGTH = 2000.0
 DEBUG_RAY_LAYER = "LoopFlow::Debug_Laser"
 DEBUG_RAY_COLOR = (255, 0, 255)
@@ -109,9 +109,19 @@ def apply_live_view_origins(session: RhinoSession, frame_id: str, payload: dict)
     return updated
 
 
+def debug_ray_enabled() -> bool:
+    """命令列 DebugRay 優先；沒有 sticky 時用模組開關（測試用）。"""
+    from loopflow.platform.rhino.prompts import debug_ray_sticky
+
+    sticky = debug_ray_sticky()
+    if sticky is not None:
+        return sticky
+    return bool(DRAW_DEBUG_RAY)
+
+
 def draw_debug_ray(session: RhinoSession, plane_point, origin, direction) -> None:
-    """測試用：在 3D 畫出實際射線，先留下供對位。"""
-    if not DRAW_DEBUG_RAY:
+    """測試用：在 3D 畫出實際射線。預設關閉，命令列 DebugRay=Yes 才畫。"""
+    if not debug_ray_enabled():
         return
     drawer = getattr(session, "draw_laser_debug_ray", None)
     if not callable(drawer):
@@ -152,7 +162,7 @@ def _default_pick_tag(_session: RhinoSession) -> Optional[str]:
 def _default_pick_point(_session: RhinoSession):
     from loopflow.platform.rhino.prompts import pick_layout_detail_model_point
 
-    return pick_layout_detail_model_point()
+    return pick_layout_detail_model_point(debug_ray_option=True)
 
 
 def _default_probe(session: RhinoSession, origin, direction):
@@ -384,7 +394,7 @@ def run_tagger_laser(
         draw_debug_ray(current, origin, probe_origin, direction)
         hits = cluster_hits(probe_fn(current, probe_origin, direction))
         if not hits:
-            if DRAW_DEBUG_RAY:
+            if debug_ray_enabled():
                 return results.ok(
                     "probe_view",
                     "已畫出射線。沒打到帶 UUID 的 3D 物件。請到 3D 視窗查看。",

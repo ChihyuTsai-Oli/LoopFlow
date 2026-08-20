@@ -30,6 +30,7 @@ from loopflow.features.tagger.laser import (
     bind_laser_hit,
     choice_labels,
     cluster_hits,
+    debug_ray_enabled,
     debug_ray_end,
     hit_choice_label,
     origin_behind_plane,
@@ -172,6 +173,10 @@ class ClusterTests(unittest.TestCase):
 class DebugRayTests(unittest.TestCase):
     def test_debug_ray_end_is_length_along_direction(self):
         self.assertEqual(debug_ray_end((0, 0, 0), (0, 0, 1), 2000), (0.0, 0.0, 2000.0))
+
+    def test_debug_ray_defaults_off(self):
+        self.assertFalse(laser_mod.DRAW_DEBUG_RAY)
+        self.assertFalse(debug_ray_enabled())
 
     def test_debug_no_hit_reports_drawn_ray(self):
         laser_mod.DRAW_DEBUG_RAY = True
@@ -550,7 +555,11 @@ class CommandTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("pick_layout_detail_model_point", laser)
+        self.assertIn("debug_ray_option=True", laser)
         self.assertNotIn("pick_source_through_detail", laser)
+        self.assertIn("AddOptionToggle", text)
+        self.assertIn("DebugRay", text)
+        self.assertIn("def ask_popup_real", text)
 
     def test_moved_frame_uses_live_origin(self):
         session = _session()

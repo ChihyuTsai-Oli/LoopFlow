@@ -821,10 +821,35 @@ def pick_source_through_detail(
     return str(object_id)
 
 
+DEBUG_RAY_STICKY_KEY = "loopflow.laser.debug_ray"
+
+
+def debug_ray_sticky():
+    """本次 Rhino 工作階段是否開過 Laser DebugRay。沒設過則 None。"""
+    try:
+        import scriptcontext as sc  # type: ignore
+    except ImportError:
+        return None
+    sticky = getattr(sc, "sticky", None)
+    if sticky is None:
+        return None
+    try:
+        if DEBUG_RAY_STICKY_KEY not in sticky:
+            return None
+        return bool(sticky[DEBUG_RAY_STICKY_KEY])
+    except Exception:
+        return None
+
+
 def pick_layout_detail_model_point(
     message: str = "在目標 Detail 內點一下（Esc 取消）",
+    *,
+    debug_ray_option: bool = False,
 ):
-    """Layout 點 Detail，回傳 2D 模型空間座標。Esc／點在 Detail 外為 None。"""
+    """Layout 點 Detail，回傳 2D 模型空間座標。Esc／點在 Detail 外為 None。
+
+    Laser 傳 debug_ray_option=True，命令列出現 DebugRay=No／Yes，記住到關 Rhino。
+    """
     try:
         import Rhino  # type: ignore
         import scriptcontext as sc  # type: ignore
@@ -838,7 +863,22 @@ def pick_layout_detail_model_point(
     sc.doc.Views.Redraw()
     getter = Rhino.Input.Custom.GetPoint()
     getter.SetCommandPrompt(message)
-    getter.Get()
+    opt_debug = None
+    if debug_ray_option:
+        try:
+            initial = bool(sc.sticky[DEBUG_RAY_STICKY_KEY])
+        except Exception:
+            initial = False
+        opt_debug = Rhino.Input.Custom.OptionToggle(initial, "No", "Yes")
+        getter.AddOptionToggle("DebugRay", opt_debug)
+        while True:
+            get_result = getter.Get()
+            if get_result == Rhino.Input.GetResult.Option:
+                continue
+            break
+        sc.sticky[DEBUG_RAY_STICKY_KEY] = bool(opt_debug.CurrentValue)
+    else:
+        getter.Get()
     if getter.CommandResult() != Rhino.Commands.Result.Success:
         return None
     point = getter.Point()
@@ -898,6 +938,27 @@ def ask_real(
     if value is None:
         return None
     return float(value)
+
+
+def ask_popup_real(
+    message: str,
+    default: float = 50.0,
+    minimum: float = 0.0,
+    title: str = "LoopFlow",
+) -> Optional[float]:
+    """彈窗輸入數字；取消或小於下限回傳 None。"""
+    try:
+        import rhinoscriptsyntax as rs  # type: ignore
+    except ImportError:
+        return None
+    value = rs.RealBox(message, default, title)
+    if value is None:
+        return None
+    number = float(value)
+    if number < minimum:
+        show_message("距離不可小於 %s。" % minimum, title)
+        return None
+    return number
 
 
 def show_readonly_text(message: str, title: str = "LF Data Viewer") -> None:

@@ -279,9 +279,9 @@ def _default_pick(session: RhinoSession) -> Optional[Sequence[str]]:
 
 
 def _default_offset(_session: RhinoSession) -> Optional[float]:
-    from loopflow.platform.rhino.prompts import ask_real
+    from loopflow.platform.rhino.prompts import ask_popup_real
 
-    return ask_real("輸入框線外擴距離", DEFAULT_OFFSET, 0.0)
+    return ask_popup_real("輸入框線外擴距離", DEFAULT_OFFSET, 0.0)
 
 
 def run_anchor_frame(

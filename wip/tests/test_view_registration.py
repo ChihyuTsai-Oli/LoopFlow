@@ -316,6 +316,18 @@ class CommandTests(unittest.TestCase):
         self.assertIn("GetObjects(message, filter_code, preselect=True)", text)
         self.assertNotIn("GetObjects(message, True", text)
 
+    def test_offset_uses_popup_not_command_line(self):
+        register = (WIP / "src" / "loopflow" / "features" / "view" / "register.py").read_text(
+            encoding="utf-8"
+        )
+        prompts = (WIP / "src" / "loopflow" / "platform" / "rhino" / "prompts.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("ask_popup_real", register)
+        self.assertNotIn("ask_real(", register)
+        self.assertIn("def ask_popup_real", prompts)
+        self.assertIn("RealBox", prompts)
+
 
 if __name__ == "__main__":
     unittest.main()
