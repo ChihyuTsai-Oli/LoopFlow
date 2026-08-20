@@ -488,12 +488,11 @@ def run_duplicate_layout(
                 "appearances": tuple(appearances),
             },
         )
-        apply_queued_appearances(current, appearances)
-        if callable(show_message):
-            show_message(combined.message)
         return combined
 
     guarded = run_guarded(session, _action, command_id=COMMAND_ID)
     if guarded.ok:
         apply_queued_appearances(session, (guarded.details or {}).get("appearances"))
+        if callable(show_message):
+            show_message(guarded.message)
     return guarded

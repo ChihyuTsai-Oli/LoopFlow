@@ -156,7 +156,11 @@ def ask_layout_pages_choice(
 
             scroll = forms.Scrollable()
             scroll.Border = forms.BorderType.Line
-            scroll.Height = 480
+            try:
+                scroll.ExpandContentWidth = True
+                scroll.ExpandContentHeight = False
+            except Exception:
+                pass
             table = forms.TableLayout()
             table.Spacing = drawing.Size(0, 0)
             table.Padding = drawing.Padding(0, 2, 0, 2)
@@ -166,20 +170,22 @@ def ask_layout_pages_choice(
             spacer.ScaleHeight = True
             table.Rows.Add(spacer)
             scroll.Content = table
-            layout.AddRow(scroll)
+            layout.Add(scroll, True, True)
 
             btn_ok = forms.Button()
             btn_ok.Text = "確定（Enter）"
             btn_ok.Font = self.font
+            btn_ok.Height = 28
             btn_ok.Click += self._on_ok
             btn_cancel = forms.Button()
             btn_cancel.Text = "取消（Esc）"
             btn_cancel.Font = self.font
+            btn_cancel.Height = 28
             btn_cancel.Click += self._on_cancel
             btn_layout = forms.DynamicLayout()
             btn_layout.DefaultSpacing = drawing.Size(10, 0)
             btn_layout.AddRow(None, btn_cancel, btn_ok)
-            layout.AddRow(btn_layout)
+            layout.Add(btn_layout, True, False)
 
             self.Content = layout
             self.AbortButton = btn_cancel
