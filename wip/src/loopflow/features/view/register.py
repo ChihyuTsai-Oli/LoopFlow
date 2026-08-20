@@ -68,14 +68,27 @@ def mirror_scale(hint: str) -> float:
     return 1.0
 
 
+def unique_named_records(hint: str, records: Sequence, get_name) -> tuple:
+    """先完整名稱（不分大小寫）。沒有完全相同時，才看恰好一個名稱包含提示字。"""
+    needle = (hint or "").strip().casefold()
+    if not needle:
+        return ()
+    indexed = []
+    for record in records:
+        name = str(get_name(record) or "").strip().casefold()
+        indexed.append((record, name))
+    exact = tuple(record for record, name in indexed if name == needle)
+    if exact:
+        return exact
+    return tuple(record for record, name in indexed if needle in name)
+
+
 def match_clipping_planes(session: RhinoSession, hint: str):
-    needle = hint.upper()
-    hits = []
-    for cp_id in session.iter_clipping_plane_ids():
-        name = session.object_name(cp_id) or ""
-        if needle and needle in name.upper():
-            hits.append(cp_id)
-    return tuple(hits)
+    return unique_named_records(
+        hint,
+        session.iter_clipping_plane_ids(),
+        lambda cp_id: session.object_name(cp_id) or "",
+    )
 
 
 def split_selection(session: RhinoSession, selected_ids: Sequence[str]):

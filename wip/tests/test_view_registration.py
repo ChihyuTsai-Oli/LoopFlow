@@ -28,7 +28,7 @@ from loopflow.features.view.keys import (
     VIEW_SCHEMA_ID,
     VIEW_TRANSFORM_KEY,
 )
-from loopflow.features.view.register import register_view, run_anchor_frame
+from loopflow.features.view.register import match_clipping_planes, register_view, run_anchor_frame
 from loopflow.features.view.transform import decode_transform, map_2d_to_cp_local
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
@@ -162,6 +162,36 @@ class RegisterTests(unittest.TestCase):
         result = register_view(session, ("curve", "dot"), 50)
         self.assertEqual(result.blocking, ("ambiguous_clipping_plane",))
         self.assertEqual(_snapshot(session)["ids"], before["ids"])
+
+    def test_exact_clipping_plane_ignores_numbered_suffix(self):
+        session = _session()
+        session.add_text_dot("dot", "LF_立面")
+        session.add_clipping_plane(
+            "cp",
+            name="LF_立面",
+            origin=(0, 0, 0),
+            section_bbox_local=(0, 0, 20, 10),
+        )
+        session.add_clipping_plane(
+            "cp2",
+            name="LF_立面2",
+            origin=(10, 0, 0),
+            section_bbox_local=(0, 0, 20, 10),
+        )
+        result = register_view(session, ("curve", "dot"), 50)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(
+            session.get_object_user_text(result.details["frame_id"], CLIPPING_PLANE_ID_KEY),
+            "cp",
+        )
+        self.assertEqual(
+            match_clipping_planes(session, "LF_立面"),
+            ("cp",),
+        )
+        self.assertEqual(
+            match_clipping_planes(session, "LF_立面2"),
+            ("cp2",),
+        )
 
     def test_missing_section_intersection_zero_write(self):
         session = _session()

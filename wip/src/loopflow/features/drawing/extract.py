@@ -171,7 +171,6 @@ def match_view_for_root(root: str, views: Sequence[Mapping]) -> results.Result:
         dict(view)
         for view in views
         if _norm(view.get("name")) == needle
-        or (needle and needle in (_norm(view.get("name")) or ""))
     ]
     if len(hits) == 1:
         return results.ok(STAGE, "已對到 View。", details={"view": hits[0]})

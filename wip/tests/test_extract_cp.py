@@ -19,6 +19,7 @@ from loopflow.features.drawing import keys as drawing_keys
 from loopflow.features.drawing.extract import (
     classify_sources,
     listed_section_roots,
+    match_view_for_root,
     run_extract_cp,
     target_layer_for,
 )
@@ -348,6 +349,34 @@ class ExtractTests(unittest.TestCase):
         self.assertEqual(result.status, "blocked")
         self.assertIn("ambiguous_view", result.blocking)
         self.assertEqual(_snapshot(session)["ids"], before["ids"])
+
+    def test_longer_view_name_does_not_collide(self):
+        views = (
+            {"frame_id": "east", "view_id": "1", "name": "LF_立面"},
+            {"frame_id": "west", "view_id": "2", "name": "LF_立面2"},
+        )
+        east = match_view_for_root("LF_立面", views)
+        self.assertTrue(east.ok, east.message)
+        self.assertEqual(east.details["view"]["frame_id"], "east")
+        west = match_view_for_root("LF_立面2", views)
+        self.assertTrue(west.ok, west.message)
+        self.assertEqual(west.details["view"]["frame_id"], "west")
+
+    def test_prefix_frame_does_not_block_extract(self):
+        session = _session()
+        session.add_object(
+            "frame-2",
+            name="A-A2",
+            layer="LoopFlow::Anchor_Frame",
+            user_text={
+                SCHEMA_ID_KEY: VIEW_SCHEMA_ID,
+                SCHEMA_VERSION_KEY: VIEW_SCHEMA_VERSION,
+                VIEW_ID_KEY: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+            },
+        )
+        result, _messages = _run(session)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(len(_extract_ids(session)), 3)
 
 
 if __name__ == "__main__":
