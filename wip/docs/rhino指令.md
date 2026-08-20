@@ -101,7 +101,9 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Disp
 
 ## 正式指令名稱（G02）
 
-封裝後使用者在 Rhino 命令列輸入的是**無底線**名稱。開發期 ID、入口檔名與契約維持底線（例如 `LF_Open_Dictionary`）。精簡清單見 `指令名稱.txt`。現在不要改程式。`LF_D08_Migrate_Display_Keys` 不登錄。
+封裝後使用者在 Rhino 命令列輸入的是**無底線**名稱。開發期 ID、入口檔名與契約維持底線（例如 `LF_Open_Dictionary`）。精簡清單見 `指令名稱.txt`。現在不要改程式。`LF_D08_Migrate_Display_Keys` 不登錄、不進安裝包。
+
+2.0 安裝主格式是 `.yak`（同一份上 Package Manager 與 GitHub Release）；不做 RHI。工具列存 RUI，不存 RHC。細節見 `系統設定.md`「Build 與 Release」。
 
 | 開發期 ID | 正式指令 |
 |---|---|
@@ -151,7 +153,7 @@ Sync Worksession：跑 `LF_Sync_Worksession`。須先存檔。第一次**彈窗*
 
 Document：跑 `LF_Document`。開啟 `https://github.com/ChihyuTsai-Oli/LoopFlow/blob/main/docs/README.md`（文件入口，不是專案首頁），頁內再連繁中／英文說明。不改模型。Rhino 不猜語系。打不開只說明。舊名 `LF_Help` 不登錄。不進 Nexus。**家中 Rhino 8 已測（2026-08-21）。**
 
-左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。正式工具列在 G02 封裝時才建立。
+左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。開發期按鈕仍指向 repo。正式工具列由使用者在 Rhino 8 排成 `LoopFlow.rui`，進 `.yak` 後左／右鍵改打正式名稱（例如 `! _LFDocument`）。完整 RUI 等最小 spike 命令列打得到再定稿。
 
 ## Nexus 選單（開案檢查通過才出現）
 
@@ -185,6 +187,6 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Test_Random_M3D_
 
 ## 預定新增
 
-核心主鏈指令已齊。Extract CP **公司 Rhino 8 已測（2026-08-20）**。Duplicate Layout／Sync Worksession **家中 Rhino 8 已測（2026-08-20）**。Document **家中 Rhino 8 已測（2026-08-21）**。之後是 G02 安裝檔。G01 只查上傳用 3dm 範例。1.x 與 2.0 不可混用。
+核心主鏈指令已齊。Extract CP **公司 Rhino 8 已測（2026-08-20）**。Duplicate Layout／Sync Worksession **家中 Rhino 8 已測（2026-08-20）**。Document **家中 Rhino 8 已測（2026-08-21）**。之後是 G02：格式已鎖定為 `.yak`，等授權才做最小 spike（一支 `LFDocument`）。G01 只查上傳用 3dm 範例。1.x 與 2.0 不可混用。
 
 Cabinet／三支 2D 工具不屬 2.0。

@@ -30,7 +30,7 @@ AI 或開發者依序閱讀：
 | `docs/資料契約.md` | Dictionary、模型、Registry、View、Drawing、Sheet、Tag 與 Health 正式契約 |
 | `docs/工作流程.md` | 使用者操作順序、介入點、安全停點、重跑與失敗行為 |
 | `docs/開發任務與路徑.md` | 任務 ID、依賴、工作波次與驗收條件 |
-| `docs/系統設定.md` | repo、runtime、路徑、entrypoint、build／installer 等技術設定 |
+| `docs/系統設定.md` | repo、runtime、路徑、entrypoint、build／`.yak` 安裝等技術設定 |
 | `docs/重構進度.md` | 已完成工作、驗證、限制與唯一下一步 |
 | `docs/rhino指令.md` | 開發期目前可跑的 Rhino 指令、按鈕巨集與左右鍵配置；正式無底線指令名稱對照；要改指令名稱先改這份 |
 | `docs/指令名稱.txt` | G02 預計登錄的正式指令名稱（無底線）；不是開發期入口清單 |
