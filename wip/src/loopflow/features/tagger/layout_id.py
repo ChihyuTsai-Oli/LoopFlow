@@ -258,18 +258,16 @@ def build_sheet_rows(
     return tuple(rows), tuple(skipped)
 
 
-PREVIEW_HEADERS = ("頁序", "圖號", "圖名", "頁名", "狀態")
+PREVIEW_HEADERS = ("原始名稱", "修改後名稱", "狀態")
 
 
 def preview_table_rows(
     rows: Sequence[SheetRow], skipped: Sequence[dict]
-) -> Tuple[Tuple[str, str, str, str, str], ...]:
-    """核對清單列。與選取 Sheet 相同欄位對齊；確認前不寫入。"""
+) -> Tuple[Tuple[str, str, str], ...]:
+    """核對清單列：原始頁名、寫入後頁名、狀態。確認前不寫入。"""
     table = []
     for row in rows:
         marks = []
-        if row.is_new_sheet:
-            marks.append("[→]")
         if row.plan.status == STATUS_BASELINE:
             marks.append("系列起點")
         if row.plan.status == STATUS_MANUAL:
@@ -285,37 +283,24 @@ def preview_table_rows(
             marks.append(
                 "圖名 %s → %s" % (row.previous_drawing_name, row.plan.drawing_name or "（空）")
             )
-        if row.renames_page and not row.is_new_sheet:
-            marks.append("頁名 → %s" % row.plan.new_page_name)
         table.append(
             (
-                "%02d" % row.page_number,
-                row.plan.drawing_no or "",
-                row.plan.drawing_name or "（未命名）",
+                row.page_name or "（未命名頁）",
                 row.plan.new_page_name or row.page_name or "",
                 "；".join(marks),
             )
         )
     for item in skipped:
-        table.append(
-            (
-                "--",
-                "",
-                "",
-                str(item.get("page_name") or "（未命名頁）"),
-                "跳過：%s" % (item.get("reason") or ""),
-            )
-        )
+        name = str(item.get("page_name") or "（未命名頁）")
+        table.append((name, "", "跳過：%s" % (item.get("reason") or "")))
     return tuple(table)
 
 
 def preview_lines(rows: Sequence[SheetRow], skipped: Sequence[dict]) -> Tuple[str, ...]:
     """核對清單純文字（測試與無表格式介面）。"""
     lines = []
-    for page_number, drawing_no, drawing_name, page_name, status in preview_table_rows(
-        rows, skipped
-    ):
-        cells = [page_number, drawing_no, drawing_name, page_name]
+    for original, updated, status in preview_table_rows(rows, skipped):
+        cells = [original, updated]
         if status:
             cells.append(status)
         lines.append("　".join(cells))

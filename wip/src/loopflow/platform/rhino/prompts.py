@@ -563,15 +563,13 @@ def ask_confirm_table(
     except ImportError:
         return False
 
-    last_col = len(captions) - 1
-
     class _ConfirmTableDialog(forms.Dialog[bool]):
         def __init__(self) -> None:
             super().__init__()
             self.Title = title
             self.Padding = _dialog_padding(drawing)
             self.Resizable = True
-            self.Width = 640
+            self.Width = 520
             self.Height = 560
             self._header_fg = drawing.Color.FromArgb(90, 90, 90)
 
@@ -607,8 +605,6 @@ def ask_confirm_table(
             self.DefaultButton = btn_ok
 
         def _cell_padding(self, col: int):
-            if col == 2:
-                return _sheet_col_padding(drawing, 2)
             return _dialog_row_padding(drawing)
 
         def _make_header_row(self):
@@ -621,7 +617,7 @@ def ask_confirm_table(
                 header_panel = forms.Panel()
                 header_panel.Padding = self._cell_padding(index)
                 header_panel.Content = label
-                row.Cells.Add(forms.TableCell(header_panel, index == last_col))
+                row.Cells.Add(forms.TableCell(header_panel, index == 1))
             return row
 
         def _make_data_row(self, cells: Sequence[str]):
@@ -638,7 +634,7 @@ def ask_confirm_table(
                 panel = forms.Panel()
                 panel.Padding = self._cell_padding(col)
                 panel.Content = label
-                table_row.Cells.Add(forms.TableCell(panel, col == last_col))
+                table_row.Cells.Add(forms.TableCell(panel, col == 1))
             return table_row
 
         def _on_ok(self, sender, e) -> None:

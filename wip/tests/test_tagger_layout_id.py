@@ -451,17 +451,15 @@ class LayoutIdCommandTests(unittest.TestCase):
         table = preview_table_rows((new_row, existing), ())
         self.assertEqual(
             table[0],
-            ("04", "IN 101.02", "地坪_Copy1", "IN__101.02__地坪_Copy1", "[→]"),
+            ("地坪_Copy1", "IN__101.02__地坪_Copy1", ""),
         )
-        self.assertEqual(table[1][0], "03")
-        self.assertEqual(table[1][1], "IN 101.01")
-        self.assertEqual(table[1][2], "地坪改")
-        self.assertEqual(table[1][3], "**IN__101.01__地坪改")
-        self.assertIn("系列起點", table[1][4])
-        self.assertIn("圖名 地坪 → 地坪改", table[1][4])
-        self.assertIn("頁名 → **IN__101.01__地坪改", table[1][4])
-        self.assertNotIn("新頁", table[0][4])
-        self.assertNotIn("頁名 →", table[0][4])
+        self.assertEqual(table[1][0], "IN__101.01__地坪")
+        self.assertEqual(table[1][1], "**IN__101.01__地坪改")
+        self.assertIn("系列起點", table[1][2])
+        self.assertIn("圖名 地坪 → 地坪改", table[1][2])
+        self.assertNotIn("[→]", table[0][2])
+        self.assertNotIn("新頁", table[0][2])
+        self.assertNotIn("頁名 →", table[1][2])
 
 
 if __name__ == "__main__":
