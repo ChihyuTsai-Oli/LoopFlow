@@ -61,6 +61,14 @@ class ImportSmokeTests(unittest.TestCase):
         self.assertEqual(spec["entrypoint"], "LF_Sync_Worksession.py")
         self.assertEqual(spec["task"], "E04")
 
+    def test_catalog_lists_document(self):
+        from loopflow.command_catalog import get_command
+
+        spec = get_command("LF_Document")
+        self.assertEqual(spec["status"], "ready")
+        self.assertEqual(spec["entrypoint"], "LF_Document.py")
+        self.assertEqual(spec["task"], "E06")
+
     def test_catalog_lists_data_viewer(self):
         from loopflow.command_catalog import get_command
 
@@ -97,17 +105,13 @@ class ImportSmokeTests(unittest.TestCase):
         from loopflow.bootstrap import run_command
         from loopflow.command_catalog import CORE_COMMANDS, get_command
 
-        remaining = (
-            "LF_Document",
-        )
-        for command_id in remaining:
-            self.assertIn(command_id, CORE_COMMANDS)
-            self.assertEqual(get_command(command_id)["status"], "not_implemented")
+        self.assertIn("LF_Document", CORE_COMMANDS)
+        self.assertEqual(get_command("LF_Document")["status"], "ready")
 
         with redirect_stdout(io.StringIO()):
             result = run_command("LF_Document")
         self.assertFalse(result.ok)
-        self.assertEqual(result.status, "not_implemented")
+        self.assertNotEqual(result.status, "not_implemented")
         with redirect_stdout(io.StringIO()):
             result = run_command("LF_Sync_Worksession")
         self.assertFalse(result.ok)

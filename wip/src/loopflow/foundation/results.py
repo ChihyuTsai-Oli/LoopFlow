@@ -58,6 +58,7 @@ STAGES = (
     "extract_drawing",
     "duplicate_layout",
     "sync_worksession",
+    "open_document",
 )
 
 

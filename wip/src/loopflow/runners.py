@@ -226,6 +226,18 @@ def run_sync_worksession() -> Result:
     return result
 
 
+def run_document() -> Result:
+    from loopflow.features.document.open_guide import open_document
+
+    opened = _open_live_session()
+    if not opened.ok:
+        return opened
+    result = open_document()
+    if not result.ok:
+        return _present_failure(result)
+    return result
+
+
 RUNNERS: Dict[str, Runner] = {
     "LF_Nexus": run_nexus,
     "LF_Open_Dictionary": run_open_dictionary,
@@ -245,6 +257,7 @@ RUNNERS: Dict[str, Runner] = {
     "LF_Extract_CP": run_extract_cp,
     "LF_Duplicate_Layout": run_duplicate_layout,
     "LF_Sync_Worksession": run_sync_worksession,
+    "LF_Document": run_document,
 }
 
 

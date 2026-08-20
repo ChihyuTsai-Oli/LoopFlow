@@ -17,6 +17,8 @@ if str(SRC) not in sys.path:
 
 DRIVE_RE = re.compile(r"[A-Za-z]:\\")
 PERSONAL_MARKERS = ("Dropbox", "WIP_loopflow", "Chihyu", "chihyu")
+# 公開 GitHub 網址可含擁有者名稱；那不是本機路徑。
+PUBLIC_URL_RE = re.compile(r"https://github\.com/[^\s\"']+")
 
 
 class ResultTests(unittest.TestCase):
@@ -282,7 +284,7 @@ class SourceHygieneTests(unittest.TestCase):
         root = SRC / "loopflow"
         offenders = []
         for path in root.rglob("*.py"):
-            text = path.read_text(encoding="utf-8")
+            text = PUBLIC_URL_RE.sub("", path.read_text(encoding="utf-8"))
             if DRIVE_RE.search(text) or any(marker in text for marker in PERSONAL_MARKERS):
                 offenders.append(str(path.relative_to(SRC)))
         self.assertEqual(offenders, [])

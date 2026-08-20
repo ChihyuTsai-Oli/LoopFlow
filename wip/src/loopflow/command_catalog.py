@@ -50,6 +50,7 @@ _READY = {
     "LF_Extract_CP": "E02",
     "LF_Duplicate_Layout": "E03",
     "LF_Sync_Worksession": "E04",
+    "LF_Document": "E06",
 }
 
 _COMMANDS = {
