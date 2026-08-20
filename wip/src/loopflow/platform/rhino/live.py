@@ -8,7 +8,12 @@ from __future__ import annotations
 from typing import Optional, Tuple
 
 from loopflow.foundation import results
-from loopflow.platform.rhino.session import capture_snapshot, restore_snapshot, silence_loopflow_layers
+from loopflow.platform.rhino.session import (
+    capture_snapshot,
+    restore_snapshot,
+    silence_extract_layers,
+    silence_loopflow_layers,
+)
 from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
 
 LIVE_VERIFIED_IN_RHINO = True
@@ -243,6 +248,7 @@ class LiveSession:
                     self._rs.AddLayer(part)
             parent_path = current
         silence_loopflow_layers(self, path)
+        silence_extract_layers(self, path)
         return created
 
     def delete_layer(self, path: str) -> None:
@@ -571,6 +577,65 @@ class LiveSession:
 
     def set_object_layer(self, object_id: str, path: str) -> None:
         self._rs.ObjectLayer(object_id, path)
+
+    def copy_object(self, object_id: str) -> Optional[str]:
+        copied = self._rs.CopyObject(object_id)
+        if not copied:
+            return None
+        return str(copied)
+
+    def reset_object_to_bylayer(self, object_id: str) -> None:
+        try:
+            self._rs.ObjectColorSource(object_id, 0)
+            self._rs.ObjectLinetypeSource(object_id, 0)
+            self._rs.ObjectPrintColorSource(object_id, 0)
+            self._rs.ObjectPrintWidthSource(object_id, 0)
+        except Exception:
+            pass
+
+    def object_display_color(self, object_id: str):
+        try:
+            source = self._rs.ObjectColorSource(object_id)
+            if source == 0:
+                layer = self.object_layer(object_id)
+                if layer:
+                    color = self._rs.LayerColor(layer)
+                    if color is not None:
+                        return rgb_tuple(color)
+            color = self._rs.ObjectColor(object_id)
+            if color is not None:
+                return rgb_tuple(color)
+        except Exception:
+            return None
+        return None
+
+    def layer_locked(self, path: str) -> bool:
+        try:
+            return bool(self._rs.IsLayerLocked(path))
+        except Exception:
+            return False
+
+    def set_layer_locked(self, path: str, locked: bool) -> None:
+        if not self.has_layer(path):
+            return
+        try:
+            self._rs.LayerLocked(path, bool(locked))
+        except Exception:
+            pass
+
+    def layer_visible(self, path: str) -> bool:
+        try:
+            return bool(self._rs.IsLayerVisible(path))
+        except Exception:
+            return True
+
+    def set_layer_visible(self, path: str, visible: bool) -> None:
+        if not self.has_layer(path):
+            return
+        try:
+            self._rs.LayerVisible(path, bool(visible), True)
+        except Exception:
+            pass
 
     def get_object_user_text(self, object_id: str, key: str) -> Optional[str]:
         value = self._rs.GetUserText(object_id, key)

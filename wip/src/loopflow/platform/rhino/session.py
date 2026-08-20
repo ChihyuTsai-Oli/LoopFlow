@@ -323,11 +323,17 @@ def run_guarded(
 
 
 LOOPFLOW_LAYER_ROOT = "LoopFlow"
+EXTRACT_LAYER_ROOT = "LoopFlow_Extract"
 
 
 def is_loopflow_layer(path: str) -> bool:
     text = str(path or "")
     return text == LOOPFLOW_LAYER_ROOT or text.startswith(LOOPFLOW_LAYER_ROOT + "::")
+
+
+def is_extract_layer(path: str) -> bool:
+    text = str(path or "")
+    return text == EXTRACT_LAYER_ROOT or text.startswith(EXTRACT_LAYER_ROOT + "::")
 
 
 def loopflow_layer_chain(path: str) -> Tuple[str, ...]:
@@ -355,4 +361,32 @@ def silence_loopflow_layers(session: RhinoSession, path: str) -> None:
         return
     for existing in lister() or ():
         if is_loopflow_layer(str(existing)):
+            setter(str(existing), False)
+
+
+def extract_layer_chain(path: str) -> Tuple[str, ...]:
+    if not is_extract_layer(path):
+        return ()
+    current = ""
+    chain = []
+    for index, part in enumerate(str(path).split("::")):
+        current = part if index == 0 else current + "::" + part
+        chain.append(current)
+    return tuple(chain)
+
+
+def silence_extract_layers(session: RhinoSession, path: str) -> None:
+    """LoopFlow_Extract 與其子圖層一律 No Print（PlotWeight = -1）。"""
+    if not is_extract_layer(path):
+        return
+    setter = getattr(session, "set_layer_printable", None)
+    if not callable(setter):
+        return
+    for item in extract_layer_chain(path):
+        setter(item, False)
+    lister = getattr(session, "layer_paths", None)
+    if not callable(lister):
+        return
+    for existing in lister() or ():
+        if is_extract_layer(str(existing)):
             setter(str(existing), False)

@@ -77,6 +77,23 @@ def ask_save_filename(
     return str(value)
 
 
+def ask_checklist(
+    items: Sequence[str],
+    message: str,
+    title: str = "LoopFlow",
+) -> Optional[Tuple[str, ...]]:
+    """多選清單。取消回傳 None；確定但一項都沒勾回傳空 tuple。"""
+    try:
+        import rhinoscriptsyntax as rs  # type: ignore
+    except ImportError:
+        return None
+    rows = [(str(item), False) for item in items]
+    result = rs.CheckListBox(rows, message, title)
+    if result is None:
+        return None
+    return tuple(str(name) for name, checked in result if checked)
+
+
 def ask_popup_choice(
     message: str,
     items: Sequence[str],

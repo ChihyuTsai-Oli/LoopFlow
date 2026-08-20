@@ -163,7 +163,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 → 選用：建立圖目錄（獨立指令 `LF_Catalog`，須先有 Sheet metadata）
 → Infuser 注入 Tag 顯示資料
 → TAG-O 確認活著或斷連</code></pre>
-<p>目前主鏈（開案到 TAG-O）已接通並實機通過。剩餘開發順序：<strong>Extract CP → Duplicate Layout → Sync Worksession → Document。</strong> TAG-O 只檢查與上色，不實作 Repair。</p>
+<p>目前主鏈（開案到 TAG-O）已接通並實機通過。Extract CP 已有自動測試，<strong>待 Rhino 實機</strong>。剩餘：<strong>Duplicate Layout → Sync Worksession → Document。</strong> TAG-O 只檢查與上色，不實作 Repair。</p>
 <h2 id="1-開案檢查">1. 開案檢查</h2>
 <p><strong>動作</strong>：解析 <code>LOOPFLOW_WORKFILES_ROOT</code>、Dictionary、<code>exchange/</code>、project identity、schema version 與 Rhino 文件單位。</p>
 <p><strong>使用者介入</strong>：只有設定缺失、專案辨識不明或非 cm 警告時處理。</p>
@@ -209,10 +209,10 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <p>3D 模型（含 worksession 連結檔）須能與該 Clipping Plane 相交，否則無法寫入固定 transform。本批不要求 Layout 上已有 Detail，也不射線。Clipping Plane 之後若移動，須重新登記。</p>
 <p>View 不依名稱或可變 bbox 重新猜測。Section linked output 可以先保留、更新與檢查，不必立即 Materialize 或 Tag。</p>
 <h2 id="8-Materialize-可編輯-Drawing">8. Materialize 可編輯 Drawing</h2>
-<p>使用者需要獨立整理線稿時，將 Section 結果轉為 <code>drawing_id</code>：</p>
-<ul><li>產出放在根圖層 <code>LoopFlow_Extract</code>（與 <code>LoopFlow</code> 平級，不是 <code>LoopFlow::Extract</code>）。實作時列印寬度設 <code>No Print</code>（<code>PlotWeight = -1</code>）。子層名稱等 E02 開工再定。</li><li>辨識前次產出，讓使用者選擇取代、新增或略過。</li><li>保存來源 <code>view_id</code>、source revision 與 drawing element provenance。</li><li>回報 indexed／unindexed／ambiguous 覆蓋率。</li><li>復原原有 selection、layer lock 與 visibility。</li><li>使用者補線、刪線或改樣式後標記為 modified；更新不靜默覆寫。</li></ul>
-<p>2.0 <strong>尚未實作</strong> Extract；本節只鎖定根圖層名稱與冪等政策。<strong>剩餘第一項；現在不要實作程式。</strong></p>
-<p><strong>安全停點</strong>：Drawing 完成即可獨立存檔與人工整理。</p>
+<p>使用者需要獨立整理線稿時，在 <strong>2D 模型空間</strong>跑 <code>LF_Extract_CP</code>，把 Section 結果轉為 <code>drawing_id</code>：</p>
+<ul><li>勾選 Clipping Drawing 的剖面根圖層（底下有 Visible／Hatch／Curve 子層）。</li><li>產出放在根圖層 <code>LoopFlow_Extract</code>（與 <code>LoopFlow</code> 平級，不是 <code>LoopFlow::Extract</code>）。列印寬度 <code>No Print</code>（<code>PlotWeight = -1</code>）。</li><li>子層：<code>Visible</code>、<code>Hatch</code>、<code>Curve_#RRGGBB</code>（依線的顏色；對齊 1.x 拆層習慣）。</li><li>對到已登記 View 時寫來源 <code>view_id</code>；寫 source revision 與每個 element 的 <code>source_object_ids[]</code>。</li><li>同一 View／同一剖面若已有抽出，選取代、新增或略過。</li><li>回報 indexed／unindexed／ambiguous 覆蓋率；索引不完整仍產出。</li><li>復原原有 selection 與來源圖層 lock／visibility。</li><li>使用者補線、刪線或改樣式後應把 <code>lf_provenance_state</code> 標為 <code>modified</code>；取代不會覆蓋已修改的 Drawing。</li></ul>
+<p>Esc／取消、在 Layout 頁執行、找不到剖面圖層、一個剖面對到兩個 View，都不寫入。來源剖面本身不移動。</p>
+<p><strong>安全停點</strong>：Drawing 完成即可獨立存檔與人工整理。<strong>未在 Rhino 8 實機驗證。</strong></p>
 <h2 id="9-建立-Sheet-圖框與-Layout-ID">9. 建立 Sheet、圖框與 Layout ID</h2>
 <p>使用者建立 Layout、Detail、圖框與 Tag Blocks。圖號與圖名的真相是 <strong>Sheet metadata</strong>，不是頁名字串。指令 <code>LF_Tagger_Layout_ID</code> 負責建立與維持這份 metadata；其他功能（含圖目錄）只讀、不自行解析頁名。</p>
 <p>本節是 Layout ID 的操作說明與命名邏輯總覽，日後 GitHub 公開說明可直接沿用；機器可檢查的契約細節以 <code>資料契約.md</code> 的 Sheet 章節為準。</p>

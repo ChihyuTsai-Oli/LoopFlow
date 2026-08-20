@@ -2,12 +2,14 @@
 """記憶體假 Rhino 文件，供純 Python 測試 snapshot／restore 與圖層同步。"""
 from __future__ import annotations
 
+import copy
 from typing import Dict, List, Optional
 
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import (
     capture_snapshot,
     restore_snapshot,
+    silence_extract_layers,
     silence_loopflow_layers,
 )
 from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
@@ -171,6 +173,7 @@ class MemorySession:
                 self._layers[current] = {"user_text": {}}
                 self._modified = True
         silence_loopflow_layers(self, path)
+        silence_extract_layers(self, path)
         return created
 
     def delete_layer(self, path: str) -> None:
@@ -215,6 +218,75 @@ class MemorySession:
     def layer_color(self, path: str):
         layer = self._layers.get(path) or {}
         return layer.get("color")
+
+    def layer_locked(self, path: str) -> bool:
+        return bool((self._layers.get(path) or {}).get("locked", False))
+
+    def set_layer_locked(self, path: str, locked: bool) -> None:
+        if path not in self._layers:
+            return
+        self._layers[path]["locked"] = bool(locked)
+        self._modified = True
+
+    def layer_visible(self, path: str) -> bool:
+        layer = self._layers.get(path) or {}
+        if "visible" not in layer:
+            return True
+        return bool(layer.get("visible"))
+
+    def set_layer_visible(self, path: str, visible: bool) -> None:
+        if path not in self._layers:
+            return
+        self._layers[path]["visible"] = bool(visible)
+        self._modified = True
+
+    def copy_object(self, object_id: str) -> Optional[str]:
+        if object_id not in self._objects:
+            return None
+        state = self._objects[object_id]
+        meta = copy.deepcopy(self._meta(object_id))
+        new_id = "mem-%s" % self._next_id
+        self._next_id += 1
+        self.add_object(
+            new_id,
+            selected=False,
+            locked=False,
+            hidden=False,
+            color=state.color,
+            color_by_layer=True,
+            name=meta.get("name"),
+            layer=meta.get("layer"),
+            user_text=meta.get("user_text"),
+        )
+        if object_id in self._curves:
+            self._curves[new_id] = copy.deepcopy(self._curves[object_id])
+        if object_id in self._bboxes:
+            self._bboxes[new_id] = copy.deepcopy(self._bboxes[object_id])
+        if object_id in self._points:
+            self._points[new_id] = tuple(self._points[object_id])
+        return new_id
+
+    def reset_object_to_bylayer(self, object_id: str) -> None:
+        state = self._objects.get(object_id)
+        if state is None:
+            return
+        self._objects[object_id] = ObjectViewState(
+            object_id=object_id,
+            selected=state.selected,
+            locked=state.locked,
+            hidden=state.hidden,
+            color=state.color,
+            color_by_layer=True,
+        )
+
+    def object_display_color(self, object_id: str):
+        state = self._objects.get(object_id)
+        if state is None:
+            return None
+        if state.color_by_layer:
+            layer = self.object_layer(object_id)
+            return self.layer_color(layer) if layer else state.color
+        return state.color
 
     def layer_material_name(self, path: str) -> Optional[str]:
         layer = self._layers.get(path) or {}

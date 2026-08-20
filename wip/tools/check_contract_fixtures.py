@@ -251,6 +251,11 @@ def check_local_frame() -> None:
 
 
 def check_drawing() -> None:
+    spec = load(SCHEMA / "drawing.json")
+    if spec.get("layer_root") != "LoopFlow_Extract":
+        fail("drawing 根圖層必須是 LoopFlow_Extract")
+    if spec.get("plot_weight") != -1:
+        fail("drawing 根圖層 PlotWeight 必須是 -1（No Print）")
     for case in load(CONTRACT / "drawing" / "provenance_cases.json")["cases"]:
         ids = case.get("source_object_ids", [])
         n = len(ids)

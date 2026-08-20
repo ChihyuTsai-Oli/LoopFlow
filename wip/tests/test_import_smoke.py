@@ -82,7 +82,6 @@ class ImportSmokeTests(unittest.TestCase):
         from loopflow.command_catalog import CORE_COMMANDS, get_command
 
         remaining = (
-            "LF_Extract_CP",
             "LF_Duplicate_Layout",
             "LF_Sync_Worksession",
             "LF_Document",
@@ -92,13 +91,13 @@ class ImportSmokeTests(unittest.TestCase):
             self.assertEqual(get_command(command_id)["status"], "not_implemented")
 
         with redirect_stdout(io.StringIO()):
-            result = run_command("LF_Extract_CP")
+            result = run_command("LF_Duplicate_Layout")
         self.assertFalse(result.ok)
         self.assertEqual(result.status, "not_implemented")
         with redirect_stdout(io.StringIO()):
-            result = run_command("LF_Document")
+            result = run_command("LF_Extract_CP")
         self.assertFalse(result.ok)
-        self.assertEqual(result.status, "not_implemented")
+        self.assertNotEqual(result.status, "not_implemented")
 
     def test_run_command_does_not_claim_scan_success(self):
         from loopflow.bootstrap import run_command

@@ -55,6 +55,7 @@ STAGES = (
     "probe_view",
     "infuse_tags",
     "health_check",
+    "extract_drawing",
 )
 
 
