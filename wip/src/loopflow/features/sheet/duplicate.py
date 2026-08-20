@@ -9,24 +9,24 @@ from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from loopflow.features.catalog import keys as catalog_keys
 from loopflow.features.drawing import keys as drawing_keys
+from loopflow.features.health.appearance import (
+    MODE_BROKEN,
+    apply_queued_appearances,
+    queue_appearance,
+)
 from loopflow.features.sheet.keys import DRAWING_NAME_KEY, DRAWING_NO_KEY, SHEET_ID_KEY
 from loopflow.features.sheet.metadata import is_title_frame
 from loopflow.features.sheet.naming import NamingRules, compose_page_name, load_naming_rules, parse_page_name
 from loopflow.features.tagger.binding import canonical_uuid, new_id, text
 from loopflow.features.tagger.keys import (
-    BINDING_MODE_KEY,
-    HEALTH_STATE_KEY,
     HOST_SHEET_ID_KEY,
     LAST_SYNCED_REVISION_KEY,
-    LOCK_STATE_KEY,
-    LOCK_STATE_PREV_KEY,
     SOURCE_BLOCK_NAME_KEY,
     SOURCE_OBJECT_ID_KEY,
     TAG_ID_KEY,
     TARGET_LAYOUT_KEY,
     TARGET_SHEET_ID_KEY,
     TARGET_VIEW_ID_KEY,
-    is_legacy_lock_key,
 )
 from loopflow.features.tagger.templates import TagTemplate, TagTemplateSet, load_tag_templates
 from loopflow.foundation import results
@@ -37,7 +37,7 @@ STAGE = "duplicate_layout"
 COPY_SUFFIX = "_Copy"
 MIN_COPIES = 1
 MAX_COPIES = 100
-# 除 TAG_DW 外，來源綁定與健康狀態一律清除；template_id 保留。
+# 除 TAG_DW 外，來源綁定一律清除；template_id 與 lock 保留。斷連樣式事後再套。
 BINDING_CLEAR_KEYS = (
     SOURCE_OBJECT_ID_KEY,
     SOURCE_BLOCK_NAME_KEY,
@@ -46,7 +46,6 @@ BINDING_CLEAR_KEYS = (
     TARGET_LAYOUT_KEY,
     HOST_SHEET_ID_KEY,
     LAST_SYNCED_REVISION_KEY,
-    HEALTH_STATE_KEY,
 )
 ShowMessage = Callable[[str], None]
 PickPage = Callable[[RhinoSession, Sequence[str]], Optional[str]]
@@ -126,23 +125,19 @@ def _clear_key(session: RhinoSession, object_id: str, key: str) -> None:
     session.set_object_user_text(object_id, key, "")
 
 
-def _reset_lock(session: RhinoSession, object_id: str, template: TagTemplate) -> None:
-    if not template.lock_allowed:
-        return
-    keys_fn = getattr(session, "object_user_text_keys", None)
-    keys = tuple(keys_fn(object_id) or ()) if callable(keys_fn) else ()
-    for key in keys:
-        if is_legacy_lock_key(key):
-            _clear_key(session, object_id, key)
-    _clear_key(session, object_id, LOCK_STATE_PREV_KEY)
-    state = "true" if template.default_lock_state else "false"
-    session.set_object_user_text(object_id, LOCK_STATE_KEY, state)
+def _render_keys(template: TagTemplate) -> Tuple[str, ...]:
+    keys = []
+    for field in template.fields:
+        if field.owner == "render" and field.usertext:
+            keys.append(field.usertext)
+    return tuple(keys)
 
 
 def _sanitize_tag(
     session: RhinoSession,
     object_id: str,
     template: TagTemplate,
+    cache: dict,
 ) -> None:
     session.set_object_user_text(object_id, TAG_ID_KEY, new_id())
     if template.template_id == "TAG_DW":
@@ -153,7 +148,8 @@ def _sanitize_tag(
     for field in template.fields:
         if field.clear_on_duplicate and field.usertext:
             _clear_key(session, object_id, field.usertext)
-    _reset_lock(session, object_id, template)
+    # 不改 lock／畫面上的 x；整顆改斷連樣式（自動欄 ?、塗紅）。
+    queue_appearance(cache, object_id, _render_keys(template), MODE_BROKEN)
 
 
 def _sanitize_title_frame(
@@ -223,8 +219,10 @@ def sanitize_copied_objects(
     id_map: Mapping[str, str],
     catalog: TagTemplateSet,
     source_sheet_id: Optional[str],
+    cache: Optional[dict] = None,
 ) -> str:
     """依契約改寫複製物件。回傳此頁新 `sheet_id`（無圖框則空字串）。"""
+    appearances = cache if cache is not None else {}
     has_frame = any(
         is_title_frame(session, new_id_value, catalog)
         for new_id_value in id_map.values()
@@ -251,7 +249,7 @@ def sanitize_copied_objects(
         template = catalog.by_block_name(block_name)
         if template is None or template.role != "tag":
             continue
-        _sanitize_tag(session, new_object, template)
+        _sanitize_tag(session, new_object, template, appearances)
     return new_sheet_id or ""
 
 
@@ -270,9 +268,9 @@ def _default_pick_page(_session: RhinoSession, names: Sequence[str]) -> Optional
 
 
 def _default_pick_count(_session: RhinoSession) -> Optional[int]:
-    from loopflow.platform.rhino.prompts import ask_integer
+    from loopflow.platform.rhino.prompts import ask_popup_integer
 
-    return ask_integer("要複製幾份？", 1, MIN_COPIES, MAX_COPIES)
+    return ask_popup_integer("要複製幾份？", 1, MIN_COPIES, MAX_COPIES, COMMAND_ID)
 
 
 def _summary(source: str, created: Sequence[str]) -> str:
@@ -322,6 +320,7 @@ def duplicate_layout_pages(
     rules = load_naming_rules(session)
     source_sheet = _source_sheet_id(session, source_name, catalog)
     created: List[str] = []
+    cache: dict = {}
     try:
         existing = list(_layout_names(session))
         for index in range(1, count + 1):
@@ -344,7 +343,7 @@ def duplicate_layout_pages(
                     "複製「%s」的物件失敗。" % source_name,
                     command_id=COMMAND_ID,
                 )
-            sanitize_copied_objects(session, mapping, catalog, source_sheet)
+            sanitize_copied_objects(session, mapping, catalog, source_sheet, cache)
     except Exception:
         _rollback_pages(session, created)
         raise
@@ -359,6 +358,7 @@ def duplicate_layout_pages(
             "source": source_name,
             "created": tuple(created),
             "count": len(created),
+            "appearances": tuple(cache.get("appearances") or ()),
         },
     )
 
@@ -419,8 +419,13 @@ def run_duplicate_layout(
                 command_id=COMMAND_ID,
             )
         outcome = duplicate_layout_pages(current, chosen, copies, catalog)
-        if outcome.ok and callable(show_message):
-            show_message(outcome.message)
+        if outcome.ok:
+            apply_queued_appearances(current, (outcome.details or {}).get("appearances"))
+            if callable(show_message):
+                show_message(outcome.message)
         return outcome
 
-    return run_guarded(session, _action, command_id=COMMAND_ID)
+    guarded = run_guarded(session, _action, command_id=COMMAND_ID)
+    if guarded.ok:
+        apply_queued_appearances(session, (guarded.details or {}).get("appearances"))
+    return guarded

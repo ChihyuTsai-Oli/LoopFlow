@@ -15,6 +15,7 @@ if str(SRC) not in sys.path:
 from loopflow.features.catalog.keys import CATALOG_ID_KEY, POINT_ID_KEY
 from loopflow.features.catalog.keys import SHEET_ID_KEY as CATALOG_SHEET_ID_KEY
 from loopflow.features.drawing import keys as drawing_keys
+from loopflow.features.health.appearance import COLOR_BROKEN_RGB
 from loopflow.features.infuser.keys import (
     DETAIL_NO_KEY,
     DW_HEIGHT_KEY,
@@ -32,6 +33,8 @@ from loopflow.features.sheet.keys import DRAWING_NAME_KEY, DRAWING_NO_KEY, SCALE
 from loopflow.features.sheet.naming import NamingRules
 from loopflow.features.tagger.binding import UUID_V4_RE
 from loopflow.features.tagger.keys import (
+    HEALTH_STATE_BROKEN,
+    HEALTH_STATE_KEY,
     HOST_SHEET_ID_KEY,
     LOCK_STATE_KEY,
     SOURCE_OBJECT_ID_KEY,
@@ -278,10 +281,15 @@ class DuplicateLayoutTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text(grab, TEMPLATE_ID_KEY), "TAG_HEIGHT_GRAB")
         self.assertIsNone(session.get_object_user_text(grab, SOURCE_OBJECT_ID_KEY))
         self.assertIsNone(session.get_object_user_text(grab, HOST_SHEET_ID_KEY))
-        self.assertIsNone(session.get_object_user_text(grab, ELEVATION_DISPLAY_KEY))
+        self.assertEqual(session.get_object_user_text(grab, ELEVATION_DISPLAY_KEY), "?")
         self.assertIsNone(session.get_object_user_text(grab, REMARKS_MANUAL_KEY))
-        self.assertEqual(session.get_object_user_text(grab, LOCK_STATE_KEY), "false")
-        self.assertIsNone(session.get_object_user_text(grab, "attr_Lock_不更新>寫入x或X"))
+        self.assertEqual(session.get_object_user_text(grab, LOCK_STATE_KEY), "true")
+        self.assertEqual(session.get_object_user_text(grab, "attr_Lock_不更新>寫入x或X"), "X")
+        self.assertEqual(session.get_object_user_text(grab, HEALTH_STATE_KEY), HEALTH_STATE_BROKEN)
+        grab_state = session.get_view_state(grab)
+        self.assertIsNotNone(grab_state)
+        self.assertEqual(grab_state.color, COLOR_BROKEN_RGB)
+        self.assertFalse(grab_state.color_by_layer)
 
         dw = _on_page(session, copied, "TAG_DW")
         dw_id = session.get_object_user_text(dw, TAG_ID_KEY)
@@ -291,17 +299,23 @@ class DuplicateLayoutTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text(dw, DW_WIDTH_KEY), "90")
         self.assertEqual(session.get_object_user_text(dw, DW_HEIGHT_KEY), "210")
         self.assertIsNone(session.get_object_user_text(dw, HOST_SHEET_ID_KEY))
+        dw_state = session.get_view_state(dw)
+        self.assertTrue(dw_state.color_by_layer)
 
         index = _on_page(session, copied, "TAG_SECTION_DETAIL")
         self.assertIsNone(session.get_object_user_text(index, TARGET_VIEW_ID_KEY))
         self.assertIsNone(session.get_object_user_text(index, TARGET_LAYOUT_KEY))
         self.assertIsNone(session.get_object_user_text(index, DETAIL_NO_KEY))
-        self.assertIsNone(session.get_object_user_text(index, "lf_sheet_code"))
+        self.assertEqual(session.get_object_user_text(index, "lf_sheet_code"), "?")
+        self.assertEqual(session.get_object_user_text(index, HEALTH_STATE_KEY), HEALTH_STATE_BROKEN)
+        index_state = session.get_view_state(index)
+        self.assertEqual(index_state.color, COLOR_BROKEN_RGB)
+        self.assertFalse(index_state.color_by_layer)
 
         elev0 = _on_page(session, copied, "TAG_ELEV_0")
         self.assertIsNone(session.get_object_user_text(elev0, "lf_dir_num"))
         self.assertIsNone(session.get_object_user_text(elev0, "lf_dir_elev"))
-        self.assertIsNone(session.get_object_user_text(elev0, "lf_sheet_code"))
+        self.assertEqual(session.get_object_user_text(elev0, "lf_sheet_code"), "?")
 
         cat_ids = [
             object_id
@@ -383,7 +397,8 @@ class DuplicateLayoutTests(unittest.TestCase):
         for text in (source, live):
             self.assertNotIn("CopyToClipboard", text)
             self.assertNotIn("_-Paste", text)
-            self.assertNotIn("CopyToClipboard", text)
+        self.assertIn("ask_popup_integer", source)
+        self.assertNotIn("ask_integer(", source)
 
     def test_command_id(self):
         self.assertEqual(COMMAND_ID, "LF_Duplicate_Layout")

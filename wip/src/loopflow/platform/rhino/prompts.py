@@ -1017,6 +1017,28 @@ def ask_popup_real(
     return number
 
 
+def ask_popup_integer(
+    message: str,
+    default: int = 1,
+    minimum: int = 1,
+    maximum: int = 100,
+    title: str = "LoopFlow",
+) -> Optional[int]:
+    """彈窗輸入整數；取消回傳 None。超出範圍會說明並視為取消。"""
+    try:
+        import rhinoscriptsyntax as rs  # type: ignore
+    except ImportError:
+        return None
+    value = rs.RealBox(message, float(default), title)
+    if value is None:
+        return None
+    number = int(round(float(value)))
+    if number < minimum or number > maximum:
+        show_message("份數須為 %s 到 %s。" % (minimum, maximum), title)
+        return None
+    return number
+
+
 def show_readonly_text(message: str, title: str = "LF Data Viewer") -> None:
     try:
         import Eto.Drawing as drawing  # type: ignore
