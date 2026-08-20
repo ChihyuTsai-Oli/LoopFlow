@@ -30,6 +30,7 @@ from loopflow.features.tagger.laser import (
     choice_labels,
     cluster_hits,
     hit_choice_label,
+    origin_behind_plane,
     run_tagger_laser,
     view_frames_containing,
 )
@@ -123,7 +124,7 @@ def _run(session, **kwargs):
 
 
 class ClusterTests(unittest.TestCase):
-    def test_prefers_frontal_and_keeps_near_cluster(self):
+    def test_keeps_nearest_two_objects(self):
         hits = cluster_hits(
             (
                 {"object_id": "far_front", "dist": 400.0, "hit_type": "FRONTAL"},
@@ -132,9 +133,9 @@ class ClusterTests(unittest.TestCase):
             )
         )
         ids = [item["object_id"] for item in hits]
-        self.assertEqual(ids, ["near_front"])
+        self.assertEqual(ids, ["near_back", "near_front"])
 
-    def test_includes_hits_within_gap(self):
+    def test_drops_third_object(self):
         hits = cluster_hits(
             (
                 {"object_id": "a", "dist": 100.0, "hit_type": "FRONTAL"},
@@ -144,6 +145,18 @@ class ClusterTests(unittest.TestCase):
         )
         ids = [item["object_id"] for item in hits]
         self.assertEqual(ids, ["a", "b"])
+
+    def test_same_object_counts_once(self):
+        hits = cluster_hits(
+            (
+                {"object_id": "wall", "dist": 10.0, "hit_type": "FRONTAL"},
+                {"object_id": "wall", "dist": 40.0, "hit_type": "BACKFACE"},
+                {"object_id": "tile", "dist": 50.0, "hit_type": "FRONTAL"},
+                {"object_id": "toilet", "dist": 60.0, "hit_type": "FRONTAL"},
+            )
+        )
+        ids = [item["object_id"] for item in hits]
+        self.assertEqual(ids, ["wall", "tile"])
 
 
 class ChoiceLabelTests(unittest.TestCase):
@@ -296,7 +309,7 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY), OBJECT_ID)
         self.assertTrue(session.get_view_state("wall").selected)
         expected_origin, expected_dir = ray_from_transform(_transform(), POINT_2D)
-        self.assertEqual(captured[0][0], expected_origin)
+        self.assertEqual(captured[0][0], origin_behind_plane(expected_origin, expected_dir))
         self.assertEqual(captured[0][1], expected_dir)
 
     def test_minus_y_elevation_shoots_toward_model(self):
@@ -332,6 +345,8 @@ class CommandTests(unittest.TestCase):
         result = _run(session, probe=probe)
         self.assertTrue(result.ok, result.message)
         self.assertEqual(captured[0][1], (0.0, 1.0, 0.0))
+        plane_origin, _stored = ray_from_transform(payload, POINT_2D)
+        self.assertEqual(captured[0][0], origin_behind_plane(plane_origin, (0.0, 1.0, 0.0)))
 
     def test_default_probe_uses_injected_ray_hits(self):
         session = _session()
@@ -476,7 +491,7 @@ class CommandTests(unittest.TestCase):
         result = _run(session, pick_point=lambda _s: (10.0, 1005.0, 0.0), probe=probe)
         self.assertTrue(result.ok, result.message)
         expected_origin, expected_dir = ray_from_transform(_transform(), POINT_2D)
-        self.assertEqual(captured[0][0], expected_origin)
+        self.assertEqual(captured[0][0], origin_behind_plane(expected_origin, expected_dir))
         self.assertEqual(captured[0][1], expected_dir)
 
     def test_ceiling_scale_survives_frame_translate(self):
@@ -505,7 +520,7 @@ class CommandTests(unittest.TestCase):
         unmoved = dict(payload)
         unmoved["origin_2d"] = [10.0, 5.0, 0.0]
         expected_origin, expected_dir = ray_from_transform(unmoved, (15.0, 5.0, 0.0))
-        self.assertEqual(captured[0][0], expected_origin)
+        self.assertEqual(captured[0][0], origin_behind_plane(expected_origin, expected_dir))
         self.assertEqual(captured[0][1], expected_dir)
 
     def test_catalog_and_entrypoint(self):

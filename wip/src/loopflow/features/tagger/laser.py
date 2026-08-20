@@ -2,7 +2,8 @@
 """LF_Tagger_Laser：Layout 點 Detail，用固定 View transform 射線。只寫 binding。"""
 from __future__ import annotations
 
-from typing import Callable, Optional, Sequence
+import math
+from typing import Callable, Optional, Sequence, Tuple
 
 from loopflow.features.tagger.binding import UUID_V4_RE, write_object_binding
 from loopflow.features.tagger.keys import (
@@ -23,7 +24,8 @@ from loopflow.foundation.usertext import OBJECT_ID_KEY, read_text
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Tagger_Laser"
-CLUSTER_GAP = 200.0
+MAX_HIT_OBJECTS = 2
+ORIGIN_BACK = 5.0
 HIT_PRIORITY = {"FRONTAL": 0, "GRAZING": 1, "BACKFACE": 2}
 PickTag = Callable[[RhinoSession], Optional[str]]
 PickPoint = Callable[[RhinoSession], Optional[Sequence[float]]]
@@ -62,17 +64,42 @@ def view_frames_containing(session: RhinoSession, point_2d: Sequence[float]):
     return tuple(hits)
 
 
+def origin_behind_plane(origin, direction, back: float = ORIGIN_BACK) -> Tuple[float, float, float]:
+    """把射線原點往射出方向的反方向微移，才能打到貼在剖平面上的牆。"""
+    dx, dy, dz = float(direction[0]), float(direction[1]), float(direction[2])
+    length = math.sqrt(dx * dx + dy * dy + dz * dz)
+    if length < 1e-9:
+        return (float(origin[0]), float(origin[1]), float(origin[2]))
+    scale = float(back) / length
+    return (
+        float(origin[0]) - dx * scale,
+        float(origin[1]) - dy * scale,
+        float(origin[2]) - dz * scale,
+    )
+
+
 def cluster_hits(hits: Sequence[dict]):
+    """依距離排序，同一物件只留一次，穿過兩個物件就停止。"""
     if not hits:
         return ()
     ordered = sorted(
         hits,
-        key=lambda item: (HIT_PRIORITY.get(item.get("hit_type") or "", 9), float(item.get("dist") or 0.0)),
+        key=lambda item: (
+            float(item.get("dist") or 0.0),
+            HIT_PRIORITY.get(item.get("hit_type") or "", 9),
+        ),
     )
-    frontal = [item for item in ordered if item.get("hit_type") == "FRONTAL"]
-    pool = frontal or list(ordered)
-    nearest = float(pool[0].get("dist") or 0.0)
-    return tuple(item for item in pool if float(item.get("dist") or 0.0) <= nearest + CLUSTER_GAP)
+    unique = []
+    seen = set()
+    for item in ordered:
+        object_id = item.get("object_id")
+        if not object_id or object_id in seen:
+            continue
+        seen.add(object_id)
+        unique.append(item)
+        if len(unique) >= MAX_HIT_OBJECTS:
+            break
+    return tuple(unique)
 
 
 def _default_pick_tag(_session: RhinoSession) -> Optional[str]:
@@ -318,7 +345,8 @@ def run_tagger_laser(
         center_fn = getattr(current, "uuid_objects_bbox_center", None)
         model_center = center_fn() if callable(center_fn) else None
         direction = facing_direction(payload, model_center)
-        hits = cluster_hits(probe_fn(current, origin, direction))
+        probe_origin = origin_behind_plane(origin, direction)
+        hits = cluster_hits(probe_fn(current, probe_origin, direction))
         if not hits:
             return results.blocked(
                 "probe_view",

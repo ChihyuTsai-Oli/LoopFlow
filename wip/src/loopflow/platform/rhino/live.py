@@ -1093,24 +1093,12 @@ class LiveSession:
             if brep:
                 brep.Transform(xform)
                 breps.append(brep)
-        elif isinstance(geom, rhino.Geometry.Mesh):
-            mesh = geom.Duplicate()
-            mesh.Transform(xform)
+        elif isinstance(geom, rhino.Geometry.ClippingPlaneSurface):
+            pass
+        elif isinstance(geom, rhino.Geometry.Surface):
             brep = None
             try:
-                brep = rhino.Geometry.Brep.CreateFromMesh(mesh, False)
-            except Exception:
-                brep = None
-            if brep:
-                breps.append(brep)
-        elif hasattr(rhino.Geometry, "SubD") and isinstance(geom, rhino.Geometry.SubD):
-            brep = None
-            try:
-                create = getattr(rhino.Geometry.Brep, "CreateFromSubD", None)
-                if callable(create):
-                    brep = create(geom, 1)
-                elif hasattr(geom, "ToBrep"):
-                    brep = geom.ToBrep()
+                brep = geom.ToBrep()
             except Exception:
                 brep = None
             if brep:
