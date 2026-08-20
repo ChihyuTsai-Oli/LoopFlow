@@ -187,6 +187,6 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Test_Random_M3D_
 
 ## 預定新增
 
-核心主鏈指令已齊。Extract CP **公司 Rhino 8 已測（2026-08-20）**。Duplicate Layout／Sync Worksession **家中 Rhino 8 已測（2026-08-20）**。Document **家中 Rhino 8 已測（2026-08-21）**。之後是 G02：格式已鎖定為 `.yak`，等授權才做最小 spike（一支 `LFDocument`）。G01 只查上傳用 3dm 範例。1.x 與 2.0 不可混用。
+核心主鏈指令已齊。Extract CP **公司 Rhino 8 已測（2026-08-20）**。Duplicate Layout／Sync Worksession **家中 Rhino 8 已測（2026-08-20）**。Document **家中 Rhino 8 已測（2026-08-21）**。之後是 G02：格式已鎖定為 `.yak`；最小 spike（一支 `LFDocument`）已授權、換機暫停、尚未寫程式。G01 只查上傳用 3dm 範例。1.x 與 2.0 不可混用。
 
 Cabinet／三支 2D 工具不屬 2.0。
