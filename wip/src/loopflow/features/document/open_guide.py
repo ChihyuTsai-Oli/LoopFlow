@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""LF_Document：用系統瀏覽器開啟 GitHub 使用說明。不改模型。"""
+"""LF_Document：用系統瀏覽器開啟 GitHub 文件入口頁。不改模型。"""
 from __future__ import annotations
 
 import os
@@ -10,7 +10,7 @@ from loopflow.foundation import results
 COMMAND_ID = "LF_Document"
 STAGE = "open_document"
 DOCUMENT_URL = (
-    "https://github.com/ChihyuTsai-Oli/LoopFlow/blob/main/docs/USER_GUIDE_TW.md"
+    "https://github.com/ChihyuTsai-Oli/LoopFlow/blob/main/docs/README.md"
 )
 
 Opener = Callable[[str], None]

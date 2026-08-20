@@ -19,7 +19,7 @@ from loopflow.features.document.open_guide import (
 
 
 class DocumentCommandTests(unittest.TestCase):
-    def test_opens_traditional_chinese_user_guide(self):
+    def test_opens_bilingual_docs_entry(self):
         opened = []
 
         def opener(url: str) -> None:
@@ -29,8 +29,9 @@ class DocumentCommandTests(unittest.TestCase):
         self.assertTrue(result.ok)
         self.assertEqual(result.command_id, COMMAND_ID)
         self.assertEqual(opened, [DOCUMENT_URL])
-        self.assertIn("USER_GUIDE_TW.md", DOCUMENT_URL)
+        self.assertTrue(DOCUMENT_URL.endswith("/docs/README.md"))
         self.assertIn("github.com/ChihyuTsai-Oli/LoopFlow", DOCUMENT_URL)
+        self.assertNotIn("USER_GUIDE", DOCUMENT_URL)
 
     def test_open_failure_does_not_claim_success(self):
         def opener(_url: str) -> None:
