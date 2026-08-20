@@ -122,7 +122,7 @@ Duplicate Layout：跑 `LF_Duplicate_Layout`。加高可捲動清單可複選來
 
 Sync Worksession：跑 `LF_Sync_Worksession`。須先存檔。第一次**彈窗**「已開始監看」並監看目前檔案同資料夾的 `.3dm`（略過 `~`／`tmp` 暫存名），偵測到變動後等 0.5 秒、Rhino idle 時執行 Worksession Refresh。只 Refresh，不 Attach／Detach、不改 `.rws`。失敗延遲再試，不拆上一份參照。再跑一次**彈窗**停止。另存到別的資料夾後再跑會改監看新位置。未存檔說明並停止。不進 Nexus。**家中 Rhino 8 已測（2026-08-20）。**
 
-Document：跑 `LF_Document`。開啟 `https://github.com/ChihyuTsai-Oli/LoopFlow/blob/main/docs/README.md`（文件入口，不是專案首頁），頁內再連繁中／英文說明。不改模型。Rhino 不猜語系。打不開只說明。舊名 `LF_Help` 不登錄。不進 Nexus。入口頁尚未建立；**建好後再測，須在 G02 之前。現在不要測。**
+Document：跑 `LF_Document`。開啟 `https://github.com/ChihyuTsai-Oli/LoopFlow/blob/main/docs/README.md`（文件入口，不是專案首頁），頁內再連繁中／英文說明。不改模型。Rhino 不猜語系。打不開只說明。舊名 `LF_Help` 不登錄。不進 Nexus。入口頁 stub 已建；**待關 Rhino 再開再測。**
 
 左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。正式工具列在 G02 封裝時才建立。
 
@@ -158,6 +158,6 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Test_Random_M3D_
 
 ## 預定新增
 
-核心主鏈指令已齊。Extract CP **公司 Rhino 8 已測（2026-08-20）**。Duplicate Layout／Sync Worksession **家中 Rhino 8 已測（2026-08-20）**。Document 入口路徑已定為 `docs/README.md`，頁面尚未建立，須在 G02 前實機。之後才是 G01 migration 與發布。
+核心主鏈指令已齊。Extract CP **公司 Rhino 8 已測（2026-08-20）**。Duplicate Layout／Sync Worksession **家中 Rhino 8 已測（2026-08-20）**。Document 入口頁 stub 已建，待關 Rhino 測按鈕，須在 G02 前完成。之後才是 G01 migration 與發布。
 
 Cabinet／三支 2D 工具不屬 2.0。
