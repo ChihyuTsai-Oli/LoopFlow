@@ -16,6 +16,39 @@ def _ui_font(drawing, size: float = 11.0):
     return drawing.Font(drawing.Fonts.Sans, size)
 
 
+# 對齊 Nexus／rs.ListBox 的 Windows 系統鈕。
+DIALOG_BUTTON_WIDTH = 75
+DIALOG_BUTTON_HEIGHT = 23
+
+
+def _apply_dialog_button_size(button, drawing) -> None:
+    size = drawing.Size(DIALOG_BUTTON_WIDTH, DIALOG_BUTTON_HEIGHT)
+    button.Width = DIALOG_BUTTON_WIDTH
+    button.Height = DIALOG_BUTTON_HEIGHT
+    button.Size = size
+    try:
+        button.MinimumSize = size
+        button.MaximumSize = size
+    except Exception:
+        pass
+
+
+def _ok_cancel_row(forms, drawing, on_ok, on_cancel):
+    """右下：左 OK、右 Cancel，固定系統鈕大小。回傳 (列, OK, Cancel)。"""
+    btn_ok = forms.Button()
+    btn_ok.Text = "OK"
+    _apply_dialog_button_size(btn_ok, drawing)
+    btn_ok.Click += on_ok
+    btn_cancel = forms.Button()
+    btn_cancel.Text = "Cancel"
+    _apply_dialog_button_size(btn_cancel, drawing)
+    btn_cancel.Click += on_cancel
+    row = forms.DynamicLayout()
+    row.DefaultSpacing = drawing.Size(10, 0)
+    row.AddRow(None, btn_ok, btn_cancel)
+    return row, btn_ok, btn_cancel
+
+
 def ask_command_string(
     message: str,
     default: str = "",
@@ -172,19 +205,9 @@ def ask_layout_pages_choice(
             scroll.Content = table
             layout.Add(scroll, True, True)
 
-            btn_ok = forms.Button()
-            btn_ok.Text = "確定（Enter）"
-            btn_ok.Font = self.font
-            btn_ok.Height = 28
-            btn_ok.Click += self._on_ok
-            btn_cancel = forms.Button()
-            btn_cancel.Text = "取消（Esc）"
-            btn_cancel.Font = self.font
-            btn_cancel.Height = 28
-            btn_cancel.Click += self._on_cancel
-            btn_layout = forms.DynamicLayout()
-            btn_layout.DefaultSpacing = drawing.Size(10, 0)
-            btn_layout.AddRow(None, btn_cancel, btn_ok)
+            btn_layout, btn_ok, btn_cancel = _ok_cancel_row(
+                forms, drawing, self._on_ok, self._on_cancel
+            )
             layout.Add(btn_layout, True, False)
 
             self.Content = layout
@@ -359,15 +382,9 @@ def ask_layout_detail_choice(
             layout.AddRow(self.listbox)
             layout.Add(None)
 
-            btn_ok = forms.Button()
-            btn_ok.Text = "綁定（Enter）"
-            btn_ok.Click += self._on_ok
-            btn_cancel = forms.Button()
-            btn_cancel.Text = "取消（Esc）"
-            btn_cancel.Click += self._on_cancel
-            btn_layout = forms.DynamicLayout()
-            btn_layout.DefaultSpacing = drawing.Size(10, 0)
-            btn_layout.AddRow(None, btn_cancel, btn_ok)
+            btn_layout, btn_ok, btn_cancel = _ok_cancel_row(
+                forms, drawing, self._on_ok, self._on_cancel
+            )
             layout.AddRow(btn_layout)
 
             self.Content = layout
@@ -425,10 +442,8 @@ def ask_layout_detail_choice(
 def ask_confirm_list(
     lines: Sequence[str],
     title: str = "LoopFlow",
-    ok_text: str = "確認寫入",
-    cancel_text: str = "取消（Esc）",
 ) -> bool:
-    """把核對清單完整列出，使用者按確認才回 True。無 Eto 時回 False，不寫入。"""
+    """把核對清單完整列出，使用者按 OK 才回 True。無 Eto 時回 False，不寫入。"""
     try:
         import Eto.Drawing as drawing  # type: ignore
         import Eto.Forms as forms  # type: ignore
@@ -466,15 +481,9 @@ def ask_confirm_list(
             layout.AddRow(scroll)
             layout.Add(None)
 
-            btn_ok = forms.Button()
-            btn_ok.Text = ok_text
-            btn_ok.Click += self._on_ok
-            btn_cancel = forms.Button()
-            btn_cancel.Text = cancel_text
-            btn_cancel.Click += self._on_cancel
-            btn_layout = forms.DynamicLayout()
-            btn_layout.DefaultSpacing = drawing.Size(10, 0)
-            btn_layout.AddRow(None, btn_cancel, btn_ok)
+            btn_layout, btn_ok, btn_cancel = _ok_cancel_row(
+                forms, drawing, self._on_ok, self._on_cancel
+            )
             layout.AddRow(btn_layout)
 
             self.Content = layout
@@ -545,19 +554,13 @@ def ask_pick_title_frames(
             layout.AddRow(scroll)
             layout.Add(None)
 
-            btn_ok = forms.Button()
-            btn_ok.Text = "登錄勾選項目"
-            btn_ok.Click += self._on_ok
-            btn_skip = forms.Button()
-            btn_skip.Text = "都不登錄"
-            btn_skip.Click += self._on_cancel
-            btn_layout = forms.DynamicLayout()
-            btn_layout.DefaultSpacing = drawing.Size(10, 0)
-            btn_layout.AddRow(None, btn_skip, btn_ok)
+            btn_layout, btn_ok, btn_cancel = _ok_cancel_row(
+                forms, drawing, self._on_ok, self._on_cancel
+            )
             layout.AddRow(btn_layout)
 
             self.Content = layout
-            self.AbortButton = btn_skip
+            self.AbortButton = btn_cancel
             self.DefaultButton = btn_ok
 
         def selected_names(self):
@@ -673,15 +676,9 @@ def ask_pick_catalog_sheets(
             extra.AddRow(btn_all, btn_clear, None)
             layout.AddRow(extra)
 
-            btn_ok = forms.Button()
-            btn_ok.Text = "採用選取項目"
-            btn_ok.Click += self._on_ok
-            btn_cancel = forms.Button()
-            btn_cancel.Text = "取消（Esc）"
-            btn_cancel.Click += self._on_cancel
-            btn_layout = forms.DynamicLayout()
-            btn_layout.DefaultSpacing = drawing.Size(10, 0)
-            btn_layout.AddRow(None, btn_cancel, btn_ok)
+            btn_layout, btn_ok, btn_cancel = _ok_cancel_row(
+                forms, drawing, self._on_ok, self._on_cancel
+            )
             layout.AddRow(btn_layout)
 
             self.Content = layout

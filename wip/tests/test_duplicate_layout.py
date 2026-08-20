@@ -461,6 +461,12 @@ class DuplicateLayoutTests(unittest.TestCase):
         self.assertNotIn("forms.GridView", prompts)
         self.assertIn("def ask_layout_pages_choice", prompts)
         self.assertIn("forms.Scrollable", prompts)
+        self.assertIn("def _ok_cancel_row", prompts)
+        self.assertIn('btn_ok.Text = "OK"', prompts)
+        self.assertIn("AddRow(None, btn_ok, btn_cancel)", prompts)
+        self.assertNotIn("確定（Enter）", prompts)
+        self.assertNotIn("取消（Esc）", prompts)
+        self.assertNotIn("btn_cancel, btn_ok", prompts)
 
     def test_command_id(self):
         self.assertEqual(COMMAND_ID, "LF_Duplicate_Layout")
