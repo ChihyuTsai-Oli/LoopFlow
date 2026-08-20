@@ -29,11 +29,15 @@ from loopflow.features.tagger.laser import (
     bind_laser_hit,
     choice_labels,
     cluster_hits,
+    debug_ray_end,
     hit_choice_label,
     origin_behind_plane,
     run_tagger_laser,
     view_frames_containing,
 )
+import loopflow.features.tagger.laser as laser_mod
+
+laser_mod.DRAW_DEBUG_RAY = False
 from loopflow.features.tagger.templates import load_tag_templates
 from loopflow.features.view.keys import SCHEMA_ID_KEY, VIEW_SCHEMA_ID, VIEW_TRANSFORM_KEY
 from loopflow.features.view.transform import build_transform, encode_transform, ray_from_transform
@@ -157,6 +161,22 @@ class ClusterTests(unittest.TestCase):
         )
         ids = [item["object_id"] for item in hits]
         self.assertEqual(ids, ["wall", "tile"])
+
+
+class DebugRayTests(unittest.TestCase):
+    def test_debug_ray_end_is_length_along_direction(self):
+        self.assertEqual(debug_ray_end((0, 0, 0), (0, 0, 1), 2000), (0.0, 0.0, 2000.0))
+
+    def test_debug_no_hit_reports_drawn_ray(self):
+        laser_mod.DRAW_DEBUG_RAY = True
+        try:
+            session = _session()
+            result = _run(session, probe=lambda *_a: ())
+            self.assertTrue(result.ok, result.message)
+            self.assertIn("已畫出射線", result.message)
+            self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
+        finally:
+            laser_mod.DRAW_DEBUG_RAY = False
 
 
 class ChoiceLabelTests(unittest.TestCase):

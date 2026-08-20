@@ -24,6 +24,10 @@ from loopflow.foundation.usertext import OBJECT_ID_KEY, read_text
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Tagger_Laser"
+DRAW_DEBUG_RAY = True
+DEBUG_RAY_LENGTH = 2000.0
+DEBUG_RAY_LAYER = "LoopFlow::Debug_Laser"
+DEBUG_RAY_COLOR = (255, 0, 255)
 MAX_HIT_OBJECTS = 2
 ORIGIN_BACK = 5.0
 HIT_PRIORITY = {"FRONTAL": 0, "GRAZING": 1, "BACKFACE": 2}
@@ -76,6 +80,29 @@ def origin_behind_plane(origin, direction, back: float = ORIGIN_BACK) -> Tuple[f
         float(origin[1]) - dy * scale,
         float(origin[2]) - dz * scale,
     )
+
+
+def debug_ray_end(origin, direction, length: float = DEBUG_RAY_LENGTH) -> Tuple[float, float, float]:
+    dx, dy, dz = float(direction[0]), float(direction[1]), float(direction[2])
+    size = math.sqrt(dx * dx + dy * dy + dz * dz)
+    if size < 1e-9:
+        return (float(origin[0]), float(origin[1]), float(origin[2]))
+    scale = float(length) / size
+    return (
+        float(origin[0]) + dx * scale,
+        float(origin[1]) + dy * scale,
+        float(origin[2]) + dz * scale,
+    )
+
+
+def draw_debug_ray(session: RhinoSession, plane_point, origin, direction) -> None:
+    """測試用：在 3D 畫出實際射線。測完把 DRAW_DEBUG_RAY 改 False。"""
+    if not DRAW_DEBUG_RAY:
+        return
+    drawer = getattr(session, "draw_laser_debug_ray", None)
+    if not callable(drawer):
+        return
+    drawer(plane_point, origin, debug_ray_end(origin, direction))
 
 
 def cluster_hits(hits: Sequence[dict]):
@@ -346,8 +373,16 @@ def run_tagger_laser(
         model_center = center_fn() if callable(center_fn) else None
         direction = facing_direction(payload, model_center)
         probe_origin = origin_behind_plane(origin, direction)
+        draw_debug_ray(current, origin, probe_origin, direction)
         hits = cluster_hits(probe_fn(current, probe_origin, direction))
         if not hits:
+            if DRAW_DEBUG_RAY:
+                return results.ok(
+                    "probe_view",
+                    "已畫出射線。沒打到帶 UUID 的 3D 物件。請到 3D 視窗查看。",
+                    command_id=COMMAND_ID,
+                    details={"debug_ray": True, "hit_count": 0},
+                )
             return results.blocked(
                 "probe_view",
                 "射線沒有打到帶 UUID 的 3D 物件。",
