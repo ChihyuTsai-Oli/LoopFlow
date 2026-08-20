@@ -163,7 +163,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 → 選用：建立圖目錄（獨立指令 `LF_Catalog`，須先有 Sheet metadata）
 → Infuser 注入 Tag 顯示資料
 → TAG-O 確認活著或斷連</code></pre>
-<p>目前主鏈（開案到 Duplicate Layout）已接通並實機通過。<strong>Sync Worksession 家中 Rhino 8 已測（2026-08-20）。</strong> Document 已實作，待 Rhino 8 實機。TAG-O 只檢查與上色，不實作 Repair。</p>
+<p>目前主鏈（開案到 Duplicate Layout）已接通並實機通過。<strong>Sync Worksession 家中 Rhino 8 已測（2026-08-20）。</strong> Document 程式已寫，等 GitHub 入口頁設置完成後再接上網址並實機。TAG-O 只檢查與上色，不實作 Repair。</p>
 <h2 id="1-開案檢查">1. 開案檢查</h2>
 <p><strong>動作</strong>：解析 <code>LOOPFLOW_WORKFILES_ROOT</code>、Dictionary、<code>exchange/</code>、project identity、schema version 與 Rhino 文件單位。</p>
 <p><strong>使用者介入</strong>：只有設定缺失、專案辨識不明或非 cm 警告時處理。</p>
@@ -281,8 +281,8 @@ IN__201.02__立面圖2
 <p><strong>目前可跑 <code>LF_Sync_Worksession</code>。家中 Rhino 8 已測（2026-08-20）。</strong></p>
 <p>須先把目前檔案存到磁碟。第一次執行會<strong>彈窗</strong>並開始監看<strong>同資料夾</strong>的 <code>.3dm</code>（略過名稱含 <code>~</code> 或 <code>tmp</code> 的暫存檔）。偵測到變動後等待 0.5 秒，在 Rhino idle 時執行 Worksession Refresh，讓出圖端看到最新 3D 參照。只 Refresh，不 Attach／Detach、不改 <code>.rws</code>。Refresh 失敗會延遲再試，<strong>不拆掉上一份有效參照</strong>。再跑一次會彈窗並停止監看。若檔案已另存到別的資料夾，再跑會改監看新位置。未存檔會說明並停止。</p>
 <h2 id="14-Document-獨立指令">14. Document（獨立指令）</h2>
-<p><strong>目前可跑 <code>LF_Document</code>。尚未 Rhino 8 實機。</strong></p>
-<p>執行後用系統瀏覽器開啟 GitHub 上的繁中使用說明，不改模型。打不開時只說明，不寫 Rhino 文件。舊名 <code>LF_Help</code> 不登錄。公開指南目前仍是 1.x，等 G03 才換成 2.0。</p>
+<p><strong>程式已寫。等 GitHub 中英並列入口頁設置完成後，改 <code>DOCUMENT_URL</code> 再實機。現在不要測。</strong></p>
+<p>執行後用系統瀏覽器開啟 <strong>一個</strong> 入口頁（中英並列，頁內再連到各語系說明），不改模型。Rhino 不猜語系。打不開時只說明，不寫 Rhino 文件。舊名 <code>LF_Help</code> 不登錄。公開指南目前仍是 1.x，等 G03 才換成 2.0。</p>
 <h2 id="變更循環">變更循環</h2>
 <h3 id="只改資料">只改資料</h3>
 <p>重新 Scan／Apply／Verify → Publish 新 Registry revision → Sync → Health。若只是人工備註且屬 instance override，不得被 Dictionary 重匯覆寫。</p>
