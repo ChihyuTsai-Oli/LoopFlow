@@ -35,6 +35,7 @@ AI 或開發者依序閱讀：
 | `docs/rhino指令.md` | 開發期目前可跑的 Rhino 指令、按鈕巨集與左右鍵配置；要改指令名稱先改這份 |
 | `docs/Nexus拆分計畫.md` | C02 專用工作包、依賴與分段驗收；不是每次開工作業的必讀 |
 | `docs/LF_Catalog規劃.md` | E05 圖目錄的決策與工作包；不是權威契約，也不是每次開工必讀 |
+| `docs/LD_Document/` | 主工作鏈閱讀圖（給人看）；不是實作規格 |
 
 `docs/工作流程.html` 是由 `docs/工作流程.md` 產生的閱讀版，不是第二份規格；修改 Markdown 後執行 `wip/tools/build_workflow_html.py` 更新。
 

@@ -1,0 +1,519 @@
+<title>LoopFlow 主工作鏈</title>
+<meta name="description" content="LoopFlow 2.0 的 14 步主工作鏈與 5 個附加工具，含實際依賴路徑">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper: #eef2f5;
+    --surface: #ffffff;
+    --surface-2: #e4e9ee;
+    --ink: #16212c;
+    --ink-muted: #57697b;
+    --ink-faint: #8695a5;
+    --line: #ccd6de;
+    --line-strong: #a9b8c4;
+    --cyan: #17789e;
+    --cyan-soft: #dcf0f6;
+    --native-soft: #ece7f7;
+    --native-ink: #5b4a92;
+    --shadow: 0 1px 2px rgba(22, 33, 44, 0.06), 0 6px 20px rgba(22, 33, 44, 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0d151d;
+      --surface: #141f29;
+      --surface-2: #1b2833;
+      --ink: #e7edf2;
+      --ink-muted: #91a2b2;
+      --ink-faint: #5c6c7c;
+      --line: #2b3a47;
+      --line-strong: #3d4f5e;
+      --cyan: #5fc1e0;
+      --cyan-soft: #16303a;
+      --native-soft: #241f38;
+      --native-ink: #b6a6ec;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #0d151d;
+    --surface: #141f29;
+    --surface-2: #1b2833;
+    --ink: #e7edf2;
+    --ink-muted: #91a2b2;
+    --ink-faint: #5c6c7c;
+    --line: #2b3a47;
+    --line-strong: #3d4f5e;
+    --cyan: #5fc1e0;
+    --cyan-soft: #16303a;
+    --native-soft: #241f38;
+    --native-ink: #b6a6ec;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", -apple-system, "Segoe UI", "Noto Sans TC", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  .page { max-width: 900px; margin: 0 auto; padding: 56px 24px 80px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .page { animation: rise 0.5s ease-out both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  }
+
+  /* ---------- Masthead ---------- */
+
+  .masthead { margin-bottom: 36px; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin: 0 0 10px;
+  }
+
+  h1 {
+    font-size: 34px;
+    line-height: 1.15;
+    font-weight: 700;
+    margin: 0 0 12px;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+
+  .lede {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ink-muted);
+    max-width: 64ch;
+    margin: 0;
+  }
+
+  /* ---------- Legend ---------- */
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    margin: 26px 0 0;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
+
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-muted); }
+
+  .badge-demo {
+    width: 22px; height: 22px; border-radius: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 700;
+    background: var(--cyan-soft); color: var(--cyan);
+  }
+  .badge-demo.aux { background: var(--surface-2); color: var(--ink-faint); border: 1px dashed var(--line-strong); }
+  .badge-demo.native { background: var(--native-soft); color: var(--native-ink); }
+
+  /* ---------- Section headers ---------- */
+
+  .section-head { display: flex; align-items: baseline; gap: 10px; margin: 52px 0 20px; }
+  .section-head .num { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ink-faint); }
+  .section-head h2 { font-size: 15px; font-weight: 600; margin: 0; letter-spacing: 0.01em; }
+  .section-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+  /* ---------- Spine ---------- */
+
+  .spine { display: flex; flex-direction: column; align-items: stretch; }
+
+  .connector {
+    width: 2px; height: 26px; background: var(--line-strong);
+    margin: 0 auto; position: relative;
+  }
+  .connector::after {
+    content: ""; position: absolute; left: 50%; bottom: -1px; transform: translateX(-50%);
+    border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--line-strong);
+  }
+  .connector.short { height: 16px; }
+
+  .stage { display: flex; flex-direction: column; gap: 10px; }
+
+  .row { display: grid; gap: 12px; }
+  .row.cols-2 { grid-template-columns: 1fr 1fr; }
+  .row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+
+  .row-label { font-size: 12px; color: var(--ink-faint); text-align: center; margin: 0 0 -2px; }
+
+  .step-note {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    text-align: center;
+    margin: -2px 0 0;
+  }
+
+  /* ---------- Node card ---------- */
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .card.native { background: var(--native-soft); border-color: var(--native-ink); border-style: dashed; }
+
+  .id-badge {
+    flex: none; width: 30px; height: 30px; border-radius: 7px;
+    background: var(--cyan-soft); color: var(--cyan);
+    font-family: "IBM Plex Mono", monospace; font-weight: 700; font-size: 12.5px;
+    display: flex; align-items: center; justify-content: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .card-body { flex: 1; min-width: 0; }
+
+  .card-title {
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    font-size: 14.5px;
+    color: var(--ink);
+    margin: 0 0 3px;
+    word-break: break-word;
+  }
+
+  .card-desc { font-size: 13px; line-height: 1.55; color: var(--ink-muted); margin: 0; }
+
+  /* ---------- Auxiliary satellite ---------- */
+
+  .satellite {
+    display: flex; gap: 10px; align-items: flex-start;
+    margin: 4px 0 4px 34px;
+    padding: 10px 14px;
+    border: 1px dashed var(--line-strong);
+    border-radius: 9px;
+  }
+
+  .satellite .id-badge { background: var(--surface-2); color: var(--ink-faint); width: 26px; height: 26px; font-size: 11px; }
+
+  .satellite-wrap { display: flex; align-items: flex-start; }
+  .satellite-connector { width: 20px; height: 2px; background: var(--line-strong); margin-top: 24px; flex: none; }
+  .satellite-wrap .satellite { margin-left: 0; flex: 1; }
+
+  /* ---------- Fork / paths ---------- */
+
+  .fork-note {
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-muted);
+    max-width: 52ch;
+    margin: 14px auto 0;
+    line-height: 1.6;
+  }
+
+  .paths { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; margin-top: 8px; }
+
+  .path-head {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--cyan); text-align: center; margin: 0 0 12px;
+  }
+
+  .path-col { display: flex; flex-direction: column; }
+
+  .converge-bar { margin: 8px auto 0; text-align: center; font-size: 12.5px; color: var(--ink-faint); }
+
+  .loop-note {
+    text-align: center; font-family: "IBM Plex Mono", monospace; font-size: 12.5px;
+    color: var(--ink-muted); margin-top: 10px;
+  }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 27px; }
+    .row.cols-3 { grid-template-columns: 1fr; }
+    .paths { grid-template-columns: 1fr; }
+    .satellite { margin-left: 0; }
+  }
+</style>
+
+<div class="page">
+
+  <div class="masthead">
+    <p class="eyebrow">LoopFlow 2.0</p>
+    <h1>主工作鏈</h1>
+    <p class="lede">
+      數字（01–14）是主工作鏈，依序或分流走過；A 系列是不卡在鏈上、隨時可用或選用的附加工具。
+    </p>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="badge-demo">04</span>主工作鏈編號</div>
+    <div class="legend-item"><span class="badge-demo aux">A1</span>附加工具</div>
+    <div class="legend-item"><span class="badge-demo native">＊</span>Rhino 原生指令</div>
+  </div>
+
+  <!-- ================= STAGE: Dictionary → Model ================= -->
+
+  <div class="section-head"><span class="num">01–05</span><h2>字典到模型</h2></div>
+
+  <div class="spine">
+    <p class="row-label">字典準備是一段人工核對迴圈，只有 01 接到 04</p>
+    <div class="stage" style="gap:8px;">
+      <div class="card">
+        <div class="id-badge">03</div>
+        <div class="card-body">
+          <p class="card-title">LF_Export_Type_Layers</p>
+          <p class="card-desc">依圖層匯出字典，供人工核對，產生的檔案由 02 開啟</p>
+        </div>
+      </div>
+      <div class="connector short"></div>
+      <div class="card">
+        <div class="id-badge">02</div>
+        <div class="card-body">
+          <p class="card-title">LF_Open_Dictionary_Export</p>
+          <p class="card-desc">開啟從圖層匯出的字典，供人工核對後手動修改回 01</p>
+        </div>
+      </div>
+      <div class="connector short"></div>
+      <p class="step-note">人工核對後手動修改</p>
+      <div class="card">
+        <div class="id-badge">01</div>
+        <div class="card-body">
+          <p class="card-title">LF_Open_Dictionary</p>
+          <p class="card-desc">開啟正式 Excel 字典；經 02／03 核對修改後的內容供 04 讀取</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"></div>
+
+    <div class="stage">
+      <div class="card">
+        <div class="id-badge">04</div>
+        <div class="card-body">
+          <p class="card-title">LF_Nexus</p>
+          <p class="card-desc">將字典資料寫入模型；同一選單接著檢核，比對寫入結果與物件現值</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="satellite-wrap">
+      <div class="satellite-connector"></div>
+      <div class="satellite">
+        <div class="id-badge">A2</div>
+        <div class="card-body">
+          <p class="card-title">LF_Data_Viewer</p>
+          <p class="card-desc">點選物件唯讀顯示現有資料，不寫入、不卡在鏈上</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"></div>
+    <p class="step-note">前置：04 的檢核通過</p>
+
+    <div class="stage">
+      <div class="card">
+        <div class="id-badge">05</div>
+        <div class="card-body">
+          <p class="card-title">LF_Publish_Exchange</p>
+          <p class="card-desc">3D 與 2D 的交接檔，由模型資料寫入，發布新的 Registry revision</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"></div>
+
+    <div class="stage">
+      <div class="card native">
+        <div class="id-badge" style="background:var(--native-soft);color:var(--native-ink);">＊</div>
+        <div class="card-body">
+          <p class="card-title">Rhino Section</p>
+          <p class="card-desc">Rhino 原生剖面工具，產出圖面 A，持續與 3D 模型同步</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"></div>
+
+    <div class="stage">
+      <div class="card">
+        <div class="id-badge">06</div>
+        <div class="card-body">
+          <p class="card-title">LF_Anchor_Frame</p>
+          <p class="card-desc">依圖面 A 登記固定的 2D↔3D 對應，生成錨定外框，供 Laser 定位用</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="satellite-wrap">
+      <div class="satellite-connector"></div>
+      <div class="satellite">
+        <div class="id-badge">A3</div>
+        <div class="card-body">
+          <p class="card-title">LF_Extract_CP</p>
+          <p class="card-desc">
+            依圖面 A 擷取線稿到新圖層，產生可編輯的圖面 B。
+            使用者可將圖面 B 連同錨定框一起沿 X 或 Y 方向平移，放置在圖面 A 旁邊：
+            圖面 A 仍持續與 3D 模型同步，圖面 B 從此離線、不再連結。
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <p class="fork-note">
+      06 完成後，後續 Laser 可對圖面 A 或已平移好的圖面 B 操作——兩者共用同一個錨定框；框本身可移動，隨使用中的那張圖一起平移。
+    </p>
+
+  </div>
+
+  <!-- ================= STAGE: Fork into two paths ================= -->
+
+  <div class="section-head"><span class="num">07–14</span><h2>分為兩條路徑</h2></div>
+
+  <div class="paths">
+
+    <div class="path-col">
+      <p class="path-head">路徑 A · 圖紙與圖目錄</p>
+
+      <div class="satellite-wrap" style="margin-bottom:6px;">
+        <div class="satellite" style="margin-left:0;">
+          <div class="id-badge">A4</div>
+          <div class="card-body">
+            <p class="card-title">LF_Duplicate_Layout</p>
+            <p class="card-desc">複製指定數量的 Layout，通常在編號前使用</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="connector short"></div>
+
+      <div class="card">
+        <div class="id-badge">07</div>
+        <div class="card-body">
+          <p class="card-title">LF_Tagger_Layout_ID</p>
+          <p class="card-desc">按規則自動命名 Layout 圖號，寫入圖框圖號與圖名，同時寫入文件 Sheet metadata</p>
+        </div>
+      </div>
+
+      <div class="connector short"></div>
+      <p class="step-note">前置：07 寫入的 Sheet metadata</p>
+
+      <div class="card">
+        <div class="id-badge">08</div>
+        <div class="card-body">
+          <p class="card-title">LF_Catalog</p>
+          <p class="card-desc">只消費 Sheet metadata 建立圖目錄，不重新解析頁面</p>
+        </div>
+      </div>
+
+      <div class="satellite-wrap" style="margin-top:14px;">
+        <div class="card-body" style="padding:10px 14px;border:1px dashed var(--line-strong);border-radius:9px;font-size:12.5px;line-height:1.55;color:var(--ink-muted);">
+          <b style="color:var(--ink);">跨路徑：</b>07 重新編號後，原本由 11 綁定的 Index Tag 顯示內容會經 14 檢查判定為過期；不必重新執行 11，重跑 12／13 即可更新。
+        </div>
+      </div>
+    </div>
+
+    <div class="path-col">
+      <p class="path-head">路徑 B · Tag 綁定與注入</p>
+
+      <p class="row-label">三種綁定模式，擇一或並用</p>
+      <div class="row" style="grid-template-columns:1fr;gap:8px;">
+        <div class="card">
+          <div class="id-badge">09</div>
+          <div class="card-body">
+            <p class="card-title">LF_Tagger_Laser</p>
+            <p class="card-desc">點選處的投影區域射線綁定物件；須落在 06 已登記的錨定框內</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="id-badge">10</div>
+          <div class="card-body">
+            <p class="card-title">LF_Tagger_Grab</p>
+            <p class="card-desc">直接抓取實際剖面線的來源物件</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="id-badge">11</div>
+          <div class="card-body">
+            <p class="card-title">LF_Tagger_Index</p>
+            <p class="card-desc">綁定到指定的 Detail View</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="connector short"></div>
+      <p class="step-note">前置：已綁定的 Tag</p>
+
+      <div class="row cols-2">
+        <div class="card">
+          <div class="id-badge">12</div>
+          <div class="card-body">
+            <p class="card-title">LF_Infuser_Part</p>
+            <p class="card-desc">寫入目前頁面</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="id-badge">13</div>
+          <div class="card-body">
+            <p class="card-title">LF_Infuser_All</p>
+            <p class="card-desc">寫入所有頁面</p>
+          </div>
+        </div>
+      </div>
+      <p class="step-note">12／13 為同一動作的範圍擇一，不是兩個步驟</p>
+    </div>
+
+  </div>
+
+  <div class="converge-bar">前置：12／13 已完成注入</div>
+  <div class="connector"></div>
+
+  <div class="stage">
+    <div class="card" style="max-width:420px;margin:0 auto;">
+      <div class="id-badge">14</div>
+      <div class="card-body">
+        <p class="card-title">LF_TAG-O</p>
+        <p class="card-desc">檢查所有頁面 Tag 的健康狀態：正常／過期／斷連</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="loop-note">↻ 標示過期 → 只需重跑 12–13 重新注入，不必重新綁定；標示斷連 → 先回 09–11 重新綁定，再重跑 12–13。14 只檢查與上色，不做自動修復</p>
+
+  <!-- ================= Standalone auxiliary ================= -->
+
+  <div class="section-head"><span class="num">A1 · A5</span><h2>不卡在鏈上的獨立工具</h2></div>
+
+  <div class="row cols-2">
+    <div class="satellite" style="margin:0;">
+      <div class="id-badge">A1</div>
+      <div class="card-body">
+        <p class="card-title">LF_Sync_Worksession</p>
+        <p class="card-desc">雙機同步作業</p>
+      </div>
+    </div>
+    <div class="satellite" style="margin:0;">
+      <div class="id-badge">A5</div>
+      <div class="card-body">
+        <p class="card-title">LF_Document</p>
+        <p class="card-desc">GitHub 上的 LoopFlow 使用說明</p>
+      </div>
+    </div>
+  </div>
+
+</div>

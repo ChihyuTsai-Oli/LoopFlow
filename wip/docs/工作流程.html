@@ -207,7 +207,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <p><strong>動作</strong>（在 <strong>2D 模型空間</strong>，不要在 Layout）：</p>
 <ol><li>框選該剖面的 2D 線／圖塊／填充，以及恰好一個 Text Dot（文字須能唯一對到 Clipping Plane 名稱）。</li><li>彈出視窗輸入框線外擴距離（預設 50）。取消不寫入。</li><li>系統以 Text Dot 文字對 Clipping Plane：<strong>完整名稱相同</strong>（不分大小寫）才算。沒有完全相同時，才允許恰好一個較長名稱包含該文字（例如 <code>A-A</code> 對 <code>A-A Section</code>）。<code>LF_立面</code> 不會對到 <code>LF_立面2</code>。找不到、或找到兩個以上，都停止、不猜測。</li><li>新框畫在 <code>LoopFlow::Anchor_Frame</code>。若選取含既有 1.x <code>Role=Anchor_Frame</code> 框，則升級該框、不另畫一條、不刪舊 <code>Role</code>／<code>Target_CP</code>。</li></ol>
 <p>3D 模型（含 worksession 連結檔）須能與該 Clipping Plane 相交，否則無法寫入固定 transform。本批不要求 Layout 上已有 Detail，也不射線。只移動 Clipping Plane 元件、2D 線稿沒變時，不必重跑 Anchor Frame；真的換剖切並重出 2D、或登記後再旋轉／額外鏡射，才須重新執行。</p>
-<p>一個剖面只有一個 Anchor Frame。框與當下要 Laser 的那張圖（圖 A 或圖 B）一起平移時，不必重跑 Anchor Frame；Laser 用框的現況中心當 2D 原點，鏡射係數與 CP 三軸仍用登記時寫入的值。天花反射平面須先把 Section 圖左右鏡射，再跑 Anchor Frame（名稱含 <code>天花</code>／<code>CEILING</code>／<code>RCP</code> 時 <code>scale_x = -1</code>）。登記後不要再額外鏡射或旋轉。</p>
+<p>一個剖面只有一個 Anchor Frame。框與當下要 Laser 的那張圖（圖 A 或圖 B）一起平移時，不必重跑 Anchor Frame；Laser 用框內剖面 Hatch／Curve 現況中心當 2D 原點（不含 Visible 背景），<code>origin_3d_local</code>、鏡射係數與 CP 三軸仍用登記時寫入的值。天花反射平面須先把 Section 圖左右鏡射，再跑 Anchor Frame（名稱含 <code>天花</code>／<code>CEILING</code>／<code>RCP</code> 時 <code>scale_x = -1</code>）。登記後不要再額外鏡射或旋轉。</p>
 <p>View 身分不依名稱或可變線稿 bbox 重新猜測。Section linked output（圖 A）可以先保留、更新與檢查，不必立即 Extract 或 Tag。</p>
 <h2 id="8-Materialize-可編輯-Drawing">8. Materialize 可編輯 Drawing</h2>
 <p>使用者需要獨立整理線稿時，在 <strong>2D 模型空間</strong>跑 <code>LF_Extract_CP</code>。Section 產出是圖 A（linked、不編）；Extract 產出是圖 B（可編輯）。需要時把圖 B 與同一個 Anchor Frame 一起平移，讓圖 B 落在框內再 Laser。</p>
