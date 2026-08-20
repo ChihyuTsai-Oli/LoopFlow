@@ -192,6 +192,19 @@ def run_extract_cp() -> Result:
     return result
 
 
+def run_duplicate_layout() -> Result:
+    from loopflow.features.sheet.duplicate import run_duplicate_layout as run_duplicate
+    from loopflow.platform.rhino.prompts import show_message
+
+    opened = _open_live_session()
+    if not opened.ok:
+        return opened
+    result = run_duplicate(opened.details["session"], show_message=show_message)
+    if not result.ok:
+        return _present_failure(result)
+    return result
+
+
 RUNNERS: Dict[str, Runner] = {
     "LF_Nexus": run_nexus,
     "LF_Open_Dictionary": run_open_dictionary,
@@ -209,6 +222,7 @@ RUNNERS: Dict[str, Runner] = {
     "LF_Infuser_All": run_infuser_all,
     "LF_TAG-O": run_tag_o,
     "LF_Extract_CP": run_extract_cp,
+    "LF_Duplicate_Layout": run_duplicate_layout,
 }
 
 

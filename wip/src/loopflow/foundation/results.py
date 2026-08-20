@@ -56,6 +56,7 @@ STAGES = (
     "infuse_tags",
     "health_check",
     "extract_drawing",
+    "duplicate_layout",
 )
 
 

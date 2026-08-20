@@ -109,6 +109,23 @@ def ask_popup_choice(
     return str(value)
 
 
+def ask_integer(
+    message: str,
+    default: int = 1,
+    minimum: int = 1,
+    maximum: int = 100,
+) -> Optional[int]:
+    """指令列整數。取消回傳 None。"""
+    try:
+        import rhinoscriptsyntax as rs  # type: ignore
+    except ImportError:
+        return None
+    value = rs.GetInteger(message, int(default), int(minimum), int(maximum))
+    if value is None:
+        return None
+    return int(value)
+
+
 def _restore_page_view(original_view) -> None:
     if original_view is None:
         return

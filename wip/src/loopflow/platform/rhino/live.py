@@ -1714,6 +1714,158 @@ class LiveSession:
             return False
         return True
 
+    def layout_page_size(self, page_name: str):
+        page = self._page_view(page_name)
+        if page is None:
+            return None
+        try:
+            return (float(page.PageWidth), float(page.PageHeight))
+        except Exception:
+            return None
+
+    def add_layout_page(self, name: str, width: float, height: float):
+        """新增 Layout 頁並刪掉 Rhino 預設 Detail。不使用剪貼簿。"""
+        title = str(name or "").strip()
+        if not title or self._page_view(title) is not None:
+            return None
+        try:
+            page = self._sc.doc.Views.AddPageView(title, float(width), float(height))
+        except Exception:
+            page = None
+        if page is None:
+            return None
+        self._delete_default_details(page)
+        self._redraw_views()
+        return str(getattr(page, "PageName", None) or title)
+
+    def delete_layout_page(self, page_name: str) -> bool:
+        title = str(page_name or "")
+        if not title:
+            return False
+        try:
+            deleted = self._rs.DeleteLayout(title)
+        except Exception:
+            deleted = False
+        if deleted:
+            self._redraw_views()
+        return bool(deleted)
+
+    def copy_layout_page_objects(self, source_page: str, target_page: str):
+        """以 Rhino API 複製頁物件到目標頁，含 Detail 視窗對應。不碰系統剪貼簿。"""
+        source = self._page_view(source_page)
+        target = self._page_view(target_page)
+        if source is None or target is None:
+            return {}
+        try:
+            source_main = source.MainViewport.Id
+            target_main = target.MainViewport.Id
+        except Exception:
+            return {}
+        vp_map = {source_main: target_main}
+        try:
+            vp_map[source.Id] = target.Id
+        except Exception:
+            pass
+        detail_type = getattr(getattr(self._rhino, "DocObjects", None), "DetailViewObject", None)
+        source_ids = list(self.objects_on_layout_page(source_page))
+        details = []
+        others = []
+        for object_id in source_ids:
+            obj = self._rhino_object(object_id)
+            if detail_type is not None and obj is not None and isinstance(obj, detail_type):
+                details.append(object_id)
+            else:
+                others.append(object_id)
+        mapping = {}
+        for object_id in details:
+            old_obj = self._rhino_object(object_id)
+            old_vp = self._detail_viewport_guid(old_obj)
+            new_id = self._duplicate_to_viewport(object_id, target_main)
+            if not new_id:
+                continue
+            mapping[str(object_id)] = new_id
+            new_obj = self._rhino_object(new_id)
+            new_vp = self._detail_viewport_guid(new_obj)
+            if old_vp is not None and new_vp is not None:
+                vp_map[old_vp] = new_vp
+            if old_obj is not None and new_obj is not None:
+                try:
+                    vp_map[old_obj.Id] = new_obj.Id
+                except Exception:
+                    pass
+        for object_id in others:
+            obj = self._rhino_object(object_id)
+            old_vp = None
+            if obj is not None:
+                try:
+                    old_vp = obj.Attributes.ViewportId
+                except Exception:
+                    old_vp = None
+            new_vp = vp_map.get(old_vp, target_main)
+            new_id = self._duplicate_to_viewport(object_id, new_vp)
+            if new_id:
+                mapping[str(object_id)] = new_id
+        try:
+            self._rs.UnselectAllObjects()
+        except Exception:
+            pass
+        self._redraw_views()
+        return mapping
+
+    def _delete_default_details(self, page) -> None:
+        detail_type = getattr(getattr(self._rhino, "DocObjects", None), "DetailViewObject", None)
+        if page is None or detail_type is None:
+            return
+        try:
+            page_vp = page.MainViewport.Id
+        except Exception:
+            return
+        to_delete = []
+        for obj in self._iter_rhino_objects(include_linked=False):
+            if obj is None or not isinstance(obj, detail_type):
+                continue
+            try:
+                if obj.Attributes.ViewportId != page_vp:
+                    continue
+            except Exception:
+                continue
+            to_delete.append(obj.Id)
+        for oid in to_delete:
+            try:
+                self._sc.doc.Objects.Delete(oid, True)
+            except Exception:
+                pass
+
+    def _detail_viewport_guid(self, obj):
+        if obj is None:
+            return None
+        for name in ("Viewport", "MainViewport"):
+            viewport = getattr(obj, name, None)
+            if viewport is None:
+                continue
+            vid = getattr(viewport, "Id", None)
+            if vid is not None:
+                return vid
+        return None
+
+    def _duplicate_to_viewport(self, object_id: str, viewport_id):
+        copied = self._rs.CopyObject(object_id)
+        if not copied:
+            return None
+        obj = self._rhino_object(copied)
+        if obj is None or viewport_id is None:
+            return str(copied)
+        try:
+            obj.Attributes.ViewportId = viewport_id
+            space = getattr(getattr(self._rhino, "DocObjects", None), "ActiveSpace", None)
+            page_space = getattr(space, "PageSpace", None)
+            if page_space is not None:
+                obj.Attributes.Space = page_space
+            obj.CommitChanges()
+        except Exception:
+            pass
+        return str(copied)
+
     def detail_model_point(self, detail_id: str):
         obj = self._rhino_object(detail_id)
         if obj is None:

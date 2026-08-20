@@ -163,7 +163,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 → 選用：建立圖目錄（獨立指令 `LF_Catalog`，須先有 Sheet metadata）
 → Infuser 注入 Tag 顯示資料
 → TAG-O 確認活著或斷連</code></pre>
-<p>目前主鏈（開案到 Extract CP）已接通並實機通過。剩餘：<strong>Duplicate Layout → Sync Worksession → Document。</strong> TAG-O 只檢查與上色，不實作 Repair。</p>
+<p>目前主鏈（開案到 Extract CP）已接通並實機通過。<strong>Duplicate Layout 已實作，待 Rhino 8 實機。</strong> 剩餘：<strong>Sync Worksession → Document。</strong> TAG-O 只檢查與上色，不實作 Repair。</p>
 <h2 id="1-開案檢查">1. 開案檢查</h2>
 <p><strong>動作</strong>：解析 <code>LOOPFLOW_WORKFILES_ROOT</code>、Dictionary、<code>exchange/</code>、project identity、schema version 與 Rhino 文件單位。</p>
 <p><strong>使用者介入</strong>：只有設定缺失、專案辨識不明或非 cm 警告時處理。</p>
@@ -259,9 +259,10 @@ IN__201.02__立面圖2
 <p>不要直接改圖框 UserText（下次 Layout ID 會依規則重算）。用 Layout 頁名再跑一次：</p>
 <ul><li><strong>還沒按確認：</strong> 核對清單按取消，改頁名，再跑。</li><li><strong>只改圖名：</strong> 改第三欄，例如 <code>**IN__201__立面圖</code> → <code>**IN__201__一樓平面</code>，再跑。圖號仍依系列重算。若把頁名改成沒有 <code>__</code> 的亂名，且前面已有 <code>**</code>：當成誤改，圖名維持舊的，頁名改回自動組成的名字（起點頁仍帶 <code>**</code>）。</li><li><strong>改編號或從某頁重排：</strong> 在那一頁最前面再加 <code>**</code>，寫成你要的 <code>**圖類別__圖號__圖名</code>，再跑。該頁變成新起點，後面跟著從這個尾數往後編，直到下一頁也有 <code>**</code>。例如第四頁起要從 <code>301</code> 開始 → 把第四頁改成 <code>**IN__301__新圖名</code> 再跑。</li><li><strong>手動固定某一頁圖號：</strong> 用 <code>//圖類別__圖號__圖名</code>，不佔系列。</li><li><strong>不要</strong>刪掉所有起點頁的 <code>**</code>；檔案裡一個 <code>**</code> 都沒有時會停止、不改圖框。不要指望只改中間一頁、後面完全不動；連續編號就是這樣算的。</li></ul>
 <h3 id="Duplicate-Sheet">Duplicate Sheet</h3>
-<p>2.0 <strong>尚未實作</strong> Duplicate Layout；本節只鎖定複製後的 ID 與清除／保留規則。Extract CP 已通過，<strong>現在可開 Duplicate Layout</strong>。不要開 Sync Worksession／Document。</p>
+<p><strong>目前可跑 <code>LF_Duplicate_Layout</code>。尚未 Rhino 8 實機。</strong> 不要開 Sync Worksession／Document。</p>
+<p>從清單選來源 Layout，再輸入份數（1～100）。複製以 Rhino API 完成，<strong>不覆蓋系統剪貼簿</strong>。新頁名保留三欄 <code>圖類別__圖號__圖名</code>（圖名加 <code>_CopyN</code>），不加 <code>**</code>／<code>//</code>，避免誤當新系列起點；之後可跑 Layout ID 重算圖號。</p>
 <p>複製後建立新的 <code>sheet_id</code>、<code>drawing_id</code> 與 <code>tag_id</code>；圖目錄定位點的 <code>lf_catalog_id</code> 也必須換新號：</p>
-<ul><li>除 <code>TAG_DW</code> 外，所有 Tag 清除來源綁定、自動欄位與人工補充說明，並恢復 template 預設 lock。</li><li><code>TAG_DW</code> 的人工編號、寬、高與其他內容完整保留。</li><li>使用者重新綁定新頁 Tag。</li><li>不覆蓋系統剪貼簿。</li></ul>
+<ul><li>除 <code>TAG_DW</code> 外，所有 Tag 清除來源綁定、自動欄位與人工補充說明，並恢復 template 預設 lock。</li><li><code>TAG_DW</code> 的人工編號、寬、高與其他內容完整保留。</li><li>圖框圖號／圖名先清（等 Layout ID 重算），<code>lf_scale</code> 保留。</li><li>綁到來源 Sheet 的圖目錄定位點改綁新 <code>sheet_id</code>；綁其他 Sheet 的維持原值。</li><li>使用者重新綁定新頁 Tag。</li><li>取消、來源無物件或失敗不留下半成品頁。重跑可再複製。</li></ul>
 <h3 id="圖目錄-獨立指令-須先有-Sheet-metadata">圖目錄（獨立指令，須先有 Sheet metadata）</h3>
 <p><code>LF_Catalog</code> 只消費 Sheet metadata，不建立第二套圖號。使用者選獨立的圖號／圖名定位點與要列入的 Sheet；定位點綁 <code>sheet_id</code>，新建文字以定位點為左下角原點，Refresh 更新內容並保留字型、大小、圖層與已移動的位置。可清除定位點資料並還原選取前的圖層。<code>LoopFlow</code> 與其子圖層不列印（列印寬度 <code>No Print</code>）。操作見 <code>rhino指令.md</code>；契約見 <code>資料契約.md</code> 的 Catalog Anchor。</p>
 <h2 id="10-建立與綁定-Tag">10. 建立與綁定 Tag</h2>

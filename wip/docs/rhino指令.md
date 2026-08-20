@@ -60,6 +60,9 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_TAG-O.py"
 LF_Extract_CP
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Extract_CP.py"
 
+LF_Duplicate_Layout
+_-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Duplicate_Layout.py"
+
 LF_D08_Migrate_Display_Keys
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Display_Keys.py"
 ```
@@ -83,6 +86,7 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Disp
 | Infuser All | `LF_Infuser_All` | — |
 | TAG-O | `LF_TAG-O` | — |
 | Extract | `LF_Extract_CP` | — |
+| Duplicate Layout | `LF_Duplicate_Layout` | — |
 
 開發期輔助（**不是產品指令**，不進正式工具列）：`LF_D08_Migrate_Display_Keys` 全檔把圖塊舊顯示欄抄到 `lf_*` 後刪舊名字。鎖定欄若寫 `x`／`X` 會抄到 `lf_00_lock_state` 後刪舊名字；提示文字只刪不抄。圖塊公式改完後跑一次即可，不必逐張刪 UserText。
 
@@ -105,6 +109,8 @@ Infuser All：跑 `LF_Infuser_All`，規則與 Part 相同，一次處理**全�
 TAG-O：跑 `LF_TAG-O`，開 **TAG-O ~ Holy Cargo ~~** 深色面板（可捲動），依 Layout 頁序列出已綁定 Tag，頁與頁之間灰線。`[正常]` 綠 `#AADC78`；`[過期]` 橘 `#EA9328`（自動欄 `!`、整顆塗橘）；`[斷連]` 紅 `#D81C1C`（自動欄 `?`、整顆塗紅）。來源不在、目標頁／Detail 消失都顯示斷連。未綁定不列出。**點選項目會反白該列、切到該 Layout 並拉近，留出圖框周圍。** 只檢查 D08 Tag 圖塊。家具改名而未注入為過期，刪除綁定實例為斷連。並列出沒被 Finish Tag 涵蓋的空間。模型空間也可跑。鎖定的 Tag 仍列出並標「鎖定」，但不改文字與顏色。門窗與 `TAG_ELEV_0` 不列入。沒掃到 Tag 時不顯示「全部正常」。只檢查與上色，不自動修復；使用者依此自行修改。斷連再綁定後跑 Infuser 可恢復，不必刪 Tag。**家中 Rhino 8 已測（2026-08-19）。**
 
 Extract：在 **2D 模型空間**跑 `LF_Extract_CP`。勾選 Clipping Drawing 的剖面根圖層（底下有 Visible／Hatch／Curve）。根名稱以 `//` 開頭的不列入。複製到 `LoopFlow_Extract::Visible`、`::Hatch`、`::Curve_#RRGGBB`，可列印；Visible／Hatch 列印色灰 `#BEBEBE`，其餘黑。抽出線只留 Drawing 的 `lf_*`，不含 3D 的 `_01`～`_14`。寫 `lf_drawing_id`、來源 `lf_view_id`（圖層前綴與框名完整相同，`LF_立面` 不會對到 `LF_立面2`）、來源 revision 與 `lf_source_object_ids`。同一 View／同一剖面若已有抽出，選取代／新增／略過。已人工修改（`lf_provenance_state=modified`）不會被取代覆蓋。Esc／取消、Layout 頁、找不到剖面圖層、兩個框完整同名，都不寫入。來源剖面圖層鎖定狀態會還原。不進 Nexus。**公司 Rhino 8 已測（2026-08-20）。**
+
+Duplicate Layout：跑 `LF_Duplicate_Layout`。清單選來源 Layout，輸入份數（1～100）。以 Rhino API 複製整頁（含 Detail、圖框、Tag），**不改系統剪貼簿**。新頁名保留三欄，圖名加 `_CopyN`，不加 `**`／`//`。新頁發新的 `sheet_id`／`drawing_id`／`tag_id`／`catalog_id`。除 `TAG_DW` 外，綁定與自動欄、補充說明會清掉，lock 恢復未鎖。`TAG_DW` 編號／寬／高保留。圖框比例保留，圖號／圖名先清（之後跑 Layout ID）。Esc／取消、沒有 Layout、來源沒物件，都不寫入。失敗會刪掉已建的半成品頁。再跑可再複製。不進 Nexus。**待關 Rhino 再開再測。**
 
 左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。正式工具列在 G02 封裝時才建立。
 
@@ -140,11 +146,10 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Test_Random_M3D_
 
 ## 預定新增
 
-剩餘開發順序：**Duplicate Layout → Sync Worksession → Document。** Extract CP **公司 Rhino 8 已測（2026-08-20）**。現在可開 Duplicate Layout。
+剩餘開發順序：**Sync Worksession → Document。** Extract CP **公司 Rhino 8 已測（2026-08-20）**。Duplicate Layout 已實作，待關 Rhino 再開再測。
 
 | 指令 | 用途 | 狀態 |
 |---|---|---|
-| `LF_Duplicate_Layout` | 複製 Layout，新 ID 並依契約清除／保留 Tag | 已登錄 ID；尚未實作 |
 | `LF_Sync_Worksession` | 監看與更新 Worksession | 已登錄 ID；尚未實作 |
 | `LF_Document` | 開啟 GitHub 上的 LoopFlow 文件頁 | 已登錄 ID；尚未實作。舊名 `LF_Help` 不登錄 |
 

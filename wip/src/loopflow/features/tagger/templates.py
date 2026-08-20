@@ -17,6 +17,16 @@ DEFAULT_PATH = (
 
 
 @dataclass(frozen=True)
+class TagField:
+    """manifest 顯示欄。Duplicate 依 `clear_on_duplicate` 清除或保留。"""
+
+    key: str
+    usertext: str
+    owner: str = ""
+    clear_on_duplicate: bool = False
+
+
+@dataclass(frozen=True)
 class TagTemplate:
     template_id: str
     family: str
@@ -25,6 +35,8 @@ class TagTemplate:
     binding_modes: Tuple[str, ...]
     lock_allowed: bool
     source_block_name_pattern: Optional[str] = None
+    default_lock_state: Optional[bool] = None
+    fields: Tuple[TagField, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -69,6 +81,21 @@ def load_tag_templates(path: Optional[Path] = None) -> results.Result:
         )
     templates = []
     for item in payload.get("templates") or ():
+        lock_allowed = bool(item.get("lock_allowed"))
+        raw_lock = item.get("default_lock_state")
+        default_lock = bool(raw_lock) if lock_allowed and raw_lock is not None else (
+            False if lock_allowed else None
+        )
+        fields = tuple(
+            TagField(
+                key=str(field.get("key") or ""),
+                usertext=str(field.get("usertext") or ""),
+                owner=str(field.get("owner") or ""),
+                clear_on_duplicate=bool(field.get("clear_on_duplicate")),
+            )
+            for field in (item.get("fields") or ())
+            if field.get("usertext")
+        )
         templates.append(
             TagTemplate(
                 template_id=str(item["template_id"]),
@@ -76,8 +103,10 @@ def load_tag_templates(path: Optional[Path] = None) -> results.Result:
                 role=str(item.get("role") or ""),
                 block_names=tuple(item.get("block_names") or ()),
                 binding_modes=tuple(item.get("binding_modes") or ()),
-                lock_allowed=bool(item.get("lock_allowed")),
+                lock_allowed=lock_allowed,
                 source_block_name_pattern=item.get("source_block_name_pattern"),
+                default_lock_state=default_lock,
+                fields=fields,
             )
         )
     catalog = TagTemplateSet(

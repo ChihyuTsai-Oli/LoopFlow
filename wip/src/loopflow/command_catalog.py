@@ -48,6 +48,7 @@ _READY = {
     "LF_Infuser_All": "D07",
     "LF_TAG-O": "D05",
     "LF_Extract_CP": "E02",
+    "LF_Duplicate_Layout": "E03",
 }
 
 _COMMANDS = {

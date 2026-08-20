@@ -37,6 +37,8 @@ class MemorySession:
         self._layout_details: list = []
         self._layout_pages: List[str] = []
         self._page_objects: Dict[str, List[str]] = {}
+        self._layout_sizes: Dict[str, tuple] = {}
+        self.clipboard_ops: List[str] = []
         self._unassigned_paper_ids: List[str] = []
         self._detail_model_points: Dict[str, tuple] = {}
         self.zoomed_layout_details: List[dict] = []
@@ -279,6 +281,16 @@ class MemorySession:
             self._bboxes[new_id] = copy.deepcopy(self._bboxes[object_id])
         if object_id in self._points:
             self._points[new_id] = tuple(self._points[object_id])
+        if object_id in self._blocks:
+            self._blocks[new_id] = copy.deepcopy(self._blocks[object_id])
+        if object_id in self._block_names:
+            self._block_names[new_id] = self._block_names[object_id]
+        if object_id in self._texts:
+            self._texts[new_id] = copy.deepcopy(self._texts[object_id])
+        if object_id in self._text_dots:
+            self._text_dots[new_id] = copy.deepcopy(self._text_dots[object_id])
+        if object_id in self._clipping_planes:
+            self._clipping_planes[new_id] = copy.deepcopy(self._clipping_planes[object_id])
         return new_id
 
     def reset_object_to_bylayer(self, object_id: str) -> None:
@@ -713,11 +725,13 @@ class MemorySession:
         self._layout_pages = [str(name) for name in names]
         for name in self._layout_pages:
             self._page_objects.setdefault(name, [])
+            self._layout_sizes.setdefault(name, (297.0, 210.0))
 
     def add_object_to_layout_page(self, page_name: str, object_id: str) -> None:
         page = str(page_name)
         if page not in self._layout_pages:
             self._layout_pages.append(page)
+            self._layout_sizes.setdefault(page, (297.0, 210.0))
         self._page_objects.setdefault(page, [])
         if object_id not in self._page_objects[page]:
             self._page_objects[page].append(object_id)
@@ -730,6 +744,45 @@ class MemorySession:
 
     def objects_on_layout_page(self, page_name: str):
         return tuple(self._page_objects.get(str(page_name), ()))
+
+    def layout_page_size(self, page_name: str):
+        size = self._layout_sizes.get(str(page_name))
+        if not size:
+            return None
+        return (float(size[0]), float(size[1]))
+
+    def add_layout_page(self, name: str, width: float, height: float):
+        page = str(name or "").strip()
+        if not page or page in self._layout_pages:
+            return None
+        self._layout_pages.append(page)
+        self._page_objects[page] = []
+        self._layout_sizes[page] = (float(width), float(height))
+        self._modified = True
+        return page
+
+    def delete_layout_page(self, page_name: str) -> bool:
+        page = str(page_name)
+        if page not in self._layout_pages:
+            return False
+        for object_id in list(self._page_objects.get(page, ())):
+            self.delete_object(object_id)
+        self._layout_pages.remove(page)
+        self._page_objects.pop(page, None)
+        self._layout_sizes.pop(page, None)
+        self._modified = True
+        return True
+
+    def copy_layout_page_objects(self, source_page: str, target_page: str):
+        """複製頁上物件到目標頁。不使用剪貼簿。"""
+        mapping = {}
+        for object_id in list(self.objects_on_layout_page(source_page)):
+            new_id = self.copy_object(object_id)
+            if not new_id:
+                continue
+            mapping[str(object_id)] = new_id
+            self.add_object_to_layout_page(target_page, new_id)
+        return mapping
 
     def add_unassigned_paper_object(self, object_id: str) -> None:
         key = str(object_id)

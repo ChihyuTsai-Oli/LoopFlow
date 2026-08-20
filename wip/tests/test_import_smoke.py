@@ -45,6 +45,14 @@ class ImportSmokeTests(unittest.TestCase):
         self.assertEqual(spec["entrypoint"], "LF_Catalog.py")
         self.assertEqual(spec["task"], "E05")
 
+    def test_catalog_lists_duplicate_layout(self):
+        from loopflow.command_catalog import get_command
+
+        spec = get_command("LF_Duplicate_Layout")
+        self.assertEqual(spec["status"], "ready")
+        self.assertEqual(spec["entrypoint"], "LF_Duplicate_Layout.py")
+        self.assertEqual(spec["task"], "E03")
+
     def test_catalog_lists_data_viewer(self):
         from loopflow.command_catalog import get_command
 
@@ -82,7 +90,6 @@ class ImportSmokeTests(unittest.TestCase):
         from loopflow.command_catalog import CORE_COMMANDS, get_command
 
         remaining = (
-            "LF_Duplicate_Layout",
             "LF_Sync_Worksession",
             "LF_Document",
         )
@@ -91,9 +98,13 @@ class ImportSmokeTests(unittest.TestCase):
             self.assertEqual(get_command(command_id)["status"], "not_implemented")
 
         with redirect_stdout(io.StringIO()):
-            result = run_command("LF_Duplicate_Layout")
+            result = run_command("LF_Sync_Worksession")
         self.assertFalse(result.ok)
         self.assertEqual(result.status, "not_implemented")
+        with redirect_stdout(io.StringIO()):
+            result = run_command("LF_Duplicate_Layout")
+        self.assertFalse(result.ok)
+        self.assertNotEqual(result.status, "not_implemented")
         with redirect_stdout(io.StringIO()):
             result = run_command("LF_Extract_CP")
         self.assertFalse(result.ok)
