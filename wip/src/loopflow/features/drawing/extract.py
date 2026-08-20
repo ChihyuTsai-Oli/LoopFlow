@@ -252,6 +252,14 @@ def _restore_layers(session: RhinoSession, snapshot: Mapping[str, Mapping]) -> N
             visible_fn(path, bool(state.get("visible")))
 
 
+def _clear_object_user_text(session: RhinoSession, object_id: str) -> None:
+    keys_fn = getattr(session, "object_user_text_keys", None)
+    if not callable(keys_fn):
+        return
+    for key in tuple(keys_fn(object_id) or ()):
+        session.set_object_user_text(object_id, str(key), "")
+
+
 def _ensure_extract_layer(session: RhinoSession, path: str, rgb=None) -> None:
     session.ensure_layer(path)
     if rgb is not None:
@@ -383,11 +391,12 @@ def extract_root(
             new_id = copier(object_id)
             if not new_id:
                 continue
+            source_ids = source_object_ids(session, object_id)
             session.set_object_layer(new_id, target)
             reset = getattr(session, "reset_object_to_bylayer", None)
             if callable(reset):
                 reset(new_id)
-            source_ids = source_object_ids(session, object_id)
+            _clear_object_user_text(session, new_id)
             state, bucket, method = classify_sources(source_ids)
             coverage[bucket] = coverage.get(bucket, 0) + 1
             _write_element(

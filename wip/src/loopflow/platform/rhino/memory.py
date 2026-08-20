@@ -7,9 +7,9 @@ from typing import Dict, List, Optional
 
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import (
+    apply_extract_layer_print,
     capture_snapshot,
     restore_snapshot,
-    silence_extract_layers,
     silence_loopflow_layers,
 )
 from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
@@ -173,7 +173,7 @@ class MemorySession:
                 self._layers[current] = {"user_text": {}}
                 self._modified = True
         silence_loopflow_layers(self, path)
-        silence_extract_layers(self, path)
+        apply_extract_layer_print(self, path)
         return created
 
     def delete_layer(self, path: str) -> None:
@@ -214,6 +214,19 @@ class MemorySession:
         if value is None:
             return None
         return bool(value)
+
+    def set_layer_print_color(self, path: str, rgb) -> None:
+        if path not in self._layers:
+            return
+        self._layers[path]["print_color"] = tuple(int(value) for value in rgb[:3])
+        self._modified = True
+
+    def layer_print_color(self, path: str):
+        layer = self._layers.get(path) or {}
+        value = layer.get("print_color")
+        if value is None:
+            return None
+        return tuple(int(item) for item in value[:3])
 
     def layer_color(self, path: str):
         layer = self._layers.get(path) or {}

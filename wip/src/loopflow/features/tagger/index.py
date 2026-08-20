@@ -140,7 +140,7 @@ def resolve_view_for_detail(session: RhinoSession, item: dict) -> results.Result
     if len(frames) == 0:
         return results.blocked(
             "bind_tag",
-            "這個 Detail 對不到已登記 View。請先跑註冊 View。",
+            "這個 Detail 對不到已登記 View。請先執行 Anchor Frame。",
             ("missing_view",),
             command_id=COMMAND_ID,
         )
@@ -155,7 +155,7 @@ def resolve_view_for_detail(session: RhinoSession, item: dict) -> results.Result
     if not view_id:
         return results.blocked(
             "bind_tag",
-            "目標 View 沒有合法的 lf_view_id。請先跑註冊 View。",
+            "目標 View 沒有合法的 lf_view_id。請先執行 Anchor Frame。",
             ("missing_view",),
             command_id=COMMAND_ID,
         )
@@ -229,7 +229,7 @@ def bind_index_view(
     if not bound_view:
         return results.blocked(
             "bind_tag",
-            "目標 View 沒有合法的 lf_view_id。請先跑註冊 View。",
+            "目標 View 沒有合法的 lf_view_id。請先執行 Anchor Frame。",
             ("missing_view",),
             command_id=COMMAND_ID,
         )

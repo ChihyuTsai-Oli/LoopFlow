@@ -52,7 +52,10 @@ def _session() -> MemorySession:
         "vis",
         layer="A-A::Visible",
         color=drawing_keys.COLOR_VISIBLE,
-        user_text={OBJECT_ID_KEY: SOURCE_A},
+        user_text={
+            OBJECT_ID_KEY: SOURCE_A,
+            "_01_空間名稱": "廊道",
+        },
     )
     session.add_object("hat", layer="A-A::Hatch", color=drawing_keys.COLOR_HATCH)
     session.add_object(
@@ -168,8 +171,24 @@ class ExtractTests(unittest.TestCase):
                 "LoopFlow_Extract::Curve_#FF0000",
             },
         )
-        self.assertFalse(session.layer_printable(drawing_keys.EXTRACT_LAYER_ROOT))
-        self.assertFalse(session.layer_printable(drawing_keys.LAYER_VISIBLE))
+        self.assertTrue(session.layer_printable(drawing_keys.EXTRACT_LAYER_ROOT))
+        self.assertTrue(session.layer_printable(drawing_keys.LAYER_VISIBLE))
+        self.assertEqual(
+            session.layer_print_color(drawing_keys.LAYER_VISIBLE),
+            drawing_keys.COLOR_PRINT_GRAY,
+        )
+        self.assertEqual(
+            session.layer_print_color(drawing_keys.LAYER_HATCH),
+            drawing_keys.COLOR_PRINT_GRAY,
+        )
+        self.assertEqual(
+            session.layer_print_color(drawing_keys.EXTRACT_LAYER_ROOT),
+            drawing_keys.COLOR_PRINT_BLACK,
+        )
+        self.assertEqual(
+            session.layer_print_color("LoopFlow_Extract::Curve_#FF0000"),
+            drawing_keys.COLOR_PRINT_BLACK,
+        )
         drawing_ids = {
             session.get_object_user_text(object_id, drawing_keys.DRAWING_ID_KEY)
             for object_id in ids
@@ -184,6 +203,10 @@ class ExtractTests(unittest.TestCase):
             for object_id in ids
             if session.object_layer(object_id) == drawing_keys.LAYER_VISIBLE
         )
+        self.assertIsNone(session.get_object_user_text(vis, OBJECT_ID_KEY))
+        self.assertIsNone(session.get_object_user_text(vis, "_01_空間名稱"))
+        for key in session.object_user_text_keys(vis):
+            self.assertTrue(str(key).startswith("lf_"), key)
         self.assertIn(
             SOURCE_A,
             session.get_object_user_text(vis, drawing_keys.SOURCE_OBJECT_IDS_KEY),

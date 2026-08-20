@@ -155,6 +155,13 @@ class LoopFlowLayerTests(unittest.TestCase):
         self.assertFalse(session.layer_printable("LoopFlow"))
         self.assertFalse(session.layer_printable("LoopFlow::Anchor_Frame"))
         self.assertIsNone(session.layer_printable("M3D::01_Wall"))
+        session.ensure_layer("LoopFlow_Extract::Visible")
+        session.ensure_layer("LoopFlow_Extract::Curve_#FF0000")
+        self.assertTrue(session.layer_printable("LoopFlow_Extract"))
+        self.assertTrue(session.layer_printable("LoopFlow_Extract::Visible"))
+        self.assertEqual(session.layer_print_color("LoopFlow_Extract::Visible"), (190, 190, 190))
+        self.assertEqual(session.layer_print_color("LoopFlow_Extract"), (0, 0, 0))
+        self.assertEqual(session.layer_print_color("LoopFlow_Extract::Curve_#FF0000"), (0, 0, 0))
 
 
 class ColorHelperTests(unittest.TestCase):

@@ -11,7 +11,7 @@ from loopflow.features.tagger.keys import (
 )
 from loopflow.features.tagger.templates import TagTemplate, TagTemplateSet, load_tag_templates
 from loopflow.features.view.keys import SCHEMA_ID_KEY, VIEW_SCHEMA_ID, VIEW_TRANSFORM_KEY
-from loopflow.features.view.transform import decode_transform, ray_from_transform
+from loopflow.features.view.transform import bbox_center_2d, decode_transform, ray_from_transform
 from loopflow.features.viewer.inspect import check_document_schema
 from loopflow.foundation import results
 from loopflow.foundation.usertext import OBJECT_ID_KEY, read_text
@@ -284,7 +284,7 @@ def run_tagger_laser(
         if not frames:
             return results.blocked(
                 "probe_view",
-                "這一點不在任何已登記的 View 框內。請先跑註冊 View。",
+                "這一點不在任何已登記的 View 框內。請先執行 Anchor Frame。",
                 ("missing_view",),
                 command_id=COMMAND_ID,
             )
@@ -300,11 +300,15 @@ def run_tagger_laser(
         if payload is None:
             return results.blocked(
                 "probe_view",
-                "View 框沒有合法的固定 transform。請重新登記 View。",
+                "View 框沒有合法的固定 transform。請重新執行 Anchor Frame。",
                 ("invalid_transform",),
                 command_id=COMMAND_ID,
                 details={"frame_id": frames[0]},
             )
+        live_origin = bbox_center_2d(current.object_bbox(frames[0]))
+        if live_origin is not None:
+            payload = dict(payload)
+            payload["origin_2d"] = [live_origin[0], live_origin[1], live_origin[2]]
         origin, direction = ray_from_transform(payload, point_2d)
         hits = cluster_hits(probe_fn(current, origin, direction))
         if not hits:

@@ -9,9 +9,9 @@ from typing import Optional, Tuple
 
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import (
+    apply_extract_layer_print,
     capture_snapshot,
     restore_snapshot,
-    silence_extract_layers,
     silence_loopflow_layers,
 )
 from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
@@ -248,7 +248,7 @@ class LiveSession:
                     self._rs.AddLayer(part)
             parent_path = current
         silence_loopflow_layers(self, path)
-        silence_extract_layers(self, path)
+        apply_extract_layer_print(self, path)
         return created
 
     def delete_layer(self, path: str) -> None:
@@ -358,6 +358,50 @@ class LiveSession:
         except Exception:
             pass
         self._redraw_views()
+
+    def set_layer_print_color(self, path: str, rgb) -> None:
+        if not self.has_layer(path):
+            return
+        color = rgb_tuple(rgb)
+        try:
+            self._rs.LayerPrintColor(path, color)
+        except Exception:
+            pass
+        layer = self._layer_obj(path)
+        if layer is not None:
+            try:
+                import System  # type: ignore
+
+                layer.PlotColor = System.Drawing.Color.FromArgb(color[0], color[1], color[2])
+            except Exception:
+                try:
+                    layer.PlotColor = color
+                except Exception:
+                    pass
+            try:
+                commit = getattr(layer, "CommitChanges", None)
+                if callable(commit):
+                    commit()
+            except Exception:
+                pass
+        self._redraw_views()
+
+    def layer_print_color(self, path: str):
+        if not self.has_layer(path):
+            return None
+        try:
+            color = self._rs.LayerPrintColor(path)
+            if color is not None:
+                return rgb_tuple(color)
+        except Exception:
+            pass
+        layer = self._layer_obj(path)
+        if layer is None:
+            return None
+        try:
+            return rgb_tuple(getattr(layer, "PlotColor", None))
+        except Exception:
+            return None
 
     def layer_printable(self, path: str) -> Optional[bool]:
         if not self.has_layer(path):

@@ -336,6 +336,7 @@ class CommandTests(unittest.TestCase):
         session = _session()
         result = _run(session, pick_point=lambda _s: (100.0, 100.0, 0.0))
         self.assertEqual(result.blocking, ("missing_view",))
+        self.assertIn("Anchor Frame", result.message)
         self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
         self.assertEqual(view_frames_containing(session, (100.0, 100.0, 0.0)), ())
 
@@ -420,6 +421,58 @@ class CommandTests(unittest.TestCase):
         )
         self.assertIn("pick_layout_detail_model_point", laser)
         self.assertNotIn("pick_source_through_detail", laser)
+
+    def test_moved_frame_uses_live_origin(self):
+        session = _session()
+        session.set_bbox("frame", (0, 1000, 0), (20, 1010, 0))
+        captured = []
+
+        def probe(_session, origin, direction):
+            captured.append((origin, direction))
+            return (
+                {
+                    "object_id": "wall",
+                    "dist": 100.0,
+                    "hit_type": "FRONTAL",
+                    "layer": "M3D",
+                    "name": "Wall",
+                },
+            )
+
+        result = _run(session, pick_point=lambda _s: (10.0, 1005.0, 0.0), probe=probe)
+        self.assertTrue(result.ok, result.message)
+        expected_origin, expected_dir = ray_from_transform(_transform(), POINT_2D)
+        self.assertEqual(captured[0][0], expected_origin)
+        self.assertEqual(captured[0][1], expected_dir)
+
+    def test_ceiling_scale_survives_frame_translate(self):
+        session = _session()
+        payload = _transform()
+        payload["scale_x"] = -1.0
+        session.set_object_user_text("frame", VIEW_TRANSFORM_KEY, encode_transform(payload))
+        session.set_bbox("frame", (0, 1000, 0), (20, 1010, 0))
+        captured = []
+
+        def probe(_session, origin, direction):
+            captured.append((origin, direction))
+            return (
+                {
+                    "object_id": "wall",
+                    "dist": 100.0,
+                    "hit_type": "FRONTAL",
+                    "layer": "M3D",
+                    "name": "Wall",
+                },
+            )
+
+        point = (15.0, 1005.0, 0.0)
+        result = _run(session, pick_point=lambda _s: point, probe=probe)
+        self.assertTrue(result.ok, result.message)
+        unmoved = dict(payload)
+        unmoved["origin_2d"] = [10.0, 5.0, 0.0]
+        expected_origin, expected_dir = ray_from_transform(unmoved, (15.0, 5.0, 0.0))
+        self.assertEqual(captured[0][0], expected_origin)
+        self.assertEqual(captured[0][1], expected_dir)
 
     def test_catalog_and_entrypoint(self):
         from loopflow.command_catalog import get_command

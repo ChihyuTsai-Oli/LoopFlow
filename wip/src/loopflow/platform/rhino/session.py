@@ -71,6 +71,12 @@ class RhinoSession(Protocol):
     def layer_printable(self, path: str) -> Optional[bool]:
         ...
 
+    def set_layer_print_color(self, path: str, rgb: Sequence[int]) -> None:
+        ...
+
+    def layer_print_color(self, path: str) -> Optional[Sequence[int]]:
+        ...
+
     def object_name(self, object_id: str) -> Optional[str]:
         ...
 
@@ -375,18 +381,32 @@ def extract_layer_chain(path: str) -> Tuple[str, ...]:
     return tuple(chain)
 
 
-def silence_extract_layers(session: RhinoSession, path: str) -> None:
-    """LoopFlow_Extract 與其子圖層一律 No Print（PlotWeight = -1）。"""
+EXTRACT_PRINT_BLACK = (0, 0, 0)
+EXTRACT_PRINT_GRAY = (190, 190, 190)  # #BEBEBE
+
+
+def extract_layer_print_color(path: str):
+    """Visible／Hatch 列印灰，其餘 Extract 圖層列印黑。"""
+    terminal = str(path or "").rsplit("::", 1)[-1]
+    if terminal in ("Visible", "Hatch"):
+        return EXTRACT_PRINT_GRAY
+    return EXTRACT_PRINT_BLACK
+
+
+def apply_extract_layer_print(session: RhinoSession, path: str) -> None:
+    """LoopFlow_Extract 可列印（Default）。列印色：Visible／Hatch 灰，其餘黑。"""
     if not is_extract_layer(path):
         return
-    setter = getattr(session, "set_layer_printable", None)
-    if not callable(setter):
-        return
-    for item in extract_layer_chain(path):
-        setter(item, False)
+    printable = getattr(session, "set_layer_printable", None)
+    color = getattr(session, "set_layer_print_color", None)
+    targets = list(extract_layer_chain(path))
     lister = getattr(session, "layer_paths", None)
-    if not callable(lister):
-        return
-    for existing in lister() or ():
-        if is_extract_layer(str(existing)):
-            setter(str(existing), False)
+    if callable(lister):
+        for existing in lister() or ():
+            if is_extract_layer(str(existing)) and str(existing) not in targets:
+                targets.append(str(existing))
+    for item in targets:
+        if callable(printable):
+            printable(item, True)
+        if callable(color):
+            color(item, extract_layer_print_color(item))
