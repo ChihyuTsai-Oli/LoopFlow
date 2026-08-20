@@ -1233,29 +1233,39 @@ class LiveSession:
         return object_id
 
     def draw_laser_debug_ray(self, plane_point, start, end) -> None:
-        """測試用：清掉舊線後畫出本次射線與剖平面對應點。"""
+        """測試用：清掉舊線後，把射線畫進 3D 模型空間（不要畫在 Layout 上）。"""
+        rhino = self._rhino
         layer = "LoopFlow::Debug_Laser"
         self.ensure_layer(layer)
         self.set_layer_appearance(layer, (255, 0, 255))
         for object_id in tuple(self.objects_on_layer(layer) or ()):
             self.delete_object(object_id)
-        line_id = str(
-            self._rs.AddLine(
-                (float(start[0]), float(start[1]), float(start[2])),
-                (float(end[0]), float(end[1]), float(end[2])),
-            )
+        if rhino is None:
+            return
+        layer_index = self._layer_index(layer)
+        if layer_index < 0:
+            return
+
+        def _model_attrs(name):
+            attrs = rhino.DocObjects.ObjectAttributes()
+            attrs.LayerIndex = layer_index
+            attrs.Name = name
+            attrs.ColorSource = rhino.DocObjects.ObjectColorSource.ColorFromLayer
+            try:
+                attrs.Space = rhino.DocObjects.ActiveSpace.ModelSpace
+            except Exception:
+                pass
+            return attrs
+
+        start_pt = rhino.Geometry.Point3d(float(start[0]), float(start[1]), float(start[2]))
+        end_pt = rhino.Geometry.Point3d(float(end[0]), float(end[1]), float(end[2]))
+        plane_pt = rhino.Geometry.Point3d(
+            float(plane_point[0]), float(plane_point[1]), float(plane_point[2])
         )
-        self._rs.ObjectLayer(line_id, layer)
-        self._rs.ObjectName(line_id, "Laser_Ray")
-        self._rs.ObjectColorSource(line_id, COLOR_SOURCE_BY_LAYER)
-        point_id = str(
-            self._rs.AddPoint((float(plane_point[0]), float(plane_point[1]), float(plane_point[2])))
-        )
-        self._rs.ObjectLayer(point_id, layer)
-        self._rs.ObjectName(point_id, "Laser_Plane")
-        self._rs.ObjectColorSource(point_id, COLOR_SOURCE_BY_LAYER)
+        self._sc.doc.Objects.AddLine(start_pt, end_pt, _model_attrs("Laser_Ray"))
+        self._sc.doc.Objects.AddPoint(plane_pt, _model_attrs("Laser_Plane"))
         try:
-            self._rs.Redraw()
+            self._sc.doc.Views.Redraw()
         except Exception:
             pass
 
