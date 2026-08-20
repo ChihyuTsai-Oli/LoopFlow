@@ -765,7 +765,31 @@ def pick_object(message: str = "點選要查看的物件（Enter／Esc 結束）
     return str(object_id)
 
 
-def pick_block_instance(message: str = "選取圖塊（Esc 取消）") -> Optional[str]:
+def pick_block_instance(
+    message: str = "選取圖塊（Esc 取消）",
+    *,
+    debug_ray_option: bool = False,
+) -> Optional[str]:
+    if debug_ray_option:
+        try:
+            import Rhino  # type: ignore
+        except ImportError:
+            return None
+        getter = Rhino.Input.Custom.GetObject()
+        getter.SetCommandPrompt(message)
+        getter.GeometryFilter = Rhino.DocObjects.ObjectType.InstanceReference
+        getter.SubObjectSelect = False
+        try:
+            getter.EnablePreSelect(True, True)
+        except Exception:
+            pass
+        _run_getter_with_debug_ray(getter, Rhino)
+        if getter.CommandResult() != Rhino.Commands.Result.Success:
+            return None
+        objref = getter.Object(0)
+        if objref is None:
+            return None
+        return str(objref.ObjectId)
     try:
         import rhinoscriptsyntax as rs  # type: ignore
     except ImportError:
@@ -841,6 +865,33 @@ def debug_ray_sticky():
         return None
 
 
+def _debug_ray_initial() -> bool:
+    value = debug_ray_sticky()
+    return bool(value) if value is not None else False
+
+
+def _save_debug_ray(opt_debug) -> None:
+    try:
+        import scriptcontext as sc  # type: ignore
+
+        sc.sticky[DEBUG_RAY_STICKY_KEY] = bool(opt_debug.CurrentValue)
+    except Exception:
+        return
+
+
+def _run_getter_with_debug_ray(getter, Rhino):
+    """命令列加上 DebugRay=No／Yes，點選項後繼續等選取。"""
+    opt_debug = Rhino.Input.Custom.OptionToggle(_debug_ray_initial(), "No", "Yes")
+    getter.AddOptionToggle("DebugRay", opt_debug)
+    while True:
+        get_result = getter.Get()
+        if get_result == Rhino.Input.GetResult.Option:
+            continue
+        break
+    _save_debug_ray(opt_debug)
+    return getter
+
+
 def pick_layout_detail_model_point(
     message: str = "在目標 Detail 內點一下（Esc 取消）",
     *,
@@ -863,20 +914,8 @@ def pick_layout_detail_model_point(
     sc.doc.Views.Redraw()
     getter = Rhino.Input.Custom.GetPoint()
     getter.SetCommandPrompt(message)
-    opt_debug = None
     if debug_ray_option:
-        try:
-            initial = bool(sc.sticky[DEBUG_RAY_STICKY_KEY])
-        except Exception:
-            initial = False
-        opt_debug = Rhino.Input.Custom.OptionToggle(initial, "No", "Yes")
-        getter.AddOptionToggle("DebugRay", opt_debug)
-        while True:
-            get_result = getter.Get()
-            if get_result == Rhino.Input.GetResult.Option:
-                continue
-            break
-        sc.sticky[DEBUG_RAY_STICKY_KEY] = bool(opt_debug.CurrentValue)
+        _run_getter_with_debug_ray(getter, Rhino)
     else:
         getter.Get()
     if getter.CommandResult() != Rhino.Commands.Result.Success:

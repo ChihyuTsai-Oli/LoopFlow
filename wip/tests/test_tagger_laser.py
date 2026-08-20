@@ -556,6 +556,8 @@ class CommandTests(unittest.TestCase):
         )
         self.assertIn("pick_layout_detail_model_point", laser)
         self.assertIn("debug_ray_option=True", laser)
+        self.assertIn("pick_block_instance", laser)
+        self.assertIn("ObjectType.InstanceReference", text)
         self.assertNotIn("pick_source_through_detail", laser)
         self.assertIn("AddOptionToggle", text)
         self.assertIn("DebugRay", text)

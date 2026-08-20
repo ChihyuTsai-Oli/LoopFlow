@@ -156,7 +156,10 @@ def cluster_hits(hits: Sequence[dict]):
 def _default_pick_tag(_session: RhinoSession) -> Optional[str]:
     from loopflow.platform.rhino.prompts import pick_block_instance
 
-    return pick_block_instance("選取要綁定的 Laser Tag（Esc 取消）")
+    return pick_block_instance(
+        "選取要綁定的 Laser Tag（Esc 取消）",
+        debug_ray_option=True,
+    )
 
 
 def _default_pick_point(_session: RhinoSession):
