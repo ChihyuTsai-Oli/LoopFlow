@@ -264,7 +264,12 @@ def preview_lines(rows: Sequence[SheetRow], skipped: Sequence[dict]) -> Tuple[st
     for row in rows:
         marks = []
         if row.is_new_sheet:
-            marks.append("新頁")
+            drawing_no = row.plan.drawing_no or ""
+            drawing_name = row.plan.drawing_name or "（未命名）"
+            if drawing_no:
+                marks.append("→ %s %s" % (drawing_no, drawing_name))
+            else:
+                marks.append("→ %s" % drawing_name)
         if row.plan.status == STATUS_BASELINE:
             marks.append("系列起點")
         if row.plan.status == STATUS_MANUAL:
@@ -280,9 +285,9 @@ def preview_lines(rows: Sequence[SheetRow], skipped: Sequence[dict]) -> Tuple[st
             marks.append(
                 "圖名 %s → %s" % (row.previous_drawing_name, row.plan.drawing_name or "（空）")
             )
-        if row.renames_page:
+        if row.renames_page and not row.is_new_sheet:
             marks.append("頁名 → %s" % row.plan.new_page_name)
-        suffix = "　［%s］" % "；".join(marks) if marks else ""
+        suffix = "　[%s]" % "；".join(marks) if marks else ""
         lines.append(
             "%02d　%s　%s%s"
             % (

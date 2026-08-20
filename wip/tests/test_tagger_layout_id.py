@@ -35,7 +35,13 @@ from loopflow.features.tagger.keys import (
     TARGET_SHEET_ID_KEY,
     TEMPLATE_ID_KEY,
 )
-from loopflow.features.tagger.layout_id import SERIES_START_HELP, run_tagger_layout_id
+from loopflow.features.sheet.naming import STATUS_BASELINE, STATUS_NUMBERED, PagePlan
+from loopflow.features.tagger.layout_id import (
+    SERIES_START_HELP,
+    SheetRow,
+    preview_lines,
+    run_tagger_layout_id,
+)
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.prompts import format_result_popup
 from loopflow.platform.rhino.state import ObjectViewState
@@ -408,6 +414,45 @@ class LayoutIdCommandTests(unittest.TestCase):
             result = run_command("LF_Tagger_Layout_ID")
         self.assertFalse(result.ok)
         self.assertEqual(result.stage, "rhino_session")
+
+    def test_preview_marks_new_sheet_with_arrow_name_and_number(self):
+        new_row = SheetRow(
+            page_name="地坪_Copy1",
+            page_number=4,
+            frame_id="frame-new",
+            sheet_id=None,
+            plan=PagePlan(
+                page_name="地坪_Copy1",
+                page_number=4,
+                status=STATUS_NUMBERED,
+                drawing_no="IN 101.02",
+                drawing_name="地坪_Copy1",
+                new_page_name="IN__101.02__地坪_Copy1",
+            ),
+            previous_drawing_no=None,
+            previous_drawing_name=None,
+        )
+        existing = SheetRow(
+            page_name="IN__101.01__地坪",
+            page_number=3,
+            frame_id="frame-old",
+            sheet_id="sheet-1",
+            plan=PagePlan(
+                page_name="IN__101.01__地坪",
+                page_number=3,
+                status=STATUS_BASELINE,
+                drawing_no="IN 101.01",
+                drawing_name="地坪改",
+                new_page_name="**IN__101.01__地坪改",
+            ),
+            previous_drawing_no="IN 101.01",
+            previous_drawing_name="地坪",
+        )
+        lines = preview_lines((new_row, existing), ())
+        self.assertIn("[→ IN 101.02 地坪_Copy1]", lines[0])
+        self.assertNotIn("新頁", lines[0])
+        self.assertNotIn("頁名 →", lines[0])
+        self.assertIn("[系列起點；圖名 地坪 → 地坪改；頁名 → **IN__101.01__地坪改]", lines[1])
 
 
 if __name__ == "__main__":

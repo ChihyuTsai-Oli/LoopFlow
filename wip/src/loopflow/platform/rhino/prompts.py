@@ -24,6 +24,11 @@ DIALOG_PADDING = 10
 DIALOG_SPACING = 5
 DIALOG_ROW_PAD_X = 8
 DIALOG_ROW_PAD_Y = 2
+# 約一個中文字寬；選 Sheet 圖名 +2、頁名 -4。
+CJK_EM = 16
+SHEET_NAME_EXTRA = 2 * CJK_EM
+SHEET_PAGE_SHRINK = 4 * CJK_EM
+CATALOG_BUTTON_HEIGHT = 28
 
 
 def _dialog_padding(drawing):
@@ -38,6 +43,27 @@ def _dialog_row_padding(drawing):
     return drawing.Padding(
         DIALOG_ROW_PAD_X, DIALOG_ROW_PAD_Y, DIALOG_ROW_PAD_X, DIALOG_ROW_PAD_Y
     )
+
+
+def _sheet_col_padding(drawing, col: int):
+    """圖名欄右側多兩個中文字寬。"""
+    extra = SHEET_NAME_EXTRA if col == 2 else 0
+    return drawing.Padding(
+        DIALOG_ROW_PAD_X,
+        DIALOG_ROW_PAD_Y,
+        DIALOG_ROW_PAD_X + extra,
+        DIALOG_ROW_PAD_Y,
+    )
+
+
+def _lock_control_height(control, drawing, height: int) -> None:
+    """鎖定列高，避免 DynamicLayout 把最後一顆鈕拉高。"""
+    control.Height = height
+    try:
+        control.MinimumSize = drawing.Size(0, height)
+        control.MaximumSize = drawing.Size(10000, height)
+    except Exception:
+        pass
 
 
 def _apply_dialog_button_size(button, drawing) -> None:
@@ -480,7 +506,7 @@ def ask_confirm_list(
             self.Title = title
             self.Padding = _dialog_padding(drawing)
             self.Resizable = True
-            self.Width = 760
+            self.Width = 510
             self.Height = 560
 
             layout = forms.DynamicLayout()
@@ -498,13 +524,12 @@ def ask_confirm_list(
                 inner.AddRow(label)
             inner.Add(None)
             scroll.Content = inner
-            layout.AddRow(scroll)
-            layout.Add(None)
+            layout.Add(scroll, True, True)
 
             btn_layout, btn_ok, btn_cancel = _ok_cancel_row(
                 forms, drawing, self._on_ok, self._on_cancel
             )
-            layout.AddRow(btn_layout)
+            layout.Add(btn_layout, True, False)
 
             self.Content = layout
             self.AbortButton = btn_cancel
@@ -643,7 +668,7 @@ def ask_pick_catalog_sheets(
             self.Title = title
             self.Padding = _dialog_padding(drawing)
             self.Resizable = True
-            self.Width = 560
+            self.Width = 560 + SHEET_NAME_EXTRA - SHEET_PAGE_SHRINK
             self.Height = 500
             self.rows = rows
             self.selected = set()
@@ -716,7 +741,7 @@ def ask_pick_catalog_sheets(
                 label.Text = caption
                 label.TextColor = self._header_fg
                 header_panel = forms.Panel()
-                header_panel.Padding = _dialog_row_padding(drawing)
+                header_panel.Padding = _sheet_col_padding(drawing, index)
                 header_panel.Content = label
                 row.Cells.Add(forms.TableCell(header_panel, index == 3))
             return row
@@ -734,7 +759,7 @@ def ask_pick_catalog_sheets(
                 except Exception:
                     pass
                 panel = forms.Panel()
-                panel.Padding = _dialog_row_padding(drawing)
+                panel.Padding = _sheet_col_padding(drawing, col)
                 panel.Content = label
                 panel.MouseDown += handler
                 label.MouseDown += handler
