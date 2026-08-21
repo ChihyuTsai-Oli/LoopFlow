@@ -129,14 +129,24 @@ def export_dictionary_filename(official_name: str) -> str:
 
 
 def dictionary_filename_from_session(session) -> str:
+    remembered = remembered_dictionary_filename(session)
+    if remembered:
+        return remembered
+    return DICTIONARY_FILENAME
+
+
+def remembered_dictionary_filename(session) -> Optional[str]:
+    """只回這份文件記住的 Dictionary 檔名。沒記住就不套預設檔名。"""
     if session is None:
-        return DICTIONARY_FILENAME
+        return None
     getter = getattr(session, "document_user_text", None)
     raw = getter(DICTIONARY_FILENAME_KEY) if callable(getter) else None
+    if raw in (None, ""):
+        return None
     normalized = normalize_dictionary_filename(raw)
     if normalized.ok:
         return str(normalized.details["filename"])
-    return DICTIONARY_FILENAME
+    return None
 
 
 def resolve_workfiles(

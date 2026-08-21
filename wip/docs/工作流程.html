@@ -194,7 +194,7 @@ td:first-child{color:var(--tx);font-weight:550;white-space:nowrap}
 <h3 id="匯出-Type-Layers-為字典-獨立指令">匯出 Type Layers 為字典（獨立指令）</h3>
 <p><code>LF_Export_Type_Layers</code> 先做開案檢查，再在字典目錄新增 <code>{原檔名}_Export.xlsx</code>，供人工核對後合併進正式 Dictionary。第 1 列紅色提示；<code>diff_status</code> 有變動時只改該格文字顏色。不得覆寫正式 Dictionary，也不可把匯出檔當正式字典開啟。<code>added_in_rhino</code> 列合併時必須編新的 <code>_03_ID編號</code>，不可與既有列重複。</p>
 <h3 id="開啟字典-獨立指令">開啟字典（獨立指令）</h3>
-<p><code>LF_Open_Dictionary</code> 用系統預設程式開啟這份 <code>.3dm</code> 記住的正式字典；<code>LF_Open_Dictionary_Export</code> 開啟同資料夾的 <code>{原檔名}_Export.xlsx</code>。兩者只開檔，不編輯、不建檔。正式檔不存在時請用選單 2 指定；匯出檔不存在時請先跑 <code>LF_Export_Type_Layers</code>。</p>
+<p><code>LF_Open_Dictionary</code> 用系統預設程式開啟這份 <code>.3dm</code> 記住的正式字典；<code>LF_Open_Dictionary_Export</code> 開啟同資料夾的 <code>{原檔名}_Export.xlsx</code>。兩者只開檔，不編輯、不建檔。這份檔還沒記住字典檔名時不套用工作檔裡的預設 Excel，請用選單 2 指定。正式檔不存在時也請用選單 2 指定；匯出檔不存在時請先跑 <code>LF_Export_Type_Layers</code>。</p>
 <h3 id="資料檢視-獨立指令">資料檢視（獨立指令）</h3>
 <p><code>LF_Data_Viewer</code> 點選物件後只讀顯示 canonical UserText（<code>_01</code>～<code>_14</code>，高程框另含 <code>_15</code>）。可手動欄的鍵名本身帶 <code>*</code>：空間框 <code>_01_空間名稱*</code>、物件 <code>_02_建構狀態*</code>／<code>_08_備註*</code>、高程框 <code>_15_樓層高程*</code>。物件 <code>_01_空間名稱</code> 與 <code>_14_資料版次</code> 不加 <code>*</code>。缺值標為 <code>（缺）</code>；若值是從舊 <code>lf_*</code> 或無 <code>*</code> 舊鍵讀到，會標出來源。殘留的尺寸／數量欄另外列出，不當正式資料。不寫入、不改物件名稱。文件 <code>schema_id</code>／<code>schema_version</code> 未知或不完整時停止並說明，不猜測解析。Esc 或 Enter 結束。</p>
 <h2 id="6-發布串接資料-獨立指令">6. 發布串接資料（獨立指令）</h2>

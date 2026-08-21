@@ -9,8 +9,8 @@ from typing import Callable, Mapping, Optional
 from loopflow.foundation import results
 from loopflow.foundation.paths import (
     DICTIONARY_FILENAME,
-    dictionary_filename_from_session,
     export_dictionary_filename,
+    remembered_dictionary_filename,
     resolve_workfiles,
 )
 from loopflow.platform.rhino.session import RhinoSession
@@ -47,7 +47,15 @@ def resolve_workbook_path(
             "未知的字典檔種類：%s" % kind,
             command_id=command_id,
         )
-    filename = dictionary_filename_from_session(session)
+    filename = remembered_dictionary_filename(session)
+    if not filename:
+        return results.blocked(
+            "open_dictionary",
+            "這份檔案還沒指定 Dictionary，找不到要開的檔。"
+            "請先存檔，再用 Nexus 選單 2 指定工作檔資料夾內的 .xlsx。",
+            blocking=("dictionary_not_selected",),
+            command_id=command_id,
+        )
     workfiles = resolve_workfiles(environ=environ, dictionary_filename=filename)
     if not workfiles.ok:
         return workfiles

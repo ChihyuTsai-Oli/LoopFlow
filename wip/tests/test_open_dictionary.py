@@ -87,9 +87,34 @@ class OpenWorkbookTests(unittest.TestCase):
                 opener=opened.append,
             )
             self.assertFalse(result.ok)
-            self.assertEqual(result.blocking, ("dictionary_file_missing",))
+            self.assertEqual(result.blocking, ("dictionary_not_selected",))
             self.assertEqual(opened, [])
             self.assertFalse((Path(raw) / "LoopFlow_Dictionary.xlsx").exists())
+
+    def test_new_file_does_not_open_default_workfiles_excel(self):
+        session = _session()
+        opened = []
+        with tempfile.TemporaryDirectory(prefix="loopflow-open-dict-") as raw:
+            root = Path(raw)
+            write_table(root / "LoopFlow_Dictionary.xlsx", schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_row()])
+            result = open_workbook(
+                session,
+                kind=KIND_OFFICIAL,
+                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
+                opener=opened.append,
+            )
+            self.assertFalse(result.ok)
+            self.assertEqual(result.blocking, ("dictionary_not_selected",))
+            self.assertEqual(opened, [])
+            export = open_workbook(
+                session,
+                kind=KIND_EXPORT,
+                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
+                opener=opened.append,
+            )
+            self.assertFalse(export.ok)
+            self.assertEqual(export.blocking, ("dictionary_not_selected",))
+            self.assertEqual(opened, [])
 
     def test_opens_export_beside_official(self):
         session = _session(document_text={DICTIONARY_FILENAME_KEY: "TeamA.xlsx"})
@@ -110,7 +135,7 @@ class OpenWorkbookTests(unittest.TestCase):
             self.assertEqual(opened, [str(export)])
 
     def test_missing_export_asks_to_run_export_command(self):
-        session = _session()
+        session = _session(document_text={DICTIONARY_FILENAME_KEY: "LoopFlow_Dictionary.xlsx"})
         opened = []
         with tempfile.TemporaryDirectory(prefix="loopflow-open-dict-") as raw:
             root = Path(raw)

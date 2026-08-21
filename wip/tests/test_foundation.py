@@ -185,6 +185,19 @@ class DictionaryFilenameTests(unittest.TestCase):
         self.assertFalse(exported.ok)
         self.assertEqual(exported.blocking, ("export_file_not_dictionary",))
 
+    def test_remembered_filename_none_without_usertext(self):
+        from loopflow.foundation.paths import (
+            DICTIONARY_FILENAME,
+            dictionary_filename_from_session,
+            remembered_dictionary_filename,
+        )
+        from loopflow.platform.rhino.memory import MemorySession
+
+        session = MemorySession()
+        self.assertIsNone(remembered_dictionary_filename(session))
+        self.assertIsNone(remembered_dictionary_filename(None))
+        self.assertEqual(dictionary_filename_from_session(session), DICTIONARY_FILENAME)
+
     def test_resolve_workfiles_uses_custom_filename(self):
         from loopflow.foundation.paths import resolve_workfiles
 
