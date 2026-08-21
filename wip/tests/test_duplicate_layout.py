@@ -384,6 +384,24 @@ class DuplicateLayoutTests(unittest.TestCase):
         }
         self.assertEqual(len(sheet_ids), 3)
 
+    def test_registered_custom_frame_gets_new_sheet_id(self):
+        from loopflow.features.sheet.metadata import register_title_frame_names
+
+        session = _session()
+        session.set_block("frame", (0.0, 0.0, 0.0), "_Frame_A3_shop_drawing")
+        register_title_frame_names(session, ["_Frame_A3_shop_drawing"])
+        result, _messages = _run(session)
+        self.assertTrue(result.ok, result.message)
+        copied = _copied_page(session)
+        frame = _on_page(session, copied, "_Frame_A3_shop_drawing")
+        new_sheet = session.get_object_user_text(frame, SHEET_ID_KEY)
+        self.assertTrue(UUID_V4_RE.match(new_sheet or ""))
+        self.assertNotEqual(new_sheet, SHEET_ID)
+        self.assertIsNone(session.get_object_user_text(frame, DRAWING_NO_KEY))
+        self.assertIsNone(session.get_object_user_text(frame, DRAWING_NAME_KEY))
+        self.assertEqual(session.get_object_user_text(frame, SCALE_KEY), "1:50")
+        self.assertEqual(session.get_object_user_text("frame", SHEET_ID_KEY), SHEET_ID)
+
     def test_two_copies_create_two_pages(self):
         session = _session()
         result, _ = _run(session, count=2)

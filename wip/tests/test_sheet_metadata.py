@@ -23,6 +23,7 @@ from loopflow.features.sheet.metadata import (
     get_sheet_metadata,
     list_active_sheets,
     sheet_state,
+    stale_among_sheet_ids,
     stale_sheet_ids,
     write_sheet_metadata,
 )
@@ -189,6 +190,20 @@ class SheetApiTests(unittest.TestCase):
             write_sheet_metadata(session, sheet_id, {"drawing_no": "IN 20%s" % index, "page_position": index})
         session.set_layout_pages(["IN__202__天花", "IN__201__立面圖"])
         self.assertEqual(set(stale_sheet_ids(session, catalog)), {SHEET_A, SHEET_B})
+
+    def test_stale_among_does_not_poison_current_page(self):
+        session = _session()
+        catalog = _catalog()
+        session.set_layout_pages(["IN__201__立面圖", "IN__201__立面圖_Copy1"])
+        for index, name in enumerate(("IN__201__立面圖", "IN__201__立面圖_Copy1"), start=1):
+            frame_id = "frame-%s" % index
+            session.add_object(frame_id)
+            session.set_block(frame_id, (0, 0, 0), name="Sample_Frame")
+            session.set_object_user_text(frame_id, SHEET_ID_KEY, SHEET_A)
+            session.add_object_to_layout_page(name, frame_id)
+        write_sheet_metadata(session, SHEET_A, {"drawing_no": "IN 201", "page_position": 1})
+        self.assertEqual(stale_among_sheet_ids(session, catalog, [SHEET_A]), ())
+        self.assertEqual(set(stale_sheet_ids(session, catalog)), {SHEET_A})
 
     def test_does_not_invent_scale(self):
         session = _session()

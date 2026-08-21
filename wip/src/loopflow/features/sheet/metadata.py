@@ -217,3 +217,28 @@ def stale_sheet_ids(session: RhinoSession, catalog: TagTemplateSet) -> Tuple[str
         if sheet_state(session, sheet.sheet_id, sheet.page_number) == STATE_STALE:
             stale.append(sheet.sheet_id)
     return tuple(stale)
+
+
+def stale_among_sheet_ids(
+    session: RhinoSession,
+    catalog: TagTemplateSet,
+    sheet_ids: Sequence[str],
+) -> Tuple[str, ...]:
+    """被選中的 sheet_id 是否過期。
+
+    同一 id 若有任一頁的 page_position 對得上，來源頁就不被複本連坐。
+    全新複製、尚未跑 Layout ID 的 id（沒有對得上的頁）仍算過期。
+    """
+    wanted = tuple(sid for sid in sheet_ids if sid)
+    if not wanted:
+        return ()
+    wanted_set = set(wanted)
+    current = set()
+    present = set()
+    for sheet in list_active_sheets(session, catalog):
+        if sheet.sheet_id not in wanted_set:
+            continue
+        present.add(sheet.sheet_id)
+        if sheet_state(session, sheet.sheet_id, sheet.page_number) == STATE_CURRENT:
+            current.add(sheet.sheet_id)
+    return tuple(sid for sid in wanted if sid in present and sid not in current)

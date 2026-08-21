@@ -25,6 +25,7 @@ from loopflow.features.sheet.keys import (
     TITLE_FRAME_REGISTRY_KEY,
 )
 from loopflow.features.sheet.metadata import get_sheet_field
+from loopflow.features.tagger.binding import UUID_V4_RE
 from loopflow.features.tagger.keys import (
     BINDING_MODE_KEY,
     LOCK_LEGACY_KEY,
@@ -127,6 +128,20 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(session.get_object_user_text("frame-1", SHEET_ID_KEY), first)
         self.assertEqual(result.details["created_sheet_ids"], 0)
+
+    def test_duplicate_sheet_id_on_later_page_gets_new_id(self):
+        shared = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+        session = _session([START_IN, "天花詳圖"])
+        _add_block(session, "frame-1", START_IN, "Sample_Frame", **{SHEET_ID_KEY: shared})
+        _add_block(session, "frame-2", "天花詳圖", "Sample_Frame", **{SHEET_ID_KEY: shared})
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(result.ok, result.message)
+        first = session.get_object_user_text("frame-1", SHEET_ID_KEY)
+        second = session.get_object_user_text("frame-2", SHEET_ID_KEY)
+        self.assertEqual(first, shared)
+        self.assertNotEqual(second, first)
+        self.assertTrue(UUID_V4_RE.match(second or ""))
+        self.assertEqual(result.details["created_sheet_ids"], 1)
 
     def test_insert_middle_renumbers_but_keeps_ids(self):
         session = _session([START_IN, "天花詳圖"])

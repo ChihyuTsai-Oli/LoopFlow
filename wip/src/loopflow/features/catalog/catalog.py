@@ -43,7 +43,7 @@ from loopflow.features.catalog.keys import (
 from loopflow.features.sheet.metadata import (
     get_sheet_metadata,
     list_active_sheets,
-    stale_sheet_ids,
+    stale_among_sheet_ids,
 )
 from loopflow.features.tagger.binding import UUID_V4_RE, text
 from loopflow.features.tagger.templates import TagTemplateSet, load_tag_templates
@@ -894,11 +894,7 @@ def _sheet_context(
             extra = get_sheet_metadata(session, sheet_id)
             if extra:
                 metadata_by_id[sheet_id] = extra
-    stale = tuple(
-        sheet_id
-        for sheet_id in stale_sheet_ids(session, catalog)
-        if sheet_id in set(sheet_ids)
-    )
+    stale = stale_among_sheet_ids(session, catalog, sheet_ids)
     return metadata_by_id, active_ids, stale
 
 
