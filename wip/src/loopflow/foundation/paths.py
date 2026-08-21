@@ -1,30 +1,28 @@
 # -*- coding: utf-8 -*-
-"""以 LOOPFLOW_WORKFILES_ROOT 解析工作檔，不寫死磁碟機、不猜路徑。"""
+"""以目前 .3dm 所在資料夾解析路徑。字典與 `_LoopFlow_Config` 一律與 .3dm 同層。"""
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Optional, Union
+from typing import Optional, Union
 
 from . import results
 from .config import AppConfig, DEFAULT_CONFIG
 
-WORKFILES_ROOT_ENV = "LOOPFLOW_WORKFILES_ROOT"
 DICTIONARY_FILENAME = "LoopFlow_Dictionary.xlsx"
-DICTIONARY_FILENAME_KEY = "lf_dictionary_filename"
-EXCHANGE_DIR_NAME = "exchange"
+CONFIG_DIR_NAME = "_LoopFlow_Config"
 _FILENAME_FORBIDDEN = frozenset('\\/:*?"<>|')
 REGISTRY_FILENAME = "Project_Registry.json"
 REGISTRY_LOCK_FILENAME = "Project_Registry.lock"
 REGISTRY_PENDING_FILENAME = "Project_Registry.pending.json"
 REGISTRY_LAST_GOOD_FILENAME = "Project_Registry.last-good.json"
 
-_MISSING_ROOT_HINT = (
-    "缺少或無效的 %s。請在本機設定該環境變數，指向既有的工作檔資料夾"
-    "（見工作區根目錄的工作檔路徑說明），然後重開程式。不得猜測磁碟機，也不建立正式資料。"
-    % WORKFILES_ROOT_ENV
+_UNSAVED_HINT = (
+    "請先把這份檔案存成 .3dm。工作資料夾就是 .3dm 所在的資料夾；"
+    "尚未存檔就沒有資料夾，無法建立設定、字典位置與 %s。" % CONFIG_DIR_NAME
 )
+_NO_RHINO_HINT = "目前不在 Rhino 內，無法取得 .3dm 位置。不修改檔案。"
 _EXTENDED_PATH_PREFIX = "\\\\?\\"
 _EXTENDED_UNC_PREFIX = "\\\\?\\UNC\\"
 
@@ -40,7 +38,7 @@ def canonical_path(path: Union[str, Path]) -> Path:
 
 
 def path_relative_to_root(path: Union[str, Path], root: Union[str, Path]) -> Optional[Path]:
-    """檔案是否在工作檔根目錄內。不因大小寫或 `\\\\?\\` 前綴誤判成別的磁碟。"""
+    """檔案是否在該資料夾內。不因大小寫或 `\\\\?\\` 前綴誤判成別的磁碟。"""
     try:
         return canonical_path(path).relative_to(canonical_path(root))
     except (ValueError, OSError):
@@ -48,17 +46,16 @@ def path_relative_to_root(path: Union[str, Path], root: Union[str, Path]) -> Opt
 
 
 @dataclass(frozen=True)
-class WorkfilesPaths:
+class ProjectPaths:
+    """`.3dm` 所在資料夾即工作資料夾；三者只以相對關係綁定，換碟換機不受影響。"""
+
     root: Path
+    document: Path
+    config_dir: Path
     dictionary: Path
-    exchange_root: Path
 
     def log_file(self, config: AppConfig = DEFAULT_CONFIG) -> Path:
-        return self.root / config.log_dir_name / config.log_filename
-
-
-def _environ(environ: Optional[Mapping[str, str]] = None) -> Mapping[str, str]:
-    return os.environ if environ is None else environ
+        return self.config_dir / config.log_dir_name / config.log_filename
 
 
 def normalize_dictionary_filename(
@@ -66,7 +63,7 @@ def normalize_dictionary_filename(
     *,
     root: Optional[Path] = None,
 ) -> results.Result:
-    """只允許工作檔根目錄下的單一 .xlsx 檔名。可帶完整路徑，但必須落在該資料夾內。"""
+    """只允許 .3dm 同一層的單一 .xlsx 檔名。可帶完整路徑，但必須落在該資料夾內。"""
     text = str(raw or "").strip().strip('"')
     if not text:
         return results.failed(
@@ -79,27 +76,27 @@ def normalize_dictionary_filename(
         if root is None:
             return results.blocked(
                 "resolve_dictionary",
-                "請只輸入檔名。完整路徑須先有工作檔資料夾。",
-                blocking=("dictionary_outside_workfiles",),
+                "請只輸入檔名。完整路徑須先知道 .3dm 所在資料夾。",
+                blocking=("dictionary_outside_project_folder",),
                 details={"filename": text},
             )
         relative = path_relative_to_root(candidate, root)
         if relative is None:
             return results.blocked(
                 "resolve_dictionary",
-                "必須選工作檔資料夾內的 Excel，不能用其他磁碟或路徑。\n選到：%s\n必須在：%s"
+                "Dictionary 必須和 .3dm 放在同一個資料夾。\n選到：%s\n必須在：%s"
                 % (candidate, root),
-                blocking=("dictionary_outside_workfiles",),
+                blocking=("dictionary_outside_project_folder",),
                 details={
                     "filename": candidate.name,
                     "selected": str(candidate),
-                    "workfiles_root": str(root),
+                    "project_folder": str(root),
                 },
             )
         if len(relative.parts) != 1:
             return results.blocked(
                 "resolve_dictionary",
-                "Dictionary 須放在工作檔資料夾根目錄，不能在子資料夾。",
+                "Dictionary 須和 .3dm 同一層，不能放在子資料夾。",
                 blocking=("dictionary_not_basename",),
                 details={"filename": Path(candidate).name},
             )
@@ -152,76 +149,8 @@ def export_dictionary_filename(official_name: str) -> str:
     return "%s_Export.xlsx" % stem
 
 
-def dictionary_filename_from_session(session) -> str:
-    remembered = remembered_dictionary_filename(session)
-    if remembered:
-        return remembered
-    return DICTIONARY_FILENAME
-
-
-def remembered_dictionary_filename(session) -> Optional[str]:
-    """只回這份文件記住的 Dictionary 檔名。沒記住就不套預設檔名。"""
-    if session is None:
-        return None
-    getter = getattr(session, "document_user_text", None)
-    raw = getter(DICTIONARY_FILENAME_KEY) if callable(getter) else None
-    if raw in (None, ""):
-        return None
-    normalized = normalize_dictionary_filename(raw)
-    if normalized.ok:
-        return str(normalized.details["filename"])
-    return None
-
-
-def resolve_workfiles(
-    environ: Optional[Mapping[str, str]] = None,
-    dictionary_filename: Optional[str] = None,
-) -> results.Result:
-    """解析工作檔根目錄。目錄必須已存在；不建立、不搜尋 .3dm 旁路徑。"""
-    raw = (_environ(environ).get(WORKFILES_ROOT_ENV) or "").strip()
-    if not raw:
-        return results.failed(
-            "resolve_workfiles",
-            _MISSING_ROOT_HINT,
-            details={"env": WORKFILES_ROOT_ENV},
-        )
-    root = Path(raw)
-    if not root.exists() or not root.is_dir():
-        return results.failed(
-            "resolve_workfiles",
-            _MISSING_ROOT_HINT,
-            details={"env": WORKFILES_ROOT_ENV, "exists": root.exists()},
-        )
-    filename = DICTIONARY_FILENAME
-    if dictionary_filename not in (None, ""):
-        normalized = normalize_dictionary_filename(dictionary_filename, root=root)
-        if not normalized.ok:
-            return normalized
-        filename = str(normalized.details["filename"])
-    paths = WorkfilesPaths(
-        root=root,
-        dictionary=root / filename,
-        exchange_root=root / EXCHANGE_DIR_NAME,
-    )
-    return results.ok(
-        "resolve_workfiles",
-        "已解析工作檔根目錄",
-        details={"paths": paths},
-    )
-
-
-def dictionary_path(root: Path, filename: Optional[str] = None) -> Path:
-    name = filename or DICTIONARY_FILENAME
-    normalized = normalize_dictionary_filename(name, root=root)
-    if normalized.ok:
-        name = str(normalized.details["filename"])
-    else:
-        name = DICTIONARY_FILENAME
-    return Path(root) / name
-
-
 def normalize_project_id(value: Optional[str]) -> Optional[str]:
-    """專案名稱＝圖層前綴＝exchange 資料夾名。禁止空白與路徑／檔名非法字元。"""
+    """專案名稱＝圖層前綴＝Registry 子資料夾名。禁止空白與路徑／檔名非法字元。"""
     text = str(value or "").strip()
     if not text:
         return None
@@ -238,7 +167,7 @@ def document_directory(document_path: Optional[Union[str, Path]]) -> results.Res
     if not text:
         return results.blocked(
             "resolve_document",
-            "請先把這份檔案存成 .3dm。尚未存檔就沒有資料夾，無法建立 exchange。",
+            _UNSAVED_HINT,
             blocking=("unsaved_document",),
         )
     folder = Path(text).expanduser()
@@ -246,7 +175,7 @@ def document_directory(document_path: Optional[Union[str, Path]]) -> results.Res
     if str(parent) in ("", "."):
         return results.blocked(
             "resolve_document",
-            "請先把這份檔案存成 .3dm。尚未存檔就沒有資料夾，無法建立 exchange。",
+            _UNSAVED_HINT,
             blocking=("unsaved_document",),
         )
     return results.ok(
@@ -256,16 +185,71 @@ def document_directory(document_path: Optional[Union[str, Path]]) -> results.Res
     )
 
 
-def exchange_root_for_document(document_path: Optional[Union[str, Path]]) -> results.Result:
+def document_path_of(session) -> Optional[str]:
+    getter = getattr(session, "document_path", None) if session is not None else None
+    if not callable(getter):
+        return None
+    return getter()
+
+
+def project_paths_for_document(
+    document_path: Optional[Union[str, Path]],
+    dictionary_filename: Optional[str] = None,
+) -> results.Result:
+    """由 .3dm 位置組出工作資料夾、設定資料夾與字典路徑。不建立任何檔案。"""
     located = document_directory(document_path)
     if not located.ok:
         return located
-    root = Path(located.details["document_dir"]) / EXCHANGE_DIR_NAME
-    details = dict(located.details)
-    details["exchange_root"] = root
+    root = Path(located.details["document_dir"])
+    filename = DICTIONARY_FILENAME
+    if dictionary_filename not in (None, ""):
+        normalized = normalize_dictionary_filename(dictionary_filename, root=root)
+        if not normalized.ok:
+            return normalized
+        filename = str(normalized.details["filename"])
+    paths = ProjectPaths(
+        root=root,
+        document=Path(located.details["document_path"]),
+        config_dir=root / CONFIG_DIR_NAME,
+        dictionary=root / filename,
+    )
     return results.ok(
-        "resolve_exchange",
-        "已解析 exchange 資料夾",
+        "resolve_project_folder",
+        "已解析 .3dm 工作資料夾",
+        details={"paths": paths},
+    )
+
+
+def resolve_project_folder(session, dictionary_filename: Optional[str] = None) -> results.Result:
+    """目前 Rhino 文件的工作資料夾。沒有 session 或未存檔時停止。"""
+    if session is None:
+        return results.failed("rhino_session", _NO_RHINO_HINT)
+    return project_paths_for_document(
+        document_path_of(session),
+        dictionary_filename=dictionary_filename,
+    )
+
+
+def dictionary_path(root: Path, filename: Optional[str] = None) -> Path:
+    name = filename or DICTIONARY_FILENAME
+    normalized = normalize_dictionary_filename(name, root=root)
+    if normalized.ok:
+        name = str(normalized.details["filename"])
+    else:
+        name = DICTIONARY_FILENAME
+    return Path(root) / name
+
+
+def config_dir_for_document(document_path: Optional[Union[str, Path]]) -> results.Result:
+    located = document_directory(document_path)
+    if not located.ok:
+        return located
+    config_dir = Path(located.details["document_dir"]) / CONFIG_DIR_NAME
+    details = dict(located.details)
+    details["config_dir"] = config_dir
+    return results.ok(
+        "resolve_config_dir",
+        "已解析 %s 資料夾" % CONFIG_DIR_NAME,
         details=details,
     )
 
@@ -274,11 +258,11 @@ def resolve_registry_for_document(
     document_path: Optional[Union[str, Path]],
     project_id: Optional[str],
 ) -> results.Result:
-    """Registry 在 <目前 3dm 資料夾>/exchange/<專案名稱>/。"""
-    located = exchange_root_for_document(document_path)
+    """Registry 在 <目前 3dm 資料夾>/_LoopFlow_Config/<專案名稱>/。"""
+    located = config_dir_for_document(document_path)
     if not located.ok:
         return located
-    resolved = registry_paths(located.details["exchange_root"], project_id or "")
+    resolved = registry_paths(located.details["config_dir"], project_id or "")
     if not resolved.ok:
         return resolved
     details = dict(located.details)
@@ -290,7 +274,7 @@ def resolve_registry_for_document(
     )
 
 
-def registry_paths(exchange_root: Path, project_id: str) -> results.Result:
+def registry_paths(config_dir: Path, project_id: str) -> results.Result:
     raw = str(project_id or "").strip()
     if not raw:
         return results.failed(
@@ -305,7 +289,7 @@ def registry_paths(exchange_root: Path, project_id: str) -> results.Result:
             blocking=("invalid_project_id",),
             details={"project_id": raw},
         )
-    folder = Path(exchange_root) / pid
+    folder = Path(config_dir) / pid
     return results.ok(
         "resolve_registry",
         "已解析 Registry 路徑",

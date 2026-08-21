@@ -63,11 +63,9 @@ def load_published_registry(
     project_id: Optional[str],
     *,
     document_path: Optional[str] = None,
-    environ: Optional[Mapping[str, str]] = None,
     command_id: str = COMMAND_ID,
 ) -> results.Result:
     """正式檔優先；沒有正式檔才用 last-good。不建立空檔。"""
-    del environ  # Registry 跟目前 3dm 所在資料夾走，不再用工作檔根目錄。
     pid = normalize_project_id(project_id)
     if not pid:
         return _empty(

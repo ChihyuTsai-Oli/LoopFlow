@@ -14,7 +14,7 @@ if str(SRC) not in __import__("sys").path:
     __import__("sys").path.insert(0, str(SRC))
 
 from loopflow.features.dictionary import schema
-from loopflow.features.dictionary.loader import load_from_path, load_from_table, load_from_workfiles
+from loopflow.features.dictionary.loader import load_dictionary, load_from_path, load_from_table
 from loopflow.platform.excel import (
     DICTIONARY_FONT_NAME,
     DICTIONARY_FONT_SIZE,
@@ -24,6 +24,7 @@ from loopflow.platform.excel import (
     read_table,
     write_table,
 )
+from loopflow.platform.rhino.memory import MemorySession
 
 
 def _load_json(name: str):
@@ -181,35 +182,33 @@ class CaseAndBaselineTests(unittest.TestCase):
 
 
 class PathAndExcelTests(unittest.TestCase):
-    def test_missing_env_does_not_create_files(self):
+    def test_unsaved_document_does_not_create_files(self):
         before = set(Path(tempfile.gettempdir()).iterdir())
-        result = load_from_workfiles(environ={})
+        result = load_dictionary(MemorySession())
         after = set(Path(tempfile.gettempdir()).iterdir())
         self.assertFalse(result.ok)
-        self.assertEqual(result.stage, "resolve_workfiles")
+        self.assertEqual(result.blocking, ("unsaved_document",))
         self.assertEqual(before, after)
 
     def test_missing_xlsx_does_not_create_file(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-dict-") as raw:
             root = Path(raw)
             xlsx = root / "LoopFlow_Dictionary.xlsx"
-            result = load_from_workfiles(environ={"LOOPFLOW_WORKFILES_ROOT": str(root)})
+            result = load_dictionary(MemorySession(document_path=root / "a.3dm"))
             self.assertFalse(result.ok)
             self.assertEqual(result.stage, "resolve_dictionary")
             self.assertFalse(xlsx.exists())
 
-    def test_custom_filename_loads_from_workfiles_root(self):
+    def test_custom_filename_loads_from_document_folder(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-dict-") as raw:
             root = Path(raw)
             path = root / "TeamA.xlsx"
             written = write_table(path, schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_valid_row()])
             self.assertTrue(written.ok)
-            missing_default = load_from_workfiles(environ={"LOOPFLOW_WORKFILES_ROOT": str(root)})
+            session = MemorySession(document_path=root / "a.3dm")
+            missing_default = load_dictionary(session)
             self.assertFalse(missing_default.ok)
-            result = load_from_workfiles(
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-                dictionary_filename="TeamA.xlsx",
-            )
+            result = load_dictionary(session, dictionary_filename="TeamA.xlsx")
             self.assertTrue(result.ok, result.message)
             self.assertEqual(result.details["dictionary_filename"], "TeamA.xlsx")
             self.assertEqual(result.details["catalog"].by_type_id("EX-01").type_display_name, "鋼筋混凝土")

@@ -27,23 +27,21 @@ from loopflow.features.model_data.identity import (
     scan_identity,
     verify_identity,
 )
-from loopflow.features.project.console import (
-    PROJECT_ID_KEY,
-    SCHEMA_ID_KEY,
-    SCHEMA_VERSION_KEY,
-    open_console,
-)
+from loopflow.features.project.console import open_console
 from loopflow.foundation.usertext import SPACE_ID_KEY
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import bind_project  # noqa: E402
 
 LAYER = "00_STR_結構::Beam.樑"
 FULL = to_full_path(LAYER)
 VALID_ID = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
 OLD_ID = "11111111-1111-4111-8111-111111111111"
 NEW_ID = "22222222-2222-4222-8222-222222222222"
-PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+PROJECT_ID = "大安邸"
 
 
 def _row(**overrides):
@@ -71,15 +69,9 @@ def _catalog(*rows):
     return result.details["catalog"]
 
 
-def _session() -> MemorySession:
-    session = MemorySession(
-        document_text={
-            PROJECT_ID_KEY: PROJECT_ID,
-            SCHEMA_ID_KEY: "loopflow.project",
-            SCHEMA_VERSION_KEY: "1",
-        },
-        document_path=str(Path(tempfile.gettempdir()) / "loopflow-open-identity.3dm"),
-    )
+def _session(root=None) -> MemorySession:
+    session = MemorySession()
+    bind_project(session, root, project_id=PROJECT_ID)
     session.ensure_layer(FULL)
     session.set_document_modified(False)
     return session
@@ -131,12 +123,7 @@ class IdentityScanApplyTests(unittest.TestCase):
         session.set_object_user_text("keep", OBJECT_ID_KEY, VALID_ID)
         session.set_object_user_text("keep", SPACE_ID_KEY, "EXT")
         session.set_object_user_text("keep", REMARKS_KEY, "人工備註")
-        with tempfile.TemporaryDirectory(prefix="loopflow-id-") as raw:
-            applied = apply_identity(
-                session,
-                catalog=_catalog(_row()),
-                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
-            )
+        applied = apply_identity(session, catalog=_catalog(_row()))
         self.assertTrue(applied.ok, applied.message)
         created = session.get_object_user_text("new", OBJECT_ID_KEY)
         self.assertTrue(UUID_V4_RE.match(created))
@@ -219,27 +206,22 @@ class IdentityScanApplyTests(unittest.TestCase):
         self.assertFalse(session.document_modified())
 
     def test_console_scan_step(self):
-        session = _session()
-        _add_model(session, "wall")
         with tempfile.TemporaryDirectory(prefix="loopflow-nx04-") as raw:
             root = Path(raw)
+            session = _session(root)
+            _add_model(session, "wall")
             write_table(
                 root / "LoopFlow_Dictionary.xlsx",
                 schema.TITLE_ROW,
                 schema.DISPLAY_COLUMNS,
                 [_row()],
             )
-            scanned = open_console(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-                step="scan_apply_verify",
-            )
+            scanned = open_console(session, step="scan_apply_verify")
             self.assertEqual(scanned.stage, "scan_identity", scanned.message)
             self.assertTrue(scanned.ok, scanned.message)
             self.assertIsNone(session.get_object_user_text("wall", OBJECT_ID_KEY))
             applied = open_console(
                 session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
                 step="scan_apply_verify",
                 identity_action="apply",
             )

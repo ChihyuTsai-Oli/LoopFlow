@@ -22,6 +22,7 @@ from loopflow.features.registry.lock import acquire_lock, release_lock
 from loopflow.features.registry.publisher import publish_registry
 from loopflow.features.registry.validate import validate_payload
 from loopflow.foundation.atomic_io import read_json
+from loopflow.foundation.paths import CONFIG_DIR_NAME
 
 PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 
@@ -44,7 +45,8 @@ def _min_payload(**overrides):
 
 
 def _paths(root: Path):
-    folder = root / "exchange" / PROJECT_ID
+    """Registry 落在 .3dm 同層的 `_LoopFlow_Config/<專案名稱>/`。"""
+    folder = root / CONFIG_DIR_NAME / PROJECT_ID
     return {
         "root": root,
         "document_path": str(root / "model.3dm"),
@@ -53,13 +55,11 @@ def _paths(root: Path):
         "lock": folder / "Project_Registry.lock",
         "pending": folder / "Project_Registry.pending.json",
         "last_good": folder / "Project_Registry.last-good.json",
-        "environ": {"LOOPFLOW_WORKFILES_ROOT": str(root)},
     }
 
 
 def _publish(info, payload=None, **kwargs):
     kwargs.setdefault("document_path", info["document_path"])
-    kwargs.setdefault("environ", info["environ"])
     return publish_registry(payload if payload is not None else _min_payload(), **kwargs)
 
 

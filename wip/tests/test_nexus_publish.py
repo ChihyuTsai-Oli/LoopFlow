@@ -22,19 +22,22 @@ from loopflow.features.model_data.space import (
     SPACE_FRAME_DISPLAY_KEY,
     SPACE_ID_KEY,
 )
-from loopflow.features.project.console import PROJECT_ID_KEY, SCHEMA_ID_KEY, SCHEMA_VERSION_KEY
 from loopflow.features.registry.handoff import publish_from_session, run_publish_exchange
 from loopflow.features.registry.lock import acquire_lock, release_lock
 from loopflow.foundation.atomic_io import read_json
+from loopflow.foundation.paths import CONFIG_DIR_NAME
 from loopflow.foundation.usertext import DATA_REVISION_KEY, LEVEL_ID_KEY, OBJECT_ID_KEY
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.memory import MemorySession
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import bind_project  # noqa: E402
 
 LAYER = "00_STR_結構::Beam.樑"
 FULL = to_full_path(LAYER)
 SPACE_A = "aaaaaaaa-aaaa-4bbb-8bbb-bbbbbbbbbbbb"
 LEVEL_A = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
-PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+PROJECT_ID = "大安邸"
 
 
 def _row(**overrides):
@@ -69,21 +72,16 @@ def _catalog(*rows):
     return result.details["catalog"]
 
 
-def _session() -> MemorySession:
-    session = MemorySession(
-        document_text={
-            PROJECT_ID_KEY: PROJECT_ID,
-            SCHEMA_ID_KEY: "loopflow.project",
-            SCHEMA_VERSION_KEY: "1",
-        }
-    )
+def _session(root) -> MemorySession:
+    session = MemorySession()
+    bind_project(session, root, project_id=PROJECT_ID)
     session.ensure_layer(FULL)
     session.set_layer_user_text(FULL, "lf_type_id", "EX-01")
     return session
 
 
-def _save(session: MemorySession, root) -> None:
-    session.set_document_path(str(Path(root) / "model.3dm"))
+def _registry_folder(root) -> Path:
+    return Path(root) / CONFIG_DIR_NAME / PROJECT_ID
 
 
 def _add_space(session):
@@ -100,8 +98,8 @@ def _add_wall(session):
     session.set_bbox("wall", (2, 2, 0), (3, 3, 270))
 
 
-def _apply(session, catalog, environ=None):
-    ident = apply_identity(session, catalog=catalog, environ=environ, guarded=False)
+def _apply(session, catalog):
+    ident = apply_identity(session, catalog=catalog, guarded=False)
     if not ident.ok:
         raise AssertionError(ident.message)
     placed = apply_placement(session, catalog=catalog, guarded=False)
@@ -111,14 +109,12 @@ def _apply(session, catalog, environ=None):
 
 class PublishHandoffTests(unittest.TestCase):
     def test_before_verify_cannot_publish(self):
-        session = _session()
-        _add_space(session)
-        _add_wall(session)
         with tempfile.TemporaryDirectory(prefix="loopflow-nx07-") as raw:
-            _save(session, raw)
+            session = _session(raw)
+            _add_space(session)
+            _add_wall(session)
             result = publish_from_session(
                 session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
                 catalog=_catalog(_row()),
                 show_message=lambda _msg: None,
             )
@@ -129,16 +125,14 @@ class PublishHandoffTests(unittest.TestCase):
             self.assertIn("UUID", result.message)
             self.assertIn("Nexus 5 寫入模型 Metadata", result.message)
             self.assertTrue(session.get_view_state("wall").selected)
-            self.assertFalse((Path(raw) / "exchange").exists() and any((Path(raw) / "exchange").rglob("Project_Registry.json")))
+            self.assertEqual(list(_registry_folder(raw).glob("Project_Registry.json")), [])
 
     def test_partial_selection_cannot_publish(self):
-        session = _session()
-        _add_wall(session)
         with tempfile.TemporaryDirectory(prefix="loopflow-nx07-") as raw:
-            _save(session, raw)
+            session = _session(raw)
+            _add_wall(session)
             result = publish_from_session(
                 session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
                 catalog=_catalog(_row()),
                 selected_only=True,
                 show_message=lambda _msg: None,
@@ -146,27 +140,21 @@ class PublishHandoffTests(unittest.TestCase):
             self.assertEqual(result.blocking, ("partial_scan_cannot_publish",))
 
     def test_after_verify_writes_registry_without_tag_or_quantity(self):
-        session = _session()
-        _add_space(session)
-        _add_wall(session)
         catalog = _catalog(_row())
         with tempfile.TemporaryDirectory(prefix="loopflow-nx07-") as raw:
-            environ = {"LOOPFLOW_WORKFILES_ROOT": raw}
-            _save(session, raw)
+            session = _session(raw)
+            _add_space(session)
+            _add_wall(session)
             _write_dictionary(Path(raw))
-            _apply(session, catalog, environ)
+            _apply(session, catalog)
             popups = []
-            result = run_publish_exchange(
-                session,
-                environ=environ,
-                show_message=popups.append,
-            )
+            result = run_publish_exchange(session, show_message=popups.append)
             self.assertTrue(result.ok, result.message)
             self.assertEqual(result.command_id, "LF_Publish_Exchange")
             self.assertTrue(result.details["publish_ready"])
             self.assertTrue(popups)
-            official = Path(raw) / "exchange" / PROJECT_ID / "Project_Registry.json"
-            last_good = Path(raw) / "exchange" / PROJECT_ID / "Project_Registry.last-good.json"
+            official = _registry_folder(raw) / "Project_Registry.json"
+            last_good = _registry_folder(raw) / "Project_Registry.last-good.json"
             self.assertTrue(official.exists())
             self.assertTrue(last_good.exists())
             payload = read_json(official).details["payload"]
@@ -188,22 +176,19 @@ class PublishHandoffTests(unittest.TestCase):
             self.assertEqual(session.get_object_user_text("wall", DATA_REVISION_KEY), "1")
 
     def test_c03_lock_failure_keeps_last_good(self):
-        session = _session()
-        _add_space(session)
-        _add_wall(session)
         catalog = _catalog(_row())
         with tempfile.TemporaryDirectory(prefix="loopflow-nx07-") as raw:
-            environ = {"LOOPFLOW_WORKFILES_ROOT": raw}
-            _save(session, raw)
-            _apply(session, catalog, environ)
+            session = _session(raw)
+            _add_space(session)
+            _add_wall(session)
+            _apply(session, catalog)
             first = publish_from_session(
                 session,
-                environ=environ,
                 catalog=catalog,
                 show_message=lambda _msg: None,
             )
             self.assertTrue(first.ok, first.message)
-            folder = Path(raw) / "exchange" / PROJECT_ID
+            folder = _registry_folder(raw)
             official = folder / "Project_Registry.json"
             last_good = folder / "Project_Registry.last-good.json"
             before = official.read_bytes()
@@ -213,7 +198,6 @@ class PublishHandoffTests(unittest.TestCase):
             try:
                 second = publish_from_session(
                     session,
-                    environ=environ,
                     catalog=catalog,
                     show_message=lambda _msg: None,
                 )

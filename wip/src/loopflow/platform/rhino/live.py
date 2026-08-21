@@ -225,6 +225,10 @@ class LiveSession:
         return str(value)
 
     def set_document_user_text(self, key: str, value: str) -> None:
+        # 不帶 value 呼叫即刪除該鍵；環境設定搬進專案設定檔後要能清掉舊鍵。
+        if value in (None, ""):
+            self._rs.SetDocumentUserText(key)
+            return
         self._rs.SetDocumentUserText(key, value)
 
     def model_unit_system(self) -> str:

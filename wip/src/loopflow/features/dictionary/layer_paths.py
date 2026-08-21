@@ -5,8 +5,6 @@ from __future__ import annotations
 from typing import Optional, Sequence, Tuple
 
 LAYER_PREFIX_3D = "M3D"
-LAYER_PREFIX_KEY = "lf_layer_prefix"
-PROJECT_ID_KEY = "lf_project_id"
 DATA_SUFFIX = "_Data"
 DNA_REF_PREFIX = "DNA_REF_"
 LAYER_TYPE_ID_KEY = "lf_type_id"
@@ -41,19 +39,34 @@ def normalize_layer_prefix(name: Optional[str]) -> Optional[str]:
 
 
 def project_id_from_session(session) -> Optional[str]:
-    """專案身分＝圖層專案名稱；沒有前綴時才看 lf_project_id。"""
+    """專案身分＝圖層專案名稱，存在 .3dm 旁的專案設定檔，不在文件 UserText。"""
     if session is None:
         return None
-    getter = getattr(session, "document_user_text", None)
-    if not callable(getter):
+    from loopflow.foundation.project_config import (
+        LAYER_PREFIX_FIELD,
+        PROJECT_ID_FIELD,
+        read_config,
+    )
+
+    loaded = read_config(session)
+    if not loaded.ok:
         return None
-    return normalize_layer_prefix(getter(LAYER_PREFIX_KEY)) or normalize_layer_prefix(
-        getter(PROJECT_ID_KEY)
+    values = loaded.details["values"]
+    return normalize_layer_prefix(values.get(LAYER_PREFIX_FIELD)) or normalize_layer_prefix(
+        values.get(PROJECT_ID_FIELD)
     )
 
 
 def read_layer_prefix(session) -> str:
-    stored = normalize_layer_prefix(session.document_user_text(LAYER_PREFIX_KEY) or "")
+    """圖層樹前綴。設定檔還沒有 layer_prefix 時用 M3D。"""
+    if session is None:
+        return LAYER_PREFIX_3D
+    from loopflow.foundation.project_config import LAYER_PREFIX_FIELD, read_config
+
+    loaded = read_config(session)
+    if not loaded.ok:
+        return LAYER_PREFIX_3D
+    stored = normalize_layer_prefix(loaded.details["values"].get(LAYER_PREFIX_FIELD))
     return stored or LAYER_PREFIX_3D
 
 

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import io
 import sys
-import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -30,6 +29,7 @@ from loopflow.platform.rhino.memory import MemorySession
 from test_infuser_part import (
     OBJECT_ID,
     OTHER,
+    PROJECT_ID,
     _add_block,
     _add_live_source,
     _catalog,
@@ -37,6 +37,9 @@ from test_infuser_part import (
     _session,
     _snapshot,
 )
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import bind_project, read_project_config, registry_dir  # noqa: E402
 
 
 def _run(session, **kwargs):
@@ -128,9 +131,8 @@ class InjectTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("there", ITEM_NAME_KEY), "Chair-1")
 
     def test_missing_schema_is_filled_and_continues(self):
-        session = _session()
-        session._document_text.pop("lf_schema_id", None)
-        session._document_text.pop("lf_schema_version", None)
+        session = _session(write_config=False)
+        root = Path(session.document_path()).parent
         _add_block(
             session,
             "here",
@@ -146,17 +148,12 @@ class InjectTests(unittest.TestCase):
         )
         result = _run(session)
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(session.document_user_text("lf_schema_id"), "loopflow.project")
+        self.assertEqual(read_project_config(root)["schema_id"], "loopflow.project")
         self.assertEqual(session.get_object_user_text("here", TYPE_CATEGORY_KEY), "PT")
 
     def test_no_layout_pages_zero_write(self):
-        session = MemorySession(
-            document_text={
-                "lf_project_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-                "lf_schema_id": "loopflow.project",
-                "lf_schema_version": "1",
-            }
-        )
+        session = MemorySession()
+        bind_project(session, project_id=PROJECT_ID)
         result = _run(session)
         self.assertFalse(result.ok)
         self.assertEqual(result.blocking, ("missing_layout_page",))
@@ -178,17 +175,10 @@ class InjectTests(unittest.TestCase):
 
 class RegistryFileTests(unittest.TestCase):
     def test_corrupt_official_stops_and_does_not_write(self):
-        root = Path(tempfile.mkdtemp())
-        (root / "exchange" / "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").mkdir(parents=True)
-        official = (
-            root
-            / "exchange"
-            / "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
-            / "Project_Registry.json"
-        )
-        official.write_text("{not json", encoding="utf-8")
         session = _session()
-        session.set_document_path(str(root / "model.3dm"))
+        root = Path(session.document_path()).parent
+        folder = registry_dir(root, PROJECT_ID)
+        (folder / "Project_Registry.json").write_text("{not json", encoding="utf-8")
         _add_block(
             session,
             "here",
@@ -203,20 +193,14 @@ class RegistryFileTests(unittest.TestCase):
             user_text={SOURCE_BLOCK_NAME_KEY: "FF-01__Chair-1"},
         )
         before = _snapshot(session)
-        result = run_infuser_all(
-            session,
-            catalog=_catalog(),
-            environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-        )
+        result = run_infuser_all(session, catalog=_catalog())
         self.assertFalse(result.ok)
         self.assertIsNone(session.get_object_user_text("here", TYPE_CATEGORY_KEY))
         self.assertIsNone(session.get_object_user_text("there", ITEM_NAME_KEY))
         self.assertEqual(session._object_meta, before["objects"])
 
     def test_missing_registry_still_injects_item_on_other_page(self):
-        root = Path(tempfile.mkdtemp())
         session = _session()
-        session.set_document_path(str(root / "model.3dm"))
         _add_live_source(session)
         _add_block(
             session,
@@ -225,11 +209,7 @@ class RegistryFileTests(unittest.TestCase):
             page=OTHER,
             user_text={SOURCE_BLOCK_NAME_KEY: "FF-01__Chair-1"},
         )
-        result = run_infuser_all(
-            session,
-            catalog=_catalog(),
-            environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-        )
+        result = run_infuser_all(session, catalog=_catalog())
         self.assertTrue(result.ok, result.message)
         self.assertIn("missing_registry", result.warnings)
         self.assertEqual(session.get_object_user_text("there", ITEM_NAME_KEY), "Chair-1")

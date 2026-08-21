@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, Mapping, Optional
+from typing import Callable, Optional
 
 from loopflow.features.dictionary.loader import TypeCatalog
 from loopflow.features.dictionary.sync import export_dictionary
@@ -17,18 +17,16 @@ COMMAND_ID = "LF_Export_Type_Layers"
 def run_export_type_layers(
     session: RhinoSession,
     *,
-    environ: Optional[Mapping[str, str]] = None,
     catalog: Optional[TypeCatalog] = None,
     export_path: Optional[Path] = None,
     show_message: Optional[Callable[[str], None]] = None,
     command_id: str = COMMAND_ID,
 ) -> results.Result:
-    checked = run_open_check(session, environ=environ, command_id=command_id)
+    checked = run_open_check(session, command_id=command_id)
     if not checked.ok:
         return checked
     return export_dictionary(
         session,
-        environ=environ,
         catalog=catalog,
         export_path=export_path,
         guarded=False,

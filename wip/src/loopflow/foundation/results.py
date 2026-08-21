@@ -20,10 +20,13 @@ STATUSES = (
 
 STAGES = (
     "dispatch",
-    "resolve_workfiles",
+    "resolve_document",
+    "resolve_project_folder",
     "resolve_dictionary",
-    "resolve_exchange",
+    "resolve_config_dir",
     "resolve_registry",
+    "read_project_config",
+    "write_project_config",
     "check_schema",
     "write_log",
     "load_config",

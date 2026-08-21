@@ -44,7 +44,10 @@ from loopflow.features.view.keys import SCHEMA_ID_KEY, VIEW_ID_KEY, VIEW_SCHEMA_
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
 
-PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import bind_project  # noqa: E402
+
+PROJECT_ID = "大安邸"
 VIEW_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
 VIEW_ID_B = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"
 SHEET_CODE_KEY = "lf_sheet_code"
@@ -65,13 +68,8 @@ DETAIL_B = {
 
 
 def _session() -> MemorySession:
-    session = MemorySession(
-        document_text={
-            "lf_project_id": PROJECT_ID,
-            "lf_schema_id": "loopflow.project",
-            "lf_schema_version": "1",
-        }
-    )
+    session = MemorySession()
+    bind_project(session, project_id=PROJECT_ID)
     session.add_object("tag", selected=True, name="IndexTag", layer="M2D::Tags")
     session.set_block("tag", (0, 0, 0), name="TAG_SECTION_DETAIL")
     session.add_object("frame", name="A-A", layer="LoopFlow::Anchor_Frame")
@@ -329,7 +327,8 @@ class CommandTests(unittest.TestCase):
         self.assertIsNone(session.get_object_user_text("tag", TARGET_VIEW_ID_KEY))
 
     def test_missing_schema_stops_without_picking(self):
-        session = MemorySession(document_text={})
+        session = MemorySession()
+        bind_project(session, write_config=False)
         session.add_object("tag", name="Tag")
         session.set_block("tag", (0, 0, 0), name="TAG_SECTION_DETAIL")
         picked = []

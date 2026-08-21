@@ -47,10 +47,13 @@ from loopflow.features.sheet.metadata import write_sheet_metadata
 from loopflow.features.tagger.templates import load_tag_templates
 from loopflow.platform.rhino.memory import MemorySession
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import bind_project  # noqa: E402
+
 CASES = json.loads(
     (WIP / "fixtures" / "contract" / "catalog" / "cases.json").read_text(encoding="utf-8")
 )
-PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+PROJECT_ID = "大安邸"
 SHEET_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 SHEET_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
 SHEET_C = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
@@ -64,13 +67,9 @@ def _catalog():
 
 
 def _session() -> MemorySession:
-    return MemorySession(
-        document_text={
-            "lf_project_id": PROJECT_ID,
-            "lf_schema_id": "loopflow.project",
-            "lf_schema_version": "1",
-        }
-    )
+    session = MemorySession()
+    bind_project(session, project_id=PROJECT_ID)
+    return session
 
 
 def _point_from_case(item: dict, field: str) -> CatalogPoint:

@@ -10,6 +10,7 @@ import json
 import uuid
 from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
+from loopflow.features.dictionary.layer_paths import project_id_from_session
 from loopflow.features.drawing import keys as drawing_keys
 from loopflow.features.infuser.reader import load_published_registry
 from loopflow.features.view.keys import SCHEMA_ID_KEY as VIEW_SCHEMA_ID_KEY
@@ -22,7 +23,6 @@ from loopflow.features.tagger.binding import UUID_V4_RE, text
 
 COMMAND_ID = "LF_Extract_CP"
 STAGE = "extract_drawing"
-PROJECT_ID_KEY = "lf_project_id"
 ShowMessage = Callable[[str], None]
 PickRoots = Callable[[RhinoSession, Sequence[str]], Optional[Sequence[str]]]
 PickMode = Callable[[RhinoSession, Mapping], Optional[str]]
@@ -270,7 +270,7 @@ def _ensure_extract_layer(session: RhinoSession, path: str, rgb=None) -> None:
 
 
 def _registry_revision(session: RhinoSession):
-    project_id = text(session.document_user_text(PROJECT_ID_KEY))
+    project_id = project_id_from_session(session)
     loaded = load_published_registry(
         project_id,
         document_path=session.document_path() if hasattr(session, "document_path") else None,

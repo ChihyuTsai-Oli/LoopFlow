@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from typing import Callable, Mapping, Optional
 
-from loopflow.features.infuser.part import PROJECT_ID_KEY, infuse_page, _result_from_counts
+from loopflow.features.dictionary.layer_paths import project_id_from_session
+from loopflow.features.infuser.part import infuse_page, _result_from_counts
 from loopflow.features.health.appearance import apply_queued_appearances
 from loopflow.features.infuser.reader import load_published_registry
 from loopflow.features.tagger.templates import TagTemplateSet, load_tag_templates
@@ -41,7 +42,6 @@ def run_infuser_all(
     session: RhinoSession,
     *,
     catalog: Optional[TagTemplateSet] = None,
-    environ: Optional[Mapping[str, str]] = None,
     registry: Optional[Mapping] = None,
     show_message: Optional[ShowMessage] = None,
 ) -> results.Result:
@@ -82,9 +82,8 @@ def run_infuser_all(
     extra_warnings = {}
     if payload is None:
         registry_result = load_published_registry(
-            session.document_user_text(PROJECT_ID_KEY),
+            project_id_from_session(session),
             document_path=session.document_path() if hasattr(session, "document_path") else None,
-            environ=environ,
             command_id=COMMAND_ID,
         )
         if not registry_result.ok:

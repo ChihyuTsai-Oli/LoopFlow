@@ -3,9 +3,9 @@
 from loopflow.features.dictionary.loader import (
     TypeCatalog,
     TypeRecord,
+    load_dictionary,
     load_from_path,
     load_from_table,
-    load_from_workfiles,
 )
 from loopflow.features.dictionary.schema import (
     DISPLAY_COLUMNS,
@@ -24,9 +24,9 @@ __all__ = [
     "TypeRecord",
     "classify_measurement",
     "export_layer_diff",
+    "load_dictionary",
     "load_from_path",
     "load_from_table",
-    "load_from_workfiles",
     "split_type_id",
     "sync_type_layers",
 ]

@@ -2,7 +2,7 @@
 """NX-07：Verify 通過後組 payload，呼叫 C03 寫入。不自己做 lock。"""
 from __future__ import annotations
 
-from typing import Callable, Mapping, Optional
+from typing import Callable, Optional
 
 from loopflow.features.dictionary.layer_paths import project_id_from_session
 from loopflow.features.model_data.identity import _load_catalog
@@ -18,7 +18,6 @@ COMMAND_ID = "LF_Publish_Exchange"
 def publish_from_session(
     session: RhinoSession,
     *,
-    environ: Optional[Mapping[str, str]] = None,
     catalog=None,
     selected_only: bool = False,
     cancel: bool = False,
@@ -54,7 +53,6 @@ def publish_from_session(
         verified = compare_apply_usertext(
             current,
             catalog=catalog,
-            environ=environ,
             selected_only=False,
             command_id=command_id,
         )
@@ -69,7 +67,7 @@ def publish_from_session(
                 command_id=command_id,
                 details=dict(verified.details or {}, publish_ready=False),
             )
-        loaded = _load_catalog(catalog, environ, current)
+        loaded = _load_catalog(catalog, current)
         if not loaded.ok:
             return loaded
         type_catalog = loaded.details["catalog"]
@@ -82,7 +80,6 @@ def publish_from_session(
         written = publish_registry(
             payload,
             document_path=current.document_path() if hasattr(current, "document_path") else None,
-            environ=environ,
             command_id=command_id,
         )
         details = dict(written.details or {})
@@ -133,7 +130,6 @@ def publish_from_session(
 def run_publish_exchange(
     session: RhinoSession,
     *,
-    environ: Optional[Mapping[str, str]] = None,
     catalog=None,
     selected_only: bool = False,
     show_message: Optional[Callable[[str], None]] = None,
@@ -142,12 +138,11 @@ def run_publish_exchange(
     """獨立發布指令：先開案檢查，再走既有發布。"""
     from loopflow.features.project.console import run_open_check
 
-    checked = run_open_check(session, environ=environ, command_id=command_id)
+    checked = run_open_check(session, command_id=command_id)
     if not checked.ok:
         return checked
     return publish_from_session(
         session,
-        environ=environ,
         catalog=catalog,
         selected_only=selected_only,
         cancel=False,

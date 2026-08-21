@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""寫入工作檔 logs，不把某台電腦的絕對路徑當成契約資料。"""
+"""log 寫在 .3dm 旁的 `_LoopFlow_Config/logs/`，不把某台電腦的絕對路徑當成契約資料。"""
 from __future__ import annotations
 
 import datetime
 import traceback
 from pathlib import Path
-from typing import Mapping, Optional
+from typing import Optional
 
 from . import paths, results
 from .config import AppConfig, DEFAULT_CONFIG
@@ -16,32 +16,32 @@ def _now() -> str:
 
 
 def resolve_log_path(
-    environ: Optional[Mapping[str, str]] = None,
+    session=None,
     *,
     config: AppConfig = DEFAULT_CONFIG,
     log_path: Optional[Path] = None,
 ) -> results.Result:
     if log_path is not None:
         return results.ok("write_log", "使用指定 log 路徑", details={"log_path": Path(log_path)})
-    resolved = paths.resolve_workfiles(environ)
+    resolved = paths.resolve_project_folder(session)
     if not resolved.ok:
         return resolved
-    workfiles = resolved.details["paths"]
+    project = resolved.details["paths"]
     return results.ok(
         "write_log",
-        "使用工作檔 log 路徑",
-        details={"log_path": workfiles.log_file(config)},
+        "使用專案設定資料夾的 log 路徑",
+        details={"log_path": project.log_file(config)},
     )
 
 
 def append_log(
     message: str,
     *,
-    environ: Optional[Mapping[str, str]] = None,
+    session=None,
     config: AppConfig = DEFAULT_CONFIG,
     log_path: Optional[Path] = None,
 ) -> results.Result:
-    resolved = resolve_log_path(environ, config=config, log_path=log_path)
+    resolved = resolve_log_path(session, config=config, log_path=log_path)
     if not resolved.ok:
         return resolved
     target = Path(resolved.details["log_path"])
@@ -58,7 +58,7 @@ def log_exception(
     context: str,
     exc: Optional[BaseException] = None,
     *,
-    environ: Optional[Mapping[str, str]] = None,
+    session=None,
     config: AppConfig = DEFAULT_CONFIG,
     log_path: Optional[Path] = None,
 ) -> results.Result:
@@ -66,4 +66,4 @@ def log_exception(
     if exc is not None:
         lines.append("Exception: %r" % exc)
     lines.append(traceback.format_exc())
-    return append_log("\n".join(lines), environ=environ, config=config, log_path=log_path)
+    return append_log("\n".join(lines), session=session, config=config, log_path=log_path)

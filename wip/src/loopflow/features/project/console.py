@@ -3,23 +3,25 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Mapping, Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
-from loopflow.features.dictionary.layer_paths import PROJECT_ID_KEY, project_id_from_session
-from loopflow.features.dictionary.loader import load_from_workfiles
+from loopflow.features.dictionary.layer_paths import project_id_from_session
+from loopflow.features.dictionary.loader import load_dictionary
 from loopflow.foundation import results
 from loopflow.foundation.paths import (
-    dictionary_filename_from_session,
+    resolve_project_folder,
     resolve_registry_for_document,
-    resolve_workfiles,
+)
+from loopflow.foundation.project_config import (
+    SCHEMA_ID_FIELD,
+    SCHEMA_VERSION_FIELD,
+    dictionary_filename_from_session,
+    ensure_schema,
 )
 from loopflow.foundation.version import PACKAGE_VERSION, check_schema
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Nexus"
-PROJECT_SCHEMA_ID = "loopflow.project"
-SCHEMA_ID_KEY = "lf_schema_id"
-SCHEMA_VERSION_KEY = "lf_schema_version"
 CM_UNITS = frozenset(("cm", "centimeter", "centimeters"))
 
 CONSOLE_STEPS: Tuple[dict, ...] = (
@@ -81,19 +83,9 @@ def compose_scan_apply_message(mode: str, identity, placement) -> str:
     return message + " 不可發布。"
 
 
-def ensure_project_schema(session: RhinoSession) -> None:
-    """缺 schema 時順便寫入 loopflow.project／1，不擋開案。"""
-    if not str(session.document_user_text(SCHEMA_ID_KEY) or "").strip():
-        session.set_document_user_text(SCHEMA_ID_KEY, PROJECT_SCHEMA_ID)
-    raw = session.document_user_text(SCHEMA_VERSION_KEY)
-    if raw is None or str(raw).strip() == "":
-        session.set_document_user_text(SCHEMA_VERSION_KEY, "1")
-
-
 def run_open_check(
     session: Optional[RhinoSession],
     *,
-    environ: Optional[Mapping[str, str]] = None,
     cancel: bool = False,
     command_id: str = COMMAND_ID,
 ) -> results.Result:
@@ -103,45 +95,22 @@ def run_open_check(
             "使用者取消開案檢查。",
             command_id=command_id,
         )
-    workfiles = resolve_workfiles(environ=environ)
-    if not workfiles.ok:
-        return workfiles
-    filename = dictionary_filename_from_session(session) if session is not None else None
-    catalog = load_from_workfiles(environ=environ, dictionary_filename=filename, session=session)
-    extra_warnings: Sequence[str] = ()
-    catalog_warnings: Sequence[str] = ()
-    type_count = None
-    if not catalog.ok and catalog.stage == "resolve_dictionary":
-        extra_warnings = (
-            "找不到 Dictionary 檔案 %s。請用選單 2 指定工作檔資料夾內的 .xlsx。"
-            % ((catalog.details or {}).get("filename") or filename or "LoopFlow_Dictionary.xlsx"),
-        )
-    elif not catalog.ok:
-        return catalog
-    else:
-        catalog_warnings = catalog.warnings
-        type_count = catalog.details.get("type_count")
-    paths_result = resolve_workfiles(environ=environ, dictionary_filename=filename)
-    if not paths_result.ok:
-        return paths_result
-    paths = paths_result.details["paths"]
     if session is None:
         return results.failed(
             "rhino_session",
             "目前不在 Rhino 內，無法讀取專案名稱與文件單位。不修改檔案。",
             command_id=command_id,
         )
-    document_path = session.document_path() if hasattr(session, "document_path") else None
-    if not str(document_path or "").strip():
-        return results.blocked(
-            "open_check",
-            "請先把這份檔案存成 .3dm。尚未存檔就沒有資料夾，無法建立 exchange。",
-            blocking=("unsaved_document",),
-            command_id=command_id,
-        )
-    ensure_project_schema(session)
-    schema_id = session.document_user_text(SCHEMA_ID_KEY)
-    raw_version = session.document_user_text(SCHEMA_VERSION_KEY)
+    located = resolve_project_folder(session)
+    if not located.ok:
+        return located
+    document_path = located.details["paths"].document
+    config = ensure_schema(session)
+    if not config.ok:
+        return config
+    values = config.details["values"]
+    schema_id = values.get(SCHEMA_ID_FIELD)
+    raw_version = values.get(SCHEMA_VERSION_FIELD)
     try:
         schema_version = int(raw_version)
     except (TypeError, ValueError):
@@ -154,12 +123,32 @@ def run_open_check(
     if not version.ok:
         return version
 
+    filename = dictionary_filename_from_session(session)
+    catalog = load_dictionary(session, dictionary_filename=filename)
+    extra_warnings: Sequence[str] = ()
+    catalog_warnings: Sequence[str] = ()
+    type_count = None
+    if not catalog.ok and catalog.stage == "resolve_dictionary":
+        extra_warnings = (
+            "找不到 Dictionary 檔案 %s。請把字典放回 .3dm 所在的資料夾，或用選單 2 重新指定。"
+            % ((catalog.details or {}).get("filename") or filename),
+        )
+    elif not catalog.ok:
+        return catalog
+    else:
+        catalog_warnings = catalog.warnings
+        type_count = catalog.details.get("type_count")
+    paths_result = resolve_project_folder(session, dictionary_filename=filename)
+    if not paths_result.ok:
+        return paths_result
+    paths = paths_result.details["paths"]
+
     project_id = project_id_from_session(session)
-    exchange_exists = False
+    registry_exists = False
     if project_id:
         resolved = resolve_registry_for_document(document_path, project_id)
         if resolved.ok:
-            exchange_exists = Path(resolved.details["folder"]).exists()
+            registry_exists = Path(resolved.details["folder"]).exists()
 
     unit = session.model_unit_system()
     warnings: Sequence[str] = catalog_warnings
@@ -181,7 +170,9 @@ def run_open_check(
         "model_unit": unit,
         "dictionary_filename": paths.dictionary.name,
         "type_count": type_count,
-        "exchange_exists": exchange_exists,
+        "project_folder": str(paths.root),
+        "config_dir": str(paths.config_dir),
+        "registry_exists": registry_exists,
         "package_version": PACKAGE_VERSION,
         "steps": _copy_steps(),
         "executable_steps": (
@@ -210,7 +201,6 @@ def run_open_check(
 def open_console(
     session: Optional[RhinoSession] = None,
     *,
-    environ: Optional[Mapping[str, str]] = None,
     cancel: bool = False,
     step: str = "open_check",
     export_path=None,
@@ -256,7 +246,6 @@ def open_console(
     def action(current: RhinoSession) -> results.Result:
         checked = run_open_check(
             current,
-            environ=environ,
             cancel=cancel,
             command_id=command_id,
         )
@@ -265,7 +254,6 @@ def open_console(
         if step == "sync_type_layers":
             return sync_type_layers(
                 current,
-                environ=environ,
                 cancel=False,
                 export_path=export_path,
                 guarded=False,
@@ -308,7 +296,6 @@ def open_console(
             )
         if step in ("scan_apply_verify", "scan_identity", "apply_identity", "verify_identity", "rollback_identity"):
             kwargs = {
-                "environ": environ,
                 "selected_only": selected_only,
                 "cancel": False,
                 "guarded": False,
@@ -388,7 +375,6 @@ def open_console(
             if action_name == "verify_identity" or action_name == "verify":
                 return verify_model_data(
                     current,
-                    environ=environ,
                     selected_only=selected_only,
                     guarded=False,
                     command_id=command_id,
@@ -414,7 +400,7 @@ def open_console(
         )
 
     if session is None:
-        return run_open_check(None, environ=environ, cancel=cancel, command_id=command_id)
+        return run_open_check(None, cancel=cancel, command_id=command_id)
     outcome = run_guarded(session, action, command_id=command_id)
     if identity_action in ("verify", "verify_identity") and step in (
         "scan_apply_verify",

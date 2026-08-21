@@ -35,18 +35,16 @@ from loopflow.foundation.usertext import OBJECT_ID_KEY
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
 
-PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import bind_project  # noqa: E402
+
+PROJECT_ID = "大安邸"
 OBJECT_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
 
 
 def _session() -> MemorySession:
-    session = MemorySession(
-        document_text={
-            "lf_project_id": PROJECT_ID,
-            "lf_schema_id": "loopflow.project",
-            "lf_schema_version": "1",
-        }
-    )
+    session = MemorySession()
+    bind_project(session, project_id=PROJECT_ID)
     session.add_object(
         "wall",
         selected=True,
@@ -371,7 +369,8 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("tag", TEMPLATE_ID_KEY), "Tag_Height_Grab")
 
     def test_missing_schema_stops_without_picking(self):
-        session = MemorySession(document_text={})
+        session = MemorySession()
+        bind_project(session, write_config=False)
         session.add_object("tag", name="Tag")
         session.set_block("tag", (0, 0, 0), name="TAG_HEIGHT_GRAB")
         picked = []

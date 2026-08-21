@@ -35,19 +35,19 @@ from loopflow.foundation.usertext import (
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
 
-PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import bind_project  # noqa: E402
+
+PROJECT_ID = "大安邸"
 OBJECT_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
 
 
-def _session(document_text=None, **kwargs) -> MemorySession:
-    text = {
-        "lf_project_id": PROJECT_ID,
-        "lf_schema_id": "loopflow.project",
-        "lf_schema_version": "1",
-    }
-    if document_text is not None:
-        text = dict(document_text)
-    session = MemorySession(document_text=text, **kwargs)
+def _session(config=None, *, write_config: bool = True) -> MemorySession:
+    """預設寫好專案設定；config 可覆寫 schema 欄位，write_config=False 代表還沒有設定檔。"""
+    values = {"project_id": PROJECT_ID}
+    values.update(config or {})
+    session = MemorySession()
+    bind_project(session, write_config=write_config, **values)
     session.add_object(
         "wall",
         selected=True,
@@ -191,11 +191,7 @@ class InspectTests(unittest.TestCase):
 
 class ViewerCommandTests(unittest.TestCase):
     def test_unknown_schema_version_stops_without_picking(self):
-        session = _session(document_text={
-            "lf_project_id": PROJECT_ID,
-            "lf_schema_id": "loopflow.project",
-            "lf_schema_version": "99",
-        })
+        session = _session({"schema_version": 99})
         picked = []
         shown = []
 
@@ -217,11 +213,7 @@ class ViewerCommandTests(unittest.TestCase):
         self.assertFalse(session.document_modified())
 
     def test_unknown_schema_id_stops(self):
-        session = _session(document_text={
-            "lf_project_id": PROJECT_ID,
-            "lf_schema_id": "loopflow.unknown",
-            "lf_schema_version": "1",
-        })
+        session = _session({"schema_id": "loopflow.unknown"})
         result = run_data_viewer(
             session,
             pick_object=lambda _s: "wall",
@@ -278,7 +270,7 @@ class ViewerCommandTests(unittest.TestCase):
         self.assertFalse(session.get_view_state("other").selected)
 
     def test_missing_schema_warns_but_still_views(self):
-        session = _session(document_text={})
+        session = _session(write_config=False)
         session.set_object_user_text("wall", TYPE_ID_KEY, "EX-01")
         session.set_document_modified(False)
         picks = ["wall", None]

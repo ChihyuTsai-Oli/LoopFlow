@@ -2,9 +2,9 @@
 """LF_Data_Viewer：點選物件、只讀顯示 canonical 資料。"""
 from __future__ import annotations
 
-from typing import Callable, List, Mapping, Optional
+from typing import Callable, List, Optional
 
-from loopflow.features.dictionary.loader import TypeCatalog, load_from_workfiles
+from loopflow.features.dictionary.loader import TypeCatalog, load_dictionary
 from loopflow.features.viewer.inspect import (
     COMMAND_ID,
     check_document_schema,
@@ -21,12 +21,11 @@ Notify = Callable[[str], None]
 
 def _optional_catalog(
     catalog: Optional[TypeCatalog],
-    environ: Optional[Mapping[str, str]],
     session: Optional[RhinoSession] = None,
 ) -> Optional[TypeCatalog]:
     if catalog is not None:
         return catalog
-    loaded = load_from_workfiles(environ=environ, session=session)
+    loaded = load_dictionary(session)
     if loaded.ok:
         return loaded.details.get("catalog")
     return None
@@ -60,14 +59,13 @@ def run_data_viewer(
     show_report: Optional[ShowReport] = None,
     notify: Optional[Notify] = None,
     catalog: Optional[TypeCatalog] = None,
-    environ: Optional[Mapping[str, str]] = None,
 ) -> results.Result:
     """點選物件並顯示 canonical 報告。不寫入來源。"""
     schema = check_document_schema(session)
     if not schema.ok:
         _notify(notify, schema.message)
         return schema
-    loaded_catalog = _optional_catalog(catalog, environ, session)
+    loaded_catalog = _optional_catalog(catalog, session)
     picker = pick_object or _default_pick
     shower = show_report or _default_show
     warnings = list(schema.warnings or ())

@@ -17,7 +17,7 @@ from loopflow.features.dictionary.layer_paths import (
     read_layer_prefix,
     to_relative_path,
 )
-from loopflow.features.dictionary.loader import TypeCatalog, load_from_workfiles
+from loopflow.features.dictionary.loader import TypeCatalog, load_dictionary
 from loopflow.foundation import results
 from loopflow.foundation.atomic_io import read_json
 from loopflow.foundation.paths import resolve_registry_for_document
@@ -47,7 +47,6 @@ def _new_id() -> str:
 
 def expected_data_revision(
     session: RhinoSession,
-    environ: Optional[Mapping[str, str]] = None,
 ) -> str:
     """尚未發布為 0；已有正式 Registry 則用該檔的 registry_revision。"""
     project_id = project_id_from_session(session)
@@ -178,20 +177,16 @@ def _blocking_codes(items: Sequence[dict]) -> Tuple[str, ...]:
     return tuple(codes)
 
 
-def _load_catalog(catalog: Optional[TypeCatalog], environ, session=None) -> results.Result:
+def _load_catalog(catalog: Optional[TypeCatalog], session=None) -> results.Result:
     if catalog is not None:
         return results.ok("load_dictionary", "已使用注入的 Type Catalog。", details={"catalog": catalog})
-    loaded = load_from_workfiles(environ=environ, session=session)
-    if not loaded.ok:
-        return loaded
-    return loaded
+    return load_dictionary(session)
 
 
 def scan_identity(
     session: RhinoSession,
     *,
     catalog: Optional[TypeCatalog] = None,
-    environ: Optional[Mapping[str, str]] = None,
     selected_only: bool = False,
     cancel: bool = False,
     guarded: bool = True,
@@ -206,7 +201,7 @@ def scan_identity(
                 "使用者取消 Scan。",
                 command_id=command_id,
             )
-        loaded = _load_catalog(catalog, environ, current)
+        loaded = _load_catalog(catalog, current)
         if not loaded.ok:
             return loaded
         type_catalog = loaded.details["catalog"]
@@ -267,7 +262,6 @@ def apply_identity(
     session: RhinoSession,
     *,
     catalog: Optional[TypeCatalog] = None,
-    environ: Optional[Mapping[str, str]] = None,
     mappings: Optional[Mapping[str, str]] = None,
     selected_only: bool = False,
     cancel: bool = False,
@@ -283,11 +277,11 @@ def apply_identity(
                 "使用者取消 Apply。",
                 command_id=command_id,
             )
-        loaded = _load_catalog(catalog, environ, current)
+        loaded = _load_catalog(catalog, current)
         if not loaded.ok:
             return loaded
         type_catalog = loaded.details["catalog"]
-        revision = expected_data_revision(current, environ)
+        revision = expected_data_revision(current)
         mapping_table = dict(mappings or {})
         for new_id in mapping_table.values():
             if not UUID_V4_RE.match(new_id):
@@ -375,7 +369,6 @@ def verify_identity(
     session: RhinoSession,
     *,
     catalog: Optional[TypeCatalog] = None,
-    environ: Optional[Mapping[str, str]] = None,
     selected_only: bool = False,
     cancel: bool = False,
     guarded: bool = True,
@@ -385,7 +378,6 @@ def verify_identity(
     scanned = scan_identity(
         session,
         catalog=catalog,
-        environ=environ,
         selected_only=selected_only,
         cancel=cancel,
         guarded=guarded,

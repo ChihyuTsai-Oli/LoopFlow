@@ -28,9 +28,13 @@ from loopflow.features.model_data.verify import verify_model_data
 from loopflow.foundation.usertext import DATA_REVISION_KEY, OBJECT_ID_KEY
 from loopflow.platform.rhino.memory import MemorySession
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import bind_project, registry_dir  # noqa: E402
+
 LAYER = "00_STR_結構::Beam.樑"
 FULL = to_full_path(LAYER)
 SPACE_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+PROJECT_NAME = "大安邸"
 
 
 def _row(**overrides):
@@ -157,35 +161,28 @@ class VerifyModelTests(unittest.TestCase):
 
     def test_apply_restores_published_revision(self):
         session = _session()
-        session.set_document_user_text("lf_project_id", SPACE_A)
-        _add_space(session)
-        _add_wall(session)
         catalog = _catalog(_row())
         with tempfile.TemporaryDirectory(prefix="loopflow-rev-") as raw:
-            session.set_document_path(str(Path(raw) / "model.3dm"))
-            folder = Path(raw) / "exchange" / SPACE_A
-            folder.mkdir(parents=True)
+            root = Path(raw)
+            bind_project(session, root, project_id=PROJECT_NAME)
+            _add_space(session)
+            _add_wall(session)
+            folder = registry_dir(root, PROJECT_NAME)
             (folder / "Project_Registry.json").write_text(
-                json.dumps({"registry_revision": 3, "project_id": SPACE_A}),
+                json.dumps({"registry_revision": 3, "project_id": PROJECT_NAME}),
                 encoding="utf-8",
             )
-            environ = {"LOOPFLOW_WORKFILES_ROOT": raw}
-            ident = apply_identity(session, catalog=catalog, environ=environ, guarded=False)
+            ident = apply_identity(session, catalog=catalog, guarded=False)
             self.assertTrue(ident.ok, ident.message)
             placed = apply_placement(session, catalog=catalog, guarded=False)
             self.assertTrue(placed.ok, placed.message)
             self.assertEqual(session.get_object_user_text("wall", DATA_REVISION_KEY), "3")
             session.set_object_user_text("wall", DATA_REVISION_KEY, "99")
             popups = []
-            result = verify_model_data(
-                session,
-                catalog=catalog,
-                environ=environ,
-                show_message=popups.append,
-            )
+            result = verify_model_data(session, catalog=catalog, show_message=popups.append)
             self.assertEqual(result.status, "ok_with_warnings")
             self.assertIn("資料版次", popups[0])
-            ident = apply_identity(session, catalog=catalog, environ=environ, guarded=False)
+            ident = apply_identity(session, catalog=catalog, guarded=False)
             self.assertTrue(ident.ok, ident.message)
             self.assertEqual(session.get_object_user_text("wall", DATA_REVISION_KEY), "3")
 

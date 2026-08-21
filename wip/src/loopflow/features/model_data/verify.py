@@ -156,7 +156,6 @@ def compare_apply_usertext(
     session: RhinoSession,
     *,
     catalog=None,
-    environ: Optional[Mapping[str, str]] = None,
     selected_only: bool = False,
     command_id: str = COMMAND_ID,
 ) -> results.Result:
@@ -164,7 +163,6 @@ def compare_apply_usertext(
     identity = scan_identity(
         session,
         catalog=catalog,
-        environ=environ,
         selected_only=selected_only,
         guarded=False,
         command_id=command_id,
@@ -174,18 +172,17 @@ def compare_apply_usertext(
     placement = scan_placement(
         session,
         catalog=catalog,
-        environ=environ,
         selected_only=selected_only,
         guarded=False,
         command_id=command_id,
     )
     if not placement.ok:
         return placement
-    loaded = _load_catalog(catalog, environ, session)
+    loaded = _load_catalog(catalog, session)
     if not loaded.ok:
         return loaded
     type_catalog = loaded.details["catalog"]
-    revision = expected_data_revision(session, environ)
+    revision = expected_data_revision(session)
 
     identity_by_id = {item["rhino_id"]: item for item in identity.details.get("items") or ()}
     placement_by_id = {item["rhino_id"]: item for item in placement.details.get("items") or ()}
@@ -291,7 +288,6 @@ def verify_model_data(
     session: RhinoSession,
     *,
     catalog=None,
-    environ: Optional[Mapping[str, str]] = None,
     selected_only: bool = False,
     cancel: bool = False,
     guarded: bool = True,
@@ -311,7 +307,6 @@ def verify_model_data(
         return compare_apply_usertext(
             current,
             catalog=catalog,
-            environ=environ,
             selected_only=selected_only,
             command_id=command_id,
         )

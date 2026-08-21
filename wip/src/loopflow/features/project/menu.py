@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, Mapping, Optional, Sequence, Tuple
+from typing import Callable, Optional, Sequence, Tuple
 
 from loopflow.features.project.console import COMMAND_ID, open_console
 from loopflow.foundation import results
@@ -57,7 +57,7 @@ def prompt_nexus_menu(chooser: Optional[Chooser] = None) -> Optional[MenuChoice]
 
 
 def choose_dictionary_path(opener, root: Optional[Path], default, warn=None):
-    """選到工作檔資料夾外就說明並再問；取消回傳 None。"""
+    """選到 .3dm 同層以外就說明並再問；取消回傳 None。"""
     while True:
         chosen = opener(default)
         if chosen is None:
@@ -69,29 +69,35 @@ def choose_dictionary_path(opener, root: Optional[Path], default, warn=None):
             warn(checked.message)
 
 
-def _live_ask_dictionary(environ: Optional[Mapping[str, str]]):
-    from loopflow.foundation.paths import DICTIONARY_FILENAME, resolve_workfiles
+def _live_ask_dictionary(session):
+    """選檔視窗開在 .3dm 所在資料夾。字典改名或搬走時先說明，再讓使用者選。"""
+    from loopflow.features.dictionary.sync import dictionary_missing_hint
+    from loopflow.foundation.paths import DICTIONARY_FILENAME, resolve_project_folder
+    from loopflow.foundation.project_config import remembered_dictionary_filename
     from loopflow.platform.rhino.prompts import ask_open_filename, ask_popup_string, show_message
 
     def _ask(default):
         folder = None
         root = None
-        workfiles = resolve_workfiles(environ=environ)
-        if workfiles.ok:
-            root = workfiles.details["paths"].root.resolve()
+        located = resolve_project_folder(session)
+        if located.ok:
+            root = located.details["paths"].root.resolve()
             folder = str(root)
+        remembered = remembered_dictionary_filename(session)
+        if remembered and root is not None and not (root / remembered).is_file():
+            show_message(dictionary_missing_hint(remembered))
 
         def _open(_default):
             try:
                 return ask_open_filename(
-                    "選 Dictionary Excel（須在工作檔資料夾內）",
+                    "選這份專案的 Dictionary Excel（須與 .3dm 同資料夾）",
                     "Excel (*.xlsx)|*.xlsx||",
                     folder,
                     _default or DICTIONARY_FILENAME,
                 )
             except ImportError:
                 return ask_popup_string(
-                    "Dictionary 檔名（工作檔資料夾內的 .xlsx）",
+                    "Dictionary 檔名（.3dm 同資料夾內的 .xlsx）",
                     _default or DICTIONARY_FILENAME,
                     "LoopFlow",
                 )
@@ -104,7 +110,6 @@ def _live_ask_dictionary(environ: Optional[Mapping[str, str]]):
 def run_nexus_console(
     session: Optional[RhinoSession] = None,
     *,
-    environ: Optional[Mapping[str, str]] = None,
     interactive: bool = False,
     chooser: Optional[Chooser] = None,
     **kwargs
@@ -112,7 +117,7 @@ def run_nexus_console(
     """先開案檢查；interactive 時再選步驟。測試可注入 chooser。"""
     extra = dict(kwargs)
     presenter = extra.get("show_message")
-    first = open_console(session, environ=environ, step="open_check", **extra)
+    first = open_console(session, step="open_check", **extra)
     if not first.ok:
         from loopflow.platform.rhino.prompts import show_failure_popup
 
@@ -144,10 +149,9 @@ def run_nexus_console(
         except ImportError:
             pass
         else:
-            extra["ask_dictionary"] = _live_ask_dictionary(environ)
+            extra["ask_dictionary"] = _live_ask_dictionary(session)
     result = open_console(
         session,
-        environ=environ,
         step=step,
         identity_action=identity_action,
         **extra

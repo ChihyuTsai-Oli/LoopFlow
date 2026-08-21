@@ -7,7 +7,7 @@
 ## 開始前
 
 1. **不要改** Git 裡的 `releases/LoopFlow/Tag_Blocks.3dm`（那是 1.x 發布檔）。
-2. 把它複製到這台電腦的工作檔根目錄（環境變數 `LOOPFLOW_WORKFILES_ROOT`），例如 `source/Tag_Blocks.3dm`。
+2. 把它複製到這台電腦的 Dropbox 工作檔資料夾（路徑見工作區根目錄 `工作檔路徑.md`），例如 `source/Tag_Blocks.3dm`。
 3. 再開一份測試用副本，例如 `source/Tag_Blocks_d08.3dm`。只改副本。
 4. 用 Rhino 8 開啟副本。改完存檔後，先在測試 `.3dm` 插入新圖塊驗證，不要直接改正式專案。
 

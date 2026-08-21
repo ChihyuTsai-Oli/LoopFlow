@@ -8,7 +8,8 @@ from typing import Mapping, Optional, Sequence, Tuple
 
 from loopflow.features.dictionary import schema
 from loopflow.foundation import results
-from loopflow.foundation.paths import dictionary_filename_from_session, resolve_workfiles
+from loopflow.foundation.paths import resolve_project_folder
+from loopflow.foundation.project_config import dictionary_filename_from_session
 from loopflow.foundation.version import check_schema
 from loopflow.platform import excel
 
@@ -250,23 +251,22 @@ def load_from_path(path: Path) -> results.Result:
     )
 
 
-def load_from_workfiles(
-    environ: Optional[Mapping[str, str]] = None,
+def load_dictionary(
+    session,
     dictionary_filename: Optional[str] = None,
-    session=None,
 ) -> results.Result:
-    """經 LOOPFLOW_WORKFILES_ROOT 解析 Dictionary 路徑後載入。不建立檔案。"""
+    """從 .3dm 同資料夾的 Dictionary 載入。不建立檔案。"""
     filename = dictionary_filename
     if filename in (None, "") and session is not None:
         filename = dictionary_filename_from_session(session)
-    workfiles = resolve_workfiles(environ=environ, dictionary_filename=filename)
-    if not workfiles.ok:
-        return workfiles
-    dictionary = workfiles.details["paths"].dictionary
+    resolved = resolve_project_folder(session, dictionary_filename=filename)
+    if not resolved.ok:
+        return resolved
+    dictionary = resolved.details["paths"].dictionary
     if not dictionary.exists() or not dictionary.is_file():
         return results.failed(
             "resolve_dictionary",
-            "找不到 Dictionary 檔案 %s。請把 .xlsx 放到工作檔資料夾，或改用該資料夾內的其他檔名。不建立檔案。"
+            "找不到 Dictionary 檔案 %s。請把它放回 .3dm 所在的資料夾，或改用該資料夾內的其他 .xlsx。不建立檔案。"
             % dictionary.name,
             details={"filename": dictionary.name},
         )

@@ -20,7 +20,6 @@ from loopflow.features.health.appearance import (
 )
 from loopflow.features.infuser.part import (
     PAGE_TAG_TEMPLATE_ID,
-    PROJECT_ID_KEY,
     _as_uuid,
     _item_fields,
     _item_source_name,
@@ -30,6 +29,7 @@ from loopflow.features.infuser.part import (
     _resolve_index_sheet,
     _types_by_id,
 )
+from loopflow.features.dictionary.layer_paths import project_id_from_session
 from loopflow.features.infuser import keys as infuser_keys
 from loopflow.features.infuser.reader import load_published_registry
 from loopflow.features.sheet.metadata import is_title_frame, registered_title_frame_names
@@ -678,7 +678,6 @@ def run_tag_o(
     session: RhinoSession,
     *,
     catalog: Optional[TagTemplateSet] = None,
-    environ: Optional[Mapping[str, str]] = None,
     registry: Optional[Mapping] = None,
     show_message: Optional[ShowMessage] = None,
     show_panel: Optional[ShowPanel] = None,
@@ -721,9 +720,8 @@ def run_tag_o(
     notes: List[str] = []
     if payload is None:
         registry_result = load_published_registry(
-            session.document_user_text(PROJECT_ID_KEY),
+            project_id_from_session(session),
             document_path=session.document_path() if hasattr(session, "document_path") else None,
-            environ=environ,
             command_id=COMMAND_ID,
         )
         if not registry_result.ok:

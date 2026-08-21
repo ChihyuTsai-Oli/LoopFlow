@@ -16,6 +16,7 @@ from loopflow.features.health.appearance import (
     is_broken,
     queue_appearance,
 )
+from loopflow.features.dictionary.layer_paths import project_id_from_session
 from loopflow.features.infuser import keys as infuser_keys
 from loopflow.features.infuser.reader import load_published_registry
 from loopflow.features.sheet.metadata import (
@@ -61,7 +62,6 @@ from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Infuser_Part"
 STAGE = "infuse_tags"
-PROJECT_ID_KEY = "lf_project_id"
 PAGE_TAG_TEMPLATE_ID = "TAG_ELEV_0"
 ITEM_NAME_PATTERN = re.compile(r"^([A-Za-z]+)-([0-9]+)__(.+)$")
 SERIES_TOKEN_RE = re.compile(r"^[A-Za-z][A-Za-z0-9]*$")
@@ -1034,7 +1034,6 @@ def run_infuser_part(
     session: RhinoSession,
     *,
     catalog: Optional[TagTemplateSet] = None,
-    environ: Optional[Mapping[str, str]] = None,
     registry: Optional[Mapping] = None,
     show_message: Optional[ShowMessage] = None,
 ) -> results.Result:
@@ -1086,9 +1085,8 @@ def run_infuser_part(
     extra_warnings = {}
     if payload is None:
         registry_result = load_published_registry(
-            session.document_user_text(PROJECT_ID_KEY),
+            project_id_from_session(session),
             document_path=session.document_path() if hasattr(session, "document_path") else None,
-            environ=environ,
             command_id=COMMAND_ID,
         )
         if not registry_result.ok:

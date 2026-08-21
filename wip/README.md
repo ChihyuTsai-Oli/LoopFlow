@@ -12,7 +12,7 @@ wip/
   tools/            # 文件產生器、契約檢查器與開發輔助工具
 ```
 
-大型 Rhino 工作檔、人工測試輸出與 Dropbox 素材不放進 repo。本機根目錄由 `LOOPFLOW_WORKFILES_ROOT` 指定，雙機對照與設定方式見工作區根目錄 `工作檔路徑.md`。
+大型 Rhino 工作檔、人工測試輸出與 Dropbox 素材不放進 repo。工作資料夾就是測試 `.3dm` 所在的資料夾（Dictionary 與 `_LoopFlow_Config/` 同層）；雙機的 Dropbox 素材位置見工作區根目錄 `工作檔路徑.md`。
 
 ## 實作文件
 

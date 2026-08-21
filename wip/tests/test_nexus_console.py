@@ -14,18 +14,16 @@ if str(SRC) not in sys.path:
 
 from loopflow.features.dictionary import schema
 from loopflow.features.dictionary.layer_paths import SYSTEM_LAYERS
-from loopflow.features.project.console import (
-    PROJECT_ID_KEY,
-    SCHEMA_ID_KEY,
-    SCHEMA_VERSION_KEY,
-    open_console,
-)
+from loopflow.features.project.console import open_console
 from loopflow.features.project.menu import parse_menu_choice, run_nexus_console
-from loopflow.foundation.paths import DICTIONARY_FILENAME_KEY
+from loopflow.foundation.paths import CONFIG_DIR_NAME
 from loopflow.foundation.usertext import LEVEL_DATUM_KEY, LEVEL_ID_KEY, OBJECT_ID_KEY, SPACE_ID_KEY
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import read_project_config, write_project_config  # noqa: E402
 
 PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 
@@ -55,20 +53,19 @@ def _write_dictionary(root: Path) -> Path:
     return path
 
 
-def _session(**kwargs) -> MemorySession:
+def _session(root=None, **kwargs) -> MemorySession:
+    """3dm 存在工作資料夾內；專案設定寫在同層的 _LoopFlow_Config。"""
     unsaved = kwargs.pop("unsaved", False)
-    document_path = kwargs.pop("document_path", None)
-    text = {
-        PROJECT_ID_KEY: PROJECT_ID,
-        SCHEMA_ID_KEY: "loopflow.project",
-        SCHEMA_VERSION_KEY: "1",
-    }
-    text.update(kwargs.pop("document_text", {}))
-    if not unsaved and document_path is None:
-        document_path = str(Path(tempfile.gettempdir()) / "loopflow-open-identity.3dm")
+    config = kwargs.pop("config", {"project_id": PROJECT_ID})
+    document_path = None
+    if not unsaved:
+        folder = Path(root if root is not None else tempfile.gettempdir())
+        document_path = str(folder / "loopflow-nexus.3dm")
+        if config is not None:
+            write_project_config(folder, **config)
     session = MemorySession(
-        document_text=text,
-        document_path=None if unsaved else str(document_path),
+        document_text=kwargs.pop("document_text", {}),
+        document_path=document_path,
         **kwargs,
     )
     session.add_object("a", selected=True, locked=False, hidden=False, color=(10, 20, 30), color_by_layer=False)
@@ -77,51 +74,44 @@ def _session(**kwargs) -> MemorySession:
 
 
 class ConsoleOpenCheckTests(unittest.TestCase):
-    def test_missing_env_stops_without_creating(self):
+    def test_no_rhino_stops_without_creating(self):
         before = set(Path(tempfile.gettempdir()).iterdir())
-        result = open_console(environ={})
+        result = open_console()
         after = set(Path(tempfile.gettempdir()).iterdir())
         self.assertFalse(result.ok)
-        self.assertEqual(result.stage, "resolve_workfiles")
+        self.assertEqual(result.stage, "rhino_session")
         self.assertEqual(before, after)
-
-    def test_missing_directory_stops_without_creating(self):
-        missing = Path(tempfile.gettempdir()) / "loopflow-missing-console-root"
-        self.assertFalse(missing.exists())
-        result = open_console(environ={"LOOPFLOW_WORKFILES_ROOT": str(missing)})
-        self.assertFalse(result.ok)
-        self.assertFalse(missing.exists())
 
     def test_unsaved_document_blocks(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:
             root = Path(raw)
             _write_dictionary(root)
-            session = _session(unsaved=True)
-            result = open_console(session, environ={"LOOPFLOW_WORKFILES_ROOT": str(root)})
+            session = _session(root, unsaved=True)
+            result = open_console(session)
             self.assertFalse(result.ok)
             self.assertEqual(result.status, "blocked")
             self.assertEqual(result.blocking, ("unsaved_document",))
-            self.assertFalse((root / "exchange").exists())
+            self.assertFalse((root / CONFIG_DIR_NAME).exists())
 
     def test_missing_project_id_still_enters(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:
             root = Path(raw)
             _write_dictionary(root)
-            session = _session(document_text={PROJECT_ID_KEY: None, SCHEMA_ID_KEY: None, SCHEMA_VERSION_KEY: None})
-            result = open_console(session, environ={"LOOPFLOW_WORKFILES_ROOT": str(root)})
+            session = _session(root, config=None)
+            result = open_console(session)
             self.assertTrue(result.ok, result.message)
             self.assertIsNone(result.details["project_id"])
-            self.assertEqual(session.document_user_text(SCHEMA_ID_KEY), "loopflow.project")
-            self.assertEqual(session.document_user_text(SCHEMA_VERSION_KEY), "1")
+            stored = read_project_config(root)
+            self.assertEqual(stored["schema_id"], "loopflow.project")
+            self.assertEqual(stored["schema_version"], 1)
             self.assertTrue(any("選單 2" in item for item in result.warnings))
-            self.assertFalse((root / "exchange").exists())
 
     def test_cm_session_lists_steps_and_does_not_write(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:
             root = Path(raw)
             _write_dictionary(root)
-            session = _session()
-            result = open_console(session, environ={"LOOPFLOW_WORKFILES_ROOT": str(root)})
+            session = _session(root)
+            result = open_console(session)
             self.assertTrue(result.ok, result.message)
             self.assertEqual(result.stage, "open_check")
             self.assertEqual(result.details["project_id"], PROJECT_ID)
@@ -148,10 +138,11 @@ class ConsoleOpenCheckTests(unittest.TestCase):
                 ],
             )
             self.assertTrue(all(step["status"] == "available" for step in result.details["steps"]))
-            self.assertFalse((root / "exchange").exists())
-            self.assertFalse((root / "logs").exists())
+            self.assertEqual(result.details["project_folder"], str(root))
+            self.assertEqual(result.details["config_dir"], str(root / CONFIG_DIR_NAME))
+            self.assertFalse(result.details["registry_exists"])
+            self.assertFalse((root / CONFIG_DIR_NAME / "logs").exists())
             self.assertTrue(session.get_view_state("a").selected)
-            self.assertFalse(session.document_modified())
 
     def test_open_check_uses_stored_custom_dictionary_filename(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:
@@ -159,39 +150,38 @@ class ConsoleOpenCheckTests(unittest.TestCase):
             custom = root / "TeamA.xlsx"
             written = write_table(custom, schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_valid_row()])
             self.assertTrue(written.ok)
-            session = _session(document_text={DICTIONARY_FILENAME_KEY: "TeamA.xlsx"})
-            result = open_console(session, environ={"LOOPFLOW_WORKFILES_ROOT": str(root)})
+            session = _session(
+                root,
+                config={"project_id": PROJECT_ID, "dictionary_filename": "TeamA.xlsx"},
+            )
+            result = open_console(session)
             self.assertTrue(result.ok, result.message)
             self.assertEqual(result.details["dictionary_filename"], "TeamA.xlsx")
 
     def test_open_check_missing_dictionary_warns_and_still_enters(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:
             root = Path(raw)
-            session = _session()
+            session = _session(root)
             seen = []
 
             def _ask(default):
                 seen.append(default)
                 return "TeamA.xlsx"
 
-            result = open_console(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-                ask_dictionary=_ask,
-            )
+            result = open_console(session, ask_dictionary=_ask)
             self.assertTrue(result.ok, result.message)
             self.assertEqual(result.status, "ok_with_warnings")
-            self.assertTrue(any("選單 2" in item for item in result.warnings))
+            self.assertTrue(any("放回" in item for item in result.warnings))
             self.assertEqual(seen, [])
-            self.assertIsNone(session.document_user_text(DICTIONARY_FILENAME_KEY))
+            self.assertNotIn("dictionary_filename", read_project_config(root))
             self.assertIn("open_check", result.details["executable_steps"])
 
     def test_non_cm_warns_but_still_enters(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:
             root = Path(raw)
             _write_dictionary(root)
-            session = _session(model_unit="Millimeters")
-            result = open_console(session, environ={"LOOPFLOW_WORKFILES_ROOT": str(root)})
+            session = _session(root, model_unit="Millimeters")
+            result = open_console(session)
             self.assertTrue(result.ok)
             self.assertEqual(result.status, "ok_with_warnings")
             self.assertTrue(any("不是 cm" in item for item in result.warnings))
@@ -201,8 +191,8 @@ class ConsoleOpenCheckTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:
             root = Path(raw)
             _write_dictionary(root)
-            session = _session(document_text={SCHEMA_VERSION_KEY: "99"})
-            result = open_console(session, environ={"LOOPFLOW_WORKFILES_ROOT": str(root)})
+            session = _session(root, config={"project_id": PROJECT_ID, "schema_version": 99})
+            result = open_console(session)
             self.assertFalse(result.ok)
             self.assertEqual(result.stage, "check_schema")
 
@@ -210,22 +200,18 @@ class ConsoleOpenCheckTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:
             root = Path(raw)
             _write_dictionary(root)
-            session = _session()
+            session = _session(root)
             session.set_view_state(ObjectViewState("a", False, True, True, (0, 0, 0), True))
             session.set_document_modified(True)
             # 先把狀態改回去當「檢查前」基準，再在 cancel 路徑驗證還原。
             session.set_view_state(ObjectViewState("a", True, False, False, (10, 20, 30), False))
             session.set_document_modified(False)
-            result = open_console(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-                cancel=True,
-            )
+            result = open_console(session, cancel=True)
             self.assertEqual(result.status, "cancelled")
             self.assertTrue(session.get_view_state("a").selected)
             self.assertFalse(session.get_view_state("a").locked)
             self.assertFalse(session.document_modified())
-            self.assertFalse((root / "exchange").exists())
+            self.assertFalse((root / CONFIG_DIR_NAME / PROJECT_ID).exists())
 
 
 class ConsoleMenuTests(unittest.TestCase):
@@ -258,10 +244,9 @@ class ConsoleMenuTests(unittest.TestCase):
                 [_valid_row(), extra],
             )
             self.assertTrue(written.ok, written.message)
-            session = _session()
+            session = _session(root)
             result = run_nexus_console(
                 session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
                 interactive=False,
                 show_message=popups.append,
             )
@@ -276,10 +261,9 @@ class ConsoleMenuTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="loopflow-menu-") as raw:
             root = Path(raw)
             _write_dictionary(root)
-            session = _session()
+            session = _session(root)
             result = run_nexus_console(
                 session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
                 interactive=True,
                 chooser=lambda _labels: None,
             )
@@ -292,10 +276,9 @@ class ConsoleMenuTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="loopflow-menu-") as raw:
             root = Path(raw)
             _write_dictionary(root)
-            session = _session()
+            session = _session(root)
             result = run_nexus_console(
                 session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
                 interactive=True,
                 chooser=lambda _labels: "6",
                 show_message=popups.append,
@@ -314,14 +297,13 @@ class ConsoleMenuTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx05-") as raw:
             root = Path(raw)
             _write_dictionary(root)
-            session = _session()
+            session = _session(root)
             session.ensure_layer(full)
             session.set_layer_user_text(full, "lf_type_id", "EX-01")
             session.add_object("beam", layer=full)
             session.set_bbox("beam", (0, 0, 0), (90, 40, 210))
             applied = open_console(
                 session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
                 step="scan_apply_verify",
                 identity_action="apply",
             )
@@ -338,14 +320,13 @@ class ConsoleMenuTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx05-popup-") as raw:
             root = Path(raw)
             _write_dictionary(root)
-            session = _session()
+            session = _session(root)
             session.ensure_layer(full)
             session.set_layer_user_text(full, "lf_type_id", "EX-01")
             session.add_object("beam", layer=full)
             session.set_bbox("beam", (0, 0, 0), (90, 40, 210))
             applied = run_nexus_console(
                 session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
                 interactive=True,
                 chooser=lambda _labels: "5",
                 show_message=popups.append,
@@ -365,7 +346,7 @@ class ConsoleMenuTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx05-") as raw:
             root = Path(raw)
             _write_dictionary(root)
-            session = _session()
+            session = _session(root)
             session.ensure_layer(full)
             session.set_layer_user_text(full, "lf_type_id", "EX-01")
             session.ensure_layer(ffl_layer)
@@ -384,7 +365,6 @@ class ConsoleMenuTests(unittest.TestCase):
             session.set_object_user_text("beam", "_05_寬度W", "90")
             applied = open_console(
                 session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
                 step="scan_apply_verify",
                 identity_action="apply",
             )

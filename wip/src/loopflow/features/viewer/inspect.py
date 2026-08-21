@@ -27,14 +27,18 @@ from loopflow.foundation.usertext import (
     TYPE_SEQUENCE_KEY,
     legacy_keys,
 )
+from loopflow.foundation.project_config import (
+    PROJECT_ID_FIELD,
+    PROJECT_SCHEMA_ID,
+    SCHEMA_ID_FIELD,
+    SCHEMA_VERSION_FIELD,
+    ensure_schema,
+    read_config,
+)
 from loopflow.foundation.version import check_schema
 from loopflow.platform.rhino.session import RhinoSession
 
 COMMAND_ID = "LF_Data_Viewer"
-PROJECT_ID_KEY = "lf_project_id"
-SCHEMA_ID_KEY = "lf_schema_id"
-SCHEMA_VERSION_KEY = "lf_schema_version"
-PROJECT_SCHEMA_ID = "loopflow.project"
 MISSING_MARK = "（缺）"
 LEVEL_LAYER_MARK = "Level_Boundaries"
 SPACE_LAYER_MARK = "Space_Boundaries"
@@ -109,21 +113,22 @@ def _pad_key(key: str, width: int) -> str:
 
 
 def ensure_project_schema(session: RhinoSession) -> None:
-    """缺 schema 時順便寫入 loopflow.project／1。"""
-    if _text(session.document_user_text(SCHEMA_ID_KEY)) is None:
-        session.set_document_user_text(SCHEMA_ID_KEY, PROJECT_SCHEMA_ID)
-    if _text(session.document_user_text(SCHEMA_VERSION_KEY)) is None:
-        session.set_document_user_text(SCHEMA_VERSION_KEY, "1")
+    """缺 schema 時順便寫入專案設定檔的 loopflow.project／1。"""
+    ensure_schema(session)
 
 
 def check_document_schema(session: RhinoSession) -> results.Result:
-    """文件 schema 未知或不完整時停止；兩者都缺則警告後仍可查看。"""
-    schema_id = _text(session.document_user_text(SCHEMA_ID_KEY))
-    version_text = _text(session.document_user_text(SCHEMA_VERSION_KEY))
+    """專案 schema 未知或不完整時停止；兩者都缺則警告後仍可查看。"""
+    loaded = read_config(session)
+    if not loaded.ok:
+        return loaded
+    values = loaded.details["values"]
+    schema_id = _text(values.get(SCHEMA_ID_FIELD))
+    version_text = _text(values.get(SCHEMA_VERSION_FIELD))
     if schema_id is None and version_text is None:
         return results.ok_with_warnings(
             "check_schema",
-            "文件尚未寫入 schema，仍可查看物件欄位。",
+            "專案設定尚未寫入 schema，仍可查看物件欄位。",
             ("missing_document_schema",),
             command_id=COMMAND_ID,
             details={"schema_id": None, "schema_version": None},
@@ -131,7 +136,7 @@ def check_document_schema(session: RhinoSession) -> results.Result:
     if schema_id is None or version_text is None:
         return results.failed(
             "check_schema",
-            "文件 schema 不完整：schema_id=%s，schema_version=%s。已停止，不猜測解析。"
+            "專案 schema 不完整：schema_id=%s，schema_version=%s。已停止，不猜測解析。"
             % (schema_id or MISSING_MARK, version_text or MISSING_MARK),
             command_id=COMMAND_ID,
             details={"schema_id": schema_id, "schema_version": version_text},
@@ -157,7 +162,7 @@ def check_document_schema(session: RhinoSession) -> results.Result:
     if schema_id != PROJECT_SCHEMA_ID:
         return results.failed(
             "check_schema",
-            "未知 schema_id：%s。文件應為 %s。已停止，不猜測解析。"
+            "未知 schema_id：%s。專案設定應為 %s。已停止，不猜測解析。"
             % (schema_id, PROJECT_SCHEMA_ID),
             command_id=COMMAND_ID,
             details={"schema_id": schema_id, "schema_version": version},
@@ -241,6 +246,8 @@ def inspect_object(
     elif session.is_block_instance(object_id):
         block_name = name
 
+    loaded = read_config(session)
+    config = loaded.details["values"] if loaded.ok else {}
     raw_fields = tuple(_resolve_field(session, object_id, key, layer) for key in CANONICAL_KEYS)
     type_id = next((field.value for field in raw_fields if field.key == TYPE_ID_KEY and not field.missing), None)
     notes = []
@@ -280,9 +287,9 @@ def inspect_object(
         layer=layer,
         name=name,
         block_name=block_name,
-        project_id=_text(session.document_user_text(PROJECT_ID_KEY)),
-        schema_id=_text(session.document_user_text(SCHEMA_ID_KEY)),
-        schema_version=_text(session.document_user_text(SCHEMA_VERSION_KEY)),
+        project_id=_text(config.get(PROJECT_ID_FIELD)),
+        schema_id=_text(config.get(SCHEMA_ID_FIELD)),
+        schema_version=_text(config.get(SCHEMA_VERSION_FIELD)),
         fields=tuple(fields),
         stale=stale,
         notes=tuple(notes),

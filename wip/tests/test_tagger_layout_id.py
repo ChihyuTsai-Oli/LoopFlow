@@ -46,7 +46,10 @@ from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.prompts import format_result_popup
 from loopflow.platform.rhino.state import ObjectViewState
 
-PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import bind_project  # noqa: E402
+
+PROJECT_ID = "大安邸"
 LEGACY_NO = "DWG_NO"
 LEGACY_NAME = "DWG_NAME"
 START_IN = "**IN__101__一樓平面圖"
@@ -56,13 +59,8 @@ PAGE_IN_2 = "IN__102__天花詳圖"
 
 
 def _session(pages=None) -> MemorySession:
-    session = MemorySession(
-        document_text={
-            "lf_project_id": PROJECT_ID,
-            "lf_schema_id": "loopflow.project",
-            "lf_schema_version": "1",
-        }
-    )
+    session = MemorySession()
+    bind_project(session, project_id=PROJECT_ID)
     if pages:
         session.set_layout_pages(pages)
     session.set_document_modified(False)
@@ -358,6 +356,7 @@ class LayoutIdCommandTests(unittest.TestCase):
 
     def test_missing_schema_blocks(self):
         session = MemorySession()
+        bind_project(session, write_config=False)
         session.set_layout_pages([START_IN])
         _add_block(session, "frame-1", START_IN, "Sample_Frame")
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())

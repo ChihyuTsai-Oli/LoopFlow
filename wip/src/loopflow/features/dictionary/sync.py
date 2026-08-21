@@ -3,35 +3,37 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, List, Mapping, Optional, Set
+from typing import Callable, List, Optional, Set
 
 from loopflow.features.dictionary import schema
 from loopflow.features.dictionary.layer_paths import (
     LAYER_CONSTRUCTION_KEY,
     LAYER_PREFIX_3D,
-    LAYER_PREFIX_KEY,
     LAYER_TYPE_ID_KEY,
-    PROJECT_ID_KEY,
     color_for_layer_path,
     dna_ref_name,
     is_dw_child,
     is_exportable_type_layer,
     material_name_for_layer,
     normalize_layer_prefix,
+    project_id_from_session,
     read_layer_prefix,
     system_layers,
     to_full_path,
     to_relative_path,
 )
-from loopflow.features.dictionary.loader import TypeCatalog, load_from_workfiles
+from loopflow.features.dictionary.loader import TypeCatalog, load_dictionary
 from loopflow.foundation import results
 from loopflow.foundation.paths import (
     DICTIONARY_FILENAME,
-    DICTIONARY_FILENAME_KEY,
-    dictionary_filename_from_session,
     export_dictionary_filename,
     normalize_dictionary_filename,
-    resolve_workfiles,
+    resolve_project_folder,
+)
+from loopflow.foundation.project_config import (
+    dictionary_filename_from_session,
+    remembered_dictionary_filename,
+    update_config,
 )
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
@@ -102,8 +104,6 @@ def _sync_body(
     created_types = []
     kept_types = []
     try:
-        session.set_document_user_text(LAYER_PREFIX_KEY, prefix)
-        session.set_document_user_text(PROJECT_ID_KEY, prefix)
         for system_path in system_layers(prefix):
             session.ensure_layer(system_path)
             session.set_layer_appearance(system_path, color_for_layer_path(system_path, prefix))
@@ -171,18 +171,24 @@ def _sync_body(
 
 
 def _should_ask_dictionary(session: RhinoSession, root: Path) -> bool:
-    """第一次尚未記住檔名，或已記住的檔找不到（例如改名）時才問。"""
-    stored = (session.document_user_text(DICTIONARY_FILENAME_KEY) or "").strip()
+    """第一次尚未記住檔名，或已記住的檔不在 .3dm 同層（改名或搬走）時才問。"""
+    stored = remembered_dictionary_filename(session)
     if not stored:
         return True
-    filename = dictionary_filename_from_session(session)
-    return not (root / filename).is_file()
+    return not (root / stored).is_file()
+
+
+def dictionary_missing_hint(filename: str) -> str:
+    """字典改名或搬走時的說明。請使用者移回，再從 .3dm 目錄選。"""
+    return (
+        "找不到字典 %s。請把字典移回 .3dm 所在的資料夾（字典可以改名），"
+        "接著在開啟的視窗選這份專案要用的 .xlsx。" % filename
+    )
 
 
 def sync_type_layers(
     session: RhinoSession,
     *,
-    environ: Optional[Mapping[str, str]] = None,
     catalog: Optional[TypeCatalog] = None,
     cancel: bool = False,
     export_path: Optional[Path] = None,
@@ -197,7 +203,7 @@ def sync_type_layers(
 
     def action(current: RhinoSession) -> results.Result:
         current_prefix = read_layer_prefix(current)
-        stored = normalize_layer_prefix(current.document_user_text(LAYER_PREFIX_KEY) or "")
+        stored = normalize_layer_prefix(project_id_from_session(current) or "")
         chosen = layer_prefix
         if chosen is None and callable(ask_prefix):
             chosen = ask_prefix(stored or "")
@@ -218,10 +224,10 @@ def sync_type_layers(
                 command_id=command_id,
             )
 
-        workfiles = resolve_workfiles(environ=environ)
-        if not workfiles.ok:
-            return workfiles
-        root = workfiles.details["paths"].root
+        resolved = resolve_project_folder(current)
+        if not resolved.ok:
+            return resolved
+        root = resolved.details["paths"].root
         chosen_dict = dictionary_filename
         if chosen_dict is None and callable(ask_dictionary) and _should_ask_dictionary(current, root):
             chosen_dict = ask_dictionary(dictionary_filename_from_session(current))
@@ -237,11 +243,18 @@ def sync_type_layers(
         if not normalized.ok:
             return normalized
         filename = str(normalized.details["filename"])
-        current.set_document_user_text(DICTIONARY_FILENAME_KEY, filename)
+        remembered = update_config(
+            current,
+            project_id=prefix,
+            layer_prefix=prefix,
+            dictionary_filename=filename,
+        )
+        if not remembered.ok:
+            return remembered
         dictionary_file = root / filename
         type_catalog = catalog
         if type_catalog is None:
-            loaded = load_from_workfiles(environ=environ, dictionary_filename=filename)
+            loaded = load_dictionary(current, dictionary_filename=filename)
             if not loaded.ok:
                 return loaded
             type_catalog = loaded.details["catalog"]
@@ -403,21 +416,20 @@ def _dictionary_export_rows(session: RhinoSession, catalog: TypeCatalog, prefix:
 def export_dictionary(
     session: RhinoSession,
     *,
-    environ: Optional[Mapping[str, str]] = None,
     catalog: Optional[TypeCatalog] = None,
     export_path: Optional[Path] = None,
     guarded: bool = True,
     command_id: str = COMMAND_ID,
     show_message: Optional[Callable[[str], None]] = None,
 ) -> results.Result:
-    """在字典目錄新增匯出檔。不讀 Object UserText，不覆寫正式 Dictionary。"""
+    """在 .3dm 同資料夾新增匯出檔。不讀 Object UserText，不覆寫正式 Dictionary。"""
     filename = dictionary_filename_from_session(session)
-    workfiles = resolve_workfiles(environ=environ, dictionary_filename=filename)
-    if not workfiles.ok:
-        return workfiles
-    dictionary_path = workfiles.details["paths"].dictionary
+    resolved = resolve_project_folder(session, dictionary_filename=filename)
+    if not resolved.ok:
+        return resolved
+    dictionary_path = resolved.details["paths"].dictionary
     if catalog is None:
-        loaded = load_from_workfiles(environ=environ, dictionary_filename=filename)
+        loaded = load_dictionary(session, dictionary_filename=filename)
         if not loaded.ok:
             return loaded
         catalog = loaded.details["catalog"]
@@ -450,7 +462,7 @@ def export_dictionary(
         )
         if not written.ok:
             return written
-        message = "已在字典目錄匯出 %s，未改正式 Dictionary。" % target.name
+        message = "已在 .3dm 同資料夾匯出 %s，未改正式 Dictionary。" % target.name
         if callable(show_message):
             show_message(message)
         else:

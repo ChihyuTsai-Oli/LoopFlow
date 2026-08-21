@@ -84,7 +84,6 @@ def publish_registry(
     payload: Mapping,
     *,
     document_path: Optional[str] = None,
-    environ: Optional[Mapping[str, str]] = None,
     command_id: str = COMMAND_ID,
     after_pending: Optional[Callable[[Path], None]] = None,
     replace: Optional[Callable[[Path, Path], None]] = None,
@@ -95,8 +94,7 @@ def publish_registry(
     sleep: Optional[Callable[[float], None]] = None,
     replace_waits: Optional[Sequence[float]] = None,
 ) -> results.Result:
-    """寫入 <3dm 資料夾>/exchange/<專案名稱>/ 的正式 Registry。失敗不刪正式檔，保留 last-good。"""
-    del environ  # Dictionary 仍走工作檔；Registry 跟目前 3dm 所在資料夾走。
+    """寫入 <3dm 資料夾>/_LoopFlow_Config/<專案名稱>/ 的正式 Registry。失敗不刪正式檔，保留 last-good。"""
     if not isinstance(payload, Mapping):
         return results.blocked(
             "validate_registry",

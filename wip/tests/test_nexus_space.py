@@ -30,15 +30,13 @@ from loopflow.features.model_data.space import (
     register_space_boundaries_interactive,
 )
 from loopflow.foundation.usertext import LEVEL_DATUM_KEY
-from loopflow.features.project.console import (
-    PROJECT_ID_KEY,
-    SCHEMA_ID_KEY,
-    SCHEMA_VERSION_KEY,
-    open_console,
-)
+from loopflow.features.project.console import open_console
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import bind_project  # noqa: E402
 
 CASES_PATH = WIP / "fixtures" / "contract" / "space" / "cases.json"
 LEVEL_1 = "11111111-1111-4111-8111-111111111111"
@@ -52,15 +50,9 @@ def _fixture_cases():
     return json.loads(CASES_PATH.read_text(encoding="utf-8"))["cases"]
 
 
-def _session() -> MemorySession:
-    session = MemorySession(
-        document_text={
-            PROJECT_ID_KEY: SPACE_A,
-            SCHEMA_ID_KEY: "loopflow.project",
-            SCHEMA_VERSION_KEY: "1",
-        },
-        document_path=str(Path(tempfile.gettempdir()) / "loopflow-open-identity.3dm"),
-    )
+def _session(root=None) -> MemorySession:
+    session = MemorySession()
+    bind_project(session, root, project_id="大安邸")
     session.add_object("wall", selected=False, name="Wall", layer="M3D::00_STR_結構::Beam.樑")
     session.set_object_user_text("wall", "lf_remarks", "人工備註")
     session.set_document_modified(False)
@@ -306,20 +298,20 @@ class SpaceBoundaryTests(unittest.TestCase):
         self.assertFalse(session.document_modified())
 
     def test_console_space_boundary_step(self):
-        session = _session()
-        drafts = _add_spaces(
-            session,
-            [
-                {
-                    "space_id": SPACE_A,
-                    "space_display": "客廳",
-                    "level_id": LEVEL_1,
-                    "polygon": [[0, 0], [4, 0], [4, 4], [0, 4]],
-                }
-            ],
-        )
         with tempfile.TemporaryDirectory(prefix="loopflow-nx03-") as raw:
             root = Path(raw)
+            session = _session(root)
+            drafts = _add_spaces(
+                session,
+                [
+                    {
+                        "space_id": SPACE_A,
+                        "space_display": "客廳",
+                        "level_id": LEVEL_1,
+                        "polygon": [[0, 0], [4, 0], [4, 4], [0, 4]],
+                    }
+                ],
+            )
             written = write_table(
                 root / "LoopFlow_Dictionary.xlsx",
                 schema.TITLE_ROW,
@@ -327,12 +319,7 @@ class SpaceBoundaryTests(unittest.TestCase):
                 [_valid_row()],
             )
             self.assertTrue(written.ok, written.message)
-            result = open_console(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-                step="space_boundary",
-                drafts=drafts,
-            )
+            result = open_console(session, step="space_boundary", drafts=drafts)
         self.assertTrue(result.ok, result.message)
         self.assertEqual(result.stage, "register_spaces")
         self.assertEqual(session.get_object_user_text("curve-0", SPACE_ID_KEY), SPACE_A)
@@ -340,12 +327,12 @@ class SpaceBoundaryTests(unittest.TestCase):
         self.assertIsNone(session.get_object_user_text("wall", SPACE_ID_KEY))
 
     def test_console_reads_selected_curves(self):
-        session = _session()
-        session.add_object("curve-0", selected=True, name="客廳")
-        session.set_curve("curve-0", [[0, 0], [4, 0], [4, 4], [0, 4]], closed=True)
-        session.set_object_user_text("curve-0", LEVEL_ID_KEY, LEVEL_1)
         with tempfile.TemporaryDirectory(prefix="loopflow-nx03-") as raw:
             root = Path(raw)
+            session = _session(root)
+            session.add_object("curve-0", selected=True, name="客廳")
+            session.set_curve("curve-0", [[0, 0], [4, 0], [4, 4], [0, 4]], closed=True)
+            session.set_object_user_text("curve-0", LEVEL_ID_KEY, LEVEL_1)
             write_table(
                 root / "LoopFlow_Dictionary.xlsx",
                 schema.TITLE_ROW,
@@ -354,7 +341,6 @@ class SpaceBoundaryTests(unittest.TestCase):
             )
             result = open_console(
                 session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
                 step="space_boundary",
                 pick_objects=lambda: ("curve-0",),
                 space_name="客廳",

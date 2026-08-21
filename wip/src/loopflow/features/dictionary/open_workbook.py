@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Callable, Mapping, Optional
+from typing import Callable, Optional
 
 from loopflow.foundation import results
 from loopflow.foundation.paths import (
     DICTIONARY_FILENAME,
     export_dictionary_filename,
-    remembered_dictionary_filename,
-    resolve_workfiles,
+    resolve_project_folder,
 )
+from loopflow.foundation.project_config import remembered_dictionary_filename
 from loopflow.platform.rhino.session import RhinoSession
 
 KIND_OFFICIAL = "official"
@@ -37,7 +37,6 @@ def resolve_workbook_path(
     session: Optional[RhinoSession],
     *,
     kind: str,
-    environ: Optional[Mapping[str, str]] = None,
 ) -> results.Result:
     """解析要開啟的 xlsx。檔不存在就停止，不建立。"""
     command_id = command_id_for_kind(kind)
@@ -52,19 +51,19 @@ def resolve_workbook_path(
         return results.blocked(
             "open_dictionary",
             "這份檔案還沒指定 Dictionary，找不到要開的檔。"
-            "請先存檔，再用 Nexus 選單 2 指定工作檔資料夾內的 .xlsx。",
+            "請先存檔，再用 Nexus 選單 2 指定與 .3dm 同資料夾的 .xlsx。",
             blocking=("dictionary_not_selected",),
             command_id=command_id,
         )
-    workfiles = resolve_workfiles(environ=environ, dictionary_filename=filename)
-    if not workfiles.ok:
-        return workfiles
-    root = workfiles.details["paths"].root
+    resolved = resolve_project_folder(session, dictionary_filename=filename)
+    if not resolved.ok:
+        return resolved
+    root = resolved.details["paths"].root
     if kind == KIND_OFFICIAL:
         target = root / filename
         missing = (
-            "找不到 Dictionary 檔案 %s。請用 Nexus 選單 2 指定工作檔資料夾內的 .xlsx。"
-            % target.name
+            "找不到 Dictionary 檔案 %s。請把字典移回 .3dm 所在的資料夾，"
+            "或用 Nexus 選單 2 重新指定同資料夾內的 .xlsx。" % target.name
         )
         blocking = "dictionary_file_missing"
     else:
@@ -94,13 +93,12 @@ def open_workbook(
     session: Optional[RhinoSession],
     *,
     kind: str,
-    environ: Optional[Mapping[str, str]] = None,
     opener: Optional[Opener] = None,
     command_id: Optional[str] = None,
 ) -> results.Result:
     """開啟已存在的 Dictionary xlsx。"""
     cid = command_id or command_id_for_kind(kind)
-    resolved = resolve_workbook_path(session, kind=kind, environ=environ)
+    resolved = resolve_workbook_path(session, kind=kind)
     if not resolved.ok:
         return resolved
     path = Path(resolved.details["path"])

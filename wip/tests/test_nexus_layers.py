@@ -16,7 +16,6 @@ from loopflow.features.dictionary import schema
 from loopflow.features.dictionary.layer_paths import (
     DW_PLAN_LAYER,
     LAYER_CONSTRUCTION_KEY,
-    LAYER_PREFIX_KEY,
     LAYER_TYPE_ID_KEY,
     SYSTEM_LAYERS,
     color_for_layer_path,
@@ -32,7 +31,6 @@ from loopflow.features.dictionary.sync import (
     export_layer_diff,
     sync_type_layers,
 )
-from loopflow.foundation.paths import DICTIONARY_FILENAME_KEY
 from loopflow.platform.excel import (
     DICTIONARY_FONT_NAME,
     DICTIONARY_FONT_SIZE,
@@ -46,11 +44,8 @@ from loopflow.platform.excel import (
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
 
-from loopflow.features.project.console import (
-    PROJECT_ID_KEY,
-    SCHEMA_ID_KEY,
-    SCHEMA_VERSION_KEY,
-)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import read_project_config, write_project_config  # noqa: E402
 
 
 def _row(**overrides):
@@ -79,17 +74,19 @@ def _catalog(*rows):
 
 
 def _session() -> MemorySession:
-    session = MemorySession(
-        document_text={
-            PROJECT_ID_KEY: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-            SCHEMA_ID_KEY: "loopflow.project",
-            SCHEMA_VERSION_KEY: "1",
-        }
-    )
+    session = MemorySession()
     session.add_object("model-a", selected=True, name="Wall", layer="Default")
     session.set_object_user_text("model-a", "lf_remarks", "人工備註")
     session.set_document_modified(False)
     return session
+
+
+def _bind(session: MemorySession, raw) -> Path:
+    """3dm 存進工作資料夾，專案設定放同層的 _LoopFlow_Config。"""
+    root = Path(raw)
+    session.set_document_path(root / "a.3dm")
+    write_project_config(root)
+    return root
 
 
 class LayerSyncTests(unittest.TestCase):
@@ -97,8 +94,9 @@ class LayerSyncTests(unittest.TestCase):
         session = _session()
         catalog = _catalog(_row())
         with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
-            environ = {"LOOPFLOW_WORKFILES_ROOT": raw}
-            result = sync_type_layers(session, environ=environ, catalog=catalog)
+            root = _bind(session, raw)
+            result = sync_type_layers(session, catalog=catalog)
+            stored = read_project_config(root)
         self.assertTrue(result.ok, result.message)
         full = to_full_path("00_STR_結構::Beam.樑")
         self.assertTrue(session.has_layer(full))
@@ -109,8 +107,8 @@ class LayerSyncTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("model-a", "lf_remarks"), "人工備註")
         self.assertIsNone(session.get_object_user_text("model-a", "lf_construction_status"))
         self.assertTrue(session.get_view_state("model-a").selected)
-        self.assertEqual(session.document_user_text(LAYER_PREFIX_KEY), "M3D")
-        self.assertEqual(session.document_user_text(PROJECT_ID_KEY), "M3D")
+        self.assertEqual(stored["layer_prefix"], "M3D")
+        self.assertEqual(stored["project_id"], "M3D")
 
     def test_layer_color_follows_prefix_map(self):
         self.assertEqual(color_for_layer_path("M3D::00_STR_結構::Beam.樑"), (202, 16, 16))
@@ -125,7 +123,8 @@ class LayerSyncTests(unittest.TestCase):
         session = _session()
         catalog = _catalog(_row())
         with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
-            result = sync_type_layers(session, environ={"LOOPFLOW_WORKFILES_ROOT": raw}, catalog=catalog)
+            _bind(session, raw)
+            result = sync_type_layers(session, catalog=catalog)
         self.assertTrue(result.ok, result.message)
         full = to_full_path("00_STR_結構::Beam.樑")
         self.assertEqual(session.layer_color(full), (202, 16, 16))
@@ -145,7 +144,8 @@ class LayerSyncTests(unittest.TestCase):
         session.set_layer_user_text(full, LAYER_TYPE_ID_KEY, "OLD")
         catalog = _catalog(_row(construction_default="Existing"))
         with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
-            result = sync_type_layers(session, environ={"LOOPFLOW_WORKFILES_ROOT": raw}, catalog=catalog)
+            _bind(session, raw)
+            result = sync_type_layers(session, catalog=catalog)
         self.assertTrue(result.ok, result.message)
         self.assertEqual(result.details["kept_type_ids"], ("EX-01",))
         self.assertEqual(session.get_layer_user_text(full, LAYER_CONSTRUCTION_KEY), "Demolished")
@@ -160,9 +160,9 @@ class LayerSyncTests(unittest.TestCase):
         session.add_placeholder(layer=full, name="DNA_REF_舊名")
         catalog = _catalog(_row())
         with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
-            environ = {"LOOPFLOW_WORKFILES_ROOT": raw}
-            first = sync_type_layers(session, environ=environ, catalog=catalog)
-            second = sync_type_layers(session, environ=environ, catalog=catalog)
+            _bind(session, raw)
+            first = sync_type_layers(session, catalog=catalog)
+            second = sync_type_layers(session, catalog=catalog)
         self.assertTrue(first.ok and second.ok)
         names = [session.object_name(oid) for oid in session.objects_on_layer(full)]
         self.assertEqual(names, [dna_ref_name("EX-01")])
@@ -175,7 +175,8 @@ class LayerSyncTests(unittest.TestCase):
             _row(layer_path="20_DW::Frame", type_id="DW-02", construction_default="New"),
         )
         with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
-            result = sync_type_layers(session, environ={"LOOPFLOW_WORKFILES_ROOT": raw}, catalog=catalog)
+            _bind(session, raw)
+            result = sync_type_layers(session, catalog=catalog)
         self.assertTrue(result.ok, result.message)
         self.assertEqual(result.details["skipped_dw_children"], ("20_DW::Frame",))
         self.assertTrue(session.has_layer(DW_PLAN_LAYER))
@@ -185,17 +186,12 @@ class LayerSyncTests(unittest.TestCase):
         session = _session()
         catalog = _catalog(_row())
         with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
-            root = Path(raw)
+            root = _bind(session, raw)
             official = root / "LoopFlow_Dictionary.xlsx"
             write_table(official, schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_row()])
             before = official.read_bytes()
             diff = root / "layer_diff.xlsx"
-            result = sync_type_layers(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
-                catalog=catalog,
-                export_path=diff,
-            )
+            result = sync_type_layers(session, catalog=catalog, export_path=diff)
             blocked = export_layer_diff(session, catalog, official, dictionary_path=official)
             self.assertTrue(result.ok, result.message)
             self.assertTrue(diff.exists())
@@ -217,13 +213,12 @@ class LayerSyncTests(unittest.TestCase):
         )
         popups = []
         with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
-            root = Path(raw)
+            root = _bind(session, raw)
             official = root / "LoopFlow_Dictionary.xlsx"
             write_table(official, schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_row()])
             before = official.read_bytes()
             result = export_dictionary(
                 session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
                 catalog=catalog,
                 show_message=popups.append,
             )
@@ -262,12 +257,8 @@ class LayerSyncTests(unittest.TestCase):
         catalog = _catalog(_row())
         session.set_view_state(ObjectViewState("model-a", True, False, False, (0, 0, 0), True))
         with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
-            result = sync_type_layers(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
-                catalog=catalog,
-                cancel=True,
-            )
+            _bind(session, raw)
+            result = sync_type_layers(session, catalog=catalog, cancel=True)
         self.assertEqual(result.status, "cancelled")
         self.assertFalse(session.has_layer(to_full_path("00_STR_結構::Beam.樑")))
         self.assertTrue(session.get_view_state("model-a").selected)
@@ -282,30 +273,22 @@ class LayerSyncTests(unittest.TestCase):
             return "大安邸"
 
         with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
-            result = sync_type_layers(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
-                catalog=catalog,
-                ask_prefix=_ask,
-            )
+            root = _bind(session, raw)
+            result = sync_type_layers(session, catalog=catalog, ask_prefix=_ask)
+            stored = read_project_config(root)
         self.assertTrue(result.ok, result.message)
         self.assertEqual(seen, [""])
-        self.assertEqual(session.document_user_text(LAYER_PREFIX_KEY), "大安邸")
+        self.assertEqual(stored["layer_prefix"], "大安邸")
 
     def test_custom_prefix_is_stored_and_reused_as_default(self):
         session = _session()
         catalog = _catalog(_row())
         seen = []
         with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
-            environ = {"LOOPFLOW_WORKFILES_ROOT": raw}
-            first = sync_type_layers(
-                session,
-                environ=environ,
-                catalog=catalog,
-                layer_prefix="大安邸",
-            )
+            root = _bind(session, raw)
+            first = sync_type_layers(session, catalog=catalog, layer_prefix="大安邸")
             self.assertTrue(first.ok, first.message)
-            self.assertEqual(session.document_user_text(LAYER_PREFIX_KEY), "大安邸")
+            self.assertEqual(read_project_config(root)["layer_prefix"], "大安邸")
             self.assertTrue(session.has_layer("大安邸::00_STR_結構::Beam.樑"))
             self.assertTrue(session.has_layer("大安邸::_Data::Space_Boundaries"))
             self.assertFalse(session.has_layer(to_full_path("00_STR_結構::Beam.樑")))
@@ -314,15 +297,11 @@ class LayerSyncTests(unittest.TestCase):
                 seen.append(default)
                 return default
 
-            second = sync_type_layers(
-                session,
-                environ=environ,
-                catalog=catalog,
-                ask_prefix=_ask,
-            )
+            second = sync_type_layers(session, catalog=catalog, ask_prefix=_ask)
+            stored = read_project_config(root)
         self.assertTrue(second.ok, second.message)
         self.assertEqual(seen, ["大安邸"])
-        self.assertEqual(session.document_user_text(LAYER_PREFIX_KEY), "大安邸")
+        self.assertEqual(stored["layer_prefix"], "大安邸")
 
     def test_custom_dictionary_filename_is_stored_and_exported_beside(self):
         session = _session()
@@ -334,24 +313,18 @@ class LayerSyncTests(unittest.TestCase):
             return "TeamA.xlsx"
 
         with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
-            root = Path(raw)
+            root = _bind(session, raw)
             custom = root / "TeamA.xlsx"
             write_table(custom, schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_row()])
-            result = sync_type_layers(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
-                catalog=catalog,
-                ask_dictionary=_ask,
-            )
+            result = sync_type_layers(session, catalog=catalog, ask_dictionary=_ask)
             exported = export_dictionary(
                 session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
                 catalog=catalog,
                 show_message=lambda _msg: None,
             )
             self.assertTrue(result.ok, result.message)
             self.assertEqual(seen, ["LoopFlow_Dictionary.xlsx"])
-            self.assertEqual(session.document_user_text(DICTIONARY_FILENAME_KEY), "TeamA.xlsx")
+            self.assertEqual(read_project_config(root)["dictionary_filename"], "TeamA.xlsx")
             self.assertTrue(exported.ok, exported.message)
             self.assertTrue((root / "TeamA_Export.xlsx").exists())
             self.assertFalse((root / EXPORT_FILENAME).exists())
@@ -360,7 +333,6 @@ class LayerSyncTests(unittest.TestCase):
     def test_remembered_dictionary_skips_picker_until_file_missing(self):
         session = _session()
         catalog = _catalog(_row())
-        session.set_document_user_text(DICTIONARY_FILENAME_KEY, "TeamA.xlsx")
         seen = []
 
         def _ask(default):
@@ -368,42 +340,30 @@ class LayerSyncTests(unittest.TestCase):
             return "TeamB.xlsx"
 
         with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
-            root = Path(raw)
+            root = _bind(session, raw)
+            write_project_config(root, dictionary_filename="TeamA.xlsx")
             write_table(root / "TeamA.xlsx", schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_row()])
-            first = sync_type_layers(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
-                catalog=catalog,
-                ask_dictionary=_ask,
-            )
+            first = sync_type_layers(session, catalog=catalog, ask_dictionary=_ask)
             self.assertTrue(first.ok, first.message)
             self.assertEqual(seen, [])
-            self.assertEqual(session.document_user_text(DICTIONARY_FILENAME_KEY), "TeamA.xlsx")
+            self.assertEqual(read_project_config(root)["dictionary_filename"], "TeamA.xlsx")
 
-            (root / "TeamA.xlsx").unlink()
-            write_table(root / "TeamB.xlsx", schema.TITLE_ROW, schema.DISPLAY_COLUMNS, [_row()])
-            second = sync_type_layers(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
-                catalog=catalog,
-                ask_dictionary=_ask,
-            )
+            # 字典改名（等同搬走）：再跑就要問，並記住新選的檔名。
+            (root / "TeamA.xlsx").rename(root / "TeamB.xlsx")
+            second = sync_type_layers(session, catalog=catalog, ask_dictionary=_ask)
             self.assertTrue(second.ok, second.message)
             self.assertEqual(seen, ["TeamA.xlsx"])
-            self.assertEqual(session.document_user_text(DICTIONARY_FILENAME_KEY), "TeamB.xlsx")
+            self.assertEqual(read_project_config(root)["dictionary_filename"], "TeamB.xlsx")
 
     def test_invalid_prefix_blocks(self):
         session = _session()
         catalog = _catalog(_row())
         with tempfile.TemporaryDirectory(prefix="loopflow-nx02-") as raw:
-            result = sync_type_layers(
-                session,
-                environ={"LOOPFLOW_WORKFILES_ROOT": raw},
-                catalog=catalog,
-                layer_prefix="A::B",
-            )
+            root = _bind(session, raw)
+            result = sync_type_layers(session, catalog=catalog, layer_prefix="A::B")
+            stored = read_project_config(root)
         self.assertEqual(result.blocking, ("invalid_layer_prefix",))
-        self.assertIsNone(session.document_user_text(LAYER_PREFIX_KEY))
+        self.assertNotIn("layer_prefix", stored)
 
 
 if __name__ == "__main__":

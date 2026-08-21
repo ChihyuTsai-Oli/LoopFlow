@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import io
 import sys
-import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -61,6 +60,7 @@ from test_infuser_part import (
     OBJECT_ID,
     OTHER,
     PAGE,
+    PROJECT_ID,
     SHEET_ID,
     TARGET_SHEET_ID,
     VIEW_ID,
@@ -72,6 +72,9 @@ from test_infuser_part import (
     _session,
     _snapshot,
 )
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import bind_project, read_project_config, registry_dir  # noqa: E402
 
 MISSING = "ffffffff-ffff-4fff-8fff-ffffffffffff"
 
@@ -165,9 +168,8 @@ class CatalogTests(unittest.TestCase):
 
 class GuardTests(unittest.TestCase):
     def test_missing_schema_is_filled_and_continues(self):
-        session = _session()
-        session._document_text.pop("lf_schema_id", None)
-        session._document_text.pop("lf_schema_version", None)
+        session = _session(write_config=False)
+        root = Path(session.document_path()).parent
         _add_block(
             session,
             "tag",
@@ -176,32 +178,20 @@ class GuardTests(unittest.TestCase):
         )
         result = _run(session)
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(session.document_user_text("lf_schema_id"), "loopflow.project")
+        self.assertEqual(read_project_config(root)["schema_id"], "loopflow.project")
 
     def test_no_layout_pages_zero_write(self):
-        session = MemorySession(
-            document_text={
-                "lf_project_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-                "lf_schema_id": "loopflow.project",
-                "lf_schema_version": "1",
-            }
-        )
+        session = MemorySession()
+        bind_project(session, project_id=PROJECT_ID)
         result = _run(session)
         self.assertFalse(result.ok)
         self.assertEqual(result.blocking, ("missing_layout_page",))
 
     def test_corrupt_official_stops_and_does_not_write(self):
-        root = Path(tempfile.mkdtemp())
-        (root / "exchange" / "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").mkdir(parents=True)
-        official = (
-            root
-            / "exchange"
-            / "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
-            / "Project_Registry.json"
-        )
-        official.write_text("{not json", encoding="utf-8")
         session = _session()
-        session.set_document_path(str(root / "model.3dm"))
+        root = Path(session.document_path()).parent
+        folder = registry_dir(root, PROJECT_ID)
+        (folder / "Project_Registry.json").write_text("{not json", encoding="utf-8")
         _add_block(
             session,
             "tag",
@@ -209,11 +199,7 @@ class GuardTests(unittest.TestCase):
             user_text=_filled_height(),
         )
         before = _snapshot(session)
-        result = run_tag_o(
-            session,
-            catalog=_catalog(),
-            environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-        )
+        result = run_tag_o(session, catalog=_catalog())
         self.assertFalse(result.ok)
         self.assertEqual(session._object_meta, before["objects"])
 

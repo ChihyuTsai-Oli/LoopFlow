@@ -59,9 +59,13 @@ from loopflow.foundation.usertext import (
     TYPE_ID_KEY,
     TYPE_SEQUENCE_KEY as MODEL_TYPE_SEQUENCE_KEY,
 )
+from loopflow.foundation.paths import CONFIG_DIR_NAME
 from loopflow.platform.rhino.memory import MemorySession
 
-PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import bind_project, read_project_config, registry_dir  # noqa: E402
+
+PROJECT_ID = "大安邸"
 OBJECT_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
 SHEET_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
 TARGET_SHEET_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
@@ -127,14 +131,9 @@ def _object_row(**overrides):
     return row
 
 
-def _session() -> MemorySession:
-    session = MemorySession(
-        document_text={
-            "lf_project_id": PROJECT_ID,
-            "lf_schema_id": "loopflow.project",
-            "lf_schema_version": "1",
-        }
-    )
+def _session(root=None, *, write_config: bool = True) -> MemorySession:
+    session = MemorySession()
+    bind_project(session, root, write_config=write_config, project_id=PROJECT_ID)
     session.set_layout_pages([PAGE, OTHER])
     session.set_current_layout_page(PAGE)
     session.add_object("frame", name="Frame", layer="M2D")
@@ -228,14 +227,14 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(session._object_meta, before["objects"])
 
     def test_missing_schema_is_filled_and_continues(self):
-        session = _session()
-        session._document_text.pop("lf_schema_id", None)
-        session._document_text.pop("lf_schema_version", None)
+        session = _session(write_config=False)
+        root = Path(session.document_path()).parent
         _add_block(session, "tag", "TAG_HEIGHT_GRAB", user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID})
         result = _run(session)
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(session.document_user_text("lf_schema_id"), "loopflow.project")
-        self.assertEqual(session.document_user_text("lf_schema_version"), "1")
+        stored = read_project_config(root)
+        self.assertEqual(stored["schema_id"], "loopflow.project")
+        self.assertEqual(stored["schema_version"], 1)
         self.assertEqual(session.get_object_user_text("tag", TYPE_CATEGORY_KEY), "PT")
 
 
@@ -960,50 +959,37 @@ class SkipTests(unittest.TestCase):
 
 
 class RegistryFileTests(unittest.TestCase):
-    def _workfiles(self):
-        folder = Path(tempfile.mkdtemp())
-        (folder / "exchange" / PROJECT_ID).mkdir(parents=True)
-        return folder
+    """Registry 檔在 .3dm 同層的 `_LoopFlow_Config/<專案名稱>/`。"""
+
+    def _project(self):
+        session = _session()
+        root = Path(session.document_path()).parent
+        return session, root, registry_dir(root, PROJECT_ID)
 
     def test_uses_last_good_when_official_missing(self):
-        root = self._workfiles()
-        last_good = root / "exchange" / PROJECT_ID / "Project_Registry.last-good.json"
+        session, root, folder = self._project()
+        last_good = folder / "Project_Registry.last-good.json"
         last_good.write_text(json.dumps(_payload(revision=3), ensure_ascii=False), encoding="utf-8")
-        session = _session()
-        session.set_document_path(str(root / "model.3dm"))
         _add_block(session, "tag", "TAG_HEIGHT_GRAB", user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID})
-        result = run_infuser_part(
-            session,
-            catalog=_catalog(),
-            environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-        )
+        result = run_infuser_part(session, catalog=_catalog())
         self.assertTrue(result.ok, result.message)
         self.assertIn("used_last_good", result.warnings)
         self.assertEqual(session.get_object_user_text("tag", TYPE_DISPLAY_NAME_KEY), "Paint")
         self.assertEqual(session.get_object_user_text("tag", LAST_SYNCED_REVISION_KEY), "3")
-        self.assertFalse((root / "exchange" / PROJECT_ID / "Project_Registry.json").exists())
+        self.assertFalse((folder / "Project_Registry.json").exists())
 
     def test_corrupt_official_stops_and_does_not_write(self):
-        root = self._workfiles()
-        official = root / "exchange" / PROJECT_ID / "Project_Registry.json"
-        official.write_text("{not json", encoding="utf-8")
-        session = _session()
-        session.set_document_path(str(root / "model.3dm"))
+        session, root, folder = self._project()
+        (folder / "Project_Registry.json").write_text("{not json", encoding="utf-8")
         _add_block(session, "tag", "TAG_HEIGHT_GRAB", user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID})
         before = _snapshot(session)
-        result = run_infuser_part(
-            session,
-            catalog=_catalog(),
-            environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-        )
+        result = run_infuser_part(session, catalog=_catalog())
         self.assertFalse(result.ok)
         self.assertIsNone(session.get_object_user_text("tag", TYPE_CATEGORY_KEY))
         self.assertEqual(session._object_meta["tag"]["user_text"], before["objects"]["tag"]["user_text"])
 
     def test_missing_registry_item_still_injects(self):
-        root = self._workfiles()
-        session = _session()
-        session.set_document_path(str(root / "model.3dm"))
+        session, root, folder = self._project()
         _add_block(
             session,
             "item",
@@ -1011,21 +997,15 @@ class RegistryFileTests(unittest.TestCase):
             user_text={SOURCE_BLOCK_NAME_KEY: "FF-01__Chair-1"},
         )
         _add_block(session, "height", "TAG_HEIGHT_GRAB", user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID})
-        result = run_infuser_part(
-            session,
-            catalog=_catalog(),
-            environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-        )
+        result = run_infuser_part(session, catalog=_catalog())
         self.assertTrue(result.ok)
         self.assertIn("missing_registry", result.warnings)
         self.assertEqual(session.get_object_user_text("item", ITEM_NAME_KEY), "Chair-1")
         self.assertEqual(session.get_object_user_text("height", TYPE_CATEGORY_KEY), BROKEN_DISPLAY)
-        self.assertFalse((root / "exchange" / PROJECT_ID / "Project_Registry.json").exists())
+        self.assertFalse((folder / "Project_Registry.json").exists())
 
     def test_missing_registry_height_reads_live_object(self):
-        root = self._workfiles()
-        session = _session()
-        session.set_document_path(str(root / "model.3dm"))
+        session, root, folder = self._project()
         _add_live_source(session)
         _add_block(
             session,
@@ -1034,29 +1014,21 @@ class RegistryFileTests(unittest.TestCase):
             user_text={SOURCE_BLOCK_NAME_KEY: "FF-01__Chair-1"},
         )
         _add_block(session, "height", "TAG_HEIGHT_GRAB", user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID})
-        result = run_infuser_part(
-            session,
-            catalog=_catalog(),
-            environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-        )
+        result = run_infuser_part(session, catalog=_catalog())
         self.assertTrue(result.ok, result.message)
         self.assertIn("missing_registry", result.warnings)
         self.assertEqual(session.get_object_user_text("item", ITEM_NAME_KEY), "Chair-1")
         self.assertEqual(session.get_object_user_text("height", TYPE_CATEGORY_KEY), "PT")
         self.assertEqual(session.get_object_user_text("height", ELEVATION_DISPLAY_KEY), "320")
         self.assertEqual(session.get_object_user_text("height", TYPE_DISPLAY_NAME_KEY), MISSING_DISPLAY)
-        self.assertFalse((root / "exchange" / PROJECT_ID / "Project_Registry.json").exists())
+        self.assertFalse((folder / "Project_Registry.json").exists())
 
     def test_reader_does_not_create_files(self):
         root = Path(tempfile.mkdtemp())
-        result = load_published_registry(
-            PROJECT_ID,
-            document_path=str(root / "model.3dm"),
-            environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-        )
+        result = load_published_registry(PROJECT_ID, document_path=str(root / "model.3dm"))
         self.assertTrue(result.ok)
         self.assertIn("missing_registry", result.warnings)
-        self.assertFalse((root / "exchange").exists())
+        self.assertFalse((root / CONFIG_DIR_NAME).exists())
 
 
 if __name__ == "__main__":

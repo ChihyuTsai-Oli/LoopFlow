@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""開空檔：專案名稱當身分、exchange 跟 3dm 資料夾走、schema 不擋。"""
+"""開空檔：專案名稱當身分、_LoopFlow_Config 跟 3dm 資料夾走、schema 不擋。"""
 from __future__ import annotations
 
 import sys
@@ -12,16 +12,18 @@ SRC = WIP / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from loopflow.features.dictionary.layer_paths import LAYER_PREFIX_KEY, PROJECT_ID_KEY
 from loopflow.features.dictionary.sync import sync_type_layers
-from loopflow.features.project.console import SCHEMA_ID_KEY, SCHEMA_VERSION_KEY, open_console
+from loopflow.features.project.console import open_console
 from loopflow.features.registry.publisher import publish_registry
-from loopflow.foundation.paths import resolve_registry_for_document
+from loopflow.foundation.paths import CONFIG_DIR_NAME, resolve_registry_for_document
 from loopflow.platform.rhino.memory import MemorySession
 
 from loopflow.features.dictionary import schema
 from loopflow.features.dictionary.loader import load_from_table
 from loopflow.platform.excel import write_table
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from project_fixture import bind_project, read_project_config  # noqa: E402
 
 
 def _row():
@@ -79,29 +81,26 @@ def _min_payload(project_id="M3D"):
 
 
 class OpenIdentityTests(unittest.TestCase):
-    def test_sync_writes_project_name_to_both_keys(self):
-        session = MemorySession(document_text={})
+    def test_sync_writes_project_name_to_both_fields(self):
+        session = MemorySession()
         with tempfile.TemporaryDirectory(prefix="loopflow-id-") as raw:
             root = Path(raw)
+            bind_project(session, root, write_config=False)
             _write_dictionary(root)
-            result = sync_type_layers(
-                session,
-                catalog=_catalog(),
-                environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
-                layer_prefix="Tower",
-            )
+            result = sync_type_layers(session, catalog=_catalog(), layer_prefix="Tower")
+            stored = read_project_config(root)
         self.assertTrue(result.ok, result.message)
-        self.assertEqual(session.document_user_text(LAYER_PREFIX_KEY), "Tower")
-        self.assertEqual(session.document_user_text(PROJECT_ID_KEY), "Tower")
+        self.assertEqual(stored["layer_prefix"], "Tower")
+        self.assertEqual(stored["project_id"], "Tower")
 
-    def test_renamed_3dm_keeps_same_exchange(self):
+    def test_renamed_3dm_keeps_same_registry_folder(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-id-") as raw:
             folder = Path(raw)
             first = folder / "draft.3dm"
             second = folder / "final.3dm"
             written = publish_registry(_min_payload("M3D"), document_path=str(first))
             self.assertTrue(written.ok, written.message)
-            official = folder / "exchange" / "M3D" / "Project_Registry.json"
+            official = folder / CONFIG_DIR_NAME / "M3D" / "Project_Registry.json"
             self.assertTrue(official.exists())
             located = resolve_registry_for_document(second, "M3D")
             self.assertEqual(located.details["registry"], official)
@@ -112,34 +111,30 @@ class OpenIdentityTests(unittest.TestCase):
             model = folder / "model.3dm"
             first = publish_registry(_min_payload("M3D"), document_path=str(model))
             self.assertTrue(first.ok, first.message)
-            old_folder = folder / "exchange" / "M3D"
+            old_folder = folder / CONFIG_DIR_NAME / "M3D"
             self.assertTrue((old_folder / "Project_Registry.json").exists())
             second = publish_registry(_min_payload("Tower"), document_path=str(model))
             self.assertTrue(second.ok, second.message)
-            new_folder = folder / "exchange" / "Tower"
+            new_folder = folder / CONFIG_DIR_NAME / "Tower"
             self.assertTrue((new_folder / "Project_Registry.json").exists())
             self.assertTrue((old_folder / "Project_Registry.json").exists())
 
-    def test_open_check_does_not_look_up_old_uuid_exchange(self):
+    def test_open_check_does_not_look_up_old_uuid_registry(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-id-") as raw:
             root = Path(raw)
             _write_dictionary(root)
-            old = root / "exchange" / "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+            old = root / CONFIG_DIR_NAME / "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
             old.mkdir(parents=True)
             (old / "Project_Registry.json").write_text("{}", encoding="utf-8")
-            session = MemorySession(
-                document_text={
-                    LAYER_PREFIX_KEY: "M3D",
-                    PROJECT_ID_KEY: "M3D",
-                },
-                document_path=str(root / "model.3dm"),
-            )
-            result = open_console(session, environ={"LOOPFLOW_WORKFILES_ROOT": str(root)})
+            session = MemorySession()
+            bind_project(session, root, project_id="M3D", layer_prefix="M3D")
+            result = open_console(session)
             self.assertTrue(result.ok, result.message)
-            self.assertFalse(result.details["exchange_exists"])
+            self.assertFalse(result.details["registry_exists"])
             self.assertEqual(result.details["project_id"], "M3D")
-            self.assertEqual(session.document_user_text(SCHEMA_ID_KEY), "loopflow.project")
-            self.assertEqual(session.document_user_text(SCHEMA_VERSION_KEY), "1")
+            stored = read_project_config(root)
+            self.assertEqual(stored["schema_id"], "loopflow.project")
+            self.assertEqual(stored["schema_version"], 1)
 
 
 if __name__ == "__main__":
