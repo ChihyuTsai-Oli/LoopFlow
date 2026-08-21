@@ -1,6 +1,6 @@
 #! python 3
 # -*- coding: utf-8 -*-
-"""G02 套件登錄的正式指令 LFDocument。開發期入口仍是 LF_Document.py，不要改那個檔名。"""
+"""G02 套件登錄的正式指令 LFTaggerIndex。開發期入口仍是 LF_Tagger_Index.py，不要改那個檔名。"""
 from __future__ import annotations
 
 import sys
@@ -40,4 +40,4 @@ if _SRC not in sys.path:
 
 from loopflow.bootstrap import run_command  # noqa: E402
 
-run_command("LF_Document")
+run_command("LF_Tagger_Index")

@@ -1,5 +1,4 @@
-# G02 最小 yak：只登錄 LFDocument。不上架。
-# 需要本機 Rhino 8 的 RhinoCode.exe 與 yak.exe。
+# G02 yak: register all official commands. Do not publish. Do not pack generated RUI.
 $ErrorActionPreference = "Stop"
 $Spike = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoWip = Split-Path -Parent (Split-Path -Parent $Spike)
@@ -8,19 +7,20 @@ $Build = Join-Path $Spike "build"
 $Yak = "C:\Program Files\Rhino 8\System\Yak.exe"
 $RhinoCode = "C:\Program Files\Rhino 8\System\RhinoCode.exe"
 $Rhproj = Join-Path $Spike "LoopFlow.rhproj"
-$CommandPy = Join-Path $Spike "commands\LFDocument.py"
+$CommandsDir = Join-Path $Spike "commands"
+$Version = "0.2.0"
 
 if (-not (Test-Path $Rhproj)) { throw "找不到 LoopFlow.rhproj" }
-if (-not (Test-Path $CommandPy)) { throw "找不到 commands\LFDocument.py" }
+if (-not (Test-Path (Join-Path $CommandsDir "LFDocument.py"))) { throw "找不到 commands\LFDocument.py" }
 if (-not (Test-Path $Src)) { throw "找不到 wip\src" }
 
 New-Item -ItemType Directory -Force -Path $Build | Out-Null
 $Prepared = Join-Path $Build "LoopFlow.prepared.rhproj"
 $Prepare = Join-Path $Spike "prepare_rhproj.py"
-python $Prepare $Rhproj $CommandPy $Prepared
+python $Prepare $Rhproj $Prepared
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-& $RhinoCode project build $Prepared --buildversion 0.1.2 --buildtarget 8.* --buildpath $Build
+& $RhinoCode project build $Prepared --buildversion $Version --buildtarget 8.* --buildpath $Build
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $Stage = Get-ChildItem -Path $Build -Recurse -Filter "LoopFlow.rhp" | Select-Object -First 1
@@ -33,7 +33,7 @@ New-Item -ItemType Directory -Force -Path $Lib | Out-Null
 Copy-Item -Recurse (Join-Path $Src "loopflow") (Join-Path $Lib "loopflow")
 Get-ChildItem (Join-Path $Lib "loopflow") -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force
 $GeneratedSrc = Join-Path $StageDir "src"
-if (Test-Path $GeneratedSrc) { Remove-Item $GeneratedSrc -Recurse -Force }
+if (Test-Path $GeneratedSrc) { Remove-Item $GeneratedSrc -Force -Recurse }
 # Do not pack LoopFlow.rui. It switches Rhino off the user's mori LoopFlow toolbar.
 $RuiPath = Join-Path $StageDir "LoopFlow.rui"
 if (Test-Path $RuiPath) { Remove-Item $RuiPath -Force }
