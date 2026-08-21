@@ -25,6 +25,26 @@ _MISSING_ROOT_HINT = (
     "（見工作區根目錄的工作檔路徑說明），然後重開程式。不得猜測磁碟機，也不建立正式資料。"
     % WORKFILES_ROOT_ENV
 )
+_EXTENDED_PATH_PREFIX = "\\\\?\\"
+_EXTENDED_UNC_PREFIX = "\\\\?\\UNC\\"
+
+
+def canonical_path(path: Union[str, Path]) -> Path:
+    """去掉 Windows `\\\\?\\` 前綴，再做成可比較的絕對路徑。大小寫不當作不同資料夾。"""
+    text = os.fspath(path).strip().strip('"')
+    if text.startswith(_EXTENDED_UNC_PREFIX):
+        text = "\\\\" + text[len(_EXTENDED_UNC_PREFIX) :]
+    elif text.startswith(_EXTENDED_PATH_PREFIX):
+        text = text[len(_EXTENDED_PATH_PREFIX) :]
+    return Path(os.path.normcase(os.path.abspath(os.path.realpath(text))))
+
+
+def path_relative_to_root(path: Union[str, Path], root: Union[str, Path]) -> Optional[Path]:
+    """檔案是否在工作檔根目錄內。不因大小寫或 `\\\\?\\` 前綴誤判成別的磁碟。"""
+    try:
+        return canonical_path(path).relative_to(canonical_path(root))
+    except (ValueError, OSError):
+        return None
 
 
 @dataclass(frozen=True)
@@ -63,23 +83,27 @@ def normalize_dictionary_filename(
                 blocking=("dictionary_outside_workfiles",),
                 details={"filename": text},
             )
-        try:
-            relative = candidate.resolve().relative_to(Path(root).resolve())
-        except ValueError:
+        relative = path_relative_to_root(candidate, root)
+        if relative is None:
             return results.blocked(
                 "resolve_dictionary",
-                "必須選工作檔資料夾內的 Excel，不能用其他磁碟或路徑。",
+                "必須選工作檔資料夾內的 Excel，不能用其他磁碟或路徑。\n選到：%s\n必須在：%s"
+                % (candidate, root),
                 blocking=("dictionary_outside_workfiles",),
-                details={"filename": candidate.name},
+                details={
+                    "filename": candidate.name,
+                    "selected": str(candidate),
+                    "workfiles_root": str(root),
+                },
             )
         if len(relative.parts) != 1:
             return results.blocked(
                 "resolve_dictionary",
                 "Dictionary 須放在工作檔資料夾根目錄，不能在子資料夾。",
                 blocking=("dictionary_not_basename",),
-                details={"filename": relative.as_posix()},
+                details={"filename": Path(candidate).name},
             )
-        name = relative.name
+        name = Path(candidate).name
     else:
         normalized = text.replace("\\", "/")
         parts = Path(normalized).parts

@@ -185,6 +185,43 @@ class DictionaryFilenameTests(unittest.TestCase):
         self.assertFalse(exported.ok)
         self.assertEqual(exported.blocking, ("export_file_not_dictionary",))
 
+    def test_normalize_accepts_absolute_and_extended_path_under_root(self):
+        from loopflow.foundation.paths import normalize_dictionary_filename
+
+        with tempfile.TemporaryDirectory(prefix="loopflow-dict-abs-") as raw:
+            root = Path(raw)
+            chosen = root / "LoopFlow_Dictionary.xlsx"
+            chosen.write_bytes(b"")
+            by_abs = normalize_dictionary_filename(str(chosen), root=root)
+            self.assertTrue(by_abs.ok, by_abs.message)
+            self.assertEqual(by_abs.details["filename"], "LoopFlow_Dictionary.xlsx")
+            extended = "\\\\?\\" + str(chosen.resolve())
+            by_extended = normalize_dictionary_filename(extended, root=root)
+            self.assertTrue(by_extended.ok, by_extended.message)
+            self.assertEqual(by_extended.details["filename"], "LoopFlow_Dictionary.xlsx")
+
+    def test_normalize_outside_root_shows_both_paths(self):
+        from loopflow.foundation.paths import normalize_dictionary_filename
+
+        with tempfile.TemporaryDirectory(prefix="loopflow-dict-out-") as raw:
+            root = Path(raw)
+            outside = str(root.parent / "Downloads" / "LoopFlow_Dictionary.xlsx")
+            blocked = normalize_dictionary_filename(outside, root=root)
+            self.assertFalse(blocked.ok)
+            self.assertEqual(blocked.blocking, ("dictionary_outside_workfiles",))
+            self.assertIn("Downloads", blocked.message)
+            self.assertIn(str(root), blocked.message)
+
+    def test_dialog_file_name_joins_folder(self):
+        from loopflow.platform.rhino.prompts import dialog_file_name
+
+        folder = str(Path(tempfile.gettempdir()) / "loopflow-workfiles")
+        joined = dialog_file_name(folder, "LoopFlow_Dictionary.xlsx")
+        self.assertEqual(Path(joined).name, "LoopFlow_Dictionary.xlsx")
+        self.assertEqual(Path(joined).parent, Path(folder))
+        already = dialog_file_name(folder, str(Path(folder) / "TeamA.xlsx"))
+        self.assertEqual(Path(already), Path(folder) / "TeamA.xlsx")
+
     def test_remembered_filename_none_without_usertext(self):
         from loopflow.foundation.paths import (
             DICTIONARY_FILENAME,

@@ -131,6 +131,19 @@ def ask_popup_string(
     return str(value)
 
 
+def dialog_file_name(folder: Optional[str], filename: Optional[str]) -> Optional[str]:
+    """選檔對話框要用的檔名。有資料夾時組成完整路徑，避免落到剛存檔的 .3dm 目錄。"""
+    name = str(filename or "").strip()
+    root = str(folder or "").strip()
+    if not name:
+        return None
+    if root and (len(name) < 2 or name[1] != ":"):
+        from pathlib import Path
+
+        return str(Path(root) / Path(name).name)
+    return name
+
+
 def ask_open_filename(
     message: str,
     file_filter: str,
@@ -138,12 +151,32 @@ def ask_open_filename(
     filename: Optional[str] = None,
 ) -> Optional[str]:
     """選檔；沒有 Rhino 時丟 ImportError，取消時回傳 None。"""
-    import rhinoscriptsyntax as rs  # type: ignore
+    start_folder = str(folder).strip() if folder else ""
+    suggested = dialog_file_name(start_folder or None, filename)
+    try:
+        import Rhino.UI  # type: ignore
 
-    value = rs.OpenFileName(message, file_filter, folder, filename)
-    if not value:
+        dialog = Rhino.UI.OpenFileDialog()
+        dialog.Title = message
+        if file_filter:
+            dialog.Filter = file_filter
+        if start_folder:
+            dialog.InitialDirectory = start_folder
+        if suggested:
+            dialog.FileName = suggested
+        show = getattr(dialog, "ShowOpenDialog", None) or getattr(dialog, "ShowDialog", None)
+        if show is None:
+            raise AttributeError("OpenFileDialog has no show method")
+        if show():
+            return str(dialog.FileName or "") or None
         return None
-    return str(value)
+    except Exception:
+        import rhinoscriptsyntax as rs  # type: ignore
+
+        value = rs.OpenFileName(message, file_filter, start_folder or None, suggested)
+        if not value:
+            return None
+        return str(value)
 
 
 def ask_save_filename(

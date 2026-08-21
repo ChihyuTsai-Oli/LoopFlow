@@ -62,7 +62,7 @@ def _live_ask_dictionary(environ: Optional[Mapping[str, str]]):
         folder = None
         workfiles = resolve_workfiles(environ=environ)
         if workfiles.ok:
-            folder = str(workfiles.details["paths"].root)
+            folder = str(workfiles.details["paths"].root.resolve())
         try:
             return ask_open_filename(
                 "選 Dictionary Excel（須在工作檔資料夾內）",
