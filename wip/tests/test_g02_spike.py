@@ -2,6 +2,7 @@
 """G02 最小 yak spike：只登錄 LFDocument，不改開發期入口檔名。"""
 from __future__ import annotations
 
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -19,21 +20,25 @@ from loopflow.features.document.open_guide import COMMAND_ID, DOCUMENT_URL
 class G02SpikePackagingTests(unittest.TestCase):
     def test_command_script_uses_official_name_and_existing_runner(self):
         script = (SPIKE / "commands" / "LFDocument.py").read_text(encoding="utf-8")
+        self.assertTrue(script.startswith("#! python 3"))
         self.assertIn("LFDocument", script)
         self.assertIn('run_command("LF_Document")', script)
         self.assertNotIn("LF_D08", script)
         self.assertIn("loopflow.bootstrap", script)
 
     def test_rhproj_registers_lfdocument(self):
-        text = (SPIKE / "LoopFlow.rhproj").read_text(encoding="utf-8")
-        self.assertIn('"name": "LFDocument"', text)
-        self.assertIn("commands/LFDocument.py", text)
-        self.assertNotIn('"codes": []', text)
+        data = json.loads((SPIKE / "LoopFlow.rhproj").read_text(encoding="utf-8"))
+        code = data["codes"][0]
+        self.assertEqual(code["name"], "LFDocument")
+        self.assertEqual(code["path"], "commands/LFDocument.py")
+        self.assertEqual(code["language"]["id"], "*.*.python")
+        self.assertEqual(code["language"]["version"], "3.*.*")
+        self.assertIsInstance(code["language"], dict)
 
     def test_manifest_is_spike_only(self):
         text = (SPIKE / "manifest.yml").read_text(encoding="utf-8")
         self.assertIn("name: loopflow", text)
-        self.assertIn("version: 0.1.0", text)
+        self.assertIn("version: 0.1.1", text)
         self.assertIn("LFDocument", text)
         self.assertNotIn("LF_D08_Migrate_Display_Keys", text)
         self.assertNotIn("Package Manager 上架", text)

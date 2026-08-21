@@ -20,6 +20,8 @@ def main() -> int:
         return 1
     data["codes"][0]["path"] = str(command)
     data["codes"][0]["uri"] = command.as_uri()
+    # 字串 "python3" 會被當成 C#；必須是 LanguageSpec 物件。
+    data["codes"][0]["language"] = {"id": "*.*.python", "version": "3.*.*"}
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n",

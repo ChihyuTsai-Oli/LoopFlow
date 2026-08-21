@@ -1,4 +1,4 @@
-#! python3
+#! python 3
 # -*- coding: utf-8 -*-
 """G02 最小套件登錄的正式指令 LFDocument。開發期入口仍是 LF_Document.py，不要改那個檔名。"""
 from __future__ import annotations

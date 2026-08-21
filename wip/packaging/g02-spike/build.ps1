@@ -20,7 +20,7 @@ $Prepare = Join-Path $Spike "prepare_rhproj.py"
 python $Prepare $Rhproj $CommandPy $Prepared
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-& $RhinoCode project build $Prepared --buildversion 0.1.0 --buildtarget 8.* --buildpath $Build
+& $RhinoCode project build $Prepared --buildversion 0.1.1 --buildtarget 8.* --buildpath $Build
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $Stage = Get-ChildItem -Path $Build -Recurse -Filter "LoopFlow.rhp" | Select-Object -First 1
