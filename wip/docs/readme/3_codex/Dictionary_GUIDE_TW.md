@@ -33,15 +33,18 @@ Registry 版次              唯讀的模型資料快照
 
 | 項目 | 說明 |
 |---|---|
-| 檔案名稱 | 預設 `LoopFlow_Dictionary.xlsx`，可以改用同一個工作檔資料夾裡的其他 `.xlsx` 檔名 |
-| 放置位置 | 工作檔根目錄（環境變數 `LOOPFLOW_WORKFILES_ROOT` 指向的資料夾） |
+| 檔案名稱 | 預設 `LoopFlow_Dictionary.xlsx`，可以改用 `.3dm` 同一層的其他 `.xlsx` 檔名 |
+| 放置位置 | 已存檔 `.3dm` 所在資料夾；這個資料夾就是 LoopFlow 的專案工作資料夾 |
+| 專案設定 | `.3dm` 同層的 `_LoopFlow_Config/LoopFlow_Project.json`，只記 Dictionary 檔名，不記絕對路徑 |
 | 格式要求 | 只支援 `.xlsx`；不接受 `.csv` 或 `.xls` |
 | 工作表 | 讀取第一張工作表；目前工作表名稱為 `LoopFlow_Dictionary` |
 | 第 1 列 | 版本標題列，例如 `LoopFlow Dictionary v2.0`（程式會跳過） |
 | 第 2 列 | **欄位標題列**，欄名必須完全符合下方定義 |
 | 第 3 列起 | 每一列代表一個 Type，對應一個 Rhino 子圖層 |
 
-第一次執行「同步 Type Layers」時會跳出選檔視窗，選過一次後檔名會被記住（存在 Rhino 文件的 `lf_dictionary_filename`），之後不會再問，除非那個檔名被改掉、找不到。**系統不會自動掃描資料夾裡所有的 Excel 檔，也不會用檔名以外的方式亂猜。**
+第一次執行「同步 Type Layers」時會跳出選檔視窗，選過一次後檔名會記在 `_LoopFlow_Config/LoopFlow_Project.json` 的 `dictionary_filename`，之後不會再問。Dictionary 必須和 `.3dm` 在同一層；若已記住的檔案被改名或移走，系統會先請你把檔案放回，再從 `.3dm` 所在資料夾重新選取。選到其他資料夾時會說明並再問。**系統不會掃描資料夾裡所有 Excel，也不會保存某台電腦的絕對路徑。**
+
+`.3dm`、Dictionary 與 `_LoopFlow_Config/` 只靠相對位置綁定。整個專案資料夾搬到其他上層目錄、磁碟或電腦仍可使用；只複製 `.3dm` 則不會帶走原專案名稱與 Dictionary 選擇。官方 Dictionary 範本日後會放到「文件\LoopFlow」，再複製到 `.3dm` 同一層使用（尚未實作）。
 
 > **不要選錯檔**：檔名以 `_Export.xlsx` 結尾的是差異核對檔（見「8　核對模型與字典的差異」），不能當正式字典開啟，更不能直接改名頂替正式檔。
 
@@ -152,7 +155,9 @@ Registry 版次              唯讀的模型資料快照
 
 **要特別小心**：`_03_ID編號`、`__Rhino Layer`、類別碼。這幾個是已經被物件、Registry、Tag 引用的穩定身分，改了字典裡的值不會自動更新已經寫入的物件——不要只在 Excel 把舊編號改成新編號就繼續工作，要先想清楚既有物件怎麼處理。
 
-## 7　字典與 3dm 的關係邏輯
+## 7　字典、3dm 與專案設定的關係
+
+LoopFlow 不把專案名稱、Dictionary 檔名等環境設定寫進 `.3dm`。這些資料保存在旁邊的 `_LoopFlow_Config/LoopFlow_Project.json`；Registry 與 log 也都在 `_LoopFlow_Config/` 下面。這樣同一份 `.3dm` 被複製到新專案時，不會自動帶著舊專案的路徑與設定。
 
 執行 [04 Nexus](./COMMANDS_TW.md#04-nexus開案主控台) 「同步 Type Layers」時的合併規則：
 
@@ -194,11 +199,11 @@ Registry 版次              唯讀的模型資料快照
 | 高程基準錯誤 | 填了 `BH`／`TH`／`CH`／`BC` 以外的值（例如舊版 `TH/BH`） | 改成四個合法值之一 |
 | 寫入模型時 `BC` 檢核失敗 | `BC` 用在非圖塊（Block）的一般幾何上 | 改用圖塊插入，或把該 Type 的高程基準改成 `BH`／`TH`／`CH` |
 | 計量規則錯誤 | `Q_04_單位` 跟 `Q_05_計量規則` 量綱不一致 | 對照「5　撰寫規則」的量綱表修正 |
-| 開不到正式字典 | 檔案被改名、移動，或這台電腦的工作檔路徑不同 | 在 [04 Nexus](./COMMANDS_TW.md#04-nexus開案主控台) 的同步步驟重新選檔 |
+| 開不到正式字典 | 檔案被改名、搬離 `.3dm` 同一層，或只複製了 `.3dm`、沒有帶 `_LoopFlow_Config/` | 把 Dictionary 放回 `.3dm` 同一層，再於 [04 Nexus](./COMMANDS_TW.md#04-nexus開案主控台) 的同步步驟重新選檔 |
 | 誤開了 `_Export.xlsx` | 把差異核對檔當成正式字典打開來編輯 | 改開正式檔；核對檔的修改不會被讀取 |
 | Excel 改了，Rhino 沒反應 | 忘記重新執行「同步 Type Layers」 | 存檔後回 Rhino 重新同步 |
 | Tag 上顯示舊資料 | 還沒走完寫入 → 檢核 → 發布 → 注入這條鏈 | 依序補做缺的步驟 |
 
 ## 11　中途切換字典檔案（不建議）
 
-`lf_dictionary_filename` 只記住檔名，換成另一份 `.xlsx` 之後，新檔案裡沒有涵蓋到的 Type 就無法再被同步邏輯辨識。如果真的需要換檔，建議先用「9　核對模型與字典的差異」的流程確認新舊字典的 Type 編號、欄位定義是否一致，避免既有物件的 `_03_ID編號` 在新字典裡對不到 Type。
+專案設定的 `dictionary_filename` 只記住檔名，不含路徑。換成另一份 `.xlsx` 之後，新檔案裡沒有涵蓋到的 Type 就無法再被同步邏輯辨識。如果真的需要換檔，建議先用「9　核對模型與字典的差異」流程確認新舊字典的 Type 編號、欄位定義是否一致，避免既有物件的 `_03_ID編號` 在新字典裡對不到 Type。
