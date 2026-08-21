@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1420" viewBox="0 0 1600 1420" role="img" aria-labelledby="title desc">
+  <title id="title">LoopFlow 2.0 主工作鏈 / Main Workflow</title>
+  <desc id="desc">從 Dictionary、Nexus、Registry、Section、Sheet 到 Tag、Infuser 與 TAG-O 的雙語流程圖。</desc>
+  <defs>
+    <style>
+      .bg{fill:#111722}.panel{fill:#182130;stroke:#304158;stroke-width:2}.stage{fill:#202c3d;stroke:#40546e;stroke-width:2}
+      .node{fill:#253449;stroke:#6d86a6;stroke-width:2}.node2{fill:#263a36;stroke:#65a38e;stroke-width:2}
+      .aux{fill:#352c45;stroke:#9b82bd;stroke-width:2}.native{fill:#3c3424;stroke:#b89a55;stroke-width:2}
+      .health{fill:#392d2b;stroke:#cf795e;stroke-width:2}.badge{fill:#6f8fb8}.badgeAux{fill:#9b82bd}.badgeNative{fill:#b89a55}
+      .t{font-family:Arial,"Microsoft JhengHei",sans-serif;fill:#edf4ff}.h1{font-size:34px;font-weight:700}.h2{font-size:24px;font-weight:700}
+      .zh{font-size:19px;font-weight:700}.en{font-size:14px;fill:#b9c8dc}.cmd{font-size:13px;fill:#8fb4e4}.small{font-size:14px;fill:#b9c8dc}
+      .badgeText{font-size:16px;font-weight:700;fill:#101722;text-anchor:middle}.line{stroke:#7088a8;stroke-width:3;fill:none;marker-end:url(#arrow)}
+      .route{stroke:#7088a8;stroke-width:3;fill:none}
+      .dash{stroke:#9b82bd;stroke-width:2.5;stroke-dasharray:8 7;fill:none;marker-end:url(#arrowAux)}
+      .feedback{stroke:#cf795e;stroke-width:2.5;stroke-dasharray:7 6;fill:none;marker-end:url(#arrowHealth)}
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#7088a8"/></marker>
+    <marker id="arrowAux" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#9b82bd"/></marker>
+    <marker id="arrowHealth" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#cf795e"/></marker>
+  </defs>
+
+  <rect class="bg" width="1600" height="1420"/>
+  <text class="t h1" x="70" y="62">LoopFlow 2.0 主工作鏈 / Main Workflow</text>
+  <text class="t small" x="72" y="94">主鏈可分段執行、確認與重跑 / Run, verify, and repeat each stage independently</text>
+
+  <rect class="panel" x="55" y="125" width="1490" height="500" rx="18"/>
+  <text class="t h2" x="85" y="168">A. Dictionary → Model → Drawing / 字典 → 模型 → 圖面</text>
+
+  <rect class="node" x="95" y="215" width="260" height="105" rx="14"/>
+  <circle class="badge" cx="124" cy="244" r="20"/><text class="t badgeText" x="124" y="250">01</text>
+  <text class="t zh" x="155" y="245">開啟正式字典</text><text class="t en" x="155" y="270">Open Dictionary</text>
+  <text class="t cmd" x="155" y="295">LFOpenDictionary</text>
+
+  <rect class="node2" x="420" y="215" width="280" height="105" rx="14"/>
+  <circle class="badge" cx="449" cy="244" r="20"/><text class="t badgeText" x="449" y="250">04</text>
+  <text class="t zh" x="480" y="245">開案與模型資料</text><text class="t en" x="480" y="270">Project &amp; Model Data</text>
+  <text class="t cmd" x="480" y="295">LFNexus</text>
+
+  <rect class="node2" x="765" y="215" width="280" height="105" rx="14"/>
+  <circle class="badge" cx="794" cy="244" r="20"/><text class="t badgeText" x="794" y="250">05</text>
+  <text class="t zh" x="825" y="245">發布串接資料</text><text class="t en" x="825" y="270">Publish Registry</text>
+  <text class="t cmd" x="825" y="295">LFPublishExchange</text>
+
+  <rect class="native" x="1110" y="215" width="330" height="105" rx="14"/>
+  <circle class="badgeNative" cx="1139" cy="244" r="20"/><text class="t badgeText" x="1139" y="250">＊</text>
+  <text class="t zh" x="1170" y="245">Rhino 剖面</text><text class="t en" x="1170" y="270">Rhino Section Tools</text>
+  <text class="t cmd" x="1170" y="295">Native Rhino commands</text>
+
+  <path class="line" d="M355 267 H420"/><path class="line" d="M700 267 H765"/><path class="line" d="M1045 267 H1110"/>
+
+  <rect class="aux" x="95" y="395" width="260" height="105" rx="14"/>
+  <circle class="badgeAux" cx="124" cy="424" r="20"/><text class="t badgeText" x="124" y="430">03</text>
+  <text class="t zh" x="155" y="425">匯出 Layer 差異</text><text class="t en" x="155" y="450">Export Layer Diff</text>
+  <text class="t cmd" x="155" y="475">LFExportTypeLayers</text>
+
+  <rect class="aux" x="95" y="520" width="260" height="80" rx="14"/>
+  <circle class="badgeAux" cx="124" cy="549" r="20"/><text class="t badgeText" x="124" y="555">02</text>
+  <text class="t zh" x="155" y="548">開啟匯出檔</text><text class="t en" x="155" y="573">Open Export</text>
+
+  <rect class="aux" x="420" y="395" width="280" height="105" rx="14"/>
+  <circle class="badgeAux" cx="449" cy="424" r="20"/><text class="t badgeText" x="449" y="430">A2</text>
+  <text class="t zh" x="480" y="425">唯讀資料檢視</text><text class="t en" x="480" y="450">Read-only Data Viewer</text>
+  <text class="t cmd" x="480" y="475">LFDataViewer</text>
+
+  <rect class="node2" x="1110" y="395" width="330" height="105" rx="14"/>
+  <circle class="badge" cx="1139" cy="424" r="20"/><text class="t badgeText" x="1139" y="430">06</text>
+  <text class="t zh" x="1170" y="425">登記 View 錨定框</text><text class="t en" x="1170" y="450">Register Anchor Frame</text>
+  <text class="t cmd" x="1170" y="475">LFAnchorFrame</text>
+
+  <rect class="aux" x="1110" y="520" width="330" height="80" rx="14"/>
+  <circle class="badgeAux" cx="1139" cy="549" r="20"/><text class="t badgeText" x="1139" y="555">A3</text>
+  <text class="t zh" x="1170" y="548">擷取可編輯線稿</text><text class="t en" x="1170" y="573">Extract Editable Drawing</text>
+
+  <path class="dash" d="M225 500 V520"/><path class="dash" d="M95 560 H70 V267 H95"/>
+  <path class="dash" d="M560 395 V320"/><path class="line" d="M1275 320 V395"/><path class="dash" d="M1275 500 V520"/>
+
+  <rect class="panel" x="55" y="655" width="1490" height="565" rx="18"/>
+  <text class="t h2" x="85" y="698">B. Sheet &amp; Tag / 圖紙與標籤</text>
+
+  <rect class="aux" x="95" y="750" width="260" height="105" rx="14"/>
+  <circle class="badgeAux" cx="124" cy="779" r="20"/><text class="t badgeText" x="124" y="785">A4</text>
+  <text class="t zh" x="155" y="780">複製 Layout</text><text class="t en" x="155" y="805">Duplicate Layout</text>
+  <text class="t cmd" x="155" y="830">LFDuplicateLayout</text>
+
+  <rect class="node" x="420" y="750" width="280" height="105" rx="14"/>
+  <circle class="badge" cx="449" cy="779" r="20"/><text class="t badgeText" x="449" y="785">07</text>
+  <text class="t zh" x="480" y="780">Sheet 編號與圖框</text><text class="t en" x="480" y="805">Sheet ID &amp; Title Frame</text>
+  <text class="t cmd" x="480" y="830">LFTaggerLayoutID</text>
+
+  <rect class="node" x="765" y="750" width="280" height="105" rx="14"/>
+  <circle class="badge" cx="794" cy="779" r="20"/><text class="t badgeText" x="794" y="785">08</text>
+  <text class="t zh" x="825" y="780">建立圖目錄</text><text class="t en" x="825" y="805">Build Drawing Catalog</text>
+  <text class="t cmd" x="825" y="830">LFCatalog</text>
+
+  <path class="dash" d="M355 802 H420"/><path class="line" d="M700 802 H765"/>
+
+  <text class="t h2" x="95" y="920">Tag Binding / Tag 綁定（三擇一或並用）</text>
+
+  <rect class="node2" x="95" y="955" width="300" height="105" rx="14"/>
+  <circle class="badge" cx="124" cy="984" r="20"/><text class="t badgeText" x="124" y="990">09</text>
+  <text class="t zh" x="155" y="985">射線綁定</text><text class="t en" x="155" y="1010">Laser Binding</text>
+  <text class="t cmd" x="155" y="1035">LFTaggerLaser</text>
+
+  <rect class="node2" x="430" y="955" width="300" height="105" rx="14"/>
+  <circle class="badge" cx="459" cy="984" r="20"/><text class="t badgeText" x="459" y="990">10</text>
+  <text class="t zh" x="490" y="985">直接抓取來源</text><text class="t en" x="490" y="1010">Grab Source</text>
+  <text class="t cmd" x="490" y="1035">LFTaggerGrab</text>
+
+  <rect class="node2" x="765" y="955" width="300" height="105" rx="14"/>
+  <circle class="badge" cx="794" cy="984" r="20"/><text class="t badgeText" x="794" y="990">11</text>
+  <text class="t zh" x="825" y="985">索引 Detail View</text><text class="t en" x="825" y="1010">Index Detail View</text>
+  <text class="t cmd" x="825" y="1035">LFTaggerIndex</text>
+
+  <rect class="node" x="1110" y="910" width="330" height="95" rx="14"/>
+  <circle class="badge" cx="1139" cy="939" r="20"/><text class="t badgeText" x="1139" y="945">12</text>
+  <text class="t zh" x="1170" y="940">注入目前頁</text><text class="t en" x="1170" y="965">Infuse Current Page</text>
+  <text class="t cmd" x="1170" y="987">LFInfuserPart</text>
+
+  <rect class="node" x="1110" y="1025" width="330" height="95" rx="14"/>
+  <circle class="badge" cx="1139" cy="1054" r="20"/><text class="t badgeText" x="1139" y="1060">13</text>
+  <text class="t zh" x="1170" y="1055">注入所有頁</text><text class="t en" x="1170" y="1080">Infuse All Pages</text>
+  <text class="t cmd" x="1170" y="1102">LFInfuserAll</text>
+
+  <path class="route" d="M245 1060 V1090 H1080"/>
+  <path class="route" d="M580 1060 V1090"/>
+  <path class="route" d="M915 1060 V1090"/>
+  <path class="line" d="M1080 1090 V957 H1110"/>
+  <path class="line" d="M1080 1090 V1072 H1110"/>
+
+  <rect class="health" x="765" y="1125" width="300" height="75" rx="14"/>
+  <circle class="badge" cx="794" cy="1154" r="20"/><text class="t badgeText" x="794" y="1160">14</text>
+  <text class="t zh" x="825" y="1155">Tag 健康檢查</text><text class="t en" x="825" y="1180">Tag Health / LFTagO</text>
+  <path class="line" d="M1110 1090 H1085 V1162 H1065"/>
+  <path class="feedback" d="M765 1162 H130 V1060"/><text class="t small" x="245" y="1147">斷連：重新綁定 / Broken: rebind</text>
+  <path class="feedback" d="M1065 1185 H1425 V1120"/><text class="t small" x="1120" y="1182">過期：再注入 / Stale: infuse again</text>
+
+  <rect class="stage" x="55" y="1250" width="1490" height="125" rx="18"/>
+  <text class="t h2" x="85" y="1292">Independent Tools / 獨立工具</text>
+  <rect class="aux" x="365" y="1305" width="385" height="58" rx="12"/>
+  <text class="t zh" x="385" y="1330">A1 雙檔同步 / Worksession Sync</text>
+  <text class="t cmd" x="385" y="1352">LFSyncWorksession</text>
+  <rect class="aux" x="850" y="1305" width="385" height="58" rx="12"/>
+  <text class="t zh" x="870" y="1330">A5 文件入口 / Documentation</text>
+  <text class="t cmd" x="870" y="1352">LFDocument</text>
+</svg>
