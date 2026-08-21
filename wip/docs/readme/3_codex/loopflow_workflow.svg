@@ -46,7 +46,7 @@
   <g>
     <rect x="60" y="242" width="220" height="54" rx="10" fill="#dcf0f6" stroke="#17789e" stroke-width="1.5"/>
     <text x="170" y="264" font-size="14" font-weight="600" fill="#16212c" text-anchor="middle">02　開啟匯出字典</text>
-    <text x="170" y="282" font-size="11" fill="#57697b" text-anchor="middle">LFOpenDictionaryExport</text>
+    <text x="170" y="282" font-size="11" fill="#57697b" text-anchor="middle">LFOpenDictExport</text>
   </g>
   <line x1="170" y1="296" x2="170" y2="322" stroke="#8695a5" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowDot)"/>
   <text x="285" y="313" font-size="10.5" fill="#57697b" text-anchor="start" transform="rotate(0)"> </text>
