@@ -29,6 +29,7 @@ CORE_COMMANDS = (
     "LF_Catalog",
     "LF_Sync_Worksession",
     "LF_Document",
+    "LF_Language",
 )
 
 _READY = {
@@ -51,6 +52,7 @@ _READY = {
     "LF_Duplicate_Layout": "E03",
     "LF_Sync_Worksession": "E04",
     "LF_Document": "E06",
+    "LF_Language": "G02/locale",
 }
 
 _COMMANDS = {

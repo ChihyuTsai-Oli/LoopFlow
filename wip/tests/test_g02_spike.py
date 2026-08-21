@@ -76,7 +76,7 @@ def _right_scripts_for_button(root, left_script):
 class G02SpikePackagingTests(unittest.TestCase):
     def test_command_scripts_match_name_table(self):
         pairs = _official_pairs()
-        self.assertEqual(len(pairs), 19)
+        self.assertEqual(len(pairs), 20)
         for dev_id, official in pairs:
             script_path = SPIKE / "commands" / ("%s.py" % official)
             self.assertTrue(script_path.is_file(), official)
@@ -92,13 +92,15 @@ class G02SpikePackagingTests(unittest.TestCase):
         pairs = _official_pairs()
         data = json.loads((SPIKE / "LoopFlow.rhproj").read_text(encoding="utf-8"))
         codes = data["codes"]
-        self.assertEqual(len(codes), 19)
+        self.assertEqual(len(codes), 20)
         names = [code["name"] for code in codes]
         self.assertEqual(names, [official for _dev, official in pairs])
         ids = [code["id"] for code in codes]
         self.assertEqual(len(ids), len(set(ids)))
         document = next(code for code in codes if code["name"] == "LFDocument")
         self.assertEqual(document["id"], "c3a91f4e-2b7d-4e18-9f0a-6d5c8b1e4a22")
+        language = next(code for code in codes if code["name"] == "LFLanguage")
+        self.assertEqual(language["id"], "e7b2c91a-4d18-4f6e-9a33-2c8f1b0d47ae")
         for code, (_dev, official) in zip(codes, pairs):
             self.assertEqual(code["title"], official)
             self.assertEqual(code["path"], "commands/%s.py" % official)
@@ -110,7 +112,7 @@ class G02SpikePackagingTests(unittest.TestCase):
     def test_manifest_includes_toolbar(self):
         text = (SPIKE / "manifest.yml").read_text(encoding="utf-8")
         self.assertIn("name: loopflow", text)
-        self.assertIn("version: 0.2.2", text)
+        self.assertIn("version: 0.2.3", text)
         self.assertIn("LoopFlow toolbar", text)
         self.assertNotIn("Toolbar RUI is not included yet", text)
         self.assertNotIn("LF_D08_Migrate_Display_Keys", text)
@@ -121,7 +123,7 @@ class G02SpikePackagingTests(unittest.TestCase):
         self.assertIn("docs\\toolbar\\LoopFlow.rui", text)
         self.assertIn("Replace generated LoopFlow.rui", text)
         self.assertIn("yak must contain exactly one rui", text)
-        self.assertIn('Version = "0.2.2"', text)
+        self.assertIn('Version = "0.2.3"', text)
         self.assertNotIn("refuse to pack yak", text)
 
     def test_prepare_rhproj_rewrites_every_command_uri(self):
@@ -133,8 +135,10 @@ class G02SpikePackagingTests(unittest.TestCase):
         self.assertTrue(RUI.is_file())
         self.assertGreater(RUI.stat().st_size, 1000)
         root = ET.parse(RUI).getroot()
+        pairs = _official_pairs()
+        left_required = [official for _dev, official in pairs if official != "LFLanguage"]
         scripts = set(_left_scripts(root))
-        for _dev, official in _official_pairs():
+        for official in left_required:
             self.assertIn("! _%s" % official, scripts, official)
         for script in SECTION_SCRIPTS:
             self.assertIn(script, scripts, script)
@@ -142,7 +146,8 @@ class G02SpikePackagingTests(unittest.TestCase):
         self.assertNotIn("LF_D08", blob)
         self.assertNotIn("ScriptEditor", blob)
         self.assertNotIn("2D_Cabinet", blob)
-        self.assertEqual(_right_scripts_for_button(root, "! _LFDocument"), [""])
+        self.assertNotIn("! _LFLanguage", scripts)
+        self.assertEqual(_right_scripts_for_button(root, "! _LFDocument"), ["! _LFLanguage"])
         self.assertEqual(
             _right_scripts_for_button(root, "! _LFOpenDictionary"),
             [""],
@@ -152,7 +157,7 @@ class G02SpikePackagingTests(unittest.TestCase):
     def test_dev_entrypoint_filename_unchanged(self):
         self.assertTrue((SRC / "entrypoints" / "LF_Document.py").is_file())
         self.assertIn("LF_Document", CORE_COMMANDS)
-        self.assertEqual(len(CORE_COMMANDS), 19)
+        self.assertEqual(len(CORE_COMMANDS), 20)
         self.assertEqual(COMMAND_ID, "LF_Document")
         self.assertTrue(DOCUMENT_URL.endswith("/docs/README.md"))
 

@@ -69,6 +69,14 @@ class ImportSmokeTests(unittest.TestCase):
         self.assertEqual(spec["entrypoint"], "LF_Document.py")
         self.assertEqual(spec["task"], "E06")
 
+    def test_catalog_lists_language(self):
+        from loopflow.command_catalog import get_command
+
+        spec = get_command("LF_Language")
+        self.assertEqual(spec["status"], "ready")
+        self.assertEqual(spec["entrypoint"], "LF_Language.py")
+        self.assertEqual(spec["task"], "G02/locale")
+
     def test_catalog_lists_data_viewer(self):
         from loopflow.command_catalog import get_command
 

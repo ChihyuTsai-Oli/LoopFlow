@@ -70,6 +70,9 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Sync_Worksession
 LF_Document
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Document.py"
 
+LF_Language
+_-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Language.py"
+
 LF_D08_Migrate_Display_Keys
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Display_Keys.py"
 ```
@@ -95,7 +98,7 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Disp
 | Extract | `LF_Extract_CP` | — |
 | Duplicate Layout | `LF_Duplicate_Layout` | — |
 | Sync Worksession | `LF_Sync_Worksession` | — |
-| Document | `LF_Document`（開啟文件入口） | 日後：語系（繁中／English）；spike 尚未實作 |
+| Document | `LF_Document`（開啟文件入口） | `LF_Language`（繁中／English） |
 
 開發期輔助（**不是產品指令**，不進正式工具列）：`LF_D08_Migrate_Display_Keys` 全檔把圖塊舊顯示欄抄到 `lf_*` 後刪舊名字。鎖定欄若寫 `x`／`X` 會抄到 `lf_00_lock_state` 後刪舊名字；提示文字只刪不抄。圖塊公式改完後跑一次即可，不必逐張刪 UserText。
 
@@ -126,10 +129,11 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Disp
 | `LF_Duplicate_Layout` | `LFDuplicateLayout` |
 | `LF_Sync_Worksession` | `LFSyncWorksession` |
 | `LF_Document` | `LFDocument` |
+| `LF_Language` | `LFLanguage` |
 
 ## 正式工具列（`LoopFlow.rui`）
 
-來源：`wip/docs/toolbar/LoopFlow.rui`。產品按鈕都是左鍵；Document 右鍵留空。兩顆字典各自獨立左鍵，不是同一顆的右鍵。Section 仍是 Rhino 內建巨集。不含 D08 migrate、Cabinet／2D、開發輔助。
+來源：`wip/docs/toolbar/LoopFlow.rui`。產品按鈕都是左鍵；Document 右鍵為 `LFLanguage`。兩顆字典各自獨立左鍵，不是同一顆的右鍵。Section 仍是 Rhino 內建巨集。不含 D08 migrate、Cabinet／2D、開發輔助。
 
 | 按鈕 | 左鍵 | 右鍵 |
 |---|---|---|
@@ -156,7 +160,7 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Disp
 | Infuser Part | `! _LFInfuserPart` | — |
 | Infuser All | `! _LFInfuserAll` | — |
 | TAG-O | `! _LFTagO` | — |
-| Document | `! _LFDocument` | 留空（日後改語系） |
+| Document | `! _LFDocument` | `! _LFLanguage` |
 
 Grab：在 **Layout** 先選 Tag 圖塊，再在目標 Detail 內點一下進入模型空間，然後選來源（剖面 2D 線、3D 物件或家具圖塊）。Height／Finish 綁物件 `_07_UUID`；圖 B 已清掉 UUID 時改讀 `lf_source_object_ids`（恰好一個 UUID 或一個 3D 物件才綁；兩個以上停止、不猜測）。家具 Item 綁 Block 名稱（`FF-01__Chair-1`）**以及該實例**，之後 Infuser／TAG-O 才能跟改名與刪除。Esc、點在 Detail 外、鎖定（`lf_00_lock_state=true`／`1`，或鎖定欄寫 `x`／`X`）、`TAG_DW`、Laser／Index／圖框圖塊都不寫入。結束後回到 Layout。不填 Infuser 顯示欄。來源沒有 UUID 且索引也解不出時不猜測。舊鎖定欄 `x`／`X` **家中 Rhino 8 已測（2026-08-18）**。
 
@@ -182,9 +186,9 @@ Duplicate Layout：跑 `LF_Duplicate_Layout`。加高可捲動清單可複選來
 
 Sync Worksession：跑 `LF_Sync_Worksession`。須先存檔。第一次**彈窗**「已開始監看」並監看目前檔案同資料夾的 `.3dm`（略過 `~`／`tmp` 暫存名），偵測到變動後等 0.5 秒、Rhino idle 時執行 Worksession Refresh。只 Refresh，不 Attach／Detach、不改 `.rws`。失敗延遲再試，不拆上一份參照。再跑一次**彈窗**停止。另存到別的資料夾後再跑會改監看新位置。未存檔說明並停止。不進 Nexus。**家中 Rhino 8 已測（2026-08-20）。**
 
-Document：跑 `LF_Document`（裝成套件後為 `LFDocument`）。開啟 `https://github.com/ChihyuTsai-Oli/LoopFlow/blob/main/docs/README.md`（文件入口，不是專案首頁），頁內再連繁中／英文說明。不改模型。Rhino 不猜語系。打不開只說明。舊名 `LF_Help` 不登錄。不進 Nexus。**家中 Rhino 8 已測（2026-08-21）。** 日後右鍵改這台電腦的介面語系；不另加語言按鈕。目前套件只登錄左鍵／命令列開文件。
+Document：跑 `LF_Document`（裝成套件後為 `LFDocument`）。開啟 `https://github.com/ChihyuTsai-Oli/LoopFlow/blob/main/docs/README.md`（文件入口，不是專案首頁），頁內再連繁中／英文說明。不改模型。Rhino 不猜語系。打不開只說明。舊名 `LF_Help` 不登錄。不進 Nexus。**家中 Rhino 8 已測（2026-08-21）。** 右鍵／`LFLanguage` 改這台電腦的介面語系；不另加語言按鈕。第一次跑任一產品指令會問一次。畫面句子尚未接表。
 
-左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。開發期按鈕仍指向 repo。正式工具列來源是獨立的 `wip/docs/toolbar/LoopFlow.rui`（不要改 `mori LoopFlow`），進 `.yak` 後左鍵打正式名稱（例如 `! _LFDocument`）。Document 右鍵先留空。兩顆字典都是獨立左鍵：`! _LFOpenDictionary` 與 `! _LFOpenDictExport`。
+左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。開發期按鈕仍指向 repo。正式工具列來源是獨立的 `wip/docs/toolbar/LoopFlow.rui`（不要改 `mori LoopFlow`），進 `.yak` 後左鍵打正式名稱（例如 `! _LFDocument`）。Document 右鍵為 `! _LFLanguage`。兩顆字典都是獨立左鍵：`! _LFOpenDictionary` 與 `! _LFOpenDictExport`。
 
 ## Nexus 選單（開案檢查通過才出現）
 

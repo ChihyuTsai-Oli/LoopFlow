@@ -219,6 +219,16 @@
         "version": "3.*.*"
       },
       "path": "commands/LFDocument.py"
+    },
+    {
+      "id": "e7b2c91a-4d18-4f6e-9a33-2c8f1b0d47ae",
+      "name": "LFLanguage",
+      "title": "LFLanguage",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFLanguage.py"
     }
   ]
 }

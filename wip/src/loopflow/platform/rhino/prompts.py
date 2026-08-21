@@ -273,6 +273,90 @@ def ask_popup_choice(
     return str(value)
 
 
+LOCALE_PROMPT_TITLE = "LoopFlow"
+LOCALE_PROMPT_HEADING = "選擇介面語言 / Choose interface language"
+LOCALE_PROMPT_HINT = (
+    "之後可用 Document 按鈕右鍵切換（指令 LFLanguage）。\n"
+    "You can change this later with the Document button's right click (LFLanguage)."
+)
+LOCALE_LABEL_ZH = "繁中"
+LOCALE_LABEL_EN = "English"
+
+
+def ask_ui_locale() -> Optional[str]:
+    """第一次或切換語系。回傳「繁中」／「English」；取消 None；沒有介面 ImportError。"""
+    try:
+        import Eto.Drawing as drawing  # type: ignore
+        import Eto.Forms as forms  # type: ignore
+        import Rhino  # type: ignore
+        import Rhino.UI  # type: ignore
+    except ImportError:
+        import rhinoscriptsyntax as rs  # type: ignore
+
+        value = rs.ListBox(
+            [LOCALE_LABEL_ZH, LOCALE_LABEL_EN],
+            "%s\n%s" % (LOCALE_PROMPT_HEADING, LOCALE_PROMPT_HINT),
+            LOCALE_PROMPT_TITLE,
+        )
+        if value is None:
+            return None
+        return str(value)
+
+    class _LocaleDialog(forms.Dialog[bool]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.Title = LOCALE_PROMPT_TITLE
+            self.Padding = _dialog_padding(drawing)
+            self.Resizable = False
+            self.choice = None
+            heading = forms.Label()
+            heading.Text = LOCALE_PROMPT_HEADING
+            heading.Font = _ui_font(drawing, 11)
+            hint = forms.Label()
+            hint.Text = LOCALE_PROMPT_HINT
+            hint.Font = _ui_font(drawing, 10)
+            btn_zh = forms.Button()
+            btn_zh.Text = LOCALE_LABEL_ZH
+            _apply_dialog_button_size(btn_zh, drawing)
+            btn_zh.Click += self._pick_zh
+            btn_en = forms.Button()
+            btn_en.Text = LOCALE_LABEL_EN
+            _apply_dialog_button_size(btn_en, drawing)
+            btn_en.Click += self._pick_en
+            btn_cancel = forms.Button()
+            btn_cancel.Text = "Cancel"
+            _apply_dialog_button_size(btn_cancel, drawing)
+            btn_cancel.Click += self._on_cancel
+            self.AbortButton = btn_cancel
+            row = forms.DynamicLayout()
+            row.DefaultSpacing = drawing.Size(10, 0)
+            row.AddRow(None, btn_zh, btn_en, btn_cancel)
+            layout = forms.DynamicLayout()
+            layout.Spacing = _dialog_spacing(drawing)
+            layout.AddRow(heading)
+            layout.AddRow(hint)
+            layout.AddRow(row)
+            self.Content = layout
+
+        def _pick_zh(self, sender, e) -> None:
+            self.choice = LOCALE_LABEL_ZH
+            self.Close(True)
+
+        def _pick_en(self, sender, e) -> None:
+            self.choice = LOCALE_LABEL_EN
+            self.Close(True)
+
+        def _on_cancel(self, sender, e) -> None:
+            self.choice = None
+            self.Close(False)
+
+    dialog = _LocaleDialog()
+    dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
+    if not dialog.choice:
+        return None
+    return str(dialog.choice)
+
+
 def ask_layout_pages_choice(
     items: Sequence[str],
     title: str = "複製 Layout",

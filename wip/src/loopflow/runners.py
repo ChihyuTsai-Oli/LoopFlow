@@ -238,6 +238,12 @@ def run_document() -> Result:
     return result
 
 
+def run_language() -> Result:
+    from loopflow.features.document.language import run_language as run_locale
+
+    return run_locale()
+
+
 RUNNERS: Dict[str, Runner] = {
     "LF_Nexus": run_nexus,
     "LF_Open_Dictionary": run_open_dictionary,
@@ -258,6 +264,7 @@ RUNNERS: Dict[str, Runner] = {
     "LF_Duplicate_Layout": run_duplicate_layout,
     "LF_Sync_Worksession": run_sync_worksession,
     "LF_Document": run_document,
+    "LF_Language": run_language,
 }
 
 

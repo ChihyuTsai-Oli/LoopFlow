@@ -47,6 +47,12 @@ def run_command(command_id: str) -> Result:
             command_id=command_id,
         )
         return _emit_result(result)
+    if command_id != "LF_Language":
+        from loopflow.features.document.language import ensure_locale
+
+        pending = ensure_locale()
+        if pending is not None:
+            return _emit_result(pending)
     from loopflow.runners import dispatch
 
     return _emit_result(dispatch(command_id))

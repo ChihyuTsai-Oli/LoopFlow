@@ -62,6 +62,7 @@ STAGES = (
     "duplicate_layout",
     "sync_worksession",
     "open_document",
+    "choose_locale",
 )
 
 

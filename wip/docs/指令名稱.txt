@@ -55,3 +55,6 @@ LFSyncWorksession
 
 LF_Document
 LFDocument
+
+LF_Language
+LFLanguage

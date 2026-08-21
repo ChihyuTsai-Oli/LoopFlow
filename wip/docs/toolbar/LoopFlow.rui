@@ -475,7 +475,22 @@
       </menu_text>
       <script>! _LFTaggerLayoutID</script>
     </macro_item>
-  </macros>
+      <macro_item guid="d234b64e-b844-4dbe-9284-10669cd047a0" bitmap_id="bbbbb5c0-1470-495a-b847-e6e19aa351da">
+      <tooltip>
+        <locale_1033>Language</locale_1033>
+      </tooltip>
+      <help_text>
+        <locale_1033>Language</locale_1033>
+      </help_text>
+      <button_text>
+        <locale_1033>Language</locale_1033>
+      </button_text>
+      <menu_text>
+        <locale_1033>Language</locale_1033>
+      </menu_text>
+      <script>! _LFLanguage</script>
+    </macro_item>
+</macros>
   <icons>
     <icon guid="86faa3de-f357-49ce-8638-46285fd2f206" name="86faa3de-f357-49ce-8638-46285fd2f206.svg">
       <light><svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0pt 0pt 48pt 48pt" fill-dark="#FFF" stroke-dark="none">

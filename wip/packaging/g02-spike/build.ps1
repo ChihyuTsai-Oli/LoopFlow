@@ -10,10 +10,10 @@ $RhinoCode = "C:\Program Files\Rhino 8\System\RhinoCode.exe"
 $Rhproj = Join-Path $Spike "LoopFlow.rhproj"
 $CommandsDir = Join-Path $Spike "commands"
 $ProductRui = Join-Path $RepoWip "docs\toolbar\LoopFlow.rui"
-$Version = "0.2.2"
+$Version = "0.2.3"
 
 if (-not (Test-Path $Rhproj)) { throw "找不到 LoopFlow.rhproj" }
-if (-not (Test-Path (Join-Path $CommandsDir "LFDocument.py"))) { throw "找不到 commands\LFDocument.py" }
+if (-not (Test-Path (Join-Path $CommandsDir "LFLanguage.py"))) { throw "找不到 commands\LFLanguage.py" }
 if (-not (Test-Path $Src)) { throw "找不到 wip\src" }
 if (-not (Test-Path $ProductRui)) { throw "找不到 wip\docs\toolbar\LoopFlow.rui" }
 if ((Get-Item $ProductRui).Length -lt 1000) { throw "LoopFlow.rui looks empty" }
