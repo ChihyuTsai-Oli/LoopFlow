@@ -352,6 +352,23 @@ class AssignAndBuildTests(unittest.TestCase):
         self.assertIn("stale", result.blocking)
         self.assertEqual(generated_text_ids(session, CATALOG_ID), ())
 
+    def test_shared_sheet_id_on_copy_does_not_block_original(self):
+        session = _session()
+        session.set_layout_pages(["P1", "P2"])
+        _add_sheet(session, "P1", SHEET_A, "IN 101", "一樓", 1)
+        session.add_object("frame-copy")
+        session.set_block("frame-copy", (0, 0, 0), name="Sample_Frame")
+        session.set_object_user_text("frame-copy", FRAME_SHEET_ID_KEY, SHEET_A)
+        session.add_object_to_layout_page("P2", "frame-copy")
+        _add_anchor(session, "n1", (100, 200, 0), page="P1", layer=NUMBER_LAYER, field=FIELD_DRAWING_NO)
+        _add_anchor(session, "m1", (180, 200, 0), page="P1", layer=NAME_LAYER, field=FIELD_DRAWING_NAME)
+        result = build_catalog(
+            session, [SHEET_A], confirm=lambda _lines: True, catalog=_catalog()
+        )
+        self.assertTrue(result.ok, result.message)
+        values = {session.text_content(item) for item in generated_text_ids(session, CATALOG_ID)}
+        self.assertEqual(values, {"IN 101", "一樓"})
+
     def test_missing_sheet_skipped_others_written(self):
         session = _session()
         session.set_layout_pages(["P1"])
@@ -558,6 +575,21 @@ class SheetPickerCellsTests(unittest.TestCase):
         self.assertTrue(_enum_has_flag(_Keys(2), "Control"))
         self.assertFalse(_enum_has_flag(_Keys(2), "Shift"))
         self.assertTrue(_enum_has_flag(_Keys(3), "Shift", "Control"))
+
+    def test_picker_does_not_expand_duplicate_sheet_ids(self):
+        from loopflow.platform.rhino.prompts import (
+            sheet_picker_preselected_indices,
+            sheet_picker_selected_ids,
+        )
+
+        rows = (
+            ("10", "IN 101", "一樓", "P10", SHEET_A),
+            ("11", "IN 102", "二樓", "P11", SHEET_B),
+            ("16", "IN 101", "一樓", "P16", SHEET_A),
+            ("17", "IN 102", "二樓", "P17", SHEET_B),
+        )
+        self.assertEqual(sheet_picker_selected_ids(rows, [0, 1]), (SHEET_A, SHEET_B))
+        self.assertEqual(sheet_picker_preselected_indices(rows, (SHEET_A, SHEET_B)), {0, 1})
 
 
 class RowSkipTests(unittest.TestCase):

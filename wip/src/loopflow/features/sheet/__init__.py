@@ -6,6 +6,7 @@ from loopflow.features.sheet.metadata import (
     list_active_sheets,
     scan_layout_pages,
     sheet_state,
+    stale_among_sheet_ids,
     stale_sheet_ids,
     write_sheet_metadata,
 )
@@ -24,6 +25,7 @@ __all__ = [
     "run_duplicate_layout",
     "scan_layout_pages",
     "sheet_state",
+    "stale_among_sheet_ids",
     "stale_sheet_ids",
     "write_sheet_metadata",
 ]

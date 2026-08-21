@@ -15,7 +15,7 @@ from loopflow.features.health.appearance import (
     queue_appearance,
 )
 from loopflow.features.sheet.keys import DRAWING_NAME_KEY, DRAWING_NO_KEY, SHEET_ID_KEY
-from loopflow.features.sheet.metadata import is_title_frame
+from loopflow.features.sheet.metadata import is_title_frame, registered_title_frame_names
 from loopflow.features.sheet.naming import NamingRules, compose_page_name, load_naming_rules, parse_page_name
 from loopflow.features.tagger.binding import canonical_uuid, new_id, text
 from loopflow.features.tagger.keys import (
@@ -115,8 +115,9 @@ def _source_sheet_id(
     objects_fn = getattr(session, "objects_on_layout_page", None)
     if not callable(objects_fn):
         return None
+    registered = registered_title_frame_names(session)
     for object_id in objects_fn(page_name) or ():
-        if not is_title_frame(session, object_id, catalog):
+        if not is_title_frame(session, object_id, catalog, registered):
             continue
         sheet_id = canonical_uuid(session.get_object_user_text(object_id, SHEET_ID_KEY))
         if sheet_id:
@@ -251,8 +252,9 @@ def sanitize_copied_objects(
 ) -> str:
     """依契約改寫複製物件。回傳此頁新 `sheet_id`（無圖框則空字串）。"""
     appearances = cache if cache is not None else {}
+    registered = registered_title_frame_names(session)
     has_frame = any(
-        is_title_frame(session, new_id_value, catalog)
+        is_title_frame(session, new_id_value, catalog, registered)
         for new_id_value in id_map.values()
     )
     new_sheet_id = new_id() if has_frame else None
@@ -268,7 +270,7 @@ def sanitize_copied_objects(
             new_sheet_id,
         )
         _remap_drawing(session, new_object, drawing_id_map)
-        if is_title_frame(session, new_object, catalog) and new_sheet_id:
+        if is_title_frame(session, new_object, catalog, registered) and new_sheet_id:
             _sanitize_title_frame(session, new_object, new_sheet_id)
             continue
         if not session.is_block_instance(new_object):

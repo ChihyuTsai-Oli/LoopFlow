@@ -825,6 +825,49 @@ def sheet_picker_cells(item: dict) -> Tuple[str, str, str, str, str]:
     )
 
 
+def sheet_picker_selected_ids(
+    rows: Sequence[Tuple[str, str, str, str, str]],
+    selected_indices: Sequence[int],
+) -> Tuple[str, ...]:
+    """只回被點到的列，不把同 id 的其他列一併算進去。"""
+    picked = []
+    seen = set()
+    for index in sorted(selected_indices):
+        if index < 0 or index >= len(rows):
+            continue
+        sheet_id = rows[index][4]
+        if not sheet_id or sheet_id in seen:
+            continue
+        seen.add(sheet_id)
+        picked.append(sheet_id)
+    return tuple(picked)
+
+
+def sheet_picker_preselected_indices(
+    rows: Sequence[Tuple[str, str, str, str, str]],
+    selected_ids: Sequence[str],
+) -> set:
+    """每個 sheet_id 只預選第一次出現的列，複本不連亮。"""
+    remaining = []
+    seen = set()
+    for item in selected_ids:
+        sheet_id = str(item or "")
+        if not sheet_id or sheet_id in seen:
+            continue
+        seen.add(sheet_id)
+        remaining.append(sheet_id)
+    chosen = set()
+    leftover = list(remaining)
+    for index, row in enumerate(rows):
+        sheet_id = row[4]
+        if sheet_id and sheet_id in leftover:
+            chosen.add(index)
+            leftover.remove(sheet_id)
+            if not leftover:
+                break
+    return chosen
+
+
 def ask_pick_catalog_sheets(
     items: Sequence[dict],
     selected_ids: Sequence[str] = (),
@@ -842,7 +885,6 @@ def ask_pick_catalog_sheets(
         return None
 
     rows = [sheet_picker_cells(item) for item in items]
-    preselected = {str(item) for item in selected_ids if item}
 
     class _PickSheetsDialog(forms.Dialog[bool]):
         def __init__(self) -> None:
@@ -910,9 +952,7 @@ def ask_pick_catalog_sheets(
             self.Content = layout
             self.AbortButton = btn_cancel
             self.DefaultButton = btn_ok
-            for index, row in enumerate(self.rows):
-                if row[4] in preselected:
-                    self.selected.add(index)
+            self.selected = sheet_picker_preselected_indices(self.rows, selected_ids)
             self._refresh_rows()
 
         def _make_header_row(self):
@@ -1001,11 +1041,7 @@ def ask_pick_catalog_sheets(
             self._refresh_rows()
 
         def selected_ids(self):
-            picked = set()
-            for index in self.selected:
-                if 0 <= index < len(self.rows) and self.rows[index][4]:
-                    picked.add(self.rows[index][4])
-            return tuple(row[4] for row in self.rows if row[4] in picked)
+            return sheet_picker_selected_ids(self.rows, self.selected)
 
         def _on_ok(self, sender, e) -> None:
             self.Close(True)

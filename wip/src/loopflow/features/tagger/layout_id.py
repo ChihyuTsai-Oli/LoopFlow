@@ -196,10 +196,15 @@ def build_sheet_rows(
     known_names = {}
     known_series = {}
     existing = {}
+    seen_sheet_ids = set()
     for scan, frame_id in writable:
         sheet_id = text(session.get_object_user_text(frame_id, SHEET_ID_KEY))
         if sheet_id is not None and not UUID_V4_RE.match(sheet_id):
             sheet_id = None
+        if sheet_id and sheet_id in seen_sheet_ids:
+            sheet_id = None
+        elif sheet_id:
+            seen_sheet_ids.add(sheet_id)
         existing[scan.page_name] = sheet_id
         if sheet_id is None:
             continue
