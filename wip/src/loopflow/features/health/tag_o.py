@@ -48,7 +48,7 @@ from loopflow.features.tagger.keys import (
     is_tag_locked,
 )
 from loopflow.features.tagger.templates import TagTemplate, TagTemplateSet, load_tag_templates
-from loopflow.features.viewer.inspect import check_document_schema
+from loopflow.features.viewer.inspect import check_document_schema, ensure_project_schema
 from loopflow.foundation import results
 from loopflow.foundation.usertext import (
     OBJECT_ID_KEY,
@@ -684,6 +684,7 @@ def run_tag_o(
     show_panel: Optional[ShowPanel] = None,
 ) -> results.Result:
     """全檔 Layout 頁檢查。過期／斷連會改 Tag 外觀。"""
+    ensure_project_schema(session)
     schema = check_document_schema(session)
     if not schema.ok:
         return results.failed(
@@ -721,6 +722,7 @@ def run_tag_o(
     if payload is None:
         registry_result = load_published_registry(
             session.document_user_text(PROJECT_ID_KEY),
+            document_path=session.document_path() if hasattr(session, "document_path") else None,
             environ=environ,
             command_id=COMMAND_ID,
         )
@@ -735,7 +737,7 @@ def run_tag_o(
             elif warning == "used_last_good":
                 notes.append("正式 Registry 不在，改用 last-good。")
             elif warning == "missing_project_id":
-                notes.append("文件沒有合法 project_id，無法讀 Registry。")
+                notes.append("尚未填專案名稱，無法讀 Registry。請先跑 Nexus 選單 2。")
     elif isinstance(payload, Mapping):
         revision = payload.get("registry_revision")
 

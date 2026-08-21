@@ -11,7 +11,7 @@ from loopflow.features.infuser.part import PROJECT_ID_KEY, infuse_page, _result_
 from loopflow.features.health.appearance import apply_queued_appearances
 from loopflow.features.infuser.reader import load_published_registry
 from loopflow.features.tagger.templates import TagTemplateSet, load_tag_templates
-from loopflow.features.viewer.inspect import check_document_schema
+from loopflow.features.viewer.inspect import check_document_schema, ensure_project_schema
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
@@ -46,6 +46,7 @@ def run_infuser_all(
     show_message: Optional[ShowMessage] = None,
 ) -> results.Result:
     """全檔 Layout 頁注入。取消／失敗不寫入。"""
+    ensure_project_schema(session)
     schema = check_document_schema(session)
     if not schema.ok:
         return results.failed(
@@ -82,6 +83,7 @@ def run_infuser_all(
     if payload is None:
         registry_result = load_published_registry(
             session.document_user_text(PROJECT_ID_KEY),
+            document_path=session.document_path() if hasattr(session, "document_path") else None,
             environ=environ,
             command_id=COMMAND_ID,
         )

@@ -127,7 +127,7 @@ class InjectTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("here", TYPE_CATEGORY_KEY), "PT")
         self.assertEqual(session.get_object_user_text("there", ITEM_NAME_KEY), "Chair-1")
 
-    def test_missing_schema_zero_write(self):
+    def test_missing_schema_is_filled_and_continues(self):
         session = _session()
         session._document_text.pop("lf_schema_id", None)
         session._document_text.pop("lf_schema_version", None)
@@ -144,11 +144,10 @@ class InjectTests(unittest.TestCase):
             page=OTHER,
             user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID},
         )
-        before = _snapshot(session)
         result = _run(session)
-        self.assertFalse(result.ok)
-        self.assertEqual(result.blocking, ("missing_document_schema",))
-        self.assertEqual(session._object_meta, before["objects"])
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.document_user_text("lf_schema_id"), "loopflow.project")
+        self.assertEqual(session.get_object_user_text("here", TYPE_CATEGORY_KEY), "PT")
 
     def test_no_layout_pages_zero_write(self):
         session = MemorySession(
@@ -189,6 +188,7 @@ class RegistryFileTests(unittest.TestCase):
         )
         official.write_text("{not json", encoding="utf-8")
         session = _session()
+        session.set_document_path(str(root / "model.3dm"))
         _add_block(
             session,
             "here",
@@ -216,6 +216,7 @@ class RegistryFileTests(unittest.TestCase):
     def test_missing_registry_still_injects_item_on_other_page(self):
         root = Path(tempfile.mkdtemp())
         session = _session()
+        session.set_document_path(str(root / "model.3dm"))
         _add_live_source(session)
         _add_block(
             session,

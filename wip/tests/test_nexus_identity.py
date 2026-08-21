@@ -77,7 +77,8 @@ def _session() -> MemorySession:
             PROJECT_ID_KEY: PROJECT_ID,
             SCHEMA_ID_KEY: "loopflow.project",
             SCHEMA_VERSION_KEY: "1",
-        }
+        },
+        document_path=str(Path(tempfile.gettempdir()) / "loopflow-open-identity.3dm"),
     )
     session.ensure_layer(FULL)
     session.set_document_modified(False)

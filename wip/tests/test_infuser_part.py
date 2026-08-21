@@ -227,19 +227,16 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(result.blocking, ("not_on_layout",))
         self.assertEqual(session._object_meta, before["objects"])
 
-    def test_missing_schema_zero_write(self):
+    def test_missing_schema_is_filled_and_continues(self):
         session = _session()
         session._document_text.pop("lf_schema_id", None)
         session._document_text.pop("lf_schema_version", None)
         _add_block(session, "tag", "TAG_HEIGHT_GRAB", user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID})
-        before = _snapshot(session)
         result = _run(session)
-        self.assertFalse(result.ok)
-        self.assertEqual(result.blocking, ("missing_document_schema",))
-        self.assertEqual(
-            session.get_object_user_text("tag", ELEVATION_BASIS_KEY),
-            before["objects"]["tag"]["user_text"].get(ELEVATION_BASIS_KEY),
-        )
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.document_user_text("lf_schema_id"), "loopflow.project")
+        self.assertEqual(session.document_user_text("lf_schema_version"), "1")
+        self.assertEqual(session.get_object_user_text("tag", TYPE_CATEGORY_KEY), "PT")
 
 
 class InjectTests(unittest.TestCase):
@@ -973,6 +970,7 @@ class RegistryFileTests(unittest.TestCase):
         last_good = root / "exchange" / PROJECT_ID / "Project_Registry.last-good.json"
         last_good.write_text(json.dumps(_payload(revision=3), ensure_ascii=False), encoding="utf-8")
         session = _session()
+        session.set_document_path(str(root / "model.3dm"))
         _add_block(session, "tag", "TAG_HEIGHT_GRAB", user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID})
         result = run_infuser_part(
             session,
@@ -990,6 +988,7 @@ class RegistryFileTests(unittest.TestCase):
         official = root / "exchange" / PROJECT_ID / "Project_Registry.json"
         official.write_text("{not json", encoding="utf-8")
         session = _session()
+        session.set_document_path(str(root / "model.3dm"))
         _add_block(session, "tag", "TAG_HEIGHT_GRAB", user_text={SOURCE_OBJECT_ID_KEY: OBJECT_ID})
         before = _snapshot(session)
         result = run_infuser_part(
@@ -1004,6 +1003,7 @@ class RegistryFileTests(unittest.TestCase):
     def test_missing_registry_item_still_injects(self):
         root = self._workfiles()
         session = _session()
+        session.set_document_path(str(root / "model.3dm"))
         _add_block(
             session,
             "item",
@@ -1025,6 +1025,7 @@ class RegistryFileTests(unittest.TestCase):
     def test_missing_registry_height_reads_live_object(self):
         root = self._workfiles()
         session = _session()
+        session.set_document_path(str(root / "model.3dm"))
         _add_live_source(session)
         _add_block(
             session,
@@ -1050,6 +1051,7 @@ class RegistryFileTests(unittest.TestCase):
         root = Path(tempfile.mkdtemp())
         result = load_published_registry(
             PROJECT_ID,
+            document_path=str(root / "model.3dm"),
             environ={"LOOPFLOW_WORKFILES_ROOT": str(root)},
         )
         self.assertTrue(result.ok)

@@ -11,6 +11,7 @@ from loopflow.features.dictionary.layer_paths import (
     LAYER_PREFIX_3D,
     LAYER_PREFIX_KEY,
     LAYER_TYPE_ID_KEY,
+    PROJECT_ID_KEY,
     color_for_layer_path,
     dna_ref_name,
     is_dw_child,
@@ -102,6 +103,7 @@ def _sync_body(
     kept_types = []
     try:
         session.set_document_user_text(LAYER_PREFIX_KEY, prefix)
+        session.set_document_user_text(PROJECT_ID_KEY, prefix)
         for system_path in system_layers(prefix):
             session.ensure_layer(system_path)
             session.set_layer_appearance(system_path, color_for_layer_path(system_path, prefix))

@@ -6,6 +6,7 @@ from typing import Optional, Sequence, Tuple
 
 LAYER_PREFIX_3D = "M3D"
 LAYER_PREFIX_KEY = "lf_layer_prefix"
+PROJECT_ID_KEY = "lf_project_id"
 DATA_SUFFIX = "_Data"
 DNA_REF_PREFIX = "DNA_REF_"
 LAYER_TYPE_ID_KEY = "lf_type_id"
@@ -37,6 +38,18 @@ def normalize_layer_prefix(name: Optional[str]) -> Optional[str]:
     if any(ch in text for ch in ':\\/:*?<>|"'):
         return None
     return text
+
+
+def project_id_from_session(session) -> Optional[str]:
+    """專案身分＝圖層專案名稱；沒有前綴時才看 lf_project_id。"""
+    if session is None:
+        return None
+    getter = getattr(session, "document_user_text", None)
+    if not callable(getter):
+        return None
+    return normalize_layer_prefix(getter(LAYER_PREFIX_KEY)) or normalize_layer_prefix(
+        getter(PROJECT_ID_KEY)
+    )
 
 
 def read_layer_prefix(session) -> str:

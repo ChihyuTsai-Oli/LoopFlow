@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Optional
+from typing import Mapping, Optional, Union
 
 from . import results
 from .config import AppConfig, DEFAULT_CONFIG
@@ -32,9 +32,6 @@ class WorkfilesPaths:
     root: Path
     dictionary: Path
     exchange_root: Path
-
-    def registry(self, project_id: str) -> results.Result:
-        return registry_paths(self.exchange_root, project_id)
 
     def log_file(self, config: AppConfig = DEFAULT_CONFIG) -> Path:
         return self.root / config.log_dir_name / config.log_filename
@@ -189,19 +186,90 @@ def dictionary_path(root: Path, filename: Optional[str] = None) -> Path:
     return Path(root) / name
 
 
+def normalize_project_id(value: Optional[str]) -> Optional[str]:
+    """專案名稱＝圖層前綴＝exchange 資料夾名。禁止空白與路徑／檔名非法字元。"""
+    text = str(value or "").strip()
+    if not text:
+        return None
+    if any(char in text for char in _FILENAME_FORBIDDEN):
+        return None
+    if text in (".", "..") or ".." in text.replace("\\", "/"):
+        return None
+    return text
+
+
+def document_directory(document_path: Optional[Union[str, Path]]) -> results.Result:
+    """已存檔的 .3dm 所在資料夾。未存檔不猜測、不建檔。"""
+    text = str(document_path or "").strip()
+    if not text:
+        return results.blocked(
+            "resolve_document",
+            "請先把這份檔案存成 .3dm。尚未存檔就沒有資料夾，無法建立 exchange。",
+            blocking=("unsaved_document",),
+        )
+    folder = Path(text).expanduser()
+    parent = folder.parent
+    if str(parent) in ("", "."):
+        return results.blocked(
+            "resolve_document",
+            "請先把這份檔案存成 .3dm。尚未存檔就沒有資料夾，無法建立 exchange。",
+            blocking=("unsaved_document",),
+        )
+    return results.ok(
+        "resolve_document",
+        "已確認檔案所在資料夾",
+        details={"document_path": folder, "document_dir": parent},
+    )
+
+
+def exchange_root_for_document(document_path: Optional[Union[str, Path]]) -> results.Result:
+    located = document_directory(document_path)
+    if not located.ok:
+        return located
+    root = Path(located.details["document_dir"]) / EXCHANGE_DIR_NAME
+    details = dict(located.details)
+    details["exchange_root"] = root
+    return results.ok(
+        "resolve_exchange",
+        "已解析 exchange 資料夾",
+        details=details,
+    )
+
+
+def resolve_registry_for_document(
+    document_path: Optional[Union[str, Path]],
+    project_id: Optional[str],
+) -> results.Result:
+    """Registry 在 <目前 3dm 資料夾>/exchange/<專案名稱>/。"""
+    located = exchange_root_for_document(document_path)
+    if not located.ok:
+        return located
+    resolved = registry_paths(located.details["exchange_root"], project_id or "")
+    if not resolved.ok:
+        return resolved
+    details = dict(located.details)
+    details.update(resolved.details)
+    return results.ok(
+        resolved.stage,
+        resolved.message,
+        details=details,
+    )
+
+
 def registry_paths(exchange_root: Path, project_id: str) -> results.Result:
-    pid = (project_id or "").strip()
-    if not pid:
+    raw = str(project_id or "").strip()
+    if not raw:
         return results.failed(
             "resolve_registry",
-            "缺少 project_id，停止解析 Registry。不從檔名猜測。",
+            "缺少專案名稱，停止解析 Registry。請先跑 Nexus 選單 2 填專案名稱。",
         )
-    if any(sep in pid for sep in ("/", "\\", "..")):
+    pid = normalize_project_id(raw)
+    if pid is None:
         return results.blocked(
             "resolve_registry",
-            "project_id 不可當作資料夾路徑。",
+            "專案名稱不可含 \\ / : * ? \" < > |，也不可當資料夾路徑。",
             blocking=("invalid_project_id",),
-            details={"project_id": pid},
+            details={"project_id": raw},
         )
     folder = Path(exchange_root) / pid
     return results.ok(

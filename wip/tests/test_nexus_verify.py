@@ -162,6 +162,7 @@ class VerifyModelTests(unittest.TestCase):
         _add_wall(session)
         catalog = _catalog(_row())
         with tempfile.TemporaryDirectory(prefix="loopflow-rev-") as raw:
+            session.set_document_path(str(Path(raw) / "model.3dm"))
             folder = Path(raw) / "exchange" / SPACE_A
             folder.mkdir(parents=True)
             (folder / "Project_Registry.json").write_text(

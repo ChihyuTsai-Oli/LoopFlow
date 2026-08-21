@@ -13,13 +13,14 @@ from loopflow.features.dictionary.layer_paths import (
     data_layer,
     is_in_project,
     is_system_layer,
+    project_id_from_session,
     read_layer_prefix,
     to_relative_path,
 )
 from loopflow.features.dictionary.loader import TypeCatalog, load_from_workfiles
 from loopflow.foundation import results
 from loopflow.foundation.atomic_io import read_json
-from loopflow.foundation.paths import resolve_workfiles
+from loopflow.foundation.paths import resolve_registry_for_document
 from loopflow.foundation.usertext import (
     CONSTRUCTION_KEY,
     DATA_REVISION_KEY,
@@ -35,7 +36,6 @@ from loopflow.foundation.usertext import (
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Nexus"
-PROJECT_ID_KEY = "lf_project_id"
 UUID_V4_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
 )
@@ -50,14 +50,12 @@ def expected_data_revision(
     environ: Optional[Mapping[str, str]] = None,
 ) -> str:
     """尚未發布為 0；已有正式 Registry 則用該檔的 registry_revision。"""
-    project_id = session.document_user_text(PROJECT_ID_KEY) or ""
-    if not UUID_V4_RE.match(project_id):
+    project_id = project_id_from_session(session)
+    if not project_id:
         return "0"
-    workfiles = resolve_workfiles(environ=environ)
-    if not workfiles.ok:
-        return "0"
-    paths = workfiles.details["paths"]
-    resolved = paths.registry(project_id)
+    getter = getattr(session, "document_path", None)
+    document_path = getter() if callable(getter) else None
+    resolved = resolve_registry_for_document(document_path, project_id)
     if not resolved.ok:
         return "0"
     official = Path(resolved.details["registry"])

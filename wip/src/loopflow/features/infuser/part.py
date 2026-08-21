@@ -46,7 +46,7 @@ from loopflow.features.tagger.keys import (
     is_tag_locked,
 )
 from loopflow.features.tagger.templates import TagTemplate, TagTemplateSet, load_tag_templates
-from loopflow.features.viewer.inspect import check_document_schema
+from loopflow.features.viewer.inspect import check_document_schema, ensure_project_schema
 from loopflow.foundation import results
 from loopflow.foundation.usertext import (
     ELEVATION_BASIS_KEY as MODEL_ELEVATION_BASIS_KEY,
@@ -1039,6 +1039,7 @@ def run_infuser_part(
     show_message: Optional[ShowMessage] = None,
 ) -> results.Result:
     """當前 Layout 頁注入。取消／失敗不寫入。"""
+    ensure_project_schema(session)
     schema = check_document_schema(session)
     if not schema.ok:
         return results.failed(
@@ -1086,6 +1087,7 @@ def run_infuser_part(
     if payload is None:
         registry_result = load_published_registry(
             session.document_user_text(PROJECT_ID_KEY),
+            document_path=session.document_path() if hasattr(session, "document_path") else None,
             environ=environ,
             command_id=COMMAND_ID,
         )

@@ -167,7 +167,7 @@ class ImportSmokeTests(unittest.TestCase):
         self.assertTrue(
             any(
                 token in completed.stdout
-                for token in ("不在 Rhino", "LOOPFLOW_WORKFILES_ROOT", "尚未有 project_id")
+                for token in ("不在 Rhino", "LOOPFLOW_WORKFILES_ROOT", "請先把這份檔案存成")
             ),
             completed.stdout,
         )

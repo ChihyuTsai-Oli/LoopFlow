@@ -151,7 +151,7 @@ LoopFlow 的 Project Console，負責開案檢查、Type Layer 同步、高程�
 - 專案身分與 schema
 - Rhino 文件單位
 
-非 cm 文件會警告但不強制停止。專案身分或 schema 缺失時會停止，不猜測、不自動建立正式資料。
+非 cm 文件會警告但不強制停止。未存檔會請先存檔。尚未填專案名稱不擋開案；缺 schema 會順便寫入。未知 schema 仍停止。
 
 ### 2　從字典同步 Type Layers
 

@@ -3,8 +3,10 @@
 from loopflow.foundation.config import AppConfig, DEFAULT_CONFIG, load_config
 from loopflow.foundation.paths import (
     WORKFILES_ROOT_ENV,
-    resolve_workfiles,
+    normalize_project_id,
     registry_paths,
+    resolve_registry_for_document,
+    resolve_workfiles,
 )
 from loopflow.foundation.results import Result
 from loopflow.foundation.version import PACKAGE_VERSION, SCHEMA_VERSIONS, check_schema
@@ -18,6 +20,8 @@ __all__ = [
     "WORKFILES_ROOT_ENV",
     "check_schema",
     "load_config",
+    "normalize_project_id",
     "registry_paths",
+    "resolve_registry_for_document",
     "resolve_workfiles",
 ]

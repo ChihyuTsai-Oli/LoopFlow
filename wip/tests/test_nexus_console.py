@@ -56,13 +56,21 @@ def _write_dictionary(root: Path) -> Path:
 
 
 def _session(**kwargs) -> MemorySession:
+    unsaved = kwargs.pop("unsaved", False)
+    document_path = kwargs.pop("document_path", None)
     text = {
         PROJECT_ID_KEY: PROJECT_ID,
         SCHEMA_ID_KEY: "loopflow.project",
         SCHEMA_VERSION_KEY: "1",
     }
     text.update(kwargs.pop("document_text", {}))
-    session = MemorySession(document_text=text, **kwargs)
+    if not unsaved and document_path is None:
+        document_path = str(Path(tempfile.gettempdir()) / "loopflow-open-identity.3dm")
+    session = MemorySession(
+        document_text=text,
+        document_path=None if unsaved else str(document_path),
+        **kwargs,
+    )
     session.add_object("a", selected=True, locked=False, hidden=False, color=(10, 20, 30), color_by_layer=False)
     session.set_document_modified(False)
     return session
@@ -84,15 +92,28 @@ class ConsoleOpenCheckTests(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertFalse(missing.exists())
 
-    def test_missing_project_id_blocks(self):
+    def test_unsaved_document_blocks(self):
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:
+            root = Path(raw)
+            _write_dictionary(root)
+            session = _session(unsaved=True)
+            result = open_console(session, environ={"LOOPFLOW_WORKFILES_ROOT": str(root)})
+            self.assertFalse(result.ok)
+            self.assertEqual(result.status, "blocked")
+            self.assertEqual(result.blocking, ("unsaved_document",))
+            self.assertFalse((root / "exchange").exists())
+
+    def test_missing_project_id_still_enters(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx01-") as raw:
             root = Path(raw)
             _write_dictionary(root)
             session = _session(document_text={PROJECT_ID_KEY: None, SCHEMA_ID_KEY: None, SCHEMA_VERSION_KEY: None})
             result = open_console(session, environ={"LOOPFLOW_WORKFILES_ROOT": str(root)})
-            self.assertFalse(result.ok)
-            self.assertEqual(result.status, "blocked")
-            self.assertEqual(result.blocking, ("missing_project_id",))
+            self.assertTrue(result.ok, result.message)
+            self.assertIsNone(result.details["project_id"])
+            self.assertEqual(session.document_user_text(SCHEMA_ID_KEY), "loopflow.project")
+            self.assertEqual(session.document_user_text(SCHEMA_VERSION_KEY), "1")
+            self.assertTrue(any("選單 2" in item for item in result.warnings))
             self.assertFalse((root / "exchange").exists())
 
     def test_cm_session_lists_steps_and_does_not_write(self):

@@ -108,6 +108,14 @@ def _pad_key(key: str, width: int) -> str:
     return key + (" " * max(0, width - _display_width(key)))
 
 
+def ensure_project_schema(session: RhinoSession) -> None:
+    """缺 schema 時順便寫入 loopflow.project／1。"""
+    if _text(session.document_user_text(SCHEMA_ID_KEY)) is None:
+        session.set_document_user_text(SCHEMA_ID_KEY, PROJECT_SCHEMA_ID)
+    if _text(session.document_user_text(SCHEMA_VERSION_KEY)) is None:
+        session.set_document_user_text(SCHEMA_VERSION_KEY, "1")
+
+
 def check_document_schema(session: RhinoSession) -> results.Result:
     """文件 schema 未知或不完整時停止；兩者都缺則警告後仍可查看。"""
     schema_id = _text(session.document_user_text(SCHEMA_ID_KEY))

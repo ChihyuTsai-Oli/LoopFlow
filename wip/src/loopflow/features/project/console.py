@@ -2,23 +2,24 @@
 """Nexus Project Console。開案檢查、同步 Type Layers、高程／空間框、寫入／檢核 Metadata。"""
 from __future__ import annotations
 
-import re
+from pathlib import Path
 from typing import Mapping, Optional, Sequence, Tuple
 
+from loopflow.features.dictionary.layer_paths import PROJECT_ID_KEY, project_id_from_session
 from loopflow.features.dictionary.loader import load_from_workfiles
 from loopflow.foundation import results
-from loopflow.foundation.paths import dictionary_filename_from_session, resolve_workfiles
+from loopflow.foundation.paths import (
+    dictionary_filename_from_session,
+    resolve_registry_for_document,
+    resolve_workfiles,
+)
 from loopflow.foundation.version import PACKAGE_VERSION, check_schema
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Nexus"
 PROJECT_SCHEMA_ID = "loopflow.project"
-PROJECT_ID_KEY = "lf_project_id"
 SCHEMA_ID_KEY = "lf_schema_id"
 SCHEMA_VERSION_KEY = "lf_schema_version"
-UUID_V4_RE = re.compile(
-    r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
-)
 CM_UNITS = frozenset(("cm", "centimeter", "centimeters"))
 
 CONSOLE_STEPS: Tuple[dict, ...] = (
@@ -80,6 +81,15 @@ def compose_scan_apply_message(mode: str, identity, placement) -> str:
     return message + " 不可發布。"
 
 
+def ensure_project_schema(session: RhinoSession) -> None:
+    """缺 schema 時順便寫入 loopflow.project／1，不擋開案。"""
+    if not str(session.document_user_text(SCHEMA_ID_KEY) or "").strip():
+        session.set_document_user_text(SCHEMA_ID_KEY, PROJECT_SCHEMA_ID)
+    raw = session.document_user_text(SCHEMA_VERSION_KEY)
+    if raw is None or str(raw).strip() == "":
+        session.set_document_user_text(SCHEMA_VERSION_KEY, "1")
+
+
 def run_open_check(
     session: Optional[RhinoSession],
     *,
@@ -118,34 +128,20 @@ def run_open_check(
     if session is None:
         return results.failed(
             "rhino_session",
-            "目前不在 Rhino 內，無法讀取 project_id 與文件單位。不修改檔案。",
+            "目前不在 Rhino 內，無法讀取專案名稱與文件單位。不修改檔案。",
             command_id=command_id,
         )
-    project_id = session.document_user_text(PROJECT_ID_KEY)
-    if not project_id:
+    document_path = session.document_path() if hasattr(session, "document_path") else None
+    if not str(document_path or "").strip():
         return results.blocked(
             "open_check",
-            "尚未有 project_id。請先建立專案身分，不從檔名猜測，也不建立檔案。",
-            blocking=("missing_project_id",),
+            "請先把這份檔案存成 .3dm。尚未存檔就沒有資料夾，無法建立 exchange。",
+            blocking=("unsaved_document",),
             command_id=command_id,
         )
-    if not UUID_V4_RE.match(project_id):
-        return results.blocked(
-            "open_check",
-            "project_id 必須是小寫 UUID v4，已停止。不自動改寫。",
-            blocking=("invalid_project_id",),
-            command_id=command_id,
-            details={"project_id": project_id},
-        )
+    ensure_project_schema(session)
     schema_id = session.document_user_text(SCHEMA_ID_KEY)
     raw_version = session.document_user_text(SCHEMA_VERSION_KEY)
-    if not schema_id or raw_version is None:
-        return results.blocked(
-            "open_check",
-            "文件缺少 loopflow.project 的 schema_id／schema_version。已停止，不猜測。",
-            blocking=("missing_project_schema",),
-            command_id=command_id,
-        )
     try:
         schema_version = int(raw_version)
     except (TypeError, ValueError):
@@ -158,9 +154,18 @@ def run_open_check(
     if not version.ok:
         return version
 
+    project_id = project_id_from_session(session)
+    exchange_exists = False
+    if project_id:
+        resolved = resolve_registry_for_document(document_path, project_id)
+        if resolved.ok:
+            exchange_exists = Path(resolved.details["folder"]).exists()
+
     unit = session.model_unit_system()
     warnings: Sequence[str] = catalog_warnings
     extra = []
+    if not project_id:
+        extra.append("尚未填專案名稱。請用選單 2 從字典同步 Type Layers。")
     if not _is_cm(unit):
         extra.append("文件單位為 %s，不是 cm。可繼續，但量綱尚未保證安全，建議切換為 cm。" % unit)
     if session.__class__.__name__ == "LiveSession":
@@ -176,7 +181,7 @@ def run_open_check(
         "model_unit": unit,
         "dictionary_filename": paths.dictionary.name,
         "type_count": type_count,
-        "exchange_exists": paths.exchange_root.exists(),
+        "exchange_exists": exchange_exists,
         "package_version": PACKAGE_VERSION,
         "steps": _copy_steps(),
         "executable_steps": (

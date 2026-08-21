@@ -47,6 +47,7 @@ def _paths(root: Path):
     folder = root / "exchange" / PROJECT_ID
     return {
         "root": root,
+        "document_path": str(root / "model.3dm"),
         "folder": folder,
         "registry": folder / "Project_Registry.json",
         "lock": folder / "Project_Registry.lock",
@@ -54,6 +55,12 @@ def _paths(root: Path):
         "last_good": folder / "Project_Registry.last-good.json",
         "environ": {"LOOPFLOW_WORKFILES_ROOT": str(root)},
     }
+
+
+def _publish(info, payload=None, **kwargs):
+    kwargs.setdefault("document_path", info["document_path"])
+    kwargs.setdefault("environ", info["environ"])
+    return publish_registry(payload if payload is not None else _min_payload(), **kwargs)
 
 
 class SchemaAndValidateTests(unittest.TestCase):
@@ -117,18 +124,18 @@ class SchemaAndValidateTests(unittest.TestCase):
 
 
 class PublishTests(unittest.TestCase):
-    def test_missing_env_does_not_create_files(self):
+    def test_missing_document_path_does_not_create_files(self):
         before = set(Path(tempfile.gettempdir()).iterdir())
-        result = publish_registry(_min_payload(), environ={})
+        result = publish_registry(_min_payload())
         after = set(Path(tempfile.gettempdir()).iterdir())
         self.assertFalse(result.ok)
-        self.assertEqual(result.stage, "resolve_workfiles")
+        self.assertEqual(result.blocking, ("unsaved_document",))
         self.assertEqual(before, after)
 
     def test_first_publish_writes_official_and_last_good(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-reg-") as raw:
             info = _paths(Path(raw))
-            result = publish_registry(_min_payload(), environ=info["environ"])
+            result = _publish(info)
             self.assertTrue(result.ok, result.message)
             self.assertEqual(result.details["registry_revision"], 1)
             self.assertTrue(info["registry"].exists())
@@ -143,10 +150,10 @@ class PublishTests(unittest.TestCase):
     def test_second_publish_increments_and_keeps_previous_last_good(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-reg-") as raw:
             info = _paths(Path(raw))
-            first = publish_registry(_min_payload(), environ=info["environ"])
+            first = _publish(info)
             self.assertTrue(first.ok, first.message)
             previous = info["registry"].read_bytes()
-            second = publish_registry(_min_payload(), environ=info["environ"])
+            second = _publish(info)
             self.assertTrue(second.ok, second.message)
             self.assertEqual(second.details["registry_revision"], 2)
             self.assertEqual(read_json(info["registry"]).details["payload"]["registry_revision"], 2)
@@ -155,7 +162,7 @@ class PublishTests(unittest.TestCase):
     def test_invalid_payload_does_not_write_official(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-reg-") as raw:
             info = _paths(Path(raw))
-            result = publish_registry(_min_payload(spaces=[]), environ=info["environ"])
+            result = _publish(info, _min_payload(spaces=[]))
             self.assertFalse(result.ok)
             self.assertEqual(result.blocking, ("missing_ext_space",))
             self.assertFalse(info["registry"].exists())
@@ -168,7 +175,7 @@ class PublishTests(unittest.TestCase):
             info["folder"].mkdir(parents=True)
             info["registry"].write_text("{not json", encoding="utf-8")
             before = info["registry"].read_bytes()
-            result = publish_registry(_min_payload(), environ=info["environ"])
+            result = _publish(info)
             self.assertFalse(result.ok)
             self.assertEqual(result.stage, "read_registry")
             self.assertEqual(info["registry"].read_bytes(), before)
@@ -178,16 +185,15 @@ class PublishTests(unittest.TestCase):
     def test_live_lock_blocks_second_publisher(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-reg-") as raw:
             info = _paths(Path(raw))
-            first = publish_registry(_min_payload(), environ=info["environ"])
+            first = _publish(info)
             self.assertTrue(first.ok, first.message)
             before = info["registry"].read_bytes()
             info["folder"].mkdir(parents=True, exist_ok=True)
             held = acquire_lock(info["lock"], pid=4242, host="test-host", pid_alive=lambda pid: True)
             self.assertTrue(held.ok, held.message)
             try:
-                result = publish_registry(
-                    _min_payload(),
-                    environ=info["environ"],
+                result = _publish(
+                    info,
                     pid=4343,
                     host="test-host",
                     pid_alive=lambda pid: True,
@@ -210,9 +216,8 @@ class PublishTests(unittest.TestCase):
                 now=stale_time,
                 pid_alive=lambda pid: True,
             )
-            result = publish_registry(
-                _min_payload(),
-                environ=info["environ"],
+            result = _publish(
+                info,
                 pid=1000,
                 host="test-host",
                 now=datetime.now(timezone.utc),
@@ -224,7 +229,7 @@ class PublishTests(unittest.TestCase):
     def test_interrupt_after_pending_keeps_official(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-reg-") as raw:
             info = _paths(Path(raw))
-            first = publish_registry(_min_payload(), environ=info["environ"])
+            first = _publish(info)
             self.assertTrue(first.ok, first.message)
             before = info["registry"].read_bytes()
             last_good = info["last_good"].read_bytes()
@@ -232,9 +237,8 @@ class PublishTests(unittest.TestCase):
             def _boom(_pending):
                 raise RuntimeError("simulated interrupt")
 
-            result = publish_registry(
-                _min_payload(),
-                environ=info["environ"],
+            result = _publish(
+                info,
                 after_pending=_boom,
             )
             self.assertFalse(result.ok)
@@ -247,7 +251,7 @@ class PublishTests(unittest.TestCase):
     def test_replace_failure_keeps_official(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-reg-") as raw:
             info = _paths(Path(raw))
-            first = publish_registry(_min_payload(), environ=info["environ"])
+            first = _publish(info)
             self.assertTrue(first.ok, first.message)
             before = info["registry"].read_bytes()
             last_good = info["last_good"].read_bytes()
@@ -255,9 +259,8 @@ class PublishTests(unittest.TestCase):
             def _fail(_src, _dest):
                 raise OSError("disk full")
 
-            result = publish_registry(
-                _min_payload(),
-                environ=info["environ"],
+            result = _publish(
+                info,
                 replace=_fail,
             )
             self.assertFalse(result.ok)
@@ -270,7 +273,7 @@ class PublishTests(unittest.TestCase):
     def test_sharing_violation_retries_then_succeeds(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-reg-") as raw:
             info = _paths(Path(raw))
-            first = publish_registry(_min_payload(), environ=info["environ"])
+            first = _publish(info)
             self.assertTrue(first.ok, first.message)
             calls = []
 
@@ -282,9 +285,8 @@ class PublishTests(unittest.TestCase):
                     raise err
                 os.replace(str(src), str(dest))
 
-            result = publish_registry(
-                _min_payload(),
-                environ=info["environ"],
+            result = _publish(
+                info,
                 replace=_flaky,
                 sleep=lambda _wait: None,
             )
@@ -298,7 +300,7 @@ class PublishTests(unittest.TestCase):
     def test_sharing_violation_keeps_official_and_saves_last_good(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-reg-") as raw:
             info = _paths(Path(raw))
-            first = publish_registry(_min_payload(), environ=info["environ"])
+            first = _publish(info)
             self.assertTrue(first.ok, first.message)
             before = info["registry"].read_bytes()
 
@@ -307,9 +309,8 @@ class PublishTests(unittest.TestCase):
                 err.winerror = 32
                 raise err
 
-            result = publish_registry(
-                _min_payload(),
-                environ=info["environ"],
+            result = _publish(
+                info,
                 replace=_fail,
                 sleep=lambda _wait: None,
             )

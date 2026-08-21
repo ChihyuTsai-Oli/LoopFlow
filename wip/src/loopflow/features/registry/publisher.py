@@ -12,9 +12,9 @@ from typing import Callable, Mapping, Optional, Sequence
 
 from loopflow.features.registry import schema
 from loopflow.features.registry.lock import acquire_lock, release_lock
-from loopflow.features.registry.validate import UUID_V4_RE, validate_payload
+from loopflow.features.registry.validate import validate_payload
 from loopflow.foundation import atomic_io, results
-from loopflow.foundation.paths import resolve_workfiles
+from loopflow.foundation.paths import normalize_project_id, resolve_registry_for_document
 
 COMMAND_ID = schema.COMMAND_ID
 REPLACE_WAITS = (0.2, 0.4, 0.8, 1.6)
@@ -83,6 +83,7 @@ def _replace_with_retry(
 def publish_registry(
     payload: Mapping,
     *,
+    document_path: Optional[str] = None,
     environ: Optional[Mapping[str, str]] = None,
     command_id: str = COMMAND_ID,
     after_pending: Optional[Callable[[Path], None]] = None,
@@ -94,11 +95,8 @@ def publish_registry(
     sleep: Optional[Callable[[float], None]] = None,
     replace_waits: Optional[Sequence[float]] = None,
 ) -> results.Result:
-    """寫入 exchange/<project_id>/ 的正式 Registry。失敗不刪正式檔，保留 last-good。"""
-    workfiles = resolve_workfiles(environ=environ)
-    if not workfiles.ok:
-        return workfiles
-    paths = workfiles.details["paths"]
+    """寫入 <3dm 資料夾>/exchange/<專案名稱>/ 的正式 Registry。失敗不刪正式檔，保留 last-good。"""
+    del environ  # Dictionary 仍走工作檔；Registry 跟目前 3dm 所在資料夾走。
     if not isinstance(payload, Mapping):
         return results.blocked(
             "validate_registry",
@@ -106,15 +104,15 @@ def publish_registry(
             blocking=("invalid_payload",),
             command_id=command_id,
         )
-    project_id = str(payload.get("project_id") or "").strip()
-    if not UUID_V4_RE.match(project_id):
+    project_id = normalize_project_id(payload.get("project_id"))
+    if not project_id:
         return results.blocked(
             "validate_registry",
-            "project_id 必須是小寫 UUID v4。",
+            "project_id 必須是合法專案名稱（與圖層前綴相同）。請先跑 Nexus 選單 2。",
             blocking=("invalid_project_id",),
             command_id=command_id,
         )
-    resolved = paths.registry(project_id)
+    resolved = resolve_registry_for_document(document_path, project_id)
     if not resolved.ok:
         return resolved
     folder = Path(resolved.details["folder"])

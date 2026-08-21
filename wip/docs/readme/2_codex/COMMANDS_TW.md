@@ -105,7 +105,7 @@ LoopFlow 的 Project Console，負責開案檢查、Type Layer 同步、高程�
 
 ### 1　開案檢查
 
-檢查工作檔根目錄、Dictionary 與 exchange 位置、專案身分、schema 與 Rhino 文件單位。非 cm 文件會警告；專案身分或 schema 缺失時停止，不猜測正式資料。
+檢查工作檔根目錄、Dictionary、目前 `.3dm` 旁的 exchange、專案名稱、schema 與 Rhino 文件單位。未存檔會請先存檔。非 cm 文件會警告。尚未填專案名稱不擋開案；缺 schema 會順便寫入。未知 schema 仍停止。
 
 ### 2　從字典同步 Type Layers
 

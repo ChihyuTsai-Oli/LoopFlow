@@ -58,7 +58,8 @@ def _session() -> MemorySession:
             PROJECT_ID_KEY: SPACE_A,
             SCHEMA_ID_KEY: "loopflow.project",
             SCHEMA_VERSION_KEY: "1",
-        }
+        },
+        document_path=str(Path(tempfile.gettempdir()) / "loopflow-open-identity.3dm"),
     )
     session.add_object("wall", selected=False, name="Wall", layer="M3D::00_STR_結構::Beam.樑")
     session.set_object_user_text("wall", "lf_remarks", "人工備註")

@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Mapping, Optional
 
-from loopflow.features.registry.validate import UUID_V4_RE, validate_payload
+from loopflow.features.registry.validate import validate_payload
 from loopflow.foundation import atomic_io, results
-from loopflow.foundation.paths import resolve_workfiles
+from loopflow.foundation.paths import normalize_project_id, resolve_registry_for_document
 
 COMMAND_ID = "LF_Infuser_Part"
 
@@ -62,21 +62,20 @@ def _from_file(path: Path, source: str, command_id: str) -> results.Result:
 def load_published_registry(
     project_id: Optional[str],
     *,
+    document_path: Optional[str] = None,
     environ: Optional[Mapping[str, str]] = None,
     command_id: str = COMMAND_ID,
 ) -> results.Result:
     """正式檔優先；沒有正式檔才用 last-good。不建立空檔。"""
-    pid = str(project_id or "").strip()
-    if not UUID_V4_RE.match(pid):
+    del environ  # Registry 跟目前 3dm 所在資料夾走，不再用工作檔根目錄。
+    pid = normalize_project_id(project_id)
+    if not pid:
         return _empty(
             command_id,
             "missing_project_id",
-            "文件沒有合法 project_id，無法讀 Registry。",
+            "尚未填專案名稱，無法讀 Registry。請先跑 Nexus 選單 2 從字典同步 Type Layers。",
         )
-    workfiles = resolve_workfiles(environ=environ)
-    if not workfiles.ok:
-        return workfiles
-    resolved = workfiles.details["paths"].registry(pid)
+    resolved = resolve_registry_for_document(document_path, pid)
     if not resolved.ok:
         return resolved
     official = Path(resolved.details["registry"])

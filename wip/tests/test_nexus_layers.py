@@ -109,6 +109,8 @@ class LayerSyncTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("model-a", "lf_remarks"), "人工備註")
         self.assertIsNone(session.get_object_user_text("model-a", "lf_construction_status"))
         self.assertTrue(session.get_view_state("model-a").selected)
+        self.assertEqual(session.document_user_text(LAYER_PREFIX_KEY), "M3D")
+        self.assertEqual(session.document_user_text(PROJECT_ID_KEY), "M3D")
 
     def test_layer_color_follows_prefix_map(self):
         self.assertEqual(color_for_layer_path("M3D::00_STR_結構::Beam.樑"), (202, 16, 16))

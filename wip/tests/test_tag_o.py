@@ -164,7 +164,7 @@ class CatalogTests(unittest.TestCase):
 
 
 class GuardTests(unittest.TestCase):
-    def test_missing_schema_zero_write(self):
+    def test_missing_schema_is_filled_and_continues(self):
         session = _session()
         session._document_text.pop("lf_schema_id", None)
         session._document_text.pop("lf_schema_version", None)
@@ -174,11 +174,9 @@ class GuardTests(unittest.TestCase):
             "TAG_HEIGHT_GRAB",
             user_text=_filled_height(),
         )
-        before = _snapshot(session)
         result = _run(session)
-        self.assertFalse(result.ok)
-        self.assertEqual(result.blocking, ("missing_document_schema",))
-        self.assertEqual(session._object_meta, before["objects"])
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.document_user_text("lf_schema_id"), "loopflow.project")
 
     def test_no_layout_pages_zero_write(self):
         session = MemorySession(
@@ -203,6 +201,7 @@ class GuardTests(unittest.TestCase):
         )
         official.write_text("{not json", encoding="utf-8")
         session = _session()
+        session.set_document_path(str(root / "model.3dm"))
         _add_block(
             session,
             "tag",

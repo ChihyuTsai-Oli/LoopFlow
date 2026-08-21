@@ -271,7 +271,11 @@ def _ensure_extract_layer(session: RhinoSession, path: str, rgb=None) -> None:
 
 def _registry_revision(session: RhinoSession):
     project_id = text(session.document_user_text(PROJECT_ID_KEY))
-    loaded = load_published_registry(project_id, command_id=COMMAND_ID)
+    loaded = load_published_registry(
+        project_id,
+        document_path=session.document_path() if hasattr(session, "document_path") else None,
+        command_id=COMMAND_ID,
+    )
     if not loaded.ok:
         return None
     return loaded.details.get("registry_revision")

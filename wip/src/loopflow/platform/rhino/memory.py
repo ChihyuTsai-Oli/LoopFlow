@@ -17,7 +17,7 @@ from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
 
 
 class MemorySession:
-    def __init__(self, *, model_unit: str = "Centimeters", document_text=None) -> None:
+    def __init__(self, *, model_unit: str = "Centimeters", document_text=None, document_path=None) -> None:
         self._objects: Dict[str, ObjectViewState] = {}
         self._object_meta: Dict[str, dict] = {}
         self._layers: Dict[str, dict] = {}
@@ -28,7 +28,7 @@ class MemorySession:
         self._points: Dict[str, tuple] = {}
         self._texts: Dict[str, dict] = {}
         self._text_dots: Dict[str, dict] = {}
-        self._document_path: Optional[str] = None
+        self._document_path: Optional[str] = None if document_path in (None, "") else str(document_path)
         self._clipping_planes: Dict[str, dict] = {}
         self._drawing_content_bboxes: Dict[str, tuple] = {}
         self._ray_hits: list = []

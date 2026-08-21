@@ -82,6 +82,10 @@ def _session() -> MemorySession:
     return session
 
 
+def _save(session: MemorySession, root) -> None:
+    session.set_document_path(str(Path(root) / "model.3dm"))
+
+
 def _add_space(session):
     session.ensure_layer(SPACE_BOUNDARY_LAYER)
     session.add_object("s1", layer=SPACE_BOUNDARY_LAYER)
@@ -111,6 +115,7 @@ class PublishHandoffTests(unittest.TestCase):
         _add_space(session)
         _add_wall(session)
         with tempfile.TemporaryDirectory(prefix="loopflow-nx07-") as raw:
+            _save(session, raw)
             result = publish_from_session(
                 session,
                 environ={"LOOPFLOW_WORKFILES_ROOT": raw},
@@ -130,6 +135,7 @@ class PublishHandoffTests(unittest.TestCase):
         session = _session()
         _add_wall(session)
         with tempfile.TemporaryDirectory(prefix="loopflow-nx07-") as raw:
+            _save(session, raw)
             result = publish_from_session(
                 session,
                 environ={"LOOPFLOW_WORKFILES_ROOT": raw},
@@ -146,6 +152,7 @@ class PublishHandoffTests(unittest.TestCase):
         catalog = _catalog(_row())
         with tempfile.TemporaryDirectory(prefix="loopflow-nx07-") as raw:
             environ = {"LOOPFLOW_WORKFILES_ROOT": raw}
+            _save(session, raw)
             _write_dictionary(Path(raw))
             _apply(session, catalog, environ)
             popups = []
@@ -187,6 +194,7 @@ class PublishHandoffTests(unittest.TestCase):
         catalog = _catalog(_row())
         with tempfile.TemporaryDirectory(prefix="loopflow-nx07-") as raw:
             environ = {"LOOPFLOW_WORKFILES_ROOT": raw}
+            _save(session, raw)
             _apply(session, catalog, environ)
             first = publish_from_session(
                 session,

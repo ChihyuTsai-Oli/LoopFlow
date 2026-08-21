@@ -7,6 +7,7 @@ from typing import Mapping, Sequence
 
 from loopflow.features.registry import schema
 from loopflow.foundation import results
+from loopflow.foundation.paths import normalize_project_id
 from loopflow.foundation.version import check_schema
 
 UUID_V4_RE = re.compile(
@@ -73,8 +74,11 @@ def validate_payload(payload) -> results.Result:
         return _blocked(reason, checked.message, details=checked.details)
 
     project_id = str(payload.get("project_id") or "").strip()
-    if not UUID_V4_RE.match(project_id):
-        return _blocked("invalid_project_id", "project_id 必須是小寫 UUID v4。")
+    if not normalize_project_id(project_id):
+        return _blocked(
+            "invalid_project_id",
+            "project_id 必須是合法專案名稱（與圖層前綴相同，不可含路徑字元）。",
+        )
     revision = payload.get("registry_revision")
     if not isinstance(revision, int) or isinstance(revision, bool) or revision < 1:
         return _blocked("invalid_revision", "registry_revision 必須是從 1 起的正整數。")

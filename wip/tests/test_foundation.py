@@ -88,10 +88,9 @@ class PathTests(unittest.TestCase):
         finally:
             fake.unlink()
 
-    def test_existing_directory_resolves_dictionary_and_exchange(self):
+    def test_existing_directory_resolves_dictionary(self):
         from loopflow.foundation.paths import (
             DICTIONARY_FILENAME,
-            EXCHANGE_DIR_NAME,
             resolve_workfiles,
         )
 
@@ -102,16 +101,39 @@ class PathTests(unittest.TestCase):
             workfiles = result.details["paths"]
             self.assertEqual(workfiles.root, root)
             self.assertEqual(workfiles.dictionary, root / DICTIONARY_FILENAME)
-            self.assertEqual(workfiles.exchange_root, root / EXCHANGE_DIR_NAME)
             self.assertFalse(workfiles.dictionary.exists())
-            self.assertFalse(workfiles.exchange_root.exists())
+
+    def test_unsaved_document_does_not_create_exchange(self):
+        from loopflow.foundation.paths import resolve_registry_for_document
+
+        before = set(Path(tempfile.gettempdir()).iterdir())
+        result = resolve_registry_for_document(None, "M3D")
+        after = set(Path(tempfile.gettempdir()).iterdir())
+        self.assertFalse(result.ok)
+        self.assertEqual(result.blocking, ("unsaved_document",))
+        self.assertEqual(before, after)
+
+    def test_exchange_follows_document_directory_not_filename(self):
+        from loopflow.foundation.paths import resolve_registry_for_document
+
+        with tempfile.TemporaryDirectory(prefix="loopflow-ex-") as raw:
+            folder = Path(raw)
+            first = resolve_registry_for_document(folder / "a.3dm", "M3D")
+            second = resolve_registry_for_document(folder / "b.3dm", "M3D")
+            renamed = resolve_registry_for_document(folder / "a.3dm", "Tower")
+            self.assertTrue(first.ok, first.message)
+            self.assertEqual(first.details["folder"], folder / "exchange" / "M3D")
+            self.assertEqual(second.details["folder"], first.details["folder"])
+            self.assertEqual(renamed.details["folder"], folder / "exchange" / "Tower")
+            self.assertNotEqual(first.details["folder"], renamed.details["folder"])
+            self.assertFalse((folder / "exchange").exists())
 
     def test_registry_paths_require_project_id(self):
         from loopflow.foundation.paths import registry_paths
 
         result = registry_paths(Path("exchange"), "")
         self.assertFalse(result.ok)
-        self.assertIn("project_id", result.message)
+        self.assertIn("專案名稱", result.message)
 
     def test_registry_paths_reject_nested_id(self):
         from loopflow.foundation.paths import registry_paths

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Callable, Mapping, Optional
 
+from loopflow.features.dictionary.layer_paths import project_id_from_session
 from loopflow.features.model_data.identity import _load_catalog
 from loopflow.features.model_data.verify import compare_apply_usertext, format_verify_popup, select_only
 from loopflow.features.registry.payload import assemble_payload
@@ -12,7 +13,6 @@ from loopflow.foundation import results
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 
 COMMAND_ID = "LF_Publish_Exchange"
-PROJECT_ID_KEY = "lf_project_id"
 
 
 def publish_from_session(
@@ -43,7 +43,14 @@ def publish_from_session(
                 command_id=command_id,
                 details={"publish_ready": False},
             )
-        project_id = current.document_user_text(PROJECT_ID_KEY)
+        project_id = project_id_from_session(current)
+        if not project_id:
+            return results.blocked(
+                "publish_registry",
+                "尚未填專案名稱。請先跑 Nexus 選單 2 從字典同步 Type Layers。",
+                blocking=("missing_project_id",),
+                command_id=command_id,
+            )
         verified = compare_apply_usertext(
             current,
             catalog=catalog,
@@ -74,6 +81,7 @@ def publish_from_session(
         )
         written = publish_registry(
             payload,
+            document_path=current.document_path() if hasattr(current, "document_path") else None,
             environ=environ,
             command_id=command_id,
         )
