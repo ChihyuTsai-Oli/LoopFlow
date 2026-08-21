@@ -1236,8 +1236,8 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
             self.Title = "LF_Catalog 圖目錄"
             self.Padding = _dialog_padding(drawing)
             self.Resizable = True
-            self.Width = 280
-            self.Height = 345 - CATALOG_BUTTON_HEIGHT - DIALOG_SPACING
+            self.Width = 333
+            self.Height = 330
 
             layout = forms.DynamicLayout()
             layout.Spacing = _dialog_spacing(drawing)
