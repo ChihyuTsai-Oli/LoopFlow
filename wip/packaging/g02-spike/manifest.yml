@@ -1,0 +1,12 @@
+---
+name: loopflow
+version: 0.1.0
+authors:
+- Chihyu Tsai
+description: >
+  LoopFlow 2.0 G02 spike. Registers only LFDocument. Not a full release.
+url: https://github.com/ChihyuTsai-Oli/LoopFlow
+keywords:
+- rhino
+- loopflow
+- documentation

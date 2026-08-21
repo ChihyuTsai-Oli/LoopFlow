@@ -95,7 +95,7 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Disp
 | Extract | `LF_Extract_CP` | — |
 | Duplicate Layout | `LF_Duplicate_Layout` | — |
 | Sync Worksession | `LF_Sync_Worksession` | — |
-| Document | `LF_Document` | — |
+| Document | `LF_Document`（開啟文件入口） | 日後：語系（繁中／English）；spike 尚未實作 |
 
 開發期輔助（**不是產品指令**，不進正式工具列）：`LF_D08_Migrate_Display_Keys` 全檔把圖塊舊顯示欄抄到 `lf_*` 後刪舊名字。鎖定欄若寫 `x`／`X` 會抄到 `lf_00_lock_state` 後刪舊名字；提示文字只刪不抄。圖塊公式改完後跑一次即可，不必逐張刪 UserText。
 
@@ -151,7 +151,7 @@ Duplicate Layout：跑 `LF_Duplicate_Layout`。加高可捲動清單可複選來
 
 Sync Worksession：跑 `LF_Sync_Worksession`。須先存檔。第一次**彈窗**「已開始監看」並監看目前檔案同資料夾的 `.3dm`（略過 `~`／`tmp` 暫存名），偵測到變動後等 0.5 秒、Rhino idle 時執行 Worksession Refresh。只 Refresh，不 Attach／Detach、不改 `.rws`。失敗延遲再試，不拆上一份參照。再跑一次**彈窗**停止。另存到別的資料夾後再跑會改監看新位置。未存檔說明並停止。不進 Nexus。**家中 Rhino 8 已測（2026-08-20）。**
 
-Document：跑 `LF_Document`。開啟 `https://github.com/ChihyuTsai-Oli/LoopFlow/blob/main/docs/README.md`（文件入口，不是專案首頁），頁內再連繁中／英文說明。不改模型。Rhino 不猜語系。打不開只說明。舊名 `LF_Help` 不登錄。不進 Nexus。**家中 Rhino 8 已測（2026-08-21）。**
+Document：跑 `LF_Document`（裝成套件後為 `LFDocument`）。開啟 `https://github.com/ChihyuTsai-Oli/LoopFlow/blob/main/docs/README.md`（文件入口，不是專案首頁），頁內再連繁中／英文說明。不改模型。Rhino 不猜語系。打不開只說明。舊名 `LF_Help` 不登錄。不進 Nexus。**家中 Rhino 8 已測（2026-08-21）。** 日後右鍵改這台電腦的介面語系；不另加語言按鈕。spike 只登錄左鍵／命令列開文件。
 
 左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。開發期按鈕仍指向 repo。正式工具列由使用者在 Rhino 8 排成 `LoopFlow.rui`，進 `.yak` 後左／右鍵改打正式名稱（例如 `! _LFDocument`）。完整 RUI 等最小 spike 命令列打得到再定稿。
 
