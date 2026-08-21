@@ -1,0 +1,41 @@
+{
+  "host": {
+    "name": "Rhino3D",
+    "version": "8.34.26223\u002B11001",
+    "os": "windows",
+    "arch": "x64"
+  },
+  "id": "e6822bb2-91ef-4bee-9564-45de3508ccfb",
+  "identity": {
+    "name": "LoopFlow",
+    "version": "0.1",
+    "publisher": {
+      "email": "chihyu@proton.me",
+      "name": "Chihyu Tsai",
+      "url": "https://chihyu-tsai.com/"
+    }
+  },
+  "settings": {
+    "buildPath": "build/",
+    "buildTarget": {
+      "host": {
+        "name": "Rhino3D",
+        "version": "8"
+      },
+      "title": "Rhino3D (8.*)",
+      "slug": "rh8"
+    },
+    "publishTarget": {
+      "title": "McNeel Yak Server"
+    }
+  },
+  "codes": [
+    {
+      "id": "c3a91f4e-2b7d-4e18-9f0a-6d5c8b1e4a22",
+      "name": "LFDocument",
+      "title": "LFDocument",
+      "language": "python3",
+      "path": "commands/LFDocument.py"
+    }
+  ]
+}

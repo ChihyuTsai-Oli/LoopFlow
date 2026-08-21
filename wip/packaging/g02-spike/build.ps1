@@ -2,30 +2,50 @@
 # 需要本機 Rhino 8 的 RhinoCode.exe 與 yak.exe。
 $ErrorActionPreference = "Stop"
 $Spike = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoWip = Split-Path -Parent (Split-Path -Parent $Spike)
+$Src = Join-Path $RepoWip "src"
 $Build = Join-Path $Spike "build"
 $Yak = "C:\Program Files\Rhino 8\System\Yak.exe"
 $RhinoCode = "C:\Program Files\Rhino 8\System\RhinoCode.exe"
 $Rhproj = Join-Path $Spike "LoopFlow.rhproj"
+$CommandPy = Join-Path $Spike "commands\LFDocument.py"
+
+if (-not (Test-Path $Rhproj)) { throw "找不到 LoopFlow.rhproj" }
+if (-not (Test-Path $CommandPy)) { throw "找不到 commands\LFDocument.py" }
+if (-not (Test-Path $Src)) { throw "找不到 wip\src" }
 
 New-Item -ItemType Directory -Force -Path $Build | Out-Null
-
-if (-not (Test-Path $Rhproj)) {
-    Write-Error @"
-找不到 LoopFlow.rhproj。
-請在 Rhino 8 開 ScriptEditor → 新增專案 → 把 commands\LFDocument.py 加為 Rhino 指令（名稱 LFDocument）→ 把 wip\src 加到 Libraries → 另存成這個資料夾的 LoopFlow.rhproj。
-然後再跑本腳本。不要改 wip\src\entrypoints\LF_Document.py 的檔名。
-"@
-}
-
-& $RhinoCode project build $Rhproj --buildversion 0.1.0 --buildtarget 8.* --buildpath $Build
+$Prepared = Join-Path $Build "LoopFlow.prepared.rhproj"
+$Prepare = Join-Path $Spike "prepare_rhproj.py"
+python $Prepare $Rhproj $CommandPy $Prepared
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-Push-Location $Build
+& $RhinoCode project build $Prepared --buildversion 0.1.0 --buildtarget 8.* --buildpath $Build
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+$Stage = Get-ChildItem -Path $Build -Recurse -Filter "LoopFlow.rhp" | Select-Object -First 1
+if (-not $Stage) { throw "RhinoCode 沒有產生 LoopFlow.rhp（專案可能沒有指令）" }
+$StageDir = $Stage.Directory.FullName
+
+$Lib = Join-Path $StageDir "lib"
+if (Test-Path $Lib) { Remove-Item $Lib -Recurse -Force }
+New-Item -ItemType Directory -Force -Path $Lib | Out-Null
+Copy-Item -Recurse (Join-Path $Src "loopflow") (Join-Path $Lib "loopflow")
+Get-ChildItem (Join-Path $Lib "loopflow") -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force
+$GeneratedSrc = Join-Path $StageDir "src"
+if (Test-Path $GeneratedSrc) { Remove-Item $GeneratedSrc -Recurse -Force }
+Get-ChildItem $StageDir -Filter "*.yak" | Remove-Item -Force
+
+Copy-Item -Force (Join-Path $Spike "manifest.yml") (Join-Path $StageDir "manifest.yml")
+
+Push-Location $StageDir
 try {
-    Copy-Item -Force (Join-Path $Spike "manifest.yml") .
     & $Yak build --platform win
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    Get-ChildItem *.yak | ForEach-Object { Write-Host "built $($_.FullName)" }
+    $Built = Get-ChildItem *.yak | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if (-not $Built) { throw "yak build 沒有產生 .yak" }
+    Copy-Item -Force $Built.FullName $Build
+    Write-Host "built $(Join-Path $Build $Built.Name)"
 }
 finally {
     Pop-Location

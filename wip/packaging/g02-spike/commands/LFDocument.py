@@ -7,15 +7,30 @@ import sys
 from pathlib import Path
 
 
+def _has_loopflow(root: Path) -> bool:
+    return (root / "loopflow" / "bootstrap.py").exists()
+
+
 def _loopflow_src() -> Path:
     here = Path(__file__).resolve()
     for parent in here.parents:
-        candidate = parent / "src"
-        if (candidate / "loopflow" / "bootstrap.py").exists():
-            return candidate
-        installed = parent / "lib"
-        if (installed / "loopflow" / "bootstrap.py").exists():
-            return installed
+        for folder in ("src", "lib"):
+            candidate = parent / folder
+            if _has_loopflow(candidate):
+                return candidate
+        if _has_loopflow(parent):
+            return parent
+    try:
+        import Rhino
+
+        rhp = Rhino.PlugIns.PlugIn.PathFromName("LoopFlow")
+    except Exception:
+        rhp = None
+    if rhp:
+        package_dir = Path(str(rhp)).resolve().parent
+        for candidate in (package_dir / "lib", package_dir / "src", package_dir):
+            if _has_loopflow(candidate):
+                return candidate
     raise RuntimeError("找不到 loopflow 套件（src 或 lib）。")
 
 

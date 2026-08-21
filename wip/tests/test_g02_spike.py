@@ -24,6 +24,12 @@ class G02SpikePackagingTests(unittest.TestCase):
         self.assertNotIn("LF_D08", script)
         self.assertIn("loopflow.bootstrap", script)
 
+    def test_rhproj_registers_lfdocument(self):
+        text = (SPIKE / "LoopFlow.rhproj").read_text(encoding="utf-8")
+        self.assertIn('"name": "LFDocument"', text)
+        self.assertIn("commands/LFDocument.py", text)
+        self.assertNotIn('"codes": []', text)
+
     def test_manifest_is_spike_only(self):
         text = (SPIKE / "manifest.yml").read_text(encoding="utf-8")
         self.assertIn("name: loopflow", text)
