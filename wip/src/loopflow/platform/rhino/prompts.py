@@ -871,9 +871,9 @@ def sheet_picker_preselected_indices(
 def ask_pick_catalog_sheets(
     items: Sequence[dict],
     selected_ids: Sequence[str] = (),
-    title: str = "選取 Sheet",
+    title: str = "選取 Layout",
 ) -> Optional[Tuple[str, ...]]:
-    """以反白多選 Sheet。Shift 連選、Ctrl 加選或取消。取消回 None。"""
+    """以反白多選 Layout。Shift 連選、Ctrl 加選或取消。取消回 None。"""
     if not items:
         return ()
     try:

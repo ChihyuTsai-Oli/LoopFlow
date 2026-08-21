@@ -1178,7 +1178,7 @@ def _default_pick_sheets(
     if not items:
         from loopflow.platform.rhino.prompts import show_message
 
-        show_message("沒有可列入目錄的 Sheet。請先執行 Layout ID。")
+        show_message("沒有可列入目錄的 Layout。請先執行 Layout ID。")
         return None
     return ask_pick_catalog_sheets(items, selected_ids=selected)
 
@@ -1236,8 +1236,8 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
             self.Title = "LF_Catalog 圖目錄"
             self.Padding = _dialog_padding(drawing)
             self.Resizable = True
-            self.Width = 420
-            self.Height = 345 + CATALOG_BUTTON_HEIGHT + DIALOG_SPACING
+            self.Width = 280
+            self.Height = 345 - CATALOG_BUTTON_HEIGHT - DIALOG_SPACING
 
             layout = forms.DynamicLayout()
             layout.Spacing = _dialog_spacing(drawing)
@@ -1252,9 +1252,8 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
             buttons = (
                 ("選取圖號定位點", self._on_pick_number),
                 ("選取圖名定位點", self._on_pick_name),
-                ("選取 Sheet", self._on_pick_sheets),
-                ("Build／Rebind", self._on_build),
-                ("Refresh", self._on_refresh),
+                ("選取 Layout", self._on_pick_sheets),
+                ("生成 圖號/圖名", self._on_build),
                 ("清除定位點並還原圖層", self._on_reset_points),
                 ("匯出 TXT", self._on_export),
             )
@@ -1265,20 +1264,18 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
                 button.Click += handler
                 layout.Add(button, True, False)
 
-            close_btn = forms.Button()
-            close_btn.Text = "關閉"
-            _lock_control_height(close_btn, drawing, CATALOG_BUTTON_HEIGHT)
-            close_btn.Click += self._on_close
-            layout.Add(close_btn, True, False)
             layout.Add(None)
             self.Content = layout
-            self.AbortButton = close_btn
+            abort = forms.Button()
+            abort.Visible = False
+            abort.Click += self._on_close
+            self.AbortButton = abort
             self._refresh_counts()
 
         def _refresh_counts(self) -> None:
             numbers = _layer_field_ids(session, NUMBER_LAYER, FIELD_DRAWING_NO)
             names = _layer_field_ids(session, NAME_LAYER, FIELD_DRAWING_NAME)
-            self.count_label.Text = "圖號定位點 %s　圖名定位點 %s　已選 Sheet %s" % (
+            self.count_label.Text = "圖號定位點 %s　圖名定位點 %s　已選 Layout %s" % (
                 len(numbers),
                 len(names),
                 len(selected_sheets),
@@ -1288,6 +1285,13 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
             if not result.ok:
                 show_failure_popup(result)
             self._refresh_counts()
+
+        def _finish(self, result: results.Result) -> None:
+            if not result.ok:
+                show_failure_popup(result)
+                self._refresh_counts()
+                return
+            self.Close(True)
 
         def _on_pick_number(self, sender, e) -> None:
             self.Visible = False
@@ -1327,16 +1331,13 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
                     return
                 selected_sheets[:] = list(picked)
                 self._refresh_counts()
-            self._present(build_catalog(session, tuple(selected_sheets)))
-
-        def _on_refresh(self, sender, e) -> None:
-            self._present(refresh_catalog(session))
+            self._finish(build_catalog(session, tuple(selected_sheets)))
 
         def _on_reset_points(self, sender, e) -> None:
-            self._present(reset_catalog_points(session))
+            self._finish(reset_catalog_points(session))
 
         def _on_export(self, sender, e) -> None:
-            self._present(export_catalog_txt(session, ask_path=_default_ask_path))
+            self._finish(export_catalog_txt(session, ask_path=_default_ask_path))
 
         def _on_close(self, sender, e) -> None:
             self.Close(True)
