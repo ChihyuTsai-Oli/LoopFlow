@@ -16,7 +16,9 @@ from typing import Callable, Dict, List, Optional, Sequence, Tuple
 from loopflow.features.catalog.keys import (
     ALLOWED_FIELDS,
     CATALOG_ID_KEY,
+    COLOR_BY_LAYER_VALUE,
     COLUMN_TOLERANCE,
+    DEFAULT_TEXT_FONT,
     FIELD_DRAWING_NAME,
     FIELD_DRAWING_NO,
     FIELD_KEY,
@@ -31,8 +33,12 @@ from loopflow.features.catalog.keys import (
     ROW_TOLERANCE,
     SHEET_ID_KEY,
     TEXT_COLOR,
+    TEXT_COLOR_KEY,
+    TEXT_FONT_KEY,
     TEXT_HEIGHT,
+    TEXT_HEIGHT_KEY,
     TEXT_LAYER,
+    TEXT_LAYER_KEY,
 )
 from loopflow.features.sheet.metadata import (
     get_sheet_metadata,
@@ -519,6 +525,67 @@ def _write_text_keys(
     session.set_object_user_text(text_id, FIELD_KEY, field)
 
 
+def _encode_rgb(rgb) -> str:
+    return "%s,%s,%s" % (int(rgb[0]), int(rgb[1]), int(rgb[2]))
+
+
+def _parse_rgb(value: str):
+    parts = [item.strip() for item in str(value or "").split(",")]
+    if len(parts) != 3:
+        return None
+    try:
+        return (int(parts[0]), int(parts[1]), int(parts[2]))
+    except ValueError:
+        return None
+
+
+def _parse_height(value: Optional[str]) -> Optional[float]:
+    raw = text(value)
+    if raw is None:
+        return None
+    try:
+        return float(raw)
+    except ValueError:
+        return None
+
+
+def _write_text_style_to_point(session: RhinoSession, text_id: str, point_id: str) -> None:
+    font = session.text_font(text_id)
+    if font:
+        session.set_object_user_text(point_id, TEXT_FONT_KEY, font)
+    height = session.text_height(text_id)
+    if height:
+        session.set_object_user_text(point_id, TEXT_HEIGHT_KEY, str(height))
+    layer = session.object_layer(text_id)
+    if layer:
+        session.set_object_user_text(point_id, TEXT_LAYER_KEY, layer)
+    if session.object_color_by_layer(text_id):
+        session.set_object_user_text(point_id, TEXT_COLOR_KEY, COLOR_BY_LAYER_VALUE)
+        return
+    color = session.object_display_color(text_id)
+    if color:
+        session.set_object_user_text(point_id, TEXT_COLOR_KEY, _encode_rgb(color))
+
+
+def _snapshot_generated_text_styles(session: RhinoSession, catalog_id: str) -> None:
+    for text_id in generated_text_ids(session, catalog_id):
+        point_id = text(session.get_object_user_text(text_id, POINT_ID_KEY))
+        if point_id:
+            _write_text_style_to_point(session, text_id, point_id)
+
+
+def _apply_stored_color(session: RhinoSession, text_id: str, color_raw: Optional[str]) -> None:
+    value = text(color_raw)
+    if value is None:
+        return
+    if value == COLOR_BY_LAYER_VALUE:
+        session.reset_object_to_bylayer(text_id)
+        return
+    rgb = _parse_rgb(value)
+    if rgb is not None:
+        session.set_object_color(text_id, rgb)
+
+
 def _create_catalog_text_object(
     session: RhinoSession,
     content: str,
@@ -530,14 +597,23 @@ def _create_catalog_text_object(
     field: str,
     height: float,
 ) -> str:
+    stored_font = text(session.get_object_user_text(point_id, TEXT_FONT_KEY))
+    stored_height = _parse_height(session.get_object_user_text(point_id, TEXT_HEIGHT_KEY))
+    stored_layer = text(session.get_object_user_text(point_id, TEXT_LAYER_KEY))
+    stored_color = text(session.get_object_user_text(point_id, TEXT_COLOR_KEY))
+    layer = stored_layer or TEXT_LAYER
     _ensure_text_layer(session)
+    if layer != TEXT_LAYER:
+        session.ensure_layer(layer)
     text_id = session.add_text(
         content,
         point_xyz,
-        layer=TEXT_LAYER,
+        layer=layer,
         page_name=page_name,
-        height=height,
+        height=float(stored_height if stored_height else height),
+        font=stored_font or DEFAULT_TEXT_FONT,
     )
+    _apply_stored_color(session, text_id, stored_color)
     _write_text_keys(
         session,
         text_id,
@@ -556,6 +632,7 @@ def sync_catalog_text(
     height: float = TEXT_HEIGHT,
 ) -> Tuple[str, ...]:
     """更新已有目錄文字的內容；字型、大小、圖層與位置維持原設定。缺件才在定位點新建。"""
+    _snapshot_generated_text_styles(session, catalog_id)
     existing_by_point = {}
     for text_id in generated_text_ids(session, catalog_id):
         point_id = text(session.get_object_user_text(text_id, POINT_ID_KEY))
@@ -601,6 +678,7 @@ def sync_catalog_text(
     for text_id in generated_text_ids(session, catalog_id):
         if text_id not in keep:
             session.delete_object(text_id)
+    _snapshot_generated_text_styles(session, catalog_id)
     return tuple(written)
 
 
@@ -754,6 +832,10 @@ def reset_catalog_points(
             current.set_object_user_text(object_id, FIELD_KEY, "")
             current.set_object_user_text(object_id, SHEET_ID_KEY, "")
             current.set_object_user_text(object_id, HOME_LAYER_KEY, "")
+            current.set_object_user_text(object_id, TEXT_FONT_KEY, "")
+            current.set_object_user_text(object_id, TEXT_HEIGHT_KEY, "")
+            current.set_object_user_text(object_id, TEXT_LAYER_KEY, "")
+            current.set_object_user_text(object_id, TEXT_COLOR_KEY, "")
             restored += 1
         removed = 0
         for catalog_id in catalog_ids:

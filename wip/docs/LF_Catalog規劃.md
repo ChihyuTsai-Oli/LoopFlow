@@ -39,7 +39,7 @@ flowchart TD
 - `sheet_id` 才是 Sheet 的身分。Catalog 定位點綁 `sheet_id`，**永不**綁目前的圖號。
 - Catalog 文字是可丟棄的輸出，Catalog 定位點是持久的綁定。
 
-因此重新編號、改圖名、文字被刪、文字被手改，都能由「定位點 + Sheet metadata」還原內容；字型、大小、圖層與已移動的位置在 Refresh 時保留。新建或重建時才把文字放回定位點左下角。
+因此重新編號、改圖名、文字被刪、文字被手改，都能由「定位點 + Sheet metadata」還原內容；字型、大小、圖層、顏色存在對應定位點上，缺件新建時套用。已移動的位置仍只在文字物件上，Refresh 不拉回定位點。
 
 ## 定位點契約
 
@@ -51,10 +51,14 @@ Catalog Anchor 是 Rhino Point 物件，UserText：
 | `lf_catalog_field` | 只允許 `drawing_no` 或 `drawing_name` |
 | `lf_catalog_sheet_id` | 目前綁定的 Sheet；未使用的空位不寫此欄 |
 | `lf_catalog_home_layer` | 選取歸位前的圖層；清除定位點時還原 |
+| `lf_catalog_text_font` | 該格文字字型名；缺欄新建用 `Arial` |
+| `lf_catalog_text_height` | 該格文字字高；缺欄新建用 `3.0` |
+| `lf_catalog_text_layer` | 該格文字圖層；缺欄新建用 `LoopFlow::Drawing_Text` |
+| `lf_catalog_text_color` | 該格文字顏色 `r,g,b` 或 `by_layer` |
 
-`lf_catalog_id` 與 `lf_catalog_field` 代表定位點的模板角色，`lf_catalog_sheet_id` 只代表目前綁定，因此**空位仍是合法 anchor**：40 格的模板可以只放 28 張圖。定位點不保存圖號、圖名實值，也不保存 Layout 頁名。
+`lf_catalog_id` 與 `lf_catalog_field` 代表定位點的模板角色，`lf_catalog_sheet_id` 只代表目前綁定，因此**空位仍是合法 anchor**：40 格的模板可以只放 28 張圖。定位點不保存圖號、圖名實值，也不保存 Layout 頁名。圖號格與圖名格各自記住文字外觀。
 
-產生文字寫 `lf_generated_by = LF_Catalog`、`lf_catalog_id`、`lf_catalog_point_id`、`lf_catalog_field`。新建時定位點是文字左下角原點。Refresh 對得到定位點就只改內容，不重設字型、大小、圖層、顏色，也不把已移動的文字拉回定位點；對不到才新建；未用到的舊目錄文字才刪。定位點寫 `lf_catalog_home_layer`。**不得**用「定位點附近的文字」來判斷哪些是目錄文字。
+產生文字寫 `lf_generated_by = LF_Catalog`、`lf_catalog_id`、`lf_catalog_point_id`、`lf_catalog_field`。新建時定位點是文字左下角原點。Build／Rebind／Refresh 先把現有目錄文字的字型、大小、圖層、顏色寫回定位點；對得到定位點就只改內容，不重設外觀，也不把已移動的文字拉回定位點；對不到才新建並套用該點記下的外觀。未用到的舊目錄文字才刪。定位點寫 `lf_catalog_home_layer`。**不得**用「定位點附近的文字」來判斷哪些是目錄文字。
 
 ## 三條硬規則
 
@@ -129,7 +133,7 @@ Eto Panel，七個動作：
 | 選取圖名定位點 | 選 Point → 歸位 `LoopFlow::Drawing_Name` → 面板顯示數量 |
 | 選取 Sheet | 四欄對齊（頁序、圖號、圖名、頁名）；Shift 連選、Ctrl 加選或取消，點任一欄都算該列；選取列會反白 |
 | Build／Rebind | 驗證 → 預覽核對清單 → 寫定位點綁定 → 建立或更新文字 |
-| Refresh | 不改綁定；更新內容，保留字型、大小、圖層與已移動的位置 |
+| Refresh | 不改綁定；更新內容，把字型／大小／圖層／顏色寫回定位點，已移動的位置留下 |
 | 清除定位點並還原圖層 | 清除定位點目錄資料、還原選取前的圖層、刪除目錄文字 |
 | 匯出 TXT | 依目前綁定輸出 `圖名, 圖號`，UTF-8 |
 
@@ -144,10 +148,11 @@ Build／Rebind 改變「定位點 ↔ Sheet」關係；Refresh 只重新取得�
 | 圖名修改 | Refresh 後文字更新 |
 | 插頁導致圖號改變 | `sheet_id` 不變，Refresh 取到新 `drawing_no` |
 | Layout 頁名被手改 | 完全不影響目錄 |
-| 目錄文字被手改或移動 | Refresh 把內容改回 metadata 值；字型／大小／圖層／位置留下 |
-| 目錄文字被刪 | 定位點還在即可在 `Drawing_Text` 新建 |
+| 目錄文字被手改或移動 | Refresh 把內容改回 metadata 值；字型／大小／圖層／顏色寫回定位點，位置留下 |
+| 目錄文字被刪 | 定位點還在即可新建，並套用該點記下的外觀 |
 | 定位點被移動 | Refresh 不把文字拉回新點位 |
-| 綁定的 Sheet 被刪除 | 該列不生成文字，報告 missing sheet，不阻擋其餘更新 |
+| 綁定的 Sheet 被刪除 | 該列不生成文字，報告 missing sheet，不阻擋其餘更新；刪字前外觀已在定位點上 |
+| 中間幾張圖刪除後 Rebind | 該格若需重建文字，用該定位點記下的字型／大小／圖層／顏色，不是預設 |
 | Sheet metadata 為 orphan | 同上；metadata 存在不等於 Sheet 仍 active |
 | Sheet metadata 過期（頁序變了沒重跑 D04） | 回報 `stale` 並要求先執行 D04，不安靜輸出舊值 |
 
@@ -181,7 +186,7 @@ Build／Rebind 改變「定位點 ↔ Sheet」關係；Refresh 只重新取得�
 
 ## 自動測試涵蓋
 
-排序：單欄由上而下、雙欄左欄接右欄、X 微小誤差仍同欄、選取順序不影響結果、**跨頁不混排**。配對：逐頁數量相等／不等、同列驗證通過／失敗、Sheet 少於定位點、Sheet 多於定位點零寫入。綁定：Build 寫入正確 `sheet_id`、Rebind 替換舊綁定、Refresh 不動綁定。資料更新：改圖名、改圖號、改頁名不影響目錄、stale 偵測。缺失：Sheet 被刪、orphan metadata、欄位缺值。輸出：文字被刪可重建、文字被手改可恢復內容、Refresh 維持字型／大小／圖層、不影響人工文字。安全：Esc 零寫入、預覽取消零寫入、混入多個 `catalog_id` 零寫入、選到 Block 零寫入。匯出：順序與目錄一致、UTF-8 中文正常、Rhino 檔未儲存時要求選路徑。
+排序：單欄由上而下、雙欄左欄接右欄、X 微小誤差仍同欄、選取順序不影響結果、**跨頁不混排**。配對：逐頁數量相等／不等、同列驗證通過／失敗、Sheet 少於定位點、Sheet 多於定位點零寫入。綁定：Build 寫入正確 `sheet_id`、Rebind 替換舊綁定、Refresh 不動綁定。資料更新：改圖名、改圖號、改頁名不影響目錄、stale 偵測。缺失：Sheet 被刪、orphan metadata、欄位缺值。輸出：文字被刪可重建並套用定位點外觀、文字被手改可恢復內容、Refresh 維持字型／大小／圖層／位置、中間格 Rebind 重建不回預設、不影響人工文字。安全：Esc 零寫入、預覽取消零寫入、混入多個 `catalog_id` 零寫入、選到 Block 零寫入。匯出：順序與目錄一致、UTF-8 中文正常、Rhino 檔未儲存時要求選路徑。
 
 ## Rhino 8 實機驗收清單
 
@@ -201,5 +206,6 @@ Build／Rebind 改變「定位點 ↔ Sheet」關係；Refresh 只重新取得�
 14. 開面板後確認 `LoopFlow` 與子圖層列印寬度為 `No Print`
 15. 確認關閉鈕高度與其餘按鈕相近
 16. 「清除定位點並還原圖層」確認後，點回到選取前的圖層、目錄文字刪除
+17. 改字型／大小／圖層／顏色後刪中間幾張圖，Layout ID 再 Rebind，該格重建文字應是改過的外觀
 
 家中 Rhino 8（2026-08-18）已測：定位點歸位、Sheet 四欄與 Ctrl 加選、Build、Refresh 不拉回已移動文字、關閉鈕高度、列印寬度 `No Print`。上表其餘項目可作回歸。此檔是 Catalog 當時的操作指示；Infuser／TAG-O 其後已實機通過。Extract 仍尚未實作、不要開。

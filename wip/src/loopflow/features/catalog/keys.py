@@ -24,10 +24,16 @@ TEXT_COLOR = (205, 179, 139)  # #CDB38B
 
 POINT_ID_KEY = "lf_catalog_point_id"
 HOME_LAYER_KEY = "lf_catalog_home_layer"
+TEXT_FONT_KEY = "lf_catalog_text_font"
+TEXT_HEIGHT_KEY = "lf_catalog_text_height"
+TEXT_LAYER_KEY = "lf_catalog_text_layer"
+TEXT_COLOR_KEY = "lf_catalog_text_color"
+COLOR_BY_LAYER_VALUE = "by_layer"
 
 # 文件單位為公分時的空間容差。
 COLUMN_TOLERANCE = 2.0
 ROW_TOLERANCE = 2.0
 TEXT_HEIGHT = 3.0
+DEFAULT_TEXT_FONT = "Arial"
 # rhinoscriptsyntax：Left + Bottom，文字左下角對齊定位點。
 TEXT_JUSTIFICATION_BOTTOM_LEFT = 1 | 65536

@@ -11,14 +11,20 @@
     "drawing_name": [0, 255, 0],
     "text": [205, 179, 139]
   },
-  "usertext_keys": {
-    "catalog_id": "lf_catalog_id",
-    "field": "lf_catalog_field",
-    "sheet_id": "lf_catalog_sheet_id",
-    "point_id": "lf_catalog_point_id",
-    "home_layer": "lf_catalog_home_layer",
-    "generated_by": "lf_generated_by"
-  },
+    "usertext_keys": {
+      "catalog_id": "lf_catalog_id",
+      "field": "lf_catalog_field",
+      "sheet_id": "lf_catalog_sheet_id",
+      "point_id": "lf_catalog_point_id",
+      "home_layer": "lf_catalog_home_layer",
+      "generated_by": "lf_generated_by",
+      "text_font": "lf_catalog_text_font",
+      "text_height": "lf_catalog_text_height",
+      "text_layer": "lf_catalog_text_layer",
+      "text_color": "lf_catalog_text_color"
+    },
+    "text_color_by_layer": "by_layer",
+    "default_text_font": "Arial",
   "allowed_fields": ["drawing_no", "drawing_name"],
   "generated_by_value": "LF_Catalog",
   "column_tolerance": 2.0,
@@ -30,7 +36,8 @@
     "空位仍是合法 anchor，未綁定不寫 lf_catalog_sheet_id。",
     "排序必須先依 Layout 頁分組，再 X 分欄、Y 由上而下。",
     "產生文字在 LoopFlow::Drawing_Text，左下角對齊定位點。",
-    "產生文字寫 lf_generated_by、lf_catalog_id、lf_catalog_point_id；Refresh 更新內容，保留字型、大小、圖層與已移動的位置。",
-    "定位點寫 lf_catalog_home_layer；清除定位點時還原該圖層並刪除目錄文字。"
+    "產生文字寫 lf_generated_by、lf_catalog_id、lf_catalog_point_id；Refresh 更新內容，保留字型、大小、圖層、顏色與已移動的位置。",
+    "定位點另記該格文字外觀：lf_catalog_text_font／height／layer／color。Build／Refresh 先從現有文字寫回，缺件新建時套用；缺欄用預設。",
+    "定位點寫 lf_catalog_home_layer；清除定位點時還原該圖層、清外觀欄，並刪除目錄文字。"
   ]
 }

@@ -338,6 +338,26 @@ class MemorySession:
         self._meta(object_id)["layer"] = path
         self._modified = True
 
+    def object_color_by_layer(self, object_id: str) -> bool:
+        state = self._objects.get(object_id)
+        if state is None:
+            return True
+        return bool(state.color_by_layer)
+
+    def set_object_color(self, object_id: str, rgb) -> None:
+        state = self._objects.get(object_id)
+        if state is None:
+            return
+        self._objects[object_id] = ObjectViewState(
+            object_id=object_id,
+            selected=state.selected,
+            locked=state.locked,
+            hidden=state.hidden,
+            color=tuple(int(value) for value in rgb[:3]),
+            color_by_layer=False,
+        )
+        self._modified = True
+
     def get_object_user_text(self, object_id: str, key: str) -> Optional[str]:
         value = self._meta(object_id)["user_text"].get(key)
         if value in (None, ""):
@@ -402,6 +422,7 @@ class MemorySession:
         layer: str,
         page_name: Optional[str] = None,
         height: float = 1.0,
+        font: Optional[str] = None,
     ) -> str:
         object_id = "mem-%s" % self._next_id
         self._next_id += 1
@@ -411,7 +432,7 @@ class MemorySession:
             "text": str(content),
             "point": xyz,
             "height": float(height),
-            "font": "Arial",
+            "font": str(font or "Arial"),
             "justification": "bottom_left",
         }
         if page_name:
@@ -439,6 +460,20 @@ class MemorySession:
         if item is None:
             return
         item["height"] = float(height)
+        self._modified = True
+
+    def text_font(self, object_id: str) -> Optional[str]:
+        item = self._texts.get(object_id)
+        if not item:
+            return None
+        value = str(item.get("font") or "").strip()
+        return value or None
+
+    def set_text_font(self, object_id: str, font: str) -> None:
+        item = self._texts.get(object_id)
+        if item is None:
+            return
+        item["font"] = str(font)
         self._modified = True
 
     def text_origin(self, object_id: str):

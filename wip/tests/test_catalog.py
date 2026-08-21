@@ -29,6 +29,7 @@ from loopflow.features.catalog.catalog import (
 )
 from loopflow.features.catalog.keys import (
     CATALOG_ID_KEY,
+    DEFAULT_TEXT_FONT,
     FIELD_DRAWING_NAME,
     FIELD_DRAWING_NO,
     FIELD_KEY,
@@ -40,7 +41,12 @@ from loopflow.features.catalog.keys import (
     POINT_ID_KEY,
     SHEET_ID_KEY,
     TEXT_COLOR,
+    TEXT_COLOR_KEY,
+    TEXT_FONT_KEY,
+    TEXT_HEIGHT,
+    TEXT_HEIGHT_KEY,
     TEXT_LAYER,
+    TEXT_LAYER_KEY,
 )
 from loopflow.features.sheet.keys import SHEET_ID_KEY as FRAME_SHEET_ID_KEY
 from loopflow.features.sheet.metadata import write_sheet_metadata
@@ -304,6 +310,103 @@ class AssignAndBuildTests(unittest.TestCase):
             self.assertEqual(session.text_height(object_id), 8.5)
             self.assertEqual(session.object_layer(object_id), "Manual::Catalog")
             self.assertEqual(session.text_origin(object_id), (10.0, 20.0, 0))
+        self.assertEqual(session.get_object_user_text("n1", TEXT_HEIGHT_KEY), "8.5")
+        self.assertEqual(session.get_object_user_text("n1", TEXT_LAYER_KEY), "Manual::Catalog")
+        self.assertEqual(session.get_object_user_text("m1", TEXT_HEIGHT_KEY), "8.5")
+        self.assertEqual(session.get_object_user_text("m1", TEXT_LAYER_KEY), "Manual::Catalog")
+
+    def test_refresh_recreates_deleted_text_with_stored_style(self):
+        session = _session()
+        session.set_layout_pages(["P1"])
+        _add_sheet(session, "P1", SHEET_A, "IN 101", "一樓", 1)
+        _add_anchor(session, "n1", (100, 200, 0), page="P1", layer=NUMBER_LAYER, field=FIELD_DRAWING_NO)
+        _add_anchor(session, "m1", (180, 200, 0), page="P1", layer=NAME_LAYER, field=FIELD_DRAWING_NAME)
+        result = build_catalog(session, [SHEET_A], confirm=lambda _lines: True, catalog=_catalog())
+        self.assertTrue(result.ok, result.message)
+        for object_id in generated_text_ids(session, CATALOG_ID):
+            session.set_text_font(object_id, "Noto Sans")
+            session.set_text_height(object_id, 8.5)
+            session.set_object_layer(object_id, "Manual::Catalog")
+            session.set_object_color(object_id, (10, 20, 30))
+        refreshed = refresh_catalog(session, catalog=_catalog())
+        self.assertTrue(refreshed.ok, refreshed.message)
+        self.assertEqual(session.get_object_user_text("n1", TEXT_FONT_KEY), "Noto Sans")
+        self.assertEqual(session.get_object_user_text("n1", TEXT_HEIGHT_KEY), "8.5")
+        self.assertEqual(session.get_object_user_text("n1", TEXT_LAYER_KEY), "Manual::Catalog")
+        self.assertEqual(session.get_object_user_text("n1", TEXT_COLOR_KEY), "10,20,30")
+        for object_id in list(generated_text_ids(session, CATALOG_ID)):
+            session.delete_object(object_id)
+        rebuilt = refresh_catalog(session, catalog=_catalog())
+        self.assertTrue(rebuilt.ok, rebuilt.message)
+        after = generated_text_ids(session, CATALOG_ID)
+        self.assertEqual(len(after), 2)
+        for object_id in after:
+            self.assertEqual(session.text_font(object_id), "Noto Sans")
+            self.assertEqual(session.text_height(object_id), 8.5)
+            self.assertEqual(session.object_layer(object_id), "Manual::Catalog")
+            self.assertEqual(session.object_display_color(object_id), (10, 20, 30))
+            self.assertFalse(session.object_color_by_layer(object_id))
+
+    def test_rebind_middle_slot_keeps_stored_style(self):
+        session = _session()
+        session.set_layout_pages(["P1", "P2", "P3", "Catalog"])
+        _add_sheet(session, "P1", SHEET_A, "IN 101", "一樓", 1)
+        _add_sheet(session, "P2", SHEET_B, "IN 102", "二樓", 2)
+        _add_sheet(session, "P3", SHEET_C, "IN 103", "三樓", 3)
+        _add_anchor(session, "n1", (100, 300, 0), page="Catalog", layer=NUMBER_LAYER, field=FIELD_DRAWING_NO)
+        _add_anchor(session, "n2", (100, 200, 0), page="Catalog", layer=NUMBER_LAYER, field=FIELD_DRAWING_NO)
+        _add_anchor(session, "n3", (100, 100, 0), page="Catalog", layer=NUMBER_LAYER, field=FIELD_DRAWING_NO)
+        _add_anchor(session, "m1", (180, 300, 0), page="Catalog", layer=NAME_LAYER, field=FIELD_DRAWING_NAME)
+        _add_anchor(session, "m2", (180, 200, 0), page="Catalog", layer=NAME_LAYER, field=FIELD_DRAWING_NAME)
+        _add_anchor(session, "m3", (180, 100, 0), page="Catalog", layer=NAME_LAYER, field=FIELD_DRAWING_NAME)
+        result = build_catalog(
+            session, [SHEET_A, SHEET_B, SHEET_C], confirm=lambda _lines: True, catalog=_catalog()
+        )
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(len(generated_text_ids(session, CATALOG_ID)), 6)
+        for object_id in generated_text_ids(session, CATALOG_ID):
+            session.set_text_font(object_id, "Noto Sans")
+            session.set_text_height(object_id, 8.5)
+            session.set_object_layer(object_id, "Manual::Catalog")
+            session.set_object_color(object_id, (10, 20, 30))
+        self.assertTrue(refresh_catalog(session, catalog=_catalog()).ok)
+        for object_id in list(generated_text_ids(session, CATALOG_ID)):
+            if session.get_object_user_text(object_id, POINT_ID_KEY) in ("n2", "m2"):
+                session.delete_object(object_id)
+        sheet_d = "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
+        session.set_layout_pages(["P1", "P2", "P3", "Catalog", "P4"])
+        _add_sheet(session, "P4", sheet_d, "IN 104", "四樓", 5)
+        rebound = build_catalog(
+            session, [SHEET_A, sheet_d, SHEET_C], confirm=lambda _lines: True, catalog=_catalog()
+        )
+        self.assertTrue(rebound.ok, rebound.message)
+        self.assertEqual(session.get_object_user_text("n2", SHEET_ID_KEY), sheet_d)
+        middle = []
+        for object_id in generated_text_ids(session, CATALOG_ID):
+            if session.get_object_user_text(object_id, POINT_ID_KEY) in ("n2", "m2"):
+                middle.append(object_id)
+        self.assertEqual(len(middle), 2)
+        values = {session.text_content(item) for item in middle}
+        self.assertEqual(values, {"IN 104", "四樓"})
+        for object_id in middle:
+            self.assertEqual(session.text_font(object_id), "Noto Sans")
+            self.assertEqual(session.text_height(object_id), 8.5)
+            self.assertEqual(session.object_layer(object_id), "Manual::Catalog")
+            self.assertEqual(session.object_display_color(object_id), (10, 20, 30))
+
+    def test_new_catalog_text_uses_defaults_without_stored_style(self):
+        session = _session()
+        session.set_layout_pages(["P1"])
+        _add_sheet(session, "P1", SHEET_A, "IN 101", "一樓", 1)
+        _add_anchor(session, "n1", (100, 200, 0), page="P1", layer=NUMBER_LAYER, field=FIELD_DRAWING_NO)
+        _add_anchor(session, "m1", (180, 200, 0), page="P1", layer=NAME_LAYER, field=FIELD_DRAWING_NAME)
+        result = build_catalog(session, [SHEET_A], confirm=lambda _lines: True, catalog=_catalog())
+        self.assertTrue(result.ok, result.message)
+        for object_id in generated_text_ids(session, CATALOG_ID):
+            self.assertEqual(session.text_font(object_id), DEFAULT_TEXT_FONT)
+            self.assertEqual(session.text_height(object_id), TEXT_HEIGHT)
+            self.assertEqual(session.object_layer(object_id), TEXT_LAYER)
+            self.assertTrue(session.object_color_by_layer(object_id))
 
     def test_reset_catalog_points_restores_home_layer(self):
         session = _session()
@@ -333,6 +436,10 @@ class AssignAndBuildTests(unittest.TestCase):
         self.assertIsNone(session.get_object_user_text("n1", CATALOG_ID_KEY))
         self.assertIsNone(session.get_object_user_text("n1", FIELD_KEY))
         self.assertIsNone(session.get_object_user_text("n1", HOME_LAYER_KEY))
+        self.assertIsNone(session.get_object_user_text("n1", TEXT_FONT_KEY))
+        self.assertIsNone(session.get_object_user_text("n1", TEXT_HEIGHT_KEY))
+        self.assertIsNone(session.get_object_user_text("n1", TEXT_LAYER_KEY))
+        self.assertIsNone(session.get_object_user_text("n1", TEXT_COLOR_KEY))
         self.assertEqual(generated_text_ids(session, catalog_id), ())
 
     def test_stale_blocks_refresh(self):
@@ -519,6 +626,12 @@ class SchemaFixtureTests(unittest.TestCase):
         self.assertEqual(spec["usertext_keys"]["sheet_id"], catalog_keys.SHEET_ID_KEY)
         self.assertEqual(spec["usertext_keys"]["point_id"], catalog_keys.POINT_ID_KEY)
         self.assertEqual(spec["usertext_keys"]["home_layer"], catalog_keys.HOME_LAYER_KEY)
+        self.assertEqual(spec["usertext_keys"]["text_font"], catalog_keys.TEXT_FONT_KEY)
+        self.assertEqual(spec["usertext_keys"]["text_height"], catalog_keys.TEXT_HEIGHT_KEY)
+        self.assertEqual(spec["usertext_keys"]["text_layer"], catalog_keys.TEXT_LAYER_KEY)
+        self.assertEqual(spec["usertext_keys"]["text_color"], catalog_keys.TEXT_COLOR_KEY)
+        self.assertEqual(spec["text_color_by_layer"], catalog_keys.COLOR_BY_LAYER_VALUE)
+        self.assertEqual(spec["default_text_font"], catalog_keys.DEFAULT_TEXT_FONT)
         self.assertEqual(spec["generated_by_value"], catalog_keys.GENERATED_BY_VALUE)
         self.assertEqual(spec["column_tolerance"], catalog_keys.COLUMN_TOLERANCE)
         self.assertEqual(spec["row_tolerance"], catalog_keys.ROW_TOLERANCE)

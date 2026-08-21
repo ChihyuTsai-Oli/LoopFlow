@@ -541,10 +541,18 @@ def check_catalog() -> None:
         "point_id": "lf_catalog_point_id",
         "home_layer": "lf_catalog_home_layer",
         "generated_by": "lf_generated_by",
+        "text_font": "lf_catalog_text_font",
+        "text_height": "lf_catalog_text_height",
+        "text_layer": "lf_catalog_text_layer",
+        "text_color": "lf_catalog_text_color",
     }
     for name, value in expected.items():
         if keys.get(name) != value:
             fail("catalog UserText %s 應為 %s" % (name, value))
+    if spec.get("text_color_by_layer") != "by_layer":
+        fail("catalog 跟圖層色必須寫 by_layer")
+    if spec.get("default_text_font") != "Arial":
+        fail("catalog 預設字型必須是 Arial")
     if spec["allowed_fields"] != ["drawing_no", "drawing_name"]:
         fail("catalog allowed_fields 只能是 drawing_no／drawing_name")
     if spec["generated_by_value"] != "LF_Catalog":

@@ -659,6 +659,22 @@ class LiveSession:
             return None
         return None
 
+    def object_color_by_layer(self, object_id: str) -> bool:
+        try:
+            return int(self._rs.ObjectColorSource(object_id)) == COLOR_SOURCE_BY_LAYER
+        except Exception:
+            return True
+
+    def set_object_color(self, object_id: str, rgb) -> None:
+        try:
+            self._rs.ObjectColorSource(object_id, COLOR_SOURCE_BY_OBJECT)
+            self._rs.ObjectColor(
+                object_id,
+                (int(rgb[0]), int(rgb[1]), int(rgb[2])),
+            )
+        except Exception:
+            pass
+
     def layer_locked(self, path: str) -> bool:
         try:
             return bool(self._rs.IsLayerLocked(path))
@@ -764,17 +780,19 @@ class LiveSession:
         layer: str,
         page_name: Optional[str] = None,
         height: float = 1.0,
+        font: Optional[str] = None,
     ) -> str:
         xyz = (
             float(point[0]),
             float(point[1]),
             float(point[2]) if point is not None and len(point) > 2 else 0.0,
         )
+        font_name = str(font or "Arial")
         text_id = self._rs.AddText(
             str(content),
             xyz,
             float(height),
-            "Arial",
+            font_name,
             0,
             1 | 65536,  # Left + Bottom，左下角對齊定位點
         )
@@ -842,6 +860,55 @@ class LiveSession:
             return bool(self._sc.doc.Objects.Replace(obj.Id, geom))
         except Exception:
             return False
+
+    def text_font(self, object_id: str) -> Optional[str]:
+        try:
+            value = self._rs.TextObjectFont(object_id)
+            if value not in (None, ""):
+                return str(value)
+        except Exception:
+            pass
+        obj = self._rhino_object(object_id)
+        geom = getattr(obj, "Geometry", None) if obj is not None else None
+        font = getattr(geom, "Font", None)
+        for attr in ("FaceName", "FamilyName", "LogfontName"):
+            value = getattr(font, attr, None)
+            if value not in (None, ""):
+                return str(value)
+        return None
+
+    def set_text_font(self, object_id: str, font: str) -> None:
+        name = str(font or "").strip()
+        if not name:
+            return
+        try:
+            self._rs.TextObjectFont(object_id, name)
+        except Exception:
+            pass
+
+    def text_height(self, object_id: str) -> Optional[float]:
+        try:
+            value = self._rs.TextObjectHeight(object_id)
+            if value is not None:
+                return float(value)
+        except Exception:
+            pass
+        obj = self._rhino_object(object_id)
+        geom = getattr(obj, "Geometry", None) if obj is not None else None
+        for attr in ("TextHeight", "Height"):
+            value = getattr(geom, attr, None)
+            if value is not None:
+                try:
+                    return float(value)
+                except (TypeError, ValueError):
+                    continue
+        return None
+
+    def set_text_height(self, object_id: str, height: float) -> None:
+        try:
+            self._rs.TextObjectHeight(object_id, float(height))
+        except Exception:
+            pass
 
     def document_path(self) -> Optional[str]:
         path = getattr(self._sc.doc, "Path", None) or ""

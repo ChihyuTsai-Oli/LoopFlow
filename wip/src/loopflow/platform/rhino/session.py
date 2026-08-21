@@ -89,6 +89,18 @@ class RhinoSession(Protocol):
     def set_object_layer(self, object_id: str, path: str) -> None:
         ...
 
+    def object_color_by_layer(self, object_id: str) -> bool:
+        ...
+
+    def set_object_color(self, object_id: str, rgb: Sequence[int]) -> None:
+        ...
+
+    def object_display_color(self, object_id: str):
+        ...
+
+    def reset_object_to_bylayer(self, object_id: str) -> None:
+        ...
+
     def get_object_user_text(self, object_id: str, key: str) -> Optional[str]:
         ...
 
@@ -220,10 +232,23 @@ class RhinoSession(Protocol):
         layer: str,
         page_name: Optional[str] = None,
         height: float = 1.0,
+        font: Optional[str] = None,
     ) -> str:
         ...
 
     def update_text(self, object_id: str, content: str, origin=None) -> bool:
+        ...
+
+    def text_font(self, object_id: str) -> Optional[str]:
+        ...
+
+    def set_text_font(self, object_id: str, font: str) -> None:
+        ...
+
+    def text_height(self, object_id: str) -> Optional[float]:
+        ...
+
+    def set_text_height(self, object_id: str, height: float) -> None:
         ...
 
     def document_path(self) -> Optional[str]:
