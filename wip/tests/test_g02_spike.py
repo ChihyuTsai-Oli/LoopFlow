@@ -38,10 +38,15 @@ class G02SpikePackagingTests(unittest.TestCase):
     def test_manifest_is_spike_only(self):
         text = (SPIKE / "manifest.yml").read_text(encoding="utf-8")
         self.assertIn("name: loopflow", text)
-        self.assertIn("version: 0.1.1", text)
+        self.assertIn("version: 0.1.2", text)
         self.assertIn("LFDocument", text)
         self.assertNotIn("LF_D08_Migrate_Display_Keys", text)
         self.assertNotIn("Package Manager 上架", text)
+
+    def test_build_script_strips_generated_rui(self):
+        text = (SPIKE / "build.ps1").read_text(encoding="utf-8")
+        self.assertIn("LoopFlow.rui still present; refuse to pack yak", text)
+        self.assertIn("yak still contains rui; refuse to install", text)
 
     def test_dev_entrypoint_filename_unchanged(self):
         self.assertTrue((SRC / "entrypoints" / "LF_Document.py").is_file())
