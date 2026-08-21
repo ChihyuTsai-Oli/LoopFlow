@@ -127,6 +127,37 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Disp
 | `LF_Sync_Worksession` | `LFSyncWorksession` |
 | `LF_Document` | `LFDocument` |
 
+## 正式工具列（`LoopFlow.rui`）
+
+來源：`wip/docs/toolbar/LoopFlow.rui`。產品按鈕都是左鍵；Document 右鍵留空。兩顆字典各自獨立左鍵，不是同一顆的右鍵。Section 仍是 Rhino 內建巨集。不含 D08 migrate、Cabinet／2D、開發輔助。
+
+| 按鈕 | 左鍵 | 右鍵 |
+|---|---|---|
+| Sync Worksession | `! _LFSyncWorksession` | — |
+| 開原字典 | `! _LFOpenDictionary` | — |
+| 開匯出字典 | `! _LFOpenDictExport` | — |
+| 匯出 Type Layers | `! _LFExportTypeLayers` | — |
+| Nexus | `! _LFNexus` | — |
+| 發布 | `! _LFPublishExchange` | — |
+| 檢視 | `! _LFDataViewer` | — |
+| Section | `! _ClippingSections` | — |
+| Clipping Drawings | `! _ClippingDrawings` | — |
+| Clear Sections | `! _ClearClippingSections` | — |
+| Edit Drawings | `! _EditClippingDrawings` | — |
+| Update Drawings | `! _UpdateClippingDrawings` | — |
+| 註冊 View | `! _LFAnchorFrame` | — |
+| Extract | `! _LFExtractCP` | — |
+| Duplicate Layout | `! _LFDuplicateLayout` | — |
+| Layout ID | `! _LFTaggerLayoutID` | — |
+| 圖目錄 | `! _LFCatalog` | — |
+| Laser | `! _LFTaggerLaser` | — |
+| Grab | `! _LFTaggerGrab` | — |
+| Index | `! _LFTaggerIndex` | — |
+| Infuser Part | `! _LFInfuserPart` | — |
+| Infuser All | `! _LFInfuserAll` | — |
+| TAG-O | `! _LFTagO` | — |
+| Document | `! _LFDocument` | 留空（日後改語系） |
+
 Grab：在 **Layout** 先選 Tag 圖塊，再在目標 Detail 內點一下進入模型空間，然後選來源（剖面 2D 線、3D 物件或家具圖塊）。Height／Finish 綁物件 `_07_UUID`；圖 B 已清掉 UUID 時改讀 `lf_source_object_ids`（恰好一個 UUID 或一個 3D 物件才綁；兩個以上停止、不猜測）。家具 Item 綁 Block 名稱（`FF-01__Chair-1`）**以及該實例**，之後 Infuser／TAG-O 才能跟改名與刪除。Esc、點在 Detail 外、鎖定（`lf_00_lock_state=true`／`1`，或鎖定欄寫 `x`／`X`）、`TAG_DW`、Laser／Index／圖框圖塊都不寫入。結束後回到 Layout。不填 Infuser 顯示欄。來源沒有 UUID 且索引也解不出時不猜測。舊鎖定欄 `x`／`X` **家中 Rhino 8 已測（2026-08-18）**。
 
 Laser：在 **Layout** 先選 Height／Finish 的 Laser Tag，再在目標 Detail 內點一下剖面位置。點須落在已登記的 Anchor Frame 內；用框內剖面 Hatch／Curve 中心對位（不含 Visible 背景），3D 用 Anchor Frame 寫死的 transform，不跟現況 Clipping Plane 元件，沿 Clipping Plane 法線從剖平面稍後方射出（含 Mesh／SubD 與圖塊裡的 srf／燈具／壁面設備）。同一物件只算一次，穿過兩個物件就停止，清單最多兩個。沒有框時提示請先執行 Anchor Frame。框與圖一起平移不必重跑 Anchor Frame。Esc、點在 Detail 外、鎖定（同上）、Grab／Item／`TAG_DW`／Index／圖框、0 或 ≥2 個重疊 View、沒打到、來源無 UUID，都不寫入。多個命中時讓使用者選一個，清單只顯示圖層名（有物件名稱才附上），不顯示 GUID。圖塊名不分大小寫。不填 Infuser 顯示欄。本批不接 Extract 來源索引。舊鎖定欄 `x`／`X` **家中 Rhino 8 已測（2026-08-18）**。日常不畫測試線。**選 Tag 時**命令列會出現 `DebugRay=No`，點成 Yes 才畫洋紅線（`LoopFlow::Debug_Laser`，不列印，約 20 公尺）；關 Rhino 前會記住。`Select Option ( Edit Run Open )` 是 ScriptEditor 自己的提示，不是 Laser 選項。日後裝成真正指令後，可用 `-LF_Tagger_Laser DebugRay=Yes`。
@@ -153,7 +184,7 @@ Sync Worksession：跑 `LF_Sync_Worksession`。須先存檔。第一次**彈窗*
 
 Document：跑 `LF_Document`（裝成套件後為 `LFDocument`）。開啟 `https://github.com/ChihyuTsai-Oli/LoopFlow/blob/main/docs/README.md`（文件入口，不是專案首頁），頁內再連繁中／英文說明。不改模型。Rhino 不猜語系。打不開只說明。舊名 `LF_Help` 不登錄。不進 Nexus。**家中 Rhino 8 已測（2026-08-21）。** 日後右鍵改這台電腦的介面語系；不另加語言按鈕。目前套件只登錄左鍵／命令列開文件。
 
-左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。開發期按鈕仍指向 repo。正式工具列由使用者在 Rhino 8 排成獨立的 `LoopFlow.rui`（不要改 `mori LoopFlow`），進 `.yak` 後左鍵打正式名稱（例如 `! _LFDocument`）。Document 右鍵先留空。RUI 尚未進套件。
+左鍵／右鍵由 Rhino 按鈕設定分別填入巨集，程式不偵測滑鼠鍵。開發期按鈕仍指向 repo。正式工具列來源是獨立的 `wip/docs/toolbar/LoopFlow.rui`（不要改 `mori LoopFlow`），進 `.yak` 後左鍵打正式名稱（例如 `! _LFDocument`）。Document 右鍵先留空。兩顆字典都是獨立左鍵：`! _LFOpenDictionary` 與 `! _LFOpenDictExport`。
 
 ## Nexus 選單（開案檢查通過才出現）
 
@@ -187,6 +218,6 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Test_Random_M3D_
 
 ## 預定新增
 
-核心主鏈指令已齊。Extract CP **公司 Rhino 8 已測（2026-08-20）**。Duplicate Layout／Sync Worksession **家中 Rhino 8 已測（2026-08-20）**。Document **家中 Rhino 8 已測（2026-08-21）**。G02 已登錄全部正式指令；產品 RUI 等使用者交檔。G01 只查上傳用 3dm 範例。1.x 與 2.0 不可混用。
+核心主鏈指令已齊。Extract CP **公司 Rhino 8 已測（2026-08-20）**。Duplicate Layout／Sync Worksession **家中 Rhino 8 已測（2026-08-20）**。Document **家中 Rhino 8 已測（2026-08-21）**。G02 已登錄全部正式指令，並附產品 `LoopFlow.rui`。G01 只查上傳用 3dm 範例。1.x 與 2.0 不可混用。
 
 Cabinet／三支 2D 工具不屬 2.0。

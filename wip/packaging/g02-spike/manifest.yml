@@ -1,10 +1,10 @@
 ---
 name: loopflow
-version: 0.2.0
+version: 0.2.1
 authors:
 - Chihyu Tsai
 description: >
-  LoopFlow 2.0 G02 spike. Registers official commands. Toolbar RUI is not included yet.
+  LoopFlow 2.0 G02 spike. Registers official commands and the LoopFlow toolbar.
 url: https://github.com/ChihyuTsai-Oli/LoopFlow
 keywords:
 - rhino
