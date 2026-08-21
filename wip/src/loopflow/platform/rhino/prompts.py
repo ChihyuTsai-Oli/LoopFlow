@@ -2,7 +2,9 @@
 """Rhino 提示：指令列 Enter，或彈出視窗。"""
 from __future__ import annotations
 
+import os
 import time
+from pathlib import Path
 from typing import Callable, Optional, Sequence, Tuple
 
 
@@ -138,10 +140,39 @@ def dialog_file_name(folder: Optional[str], filename: Optional[str]) -> Optional
     if not name:
         return None
     if root and (len(name) < 2 or name[1] != ":"):
-        from pathlib import Path
-
         return str(Path(root) / Path(name).name)
     return name
+
+
+def winforms_file_filter(file_filter: str) -> str:
+    """Rhino `A|*.xlsx||` 轉成 WinForms `A|*.xlsx`。"""
+    text = str(file_filter or "").strip()
+    while text.endswith("|"):
+        text = text[:-1]
+    return text or "All files (*.*)|*.*"
+
+
+def _show_winforms_open(message: str, file_filter: str, folder: str, basename: str) -> Optional[str]:
+    """舊式 Windows 選檔，較會遵守 InitialDirectory。"""
+    import System.Windows.Forms as winforms  # type: ignore
+
+    dialog = winforms.OpenFileDialog()
+    dialog.Title = message
+    dialog.Filter = winforms_file_filter(file_filter)
+    dialog.RestoreDirectory = True
+    dialog.CheckFileExists = True
+    try:
+        dialog.AutoUpgradeEnabled = False
+    except Exception:
+        pass
+    if folder:
+        dialog.InitialDirectory = folder
+    if basename:
+        dialog.FileName = basename
+    result = dialog.ShowDialog()
+    if int(result) == int(winforms.DialogResult.OK):
+        return str(dialog.FileName or "") or None
+    return None
 
 
 def ask_open_filename(
@@ -150,33 +181,49 @@ def ask_open_filename(
     folder: Optional[str] = None,
     filename: Optional[str] = None,
 ) -> Optional[str]:
-    """選檔；沒有 Rhino 時丟 ImportError，取消時回傳 None。"""
+    """選檔。先把工作目錄切到指定資料夾，避免沿用剛存檔的 .3dm 目錄。取消時回傳 None。"""
     start_folder = str(folder).strip() if folder else ""
     suggested = dialog_file_name(start_folder or None, filename)
+    basename = Path(suggested).name if suggested else ""
+    previous = None
     try:
-        import Rhino.UI  # type: ignore
+        if start_folder and os.path.isdir(start_folder):
+            previous = os.getcwd()
+            os.chdir(start_folder)
+        try:
+            return _show_winforms_open(message, file_filter, start_folder, basename)
+        except Exception:
+            pass
+        try:
+            import Rhino.UI  # type: ignore
 
-        dialog = Rhino.UI.OpenFileDialog()
-        dialog.Title = message
-        if file_filter:
-            dialog.Filter = file_filter
-        if start_folder:
-            dialog.InitialDirectory = start_folder
-        if suggested:
-            dialog.FileName = suggested
-        show = getattr(dialog, "ShowOpenDialog", None) or getattr(dialog, "ShowDialog", None)
-        if show is None:
-            raise AttributeError("OpenFileDialog has no show method")
-        if show():
-            return str(dialog.FileName or "") or None
-        return None
-    except Exception:
-        import rhinoscriptsyntax as rs  # type: ignore
-
-        value = rs.OpenFileName(message, file_filter, start_folder or None, suggested)
-        if not value:
+            dialog = Rhino.UI.OpenFileDialog()
+            dialog.Title = message
+            if file_filter:
+                dialog.Filter = file_filter
+            if start_folder:
+                dialog.InitialDirectory = start_folder
+            if suggested:
+                dialog.FileName = suggested
+            show = getattr(dialog, "ShowOpenDialog", None) or getattr(dialog, "ShowDialog", None)
+            if show is None:
+                raise AttributeError("OpenFileDialog has no show method")
+            if show():
+                return str(dialog.FileName or "") or None
             return None
-        return str(value)
+        except Exception:
+            import rhinoscriptsyntax as rs  # type: ignore
+
+            value = rs.OpenFileName(message, file_filter, start_folder or None, suggested)
+            if not value:
+                return None
+            return str(value)
+    finally:
+        if previous:
+            try:
+                os.chdir(previous)
+            except OSError:
+                pass
 
 
 def ask_save_filename(

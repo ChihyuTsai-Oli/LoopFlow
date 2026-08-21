@@ -2,10 +2,12 @@
 """Nexus Console 步驟選單。Esc／取消不執行後續步驟。"""
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Callable, Mapping, Optional, Sequence, Tuple
 
 from loopflow.features.project.console import COMMAND_ID, open_console
 from loopflow.foundation import results
+from loopflow.foundation.paths import normalize_dictionary_filename
 from loopflow.platform.rhino.session import RhinoSession
 
 MenuChoice = Tuple[str, str]
@@ -54,28 +56,47 @@ def prompt_nexus_menu(chooser: Optional[Chooser] = None) -> Optional[MenuChoice]
     return parse_menu_choice(picker(MENU_LABELS))
 
 
+def choose_dictionary_path(opener, root: Optional[Path], default, warn=None):
+    """選到工作檔資料夾外就說明並再問；取消回傳 None。"""
+    while True:
+        chosen = opener(default)
+        if chosen is None:
+            return None
+        checked = normalize_dictionary_filename(chosen, root=root)
+        if checked.ok:
+            return chosen
+        if callable(warn):
+            warn(checked.message)
+
+
 def _live_ask_dictionary(environ: Optional[Mapping[str, str]]):
     from loopflow.foundation.paths import DICTIONARY_FILENAME, resolve_workfiles
-    from loopflow.platform.rhino.prompts import ask_open_filename, ask_popup_string
+    from loopflow.platform.rhino.prompts import ask_open_filename, ask_popup_string, show_message
 
     def _ask(default):
         folder = None
+        root = None
         workfiles = resolve_workfiles(environ=environ)
         if workfiles.ok:
-            folder = str(workfiles.details["paths"].root.resolve())
-        try:
-            return ask_open_filename(
-                "選 Dictionary Excel（須在工作檔資料夾內）",
-                "Excel (*.xlsx)|*.xlsx||",
-                folder,
-                default or DICTIONARY_FILENAME,
-            )
-        except ImportError:
-            return ask_popup_string(
-                "Dictionary 檔名（工作檔資料夾內的 .xlsx）",
-                default or DICTIONARY_FILENAME,
-                "LoopFlow",
-            )
+            root = workfiles.details["paths"].root.resolve()
+            folder = str(root)
+
+        def _open(_default):
+            try:
+                return ask_open_filename(
+                    "選 Dictionary Excel（須在工作檔資料夾內）",
+                    "Excel (*.xlsx)|*.xlsx||",
+                    folder,
+                    _default or DICTIONARY_FILENAME,
+                )
+            except ImportError:
+                return ask_popup_string(
+                    "Dictionary 檔名（工作檔資料夾內的 .xlsx）",
+                    _default or DICTIONARY_FILENAME,
+                    "LoopFlow",
+                )
+
+        return choose_dictionary_path(_open, root, default, warn=show_message)
 
     return _ask
 

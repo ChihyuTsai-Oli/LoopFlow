@@ -222,6 +222,41 @@ class DictionaryFilenameTests(unittest.TestCase):
         already = dialog_file_name(folder, str(Path(folder) / "TeamA.xlsx"))
         self.assertEqual(Path(already), Path(folder) / "TeamA.xlsx")
 
+    def test_winforms_file_filter_strips_trailing_bars(self):
+        from loopflow.platform.rhino.prompts import winforms_file_filter
+
+        self.assertEqual(
+            winforms_file_filter("Excel (*.xlsx)|*.xlsx||"),
+            "Excel (*.xlsx)|*.xlsx",
+        )
+
+    def test_choose_dictionary_retries_outside_path(self):
+        from loopflow.features.project.menu import choose_dictionary_path
+
+        with tempfile.TemporaryDirectory(prefix="loopflow-dict-retry-") as raw:
+            root = Path(raw)
+            official = root / "LoopFlow_Dictionary.xlsx"
+            official.write_bytes(b"")
+            calls = []
+            warnings = []
+
+            def _open(default):
+                calls.append(default)
+                if len(calls) == 1:
+                    return str(root.parent / "Downloads" / "qed.xlsx")
+                return str(official)
+
+            picked = choose_dictionary_path(
+                _open,
+                root,
+                "LoopFlow_Dictionary.xlsx",
+                warn=warnings.append,
+            )
+            self.assertEqual(Path(picked), official)
+            self.assertEqual(len(calls), 2)
+            self.assertEqual(len(warnings), 1)
+            self.assertIn("qed.xlsx", warnings[0])
+
     def test_remembered_filename_none_without_usertext(self):
         from loopflow.foundation.paths import (
             DICTIONARY_FILENAME,
