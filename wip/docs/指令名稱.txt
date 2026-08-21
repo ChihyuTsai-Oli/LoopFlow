@@ -3,7 +3,7 @@ LF_Open_Dictionary
 LFOpenDictionary
 
 LF_Open_Dictionary_Export
-LFOpenDictionaryExport
+LFOpenDictExport
 
 LF_Nexus
 LFNexus

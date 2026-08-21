@@ -108,7 +108,7 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Disp
 | 開發期 ID | 正式指令 |
 |---|---|
 | `LF_Open_Dictionary` | `LFOpenDictionary` |
-| `LF_Open_Dictionary_Export` | `LFOpenDictionaryExport` |
+| `LF_Open_Dictionary_Export` | `LFOpenDictExport` |
 | `LF_Nexus` | `LFNexus` |
 | `LF_Export_Type_Layers` | `LFExportTypeLayers` |
 | `LF_Publish_Exchange` | `LFPublishExchange` |
