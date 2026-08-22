@@ -1,0 +1,155 @@
+# LoopFlow — 命名與資料契約
+
+本文件是 2.0 命名、Dictionary 與跨指令資料契約的權威來源。正式寫程式前先完成盤點與裁決；未定案欄位不得由 AI 自行猜測。
+
+## 狀態
+
+- 階段：1.0 靜態盤點、實際操作流程與 Tag／圖框欄位盤點完成；`資料生態決策表.md` 的 ECO-01～11、ED-01～18、ND-01～28 已全部裁決
+- 套用版本：LoopFlow `v2.0.0`
+- 舊版參考：`v1.0.0`
+- 原則：新版乾淨定義；舊版資料不在開發中零散改寫
+- Dictionary 盤點來源：`%LOOPFLOW_WORKFILES_ROOT%\LoopFlow_Dictionary.xlsx` 中文版本；repo release 的英文版本只作舊版比較
+
+## 核心裁決
+
+- Dictionary、UserText、layer、Registry、Tag 與指令名稱是一條完整資料鏈，必須整體定義。
+- 新版核心只使用一套 canonical contract，不在各 feature 散落舊名稱 alias 或雙寫邏輯。
+- 舊專案若需要升級，由獨立 migration scanner／converter 處理，不把相容程式混入日常 command。
+- `main`、`v1.0.0` 與 Release ZIP 保留舊規則；2.0 在隔離安裝與測試資料上使用新規則。
+- 名稱的語意由使用者確認；AI 負責盤點依賴、提出衝突與可理解選項。
+- 資料實體與真相邊界以 `資料生態藍圖.md` 為上位藍圖；本文件負責把已確認原則落成可驗證 schema。
+- 2.0 暫定操作順序以 `工作流程模擬.md` 為基準；尚待使用者確認的原則與實務問題只維護於 `資料生態決策表.md`，確認後才回寫本契約。
+
+## 必須盤點的命名層級
+
+| 層級 | 例子 | 必須回答 |
+|---|---|---|
+| 工作流程語彙 | Dictionary、Nexus、Registry、Tag、Infuser | 這個詞代表什麼，與其他詞的邊界在哪裡 |
+| Rhino 指令 | `LF_Nexus`、`LF_Tagger_Grab` | 對使用者顯示名稱、command ID、入口與功能責任 |
+| Layer taxonomy | `M3D`、`04_CB`、`_Data` | 完整 path、類別、大小寫、層級與用途 |
+| Dictionary 欄位 | `__Rhino Layer`、各資料欄 | 欄位意義、型別、必填、預設、版本與驗證 |
+| UserText key | `_12_UUID` 等 | 寫入者、讀取者、唯一性、可否由使用者修改 |
+| Registry schema | project／object／geometry／metadata | 欄位、型別、ID、版本與成功條件 |
+| Block／Tag | Block 名稱與欄位 | 定義檔、插入者、更新者、顯示文字與缺值行為 |
+| Block instance 名稱 | `2D_D1`、`3D_W1`、`FF-01__Chair-1` | 這是**會被程式解析的資料來源**，不只是圖形標籤：分段規則、分隔符、允許值、唯一性與解析失敗行為 |
+| 檔案／資料夾 | Dictionary、Registry、log、output | 所屬位置、生命週期、備份與是否使用者可見 |
+| Config | layer prefix、顏色、timeout | 真正可調設定與不可調內部契約的分界 |
+| 程式識別字 | module、class、function、constant | 英文命名規則、縮寫與所屬 feature |
+
+## 依賴盤點格式
+
+每個持久化名稱都要建立一列：
+
+| 現行名稱 | 意義 | Producer | Consumer | 儲存位置 | 衝突／問題 | 2.0 canonical 名稱 | 遷移方式 | 狀態 |
+|---|---|---|---|---|---|---|---|---|
+| 待盤點 |  |  |  |  |  |  |  | 未定案 |
+
+只有完成 Producer／Consumer 追蹤後才能改名，不能只因名稱看起來不清楚就直接替換。
+
+1.0 的實際欄位、producer／consumer 與指南衝突整理於 `Nexus與字典盤點.md`；待決選項集中在 `資料生態決策表.md`。使用者裁決確認後才回寫本文件，成為 2.0 正式契約。
+
+使用者已指定採用中文 Dictionary 作為內容與 layer taxonomy 的重構來源。程式欄位 ID 與顯示語言依 ND-01 已裁決：machine key 固定使用英文，中文／英文只作顯示標籤，不直接沿用完整中文欄名作為 key。
+
+## Tag／圖框現況契約（1.x 觀察基準）
+
+以下是 migration 與 2.0 schema 必須能辨識的 1.x 事實，不代表沿用同一批 canonical key。證據來自 `wip/docs/tag_block_text/` 的 10 份 Rhino Block instance 擷取文字（9 Tag、1 圖框，共 24 個唯一 UserText key）、`Tag_Blocks.3dm` 畫面與現行 Tagger／Infuser／Layout ID 程式。
+
+| Family | 現行 binding | 自動顯示欄位 | 人工欄位／特殊規則 |
+|---|---|---|---|
+| Height Grab／Laser | `Source_UUID` | `attr_ch_key`、`attr_ch_val`、`attr_mat_key`、`attr_mat_val`、`attr_note` | `attr_manual_補充說明`、lock |
+| Finish Grab／Laser | `Source_UUID` | `attr_mat_key`、`attr_mat_val`、`attr_note` | `attr_manual_補充說明`、lock |
+| Item | `Source_UUID`；Block 名稱解析時另用 `.Auto_Item_*` | `attr_item_key`、`attr_item_val`、`attr_note` | `attr_manual_補充說明`、lock；`FF-01__Chair-1` 與 Dictionary `_03_ID編號` 是兩套來源 |
+| Section Detail／Elev 1～4 | `.Target_DV_ID` | `Category`、`REF_ID` | `Detail_NO`、lock |
+| Elev 0 | 無 binding | Layout ID 寫目前頁 `Category` | 六個方向／編號欄人工維護；不參加 Infuser／TAG-O |
+| `TAG_DW` | **無；使用者已確認為純手動** | 無 2.0 自動欄位 | `attr_dw_id`、門窗寬、門窗高全部人工；沒有 lock。1.x Infuser 仍會把編號覆寫為 `?`，屬既成衝突 |
+| `Sample_Frame` | 無 binding | Layout ID 寫 `DWG_NAME`、`DWG_NO` | `03-A3 Scale` 人工；固定文字不是 UserText |
+
+### Block instance 命名慣例（使用者端契約）
+
+`Tag_Blocks.3dm` 檔內保存三種慣例，它們是 1.0 名稱解析的實際依據：
+
+| 範例 | 分段 | 用途 |
+|---|---|---|
+| `2D_D1` | `[2D]_[D1]` | 2D 門符號；`LF_2D_DW_Gen` 輸出與門窗類型辨識 |
+| `3D_W1` | `[3D]_[W1]` | 3D 窗 Block；歷史 DW 名稱解析路徑 |
+| `FF-01__Chair-1` | `[FF]-[01]__[Chair-1]` | 家具；`LF_Tagger_Grab` 由名稱解析成 `.Auto_Item_*` shadow fields |
+
+這是**使用者維護的命名，卻被程式當成資料讀取**：改了名稱就改了資料，而且沒有任何驗證或唯一性檢查。2.0 必須決定這三種慣例要保留、改為正式欄位，還是只作 migration 輸入；在裁決前不得擴充解析規則。家具 `FF-01` 的資料身分另見 ED-14。
+
+正式 8 種可鎖 Tag 都使用 `attr_Lock_不更新>寫入x或X`。現行 Grab／Laser／Index／Infuser 都能找到這個 key，但只有值在 `strip().upper()` 後恰為單一 `X` 才鎖定；鎖定同時阻擋資料寫入與重新綁定。2.0 的 canonical `lock_state` 必須是 typed boolean／enum，由 UI 切換；其他既有值交給 migration 列為待確認，不推測含義。
+
+2.0 Block manifest 至少需要：穩定 template ID、family、role、允許的 binding mode、欄位 owner、缺值顯示、template version 與 migration mapping。`TAG_DW` 使用 `binding_mode: manual`；是否以 `role: title_frame` 限定 Layout ID 寫入見 ED-16。`03-A3 Scale` 不能直接沿用為 canonical ID，因它把面板排序、圖幅與欄位語意混在名稱中；是否繼續人工或改為自動值見 ED-15。家具 `FF-01` 的資料身分見 ED-14。
+
+## Drawing 來源索引契約（已列入計畫，名稱未定案）
+
+Drawing Materialize 預計在生成線稿時保存來源關聯，供 Laser 加速與去歧義。這不是「每條線必定對應一個物件」的假設；一個 drawing element 必須能表達**零個、一個或多個**來源。概念資料至少包括：
+
+```text
+drawing_element_id
+drawing_id
+source_view_id
+source_revision
+source_object_ids[]
+provenance_method
+provenance_state
+```
+
+- `source_object_ids[]` 為空代表無法辨識或使用者新畫的線；多值代表重疊、合併或尚待選擇，不可擅自挑第一個。
+- `provenance_method` 記錄來源是 Rhino 可提供的正式關聯、LoopFlow 幾何比對，或 migration；不同方法不能假裝有相同可信度。
+- Materialize 必須報告 indexed／unindexed／ambiguous 的數量與範圍。無法建立完整索引時仍可產出 Drawing，但不得宣稱索引完整。
+- 人工修改、複製或新增線稿後，來源關聯要保留其歷史並轉成相應狀態；不能因線仍帶舊 ID 就宣稱幾何仍與來源一致。
+- Laser 只在來源唯一、revision 適用且狀態有效時直接採用索引；其他情況回到固定 View transform、候選清單與使用者選擇。
+
+欄位名稱與狀態 enum 由 A03／A06 fixtures 定案；可行性與索引覆蓋率在 E02 Materialize 與 D02 Laser 實作時一併驗證，不另立前置 spike。
+
+## Dictionary 定義工作
+
+1. 盤點 `LoopFlow_Dictionary.xlsx` 的所有欄、版本列、型別與允許值。
+2. 對照 `Dictionary_GUIDE_TW.md`、Nexus、Tagger、Registry 與 2D consumer。Cabinet／BOM 依 ED-18 不屬於 LoopFlow 2.0，`_CB.01`～`_CB.04` 已於 2026-08-14 從字典移除，2.0 schema 不含這組欄位。字典保留的 `04_CB_櫃體` 是櫃體材質分類，屬一般 Type，不是 BOM 資料。
+3. 找出同義欄位、中英文混用、prefix 推導、空值與預設值衝突。
+4. 定義 2.0 schema：欄位名稱、顯示名稱、程式 key、型別、必填、驗證與版本。
+5. 建立最小與完整 fixtures，包含合法、缺值、重複、未知欄位與舊版資料。
+6. 使用者確認詞義與工作方式後才鎖定 schema。
+
+## Layer／空間與物件識別
+
+- Layer 名稱同時可能承擔分類、顯示與資料 key，2.0 必須拆清楚其責任。
+- 完整 layer path 與 terminal name 不可混用。
+- Space 判定規則需和 `_01_空間名稱`、boundary、Registry 與數量構想一致，不在搬程式時順便改。
+- UUID 的產生、唯一性、複製、Block instance 與遺失處理必須明確定義。
+- 顏色與 layer 名稱不可作唯一資料識別，除非契約明確規定並有測試。
+
+## 新版資料版本
+
+Dictionary、Registry 與需要跨程序保存的資料都必須有明確 `schema_version`。程式啟動時先驗證版本：
+
+- 相符：正常執行。
+- 未知／較新：停止並說明，不猜測解析。
+- 舊版：交由獨立 migration 工具預覽與轉換。
+
+## 舊專案遷移邊界
+
+Migration 工具獨立於新核心：
+
+```text
+掃描舊專案
+→ 產生差異與衝突報告
+→ 使用者確認
+→ 建立完整備份
+→ 一次轉換 Dictionary／UserText／layer／Registry／Tag
+→ 以 2.0 validator 驗證
+→ 失敗時回復備份
+```
+
+禁止在一般指令執行時偷偷改名，也不長期雙寫新舊欄位。
+
+## 定案門檻
+
+- 目前工作流與所有名稱依賴已列出。
+- 每個持久化名稱都有 producer、consumer 與儲存位置。
+- 使用者已確認工作語彙與顯示名稱。
+- canonical schema、版本與驗證規則完成。
+- fixtures 與 migration 範圍完成。
+- `_LoopFlow_系統設定.md` 與 `_LoopFlow_重構計畫.md` 已同步。
+
+完成上述門檻後，才建立 2.0 command catalog 與 feature 程式骨架。

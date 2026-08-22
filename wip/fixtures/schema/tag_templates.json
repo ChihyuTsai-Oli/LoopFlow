@@ -1,0 +1,198 @@
+{
+  "schema_id": "loopflow.tag_template_set",
+  "schema_version": 1,
+  "common_fields": [
+    {"key": "tag_id", "usertext": "lf_tag_id", "owner": "system"},
+    {"key": "template_id", "usertext": "lf_template_id", "owner": "system"},
+    {"key": "template_version", "usertext": "lf_template_version", "owner": "system"},
+    {"key": "binding_mode", "usertext": "lf_binding_mode", "owner": "system"},
+    {"key": "source_object_id", "usertext": "lf_source_object_id", "owner": "system"},
+    {"key": "target_view_id", "usertext": "lf_target_view_id", "owner": "system"},
+    {"key": "target_sheet_id", "usertext": "lf_target_sheet_id", "owner": "system"},
+    {"key": "target_layout", "usertext": "lf_target_layout", "owner": "system"},
+    {"key": "source_block_name", "usertext": "lf_source_block_name", "owner": "system"},
+    {"key": "lock_state", "usertext": "lf_00_lock_state", "owner": "system"},
+    {"key": "host_sheet_id", "usertext": "lf_host_sheet_id", "owner": "system"},
+    {"key": "last_synced_revision", "usertext": "lf_last_synced_revision", "owner": "system"},
+    {"key": "health_state", "usertext": "lf_health_state", "owner": "system"}
+  ],
+  "templates": [
+    {
+      "schema_id": "loopflow.tag_template",
+      "schema_version": 1,
+      "template_id": "TAG_HEIGHT_GRAB",
+      "family": "height",
+      "role": "tag",
+      "block_names": ["TAG_HEIGHT_GRAB"],
+      "binding_modes": ["object"],
+      "lock_allowed": true,
+      "default_lock_state": false,
+      "fields": [
+        {"key": "elevation_basis", "usertext": "lf_elevation_basis", "owner": "render", "writer": "infuser", "legacy": ["attr_ch_key"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "elevation_display", "usertext": "lf_elevation_display", "owner": "render", "writer": "infuser", "legacy": ["attr_ch_val"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "type_category", "usertext": "lf_type_category", "owner": "render", "writer": "infuser", "legacy": ["attr_mat_key"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "type_sequence", "usertext": "lf_type_sequence", "owner": "render", "writer": "infuser", "legacy": ["attr_mat_val"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "type_display_name", "usertext": "lf_type_display_name", "owner": "render", "writer": "infuser", "legacy": ["attr_note"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "remarks_manual", "usertext": "lf_remarks_manual", "owner": "manual", "writer": "none", "legacy": ["attr_manual_補充說明"], "clear_on_duplicate": true}
+      ]
+    },
+    {
+      "schema_id": "loopflow.tag_template",
+      "schema_version": 1,
+      "template_id": "TAG_HEIGHT_LASER",
+      "family": "height",
+      "role": "tag",
+      "block_names": ["TAG_HEIGHT_LASER"],
+      "binding_modes": ["object"],
+      "lock_allowed": true,
+      "default_lock_state": false,
+      "fields": [
+        {"key": "elevation_basis", "usertext": "lf_elevation_basis", "owner": "render", "writer": "infuser", "legacy": ["attr_ch_key"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "elevation_display", "usertext": "lf_elevation_display", "owner": "render", "writer": "infuser", "legacy": ["attr_ch_val"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "type_category", "usertext": "lf_type_category", "owner": "render", "writer": "infuser", "legacy": ["attr_mat_key"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "type_sequence", "usertext": "lf_type_sequence", "owner": "render", "writer": "infuser", "legacy": ["attr_mat_val"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "type_display_name", "usertext": "lf_type_display_name", "owner": "render", "writer": "infuser", "legacy": ["attr_note"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "remarks_manual", "usertext": "lf_remarks_manual", "owner": "manual", "writer": "none", "legacy": ["attr_manual_補充說明"], "clear_on_duplicate": true}
+      ]
+    },
+    {
+      "schema_id": "loopflow.tag_template",
+      "schema_version": 1,
+      "template_id": "TAG_FINISH_GRAB",
+      "family": "finish",
+      "role": "tag",
+      "block_names": ["TAG_FINISH_GRAB"],
+      "binding_modes": ["object"],
+      "lock_allowed": true,
+      "default_lock_state": false,
+      "fields": [
+        {"key": "type_category", "usertext": "lf_type_category", "owner": "render", "writer": "infuser", "legacy": ["attr_mat_key"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "type_sequence", "usertext": "lf_type_sequence", "owner": "render", "writer": "infuser", "legacy": ["attr_mat_val"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "type_display_name", "usertext": "lf_type_display_name", "owner": "render", "writer": "infuser", "legacy": ["attr_note"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "remarks_manual", "usertext": "lf_remarks_manual", "owner": "manual", "writer": "none", "legacy": ["attr_manual_補充說明"], "clear_on_duplicate": true}
+      ]
+    },
+    {
+      "schema_id": "loopflow.tag_template",
+      "schema_version": 1,
+      "template_id": "TAG_FINISH_LASER",
+      "family": "finish",
+      "role": "tag",
+      "block_names": ["TAG_FINISH_LASER"],
+      "binding_modes": ["object"],
+      "lock_allowed": true,
+      "default_lock_state": false,
+      "fields": [
+        {"key": "type_category", "usertext": "lf_type_category", "owner": "render", "writer": "infuser", "legacy": ["attr_mat_key"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "type_sequence", "usertext": "lf_type_sequence", "owner": "render", "writer": "infuser", "legacy": ["attr_mat_val"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "type_display_name", "usertext": "lf_type_display_name", "owner": "render", "writer": "infuser", "legacy": ["attr_note"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "remarks_manual", "usertext": "lf_remarks_manual", "owner": "manual", "writer": "none", "legacy": ["attr_manual_補充說明"], "clear_on_duplicate": true}
+      ]
+    },
+    {
+      "schema_id": "loopflow.tag_template",
+      "schema_version": 1,
+      "template_id": "TAG_ITEM",
+      "family": "item",
+      "role": "tag",
+      "block_names": ["TAG_ITEM"],
+      "binding_modes": ["block_name"],
+      "lock_allowed": true,
+      "default_lock_state": false,
+      "source_block_name_pattern": "^([A-Za-z]+)-([0-9]+)__(.+)$",
+      "fields": [
+        {"key": "item_category", "usertext": "lf_item_category", "owner": "render", "writer": "infuser", "legacy": ["attr_item_key"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "item_code", "usertext": "lf_item_code", "owner": "render", "writer": "infuser", "legacy": ["attr_item_val"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "item_name", "usertext": "lf_item_name", "owner": "render", "writer": "infuser", "legacy": ["attr_note"], "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "remarks_manual", "usertext": "lf_remarks_manual", "owner": "manual", "writer": "none", "legacy": ["attr_manual_補充說明"], "clear_on_duplicate": true}
+      ]
+    },
+    {
+      "schema_id": "loopflow.tag_template",
+      "schema_version": 1,
+      "template_id": "TAG_DW",
+      "family": "dw",
+      "role": "tag",
+      "block_names": ["TAG_DW"],
+      "binding_modes": ["manual"],
+      "lock_allowed": false,
+      "default_lock_state": null,
+      "health_unbound": false,
+      "fields": [
+        {"key": "dw_id", "usertext": "lf_dw_id", "owner": "manual", "writer": "none", "legacy": ["attr_dw_id"], "clear_on_duplicate": false},
+        {"key": "dw_width", "usertext": "lf_dw_width", "owner": "manual", "writer": "none", "legacy": ["attr_DW-W_輸入門窗寬"], "clear_on_duplicate": false},
+        {"key": "dw_height", "usertext": "lf_dw_height", "owner": "manual", "writer": "none", "legacy": ["attr_DW-H_輸入門窗高"], "clear_on_duplicate": false}
+      ]
+    },
+    {
+      "schema_id": "loopflow.tag_template",
+      "schema_version": 1,
+      "template_id": "TAG_SECTION_DETAIL",
+      "family": "index",
+      "role": "tag",
+      "block_names": ["TAG_SECTION_DETAIL"],
+      "binding_modes": ["view", "sheet"],
+      "lock_allowed": true,
+      "default_lock_state": false,
+      "fields": [
+        {"key": "sheet_code", "usertext": "lf_sheet_code", "owner": "render", "writer": "infuser", "legacy": ["Category"], "source": "target_sheet", "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "sheet_ref", "usertext": "lf_sheet_ref", "owner": "render", "writer": "infuser", "legacy": ["REF_ID"], "source": "target_sheet", "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "detail_no", "usertext": "lf_detail_no", "owner": "manual", "writer": "none", "legacy": ["Detail_NO"], "clear_on_duplicate": true}
+      ]
+    },
+    {
+      "schema_id": "loopflow.tag_template",
+      "schema_version": 1,
+      "template_id": "TAG_ELEV",
+      "family": "index",
+      "role": "tag",
+      "block_names": ["TAG_ELEV_1", "TAG_ELEV_2", "TAG_ELEV_3", "TAG_ELEV_4"],
+      "binding_modes": ["view", "sheet"],
+      "lock_allowed": true,
+      "default_lock_state": false,
+      "fields": [
+        {"key": "sheet_code", "usertext": "lf_sheet_code", "owner": "render", "writer": "infuser", "legacy": ["Category"], "source": "target_sheet", "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "sheet_ref", "usertext": "lf_sheet_ref", "owner": "render", "writer": "infuser", "legacy": ["REF_ID"], "source": "target_sheet", "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "detail_no", "usertext": "lf_detail_no", "owner": "manual", "writer": "none", "legacy": ["Detail_NO"], "clear_on_duplicate": true}
+      ]
+    },
+    {
+      "schema_id": "loopflow.tag_template",
+      "schema_version": 1,
+      "template_id": "TAG_ELEV_0",
+      "family": "elev_key",
+      "role": "tag",
+      "block_names": ["TAG_ELEV_0"],
+      "binding_modes": ["none"],
+      "lock_allowed": true,
+      "default_lock_state": false,
+      "fields": [
+        {"key": "sheet_code", "usertext": "lf_sheet_code", "owner": "render", "writer": "layout_id", "legacy": ["Category"], "source": "current_sheet", "missing_display": "-", "clear_on_duplicate": true},
+        {"key": "dir_num", "usertext": "lf_dir_num", "owner": "manual", "writer": "none", "legacy": ["1-Elev_num"], "clear_on_duplicate": true},
+        {"key": "dir_elev", "usertext": "lf_dir_elev", "owner": "manual", "writer": "none", "legacy": ["2-Elev"], "clear_on_duplicate": true},
+        {"key": "dir_top", "usertext": "lf_dir_top", "owner": "manual", "writer": "none", "legacy": ["3-Top"], "clear_on_duplicate": true},
+        {"key": "dir_left", "usertext": "lf_dir_left", "owner": "manual", "writer": "none", "legacy": ["4-Left"], "clear_on_duplicate": true},
+        {"key": "dir_bottom", "usertext": "lf_dir_bottom", "owner": "manual", "writer": "none", "legacy": ["5-Bottom"], "clear_on_duplicate": true},
+        {"key": "dir_right", "usertext": "lf_dir_right", "owner": "manual", "writer": "none", "legacy": ["6-Right"], "clear_on_duplicate": true}
+      ]
+    },
+    {
+      "schema_id": "loopflow.tag_template",
+      "schema_version": 1,
+      "template_id": "SAMPLE_FRAME",
+      "family": "title",
+      "role": "title_frame",
+      "block_names": ["Sample_Frame"],
+      "binding_modes": ["none"],
+      "lock_allowed": false,
+      "default_lock_state": null,
+      "fields": [
+        {"key": "drawing_no", "usertext": "lf_drawing_no", "owner": "render", "writer": "layout_id", "legacy": ["DWG_NO"], "source": "current_sheet", "missing_display": "-", "clear_on_duplicate": false},
+        {"key": "drawing_name", "usertext": "lf_drawing_name", "owner": "render", "writer": "layout_id", "legacy": ["DWG_NAME"], "source": "current_sheet", "missing_display": "-", "clear_on_duplicate": false},
+        {"key": "scale", "usertext": "lf_scale", "owner": "manual", "writer": "none", "legacy": ["03-A3 Scale"], "clear_on_duplicate": false}
+      ]
+    }
+  ],
+  "lock_legacy_key": "attr_Lock_不更新>寫入x或X",
+  "unknown_block_policy": "report_and_zero_write"
+}

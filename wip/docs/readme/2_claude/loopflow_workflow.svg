@@ -1,0 +1,208 @@
+<svg viewBox="0 0 1520 1020" xmlns="http://www.w3.org/2000/svg" font-family="'Noto Sans TC','Microsoft JhengHei','PingFang TC',-apple-system,'Segoe UI',sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#57697b"/>
+    </marker>
+    <marker id="arrowAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c97b1a"/>
+    </marker>
+    <marker id="arrowDot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8695a5"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1520" height="1020" fill="#eef2f5"/>
+
+  <!-- Title -->
+  <text x="40" y="38" font-size="26" font-weight="700" fill="#16212c">LoopFlow 2.0 主工作鏈</text>
+  <text x="40" y="60" font-size="14" fill="#57697b">Main Workflow Chain — 14 個主要步驟＋5 個輔助工具／14 core steps + 5 helper tools</text>
+
+  <!-- Legend -->
+  <g font-size="12" fill="#57697b">
+    <rect x="900" y="26" width="16" height="16" rx="4" fill="#dcf0f6" stroke="#17789e"/>
+    <text x="922" y="38">主鏈步驟 core step</text>
+    <rect x="1060" y="26" width="16" height="16" rx="4" fill="#ece7f7" stroke="#5b4a92"/>
+    <text x="1082" y="38">Rhino 原生 native tool</text>
+    <rect x="1230" y="26" width="16" height="16" rx="4" fill="#e4e9ee" stroke="#a9b8c4" stroke-dasharray="3,2"/>
+    <text x="1252" y="38">輔助／選用 optional</text>
+    <line x1="900" y1="58" x2="932" y2="58" stroke="#c97b1a" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arrowAmber)"/>
+    <text x="940" y="62">回饋迴圈 feedback loop</text>
+  </g>
+
+  <!-- Phase 1 label -->
+  <text x="40" y="112" font-size="16" font-weight="600" fill="#17789e">01–06　字典到模型到剖面／Dictionary → Model → Section</text>
+
+  <!-- Dictionary loop cluster -->
+  <rect x="40" y="128" width="260" height="290" rx="14" fill="none" stroke="#a9b8c4" stroke-width="1.5" stroke-dasharray="5,4"/>
+  <text x="56" y="150" font-size="12" fill="#57697b">字典校對迴圈／Dictionary reconcile loop</text>
+
+  <g>
+    <rect x="60" y="162" width="220" height="54" rx="10" fill="#dcf0f6" stroke="#17789e" stroke-width="1.5"/>
+    <text x="170" y="184" font-size="14" font-weight="600" fill="#16212c" text-anchor="middle">03　匯出字典</text>
+    <text x="170" y="202" font-size="11" fill="#57697b" text-anchor="middle">LFExportTypeLayers</text>
+  </g>
+  <line x1="170" y1="216" x2="170" y2="242" stroke="#57697b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <g>
+    <rect x="60" y="242" width="220" height="54" rx="10" fill="#dcf0f6" stroke="#17789e" stroke-width="1.5"/>
+    <text x="170" y="264" font-size="14" font-weight="600" fill="#16212c" text-anchor="middle">02　開啟匯出字典</text>
+    <text x="170" y="282" font-size="11" fill="#57697b" text-anchor="middle">LFOpenDictionaryExport</text>
+  </g>
+  <line x1="170" y1="296" x2="170" y2="322" stroke="#8695a5" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowDot)"/>
+  <text x="285" y="313" font-size="10.5" fill="#57697b" text-anchor="start" transform="rotate(0)"> </text>
+  <text x="60" y="312" font-size="10.5" fill="#8695a5">人工核對後手動修改／manual reconcile</text>
+
+  <g>
+    <rect x="60" y="322" width="220" height="54" rx="10" fill="#dcf0f6" stroke="#17789e" stroke-width="1.5"/>
+    <text x="170" y="344" font-size="14" font-weight="600" fill="#16212c" text-anchor="middle">01　開啟正式字典</text>
+    <text x="170" y="362" font-size="11" fill="#57697b" text-anchor="middle">LFOpenDictionary</text>
+  </g>
+
+  <!-- 01 -> 04 -->
+  <path d="M 280 349 H 340 V 310 H 400" fill="none" stroke="#57697b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 04 Nexus hub -->
+  <rect x="400" y="250" width="230" height="120" rx="12" fill="#dcf0f6" stroke="#17789e" stroke-width="2"/>
+  <text x="515" y="278" font-size="15" font-weight="700" fill="#16212c" text-anchor="middle">04　Nexus（開案主控台）</text>
+  <text x="515" y="296" font-size="11" fill="#57697b" text-anchor="middle">LFNexus</text>
+  <text x="515" y="316" font-size="10.5" fill="#57697b" text-anchor="middle">開案檢查／同步 Type Layers／登記高程框</text>
+  <text x="515" y="332" font-size="10.5" fill="#57697b" text-anchor="middle">登記空間框／寫入 Metadata／檢核 Metadata</text>
+  <text x="515" y="352" font-size="10.5" fill="#8695a5" text-anchor="middle">共 6 步選單／6-step menu</text>
+
+  <!-- 04 -> 05 -->
+  <line x1="630" y1="310" x2="686" y2="310" stroke="#57697b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 05 Publish -->
+  <rect x="690" y="270" width="200" height="80" rx="10" fill="#dcf0f6" stroke="#17789e" stroke-width="1.5"/>
+  <text x="790" y="300" font-size="14" font-weight="600" fill="#16212c" text-anchor="middle">05　發布串接資料</text>
+  <text x="790" y="318" font-size="11" fill="#57697b" text-anchor="middle">LFPublishExchange</text>
+  <text x="790" y="336" font-size="10" fill="#8695a5" text-anchor="middle">前置：04 檢核通過</text>
+
+  <!-- 05 -> RS -->
+  <line x1="890" y1="310" x2="946" y2="310" stroke="#57697b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Rhino Section native -->
+  <rect x="950" y="270" width="200" height="80" rx="10" fill="#ece7f7" stroke="#5b4a92" stroke-width="1.5"/>
+  <text x="1050" y="300" font-size="14" font-weight="600" fill="#16212c" text-anchor="middle">Rhino Section（原生）</text>
+  <text x="1050" y="318" font-size="11" fill="#5b4a92" text-anchor="middle">native Clipping tools</text>
+  <text x="1050" y="336" font-size="10" fill="#8695a5" text-anchor="middle">產出圖 A，持續與 3D 同步</text>
+
+  <!-- RS -> 06 -->
+  <line x1="1150" y1="310" x2="1206" y2="310" stroke="#57697b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 06 Anchor Frame -->
+  <rect x="1210" y="270" width="270" height="80" rx="10" fill="#dcf0f6" stroke="#17789e" stroke-width="1.5"/>
+  <text x="1345" y="300" font-size="14" font-weight="600" fill="#16212c" text-anchor="middle">06　註冊 View（錨定框）</text>
+  <text x="1345" y="318" font-size="11" fill="#57697b" text-anchor="middle">LFAnchorFrame</text>
+  <text x="1345" y="336" font-size="10" fill="#8695a5" text-anchor="middle">供 Laser 定位用的固定 2D↔3D 對應</text>
+
+  <!-- branch to A2 -->
+  <line x1="515" y1="370" x2="515" y2="434" stroke="#8695a5" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowDot)"/>
+  <rect x="400" y="438" width="230" height="54" rx="10" fill="#e4e9ee" stroke="#a9b8c4" stroke-width="1.5" stroke-dasharray="5,4"/>
+  <text x="515" y="460" font-size="13" font-weight="600" fill="#16212c" text-anchor="middle">A2　資料檢視（唯讀）</text>
+  <text x="515" y="478" font-size="10.5" fill="#57697b" text-anchor="middle">LFDataViewer</text>
+
+  <!-- branch to A3 -->
+  <line x1="1345" y1="350" x2="1345" y2="434" stroke="#8695a5" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowDot)"/>
+  <rect x="1210" y="438" width="270" height="54" rx="10" fill="#e4e9ee" stroke="#a9b8c4" stroke-width="1.5" stroke-dasharray="5,4"/>
+  <text x="1345" y="460" font-size="13" font-weight="600" fill="#16212c" text-anchor="middle">A3　擷取線稿（產生圖 B）</text>
+  <text x="1345" y="478" font-size="10.5" fill="#57697b" text-anchor="middle">LFExtractCP</text>
+
+  <!-- Phase 2 label -->
+  <text x="40" y="568" font-size="16" font-weight="600" fill="#17789e">07–14　建立圖紙與綁定 Tag／Sheets → Tag Binding → Health Check</text>
+
+  <!-- A4 Duplicate Layout -->
+  <rect x="40" y="586" width="210" height="58" rx="10" fill="#e4e9ee" stroke="#a9b8c4" stroke-width="1.5" stroke-dasharray="5,4"/>
+  <text x="145" y="609" font-size="13" font-weight="600" fill="#16212c" text-anchor="middle">A4　複製 Layout</text>
+  <text x="145" y="626" font-size="10.5" fill="#57697b" text-anchor="middle">LFDuplicateLayout（通常在編號前）</text>
+  <line x1="250" y1="615" x2="396" y2="613" stroke="#8695a5" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowDot)"/>
+
+  <!-- 07 Layout ID -->
+  <rect x="400" y="584" width="230" height="64" rx="10" fill="#dcf0f6" stroke="#17789e" stroke-width="2"/>
+  <text x="515" y="610" font-size="14" font-weight="700" fill="#16212c" text-anchor="middle">07　圖號命名</text>
+  <text x="515" y="628" font-size="11" fill="#57697b" text-anchor="middle">LFTaggerLayoutID</text>
+  <text x="515" y="642" font-size="10" fill="#8695a5" text-anchor="middle">寫圖框圖號／圖名＋Sheet metadata</text>
+
+  <!-- 07 -> 08 -->
+  <path d="M 470 648 V 664 L 515 686" fill="none" stroke="#57697b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- path labels (background chip keeps text legible over any connector) -->
+  <rect x="396" y="662" width="238" height="18" fill="#eef2f5"/>
+  <text x="400" y="676" font-size="12" font-weight="600" fill="#57697b">路徑 A・圖紙與圖目錄／Sheets &amp; Catalog</text>
+  <rect x="686" y="662" width="290" height="18" fill="#eef2f5"/>
+  <text x="690" y="676" font-size="12" font-weight="600" fill="#57697b">路徑 B・Tag 綁定與注入／Tag binding &amp; sync</text>
+
+  <!-- 08 Catalog -->
+  <rect x="400" y="690" width="230" height="64" rx="10" fill="#dcf0f6" stroke="#17789e" stroke-width="1.5"/>
+  <text x="515" y="716" font-size="14" font-weight="600" fill="#16212c" text-anchor="middle">08　圖目錄</text>
+  <text x="515" y="734" font-size="11" fill="#57697b" text-anchor="middle">LFCatalog</text>
+  <text x="515" y="748" font-size="10" fill="#8695a5" text-anchor="middle">前置：07 的 Sheet metadata</text>
+
+  <!-- 09/10/11 are independent entry points (no incoming arrow from 07) -->
+  <!-- 09 Laser -->
+  <rect x="690" y="690" width="170" height="64" rx="10" fill="#dcf0f6" stroke="#17789e" stroke-width="1.5"/>
+  <text x="775" y="716" font-size="14" font-weight="600" fill="#16212c" text-anchor="middle">09　雷射投影</text>
+  <text x="775" y="734" font-size="11" fill="#57697b" text-anchor="middle">LFTaggerLaser</text>
+  <text x="775" y="748" font-size="10" fill="#8695a5" text-anchor="middle">須在 06 錨定框內</text>
+
+  <!-- 10 Grab -->
+  <rect x="880" y="690" width="170" height="64" rx="10" fill="#dcf0f6" stroke="#17789e" stroke-width="1.5"/>
+  <text x="965" y="716" font-size="14" font-weight="600" fill="#16212c" text-anchor="middle">10　直接抓取</text>
+  <text x="965" y="734" font-size="11" fill="#57697b" text-anchor="middle">LFTaggerGrab</text>
+  <text x="965" y="748" font-size="10" fill="#8695a5" text-anchor="middle">點選剖面線來源物件</text>
+
+  <!-- 11 Index -->
+  <rect x="1070" y="690" width="170" height="64" rx="10" fill="#dcf0f6" stroke="#17789e" stroke-width="1.5"/>
+  <text x="1155" y="716" font-size="14" font-weight="600" fill="#16212c" text-anchor="middle">11　對應視圖</text>
+  <text x="1155" y="734" font-size="11" fill="#57697b" text-anchor="middle">LFTaggerIndex</text>
+  <text x="1155" y="748" font-size="10" fill="#8695a5" text-anchor="middle">綁定到已登記的 Detail</text>
+
+  <!-- 07 -.-> 11 renumber note -->
+  <path d="M 630 600 C 900 600, 1155 630, 1155 686" fill="none" stroke="#c97b1a" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#arrowAmber)"/>
+  <text x="900" y="596" font-size="10" fill="#c97b1a">重新編號後，11 的既有綁定可能經 14 判過期</text>
+
+  <!-- converge to Infuser -->
+  <path d="M 775 754 L 940 804" fill="none" stroke="#57697b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 965 754 L 968 800" fill="none" stroke="#57697b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M 1155 754 L 1000 804" fill="none" stroke="#57697b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 12/13 Infuser -->
+  <rect x="830" y="800" width="280" height="70" rx="10" fill="#dcf0f6" stroke="#17789e" stroke-width="2"/>
+  <text x="970" y="827" font-size="14" font-weight="700" fill="#16212c" text-anchor="middle">12／13　注入資料</text>
+  <text x="970" y="845" font-size="11" fill="#57697b" text-anchor="middle">LFInfuserPart／LFInfuserAll</text>
+  <text x="970" y="860" font-size="10" fill="#8695a5" text-anchor="middle">當頁或全部頁，擇一範圍</text>
+
+  <!-- Infuser -> 14 -->
+  <line x1="970" y1="870" x2="970" y2="906" stroke="#57697b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- 14 TAG-O -->
+  <rect x="850" y="910" width="240" height="74" rx="10" fill="#dcf0f6" stroke="#17789e" stroke-width="2"/>
+  <text x="970" y="938" font-size="14" font-weight="700" fill="#16212c" text-anchor="middle">14　健康檢查</text>
+  <text x="970" y="956" font-size="11" fill="#57697b" text-anchor="middle">LFTagO</text>
+  <text x="970" y="972" font-size="10" fill="#8695a5" text-anchor="middle">只檢查與上色，不自動修復</text>
+
+  <!-- feedback: broken -> rebind (09/10/11) -->
+  <path d="M 850 947 C 600 960, 560 820, 690 748" fill="none" stroke="#c97b1a" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrowAmber)"/>
+  <rect x="480" y="878" width="230" height="20" rx="4" fill="#fbe8d2"/>
+  <text x="595" y="892" font-size="10.5" fill="#8a4b0f" text-anchor="middle">斷連 → 回 09–11 重新綁定／broken → rebind</text>
+
+  <!-- feedback: stale -> reinject (12/13) -->
+  <path d="M 1090 918 C 1260 900, 1260 830, 1114 812" fill="none" stroke="#c97b1a" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrowAmber)"/>
+  <rect x="1120" y="856" width="200" height="20" rx="4" fill="#fbe8d2"/>
+  <text x="1220" y="870" font-size="10.5" fill="#8a4b0f" text-anchor="middle">過期 → 重跑 12／13／stale → re-inject</text>
+
+  <!-- Independent tools cluster -->
+  <rect x="1210" y="586" width="280" height="150" rx="14" fill="none" stroke="#a9b8c4" stroke-width="1.5" stroke-dasharray="5,4"/>
+  <text x="1226" y="608" font-size="12" fill="#57697b">A1・A5　不卡在鏈上／not part of the chain</text>
+
+  <rect x="1230" y="618" width="240" height="50" rx="10" fill="#e4e9ee" stroke="#a9b8c4" stroke-width="1.5"/>
+  <text x="1350" y="638" font-size="13" font-weight="600" fill="#16212c" text-anchor="middle">A1　雙機同步</text>
+  <text x="1350" y="655" font-size="10.5" fill="#57697b" text-anchor="middle">LFSyncWorksession</text>
+
+  <rect x="1230" y="678" width="240" height="50" rx="10" fill="#e4e9ee" stroke="#a9b8c4" stroke-width="1.5"/>
+  <text x="1350" y="698" font-size="13" font-weight="600" fill="#16212c" text-anchor="middle">A5　使用說明</text>
+  <text x="1350" y="715" font-size="10.5" fill="#57697b" text-anchor="middle">LFDocument</text>
+
+  <!-- footer -->
+  <text x="40" y="1004" font-size="11" fill="#8695a5">虛線＝選用或輔助路徑；橘色＝TAG-O 回饋迴圈／dashed = optional path; amber = TAG-O feedback loop</text>
+</svg>

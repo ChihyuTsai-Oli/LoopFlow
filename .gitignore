@@ -6,6 +6,7 @@
 
 # 根目錄必要檔案
 !.gitignore
+!AGENTS.md
 !README.md
 !README_zh-TW.md
 !LICENSE
@@ -28,6 +29,11 @@
 !docs/**/.gitkeep
 !docs/*.html
 !docs/**/*.svg
+
+# 重構工作區（只追蹤文件與輕量測試定義，不放 Dropbox 工作檔）
+!wip/
+!wip/**/
+!wip/**
 
 # 發佈資料夾
 !releases/

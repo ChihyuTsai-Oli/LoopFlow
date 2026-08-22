@@ -1,0 +1,71 @@
+{
+  "schema_id": "loopflow.local_frame",
+  "schema_version": 1,
+  "axis_rule": {"w": "x_axis", "d": "y_axis", "h": "z_axis"},
+  "cases": [
+    {
+      "id": "block-insertion",
+      "geometry": "block_instance",
+      "expect": "derive",
+      "derivation_method": "block_insertion"
+    },
+    {
+      "id": "extrusion-base",
+      "geometry": "extrusion",
+      "expect": "derive",
+      "derivation_method": "extrusion_base"
+    },
+    {
+      "id": "unique-plane",
+      "geometry": "planar_curve",
+      "expect": "derive",
+      "derivation_method": "unique_plane"
+    },
+    {
+      "id": "closed-box-block",
+      "geometry": "closed_box",
+      "expect": "block",
+      "reason": "no_unique_plane"
+    },
+    {
+      "id": "oriented-box-derive",
+      "geometry": "oriented_box",
+      "expect": "derive",
+      "derivation_method": "oriented_box"
+    },
+    {
+      "id": "reuse-stored-frame",
+      "geometry": "closed_box",
+      "stored_frame": {
+        "schema_id": "loopflow.local_frame",
+        "schema_version": 1,
+        "origin": [0, 0, 0],
+        "x_axis": [1, 0, 0],
+        "y_axis": [0, 1, 0],
+        "z_axis": [0, 0, 1],
+        "derivation_method": "unique_plane"
+      },
+      "expect": "reuse"
+    },
+    {
+      "id": "corrupt-frame-not-unit",
+      "stored_frame": {
+        "schema_id": "loopflow.local_frame",
+        "schema_version": 1,
+        "origin": [0, 0, 0],
+        "x_axis": [2, 0, 0],
+        "y_axis": [0, 1, 0],
+        "z_axis": [0, 0, 1],
+        "derivation_method": "unique_plane"
+      },
+      "expect": "block",
+      "reason": "corrupt_frame"
+    },
+    {
+      "id": "world-bbox-forbidden",
+      "geometry": "closed_box",
+      "fallback": "world_bbox",
+      "expect": "block"
+    }
+  ]
+}

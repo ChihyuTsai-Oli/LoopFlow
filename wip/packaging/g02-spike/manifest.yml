@@ -1,0 +1,13 @@
+---
+name: loopflow
+version: 2.0.0
+authors:
+- Chihyu Tsai
+description: >
+  LoopFlow 2.0. Official commands, toolbar, Tag_Blocks, and Chinese/English Dictionary templates.
+url: https://github.com/ChihyuTsai-Oli/LoopFlow
+keywords:
+- rhino
+- loopflow
+- documentation
+- guid:e6822bb2-91ef-4bee-9564-45de3508ccfb

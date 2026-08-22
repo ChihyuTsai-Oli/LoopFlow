@@ -1,0 +1,125 @@
+{
+  "schema_id": "loopflow.view",
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "unique-cp-ok",
+      "expect": "pass",
+      "text_dot": "A-A",
+      "clipping_planes": ["A-A Section"],
+      "has_geometry": true,
+      "transform": {
+        "schema_id": "loopflow.view_transform",
+        "schema_version": 1,
+        "origin_2d": [100.0, 50.0, 0.0],
+        "origin_3d_local": [10.0, 20.0],
+        "scale_x": 1.0,
+        "scale_y": -1.0,
+        "cp_origin": [0.0, 0.0, 0.0],
+        "cp_x_axis": [1.0, 0.0, 0.0],
+        "cp_y_axis": [0.0, 1.0, 0.0],
+        "cp_z_axis": [0.0, 0.0, 1.0]
+      }
+    },
+    {
+      "id": "ceiling-mirror-ok",
+      "expect": "pass",
+      "text_dot": "1F_CEILING",
+      "clipping_planes": ["1F_CEILING"],
+      "has_geometry": true,
+      "transform": {
+        "schema_id": "loopflow.view_transform",
+        "schema_version": 1,
+        "origin_2d": [0.0, 0.0, 0.0],
+        "origin_3d_local": [0.0, 0.0],
+        "scale_x": -1.0,
+        "scale_y": -1.0,
+        "cp_origin": [0.0, 0.0, 320.0],
+        "cp_x_axis": [1.0, 0.0, 0.0],
+        "cp_y_axis": [0.0, 1.0, 0.0],
+        "cp_z_axis": [0.0, 0.0, 1.0]
+      }
+    },
+    {
+      "id": "missing-text-dot-block",
+      "expect": "block",
+      "reason": "missing_text_dot",
+      "text_dot": null,
+      "clipping_planes": ["A-A"],
+      "has_geometry": true
+    },
+    {
+      "id": "missing-geom-block",
+      "expect": "block",
+      "reason": "missing_geometry",
+      "text_dot": "A-A",
+      "clipping_planes": ["A-A"],
+      "has_geometry": false
+    },
+    {
+      "id": "missing-cp-block",
+      "expect": "block",
+      "reason": "missing_clipping_plane",
+      "text_dot": "A-A",
+      "clipping_planes": [],
+      "has_geometry": true
+    },
+    {
+      "id": "ambiguous-cp-block",
+      "expect": "block",
+      "reason": "ambiguous_clipping_plane",
+      "text_dot": "A-A",
+      "clipping_planes": ["A-A North", "A-A South"],
+      "has_geometry": true
+    },
+    {
+      "id": "cancel-zero-write",
+      "expect": "cancel",
+      "cancelled": true,
+      "text_dot": "A-A",
+      "clipping_planes": ["A-A"],
+      "has_geometry": true
+    },
+    {
+      "id": "upgrade-legacy-keep-geometry",
+      "expect": "upgrade",
+      "text_dot": "A-A",
+      "clipping_planes": ["A-A"],
+      "has_geometry": true,
+      "upgrade_host": true,
+      "legacy": {"Role": "Anchor_Frame", "Target_CP": "A-A"},
+      "transform": {
+        "schema_id": "loopflow.view_transform",
+        "schema_version": 1,
+        "origin_2d": [0.0, 0.0, 0.0],
+        "origin_3d_local": [0.0, 0.0],
+        "scale_x": 1.0,
+        "scale_y": -1.0,
+        "cp_origin": [0.0, 0.0, 0.0],
+        "cp_x_axis": [1.0, 0.0, 0.0],
+        "cp_y_axis": [0.0, 1.0, 0.0],
+        "cp_z_axis": [0.0, 0.0, 1.0]
+      }
+    },
+    {
+      "id": "invalid-transform-block",
+      "expect": "block",
+      "reason": "invalid_transform",
+      "text_dot": "A-A",
+      "clipping_planes": ["A-A"],
+      "has_geometry": true,
+      "transform": {
+        "schema_id": "loopflow.view_transform",
+        "schema_version": 1,
+        "origin_2d": [0.0, 0.0, 0.0],
+        "origin_3d_local": [0.0, 0.0],
+        "scale_x": 1.0,
+        "scale_y": -1.0,
+        "cp_origin": [0.0, 0.0, 0.0],
+        "cp_x_axis": [2.0, 0.0, 0.0],
+        "cp_y_axis": [0.0, 1.0, 0.0],
+        "cp_z_axis": [0.0, 0.0, 1.0]
+      }
+    }
+  ]
+}

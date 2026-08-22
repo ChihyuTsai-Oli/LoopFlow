@@ -1,0 +1,71 @@
+{
+  "schema_id": "loopflow.registry",
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "valid-min",
+      "expect": "pass",
+      "payload": {
+        "schema_id": "loopflow.registry",
+        "schema_version": 1,
+        "project_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "registry_revision": 1,
+        "published_at": "2026-08-14T00:00:00Z",
+        "model_unit": "Centimeters",
+        "types": [],
+        "spaces": [{"space_id": "EXT", "level_id": null, "space_display": "EXT"}],
+        "objects": [],
+        "extension": {}
+      }
+    },
+    {
+      "id": "unknown-version",
+      "expect": "block",
+      "payload": {
+        "schema_id": "loopflow.registry",
+        "schema_version": 99,
+        "project_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "registry_revision": 1,
+        "published_at": "2026-08-14T00:00:00Z",
+        "model_unit": "Centimeters",
+        "types": [],
+        "spaces": [{"space_id": "EXT", "level_id": null, "space_display": "EXT"}],
+        "objects": [],
+        "extension": {}
+      }
+    },
+    {
+      "id": "unknown-core-field",
+      "expect": "block",
+      "payload": {
+        "schema_id": "loopflow.registry",
+        "schema_version": 1,
+        "project_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "registry_revision": 1,
+        "published_at": "2026-08-14T00:00:00Z",
+        "model_unit": "Centimeters",
+        "types": [],
+        "spaces": [{"space_id": "EXT", "level_id": null, "space_display": "EXT"}],
+        "objects": [],
+        "extension": {},
+        "Tag_Links": []
+      }
+    },
+    {
+      "id": "missing-ext-space",
+      "expect": "block",
+      "payload": {
+        "schema_id": "loopflow.registry",
+        "schema_version": 1,
+        "project_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "registry_revision": 1,
+        "published_at": "2026-08-14T00:00:00Z",
+        "model_unit": "Centimeters",
+        "types": [],
+        "spaces": [],
+        "objects": [],
+        "extension": {}
+      }
+    }
+  ]
+}

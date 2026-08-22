@@ -1,0 +1,43 @@
+{
+  "schema_id": "loopflow.drawing",
+  "schema_version": 1,
+  "layer_root": "LoopFlow_Extract",
+  "sublayers": {
+    "visible": "LoopFlow_Extract::Visible",
+    "hatch": "LoopFlow_Extract::Hatch",
+    "curve": "LoopFlow_Extract::Curve_#RRGGBB"
+  },
+  "plot_weight": -1,
+  "usertext_keys": {
+    "drawing_id": "lf_drawing_id",
+    "drawing_element_id": "lf_drawing_element_id",
+    "view_id": "lf_view_id",
+    "source_layer_root": "lf_source_layer_root",
+    "source_revision": "lf_source_revision",
+    "source_object_ids": "lf_source_object_ids",
+    "provenance_method": "lf_provenance_method",
+    "provenance_state": "lf_provenance_state",
+    "drawing_status": "lf_drawing_status",
+    "schema_id": "lf_schema_id",
+    "schema_version": "lf_schema_version"
+  },
+  "provenance_method": [
+    "rhino_association",
+    "loopflow_geometry",
+    "migration"
+  ],
+  "provenance_state": [
+    "current",
+    "modified",
+    "stale",
+    "unindexed",
+    "ambiguous"
+  ],
+  "rerun_modes": ["replace", "add", "skip"],
+  "notes": [
+    "根圖層與 LoopFlow 平級，不是 LoopFlow::Extract。",
+    "重跑先辨識同一 view_id 或來源剖面根層的前次產出。",
+    "人工修改（provenance_state=modified）不得被取代覆蓋。",
+    "索引不完整不阻擋產出。"
+  ]
+}

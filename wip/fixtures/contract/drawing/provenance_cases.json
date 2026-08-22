@@ -1,0 +1,56 @@
+{
+  "schema_id": "loopflow.drawing",
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "zero-source",
+      "source_object_ids": [],
+      "provenance_method": "loopflow_geometry",
+      "provenance_state": "unindexed",
+      "expect": "pass",
+      "coverage": "unindexed"
+    },
+    {
+      "id": "one-source",
+      "source_object_ids": ["3fa85f64-5717-4562-b3fc-2c963f66afa6"],
+      "provenance_method": "rhino_association",
+      "provenance_state": "current",
+      "expect": "pass",
+      "coverage": "indexed"
+    },
+    {
+      "id": "many-sources",
+      "source_object_ids": [
+        "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+      ],
+      "provenance_method": "loopflow_geometry",
+      "provenance_state": "ambiguous",
+      "expect": "pass",
+      "coverage": "ambiguous",
+      "note": "不可擅自挑第一個"
+    },
+    {
+      "id": "manual-edit-not-current",
+      "source_object_ids": ["3fa85f64-5717-4562-b3fc-2c963f66afa6"],
+      "provenance_method": "rhino_association",
+      "provenance_state": "modified",
+      "expect": "pass",
+      "forbid_state": "current"
+    },
+    {
+      "id": "stale-revision",
+      "source_object_ids": ["3fa85f64-5717-4562-b3fc-2c963f66afa6"],
+      "provenance_state": "stale",
+      "source_revision": 1,
+      "current_registry_revision": 2,
+      "expect": "pass"
+    },
+    {
+      "id": "incomplete-index-still-produces",
+      "coverage_incomplete": true,
+      "expect": "pass",
+      "block_drawing": false
+    }
+  ]
+}

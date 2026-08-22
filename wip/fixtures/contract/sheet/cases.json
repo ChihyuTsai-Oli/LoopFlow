@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "page_name_cases": [
+    {
+      "id": "baseline-integer",
+      "page_name": "**IN__201__立面圖",
+      "expect": "baseline",
+      "series": "IN",
+      "number": "201",
+      "drawing_name": "立面圖"
+    },
+    {
+      "id": "baseline-decimal",
+      "page_name": "**A__201.02__立面圖",
+      "expect": "baseline",
+      "series": "A",
+      "number": "201.02",
+      "drawing_name": "立面圖"
+    },
+    {
+      "id": "same-series-plain-name",
+      "page_name": "天花詳圖",
+      "expect": "inherit",
+      "drawing_name": "天花詳圖"
+    },
+    {
+      "id": "structured-without-star-updates-name",
+      "page_name": "IN__201__一樓平面",
+      "expect": "inherit",
+      "drawing_name": "一樓平面"
+    },
+    {
+      "id": "no-separator-inherits",
+      "page_name": "Layout 05",
+      "expect": "inherit",
+      "drawing_name": "Layout 05"
+    },
+    {
+      "id": "extra-separator-keeps-rest-as-name",
+      "page_name": "**IN__201__一樓__平面圖",
+      "expect": "baseline",
+      "series": "IN",
+      "number": "201",
+      "drawing_name": "一樓__平面圖"
+    },
+    {
+      "id": "empty-drawing-name-allowed",
+      "page_name": "**IN__201__",
+      "expect": "baseline",
+      "series": "IN",
+      "number": "201",
+      "drawing_name": ""
+    },
+    {
+      "id": "star-without-number-inherits",
+      "page_name": "**無編號",
+      "expect": "inherit",
+      "drawing_name": "無編號"
+    },
+    {
+      "id": "blank-page-name-skipped",
+      "page_name": "   ",
+      "expect": "skip"
+    },
+    {
+      "id": "baseline-alphanumeric-number",
+      "page_name": "**IN__A01__平面",
+      "expect": "baseline",
+      "series": "IN",
+      "number": "A01",
+      "drawing_name": "平面"
+    },
+    {
+      "id": "star-without-trailing-digit-inherits",
+      "page_name": "**IN__AB__平面",
+      "expect": "inherit",
+      "drawing_name": "IN__AB__平面"
+    },
+    {
+      "id": "manual-slash-three-part",
+      "page_name": "//S__901__結構平面圖",
+      "expect": "manual",
+      "series": "S",
+      "number": "901",
+      "drawing_name": "結構平面圖"
+    },
+    {
+      "id": "manual-slash-without-number-invalid",
+      "page_name": "//結構平面圖",
+      "expect": "manual_invalid",
+      "drawing_name": "結構平面圖"
+    }
+  ],
+  "numbering_cases": [
+    {
+      "id": "first-import-two-series",
+      "pages": [
+        "**IN__201__立面圖",
+        "樓下30公分",
+        "**A__201.02__立面圖",
+        "西向"
+      ],
+      "expect_drawing_no": ["IN 201", "IN 202", "A 201.02", "A 201.03"],
+      "expect_drawing_name": ["立面圖", "樓下30公分", "立面圖", "西向"],
+      "expect_page_name": [
+        "**IN__201__立面圖",
+        "IN__202__樓下30公分",
+        "**A__201.02__立面圖",
+        "A__201.03__西向"
+      ]
+    },
+    {
+      "id": "insert-middle-renumbers-following",
+      "pages": ["**IN__201__立面圖", "新增頁", "天花詳圖"],
+      "expect_drawing_no": ["IN 201", "IN 202", "IN 203"]
+    },
+    {
+      "id": "blank-new-page-inherits-series",
+      "pages": ["**IN__201__立面圖", "Layout 05"],
+      "expect_drawing_no": ["IN 201", "IN 202"],
+      "expect_drawing_name": ["立面圖", "Layout 05"]
+    },
+    {
+      "id": "pages-before-first-series-unnumbered",
+      "pages": ["封面", "**IN__201__立面圖"],
+      "expect_drawing_no": [null, "IN 201"]
+    },
+    {
+      "id": "no-series-at-all-unnumbered",
+      "pages": ["封面", "目錄"],
+      "expect_drawing_no": [null, null]
+    },
+    {
+      "id": "decimal-tail-increments",
+      "pages": ["**A__201.09__詳圖", "下一頁"],
+      "expect_drawing_no": ["A 201.09", "A 201.10"]
+    },
+    {
+      "id": "single-digit-tail-rolls-to-two-digits",
+      "pages": ["**IN__101.9__一樓", "下一頁"],
+      "expect_drawing_no": ["IN 101.9", "IN 101.10"],
+      "expect_page_name": ["**IN__101.9__一樓", "IN__101.10__下一頁"]
+    },
+    {
+      "id": "alphanumeric-tail-increments",
+      "pages": ["**IN__A09__平面", "天花"],
+      "expect_drawing_no": ["IN A09", "IN A10"],
+      "expect_page_name": ["**IN__A09__平面", "IN__A10__天花"]
+    },
+    {
+      "id": "alphanumeric-single-digit-rolls-to-two-digits",
+      "pages": ["**IN__A9__平面", "天花"],
+      "expect_drawing_no": ["IN A9", "IN A10"]
+    },
+    {
+      "id": "manual-slash-does-not-consume-series",
+      "pages": ["**IN__101.01__一樓", "//S__901__結構平面圖", "二樓"],
+      "expect_drawing_no": ["IN 101.01", "S 901", "IN 101.02"],
+      "expect_drawing_name": ["一樓", "結構平面圖", "二樓"],
+      "expect_page_name": [
+        "**IN__101.01__一樓",
+        "//S__901__結構平面圖",
+        "IN__101.02__二樓"
+      ]
+    },
+    {
+      "id": "manual-slash-without-star",
+      "pages": ["//S__901__結構平面圖"],
+      "expect_drawing_no": ["S 901"],
+      "expect_page_name": ["//S__901__結構平面圖"]
+    },
+    {
+      "id": "invalid-slash-does-not-number",
+      "pages": ["**IN__101__一樓", "//結構"],
+      "expect_drawing_no": ["IN 101", null]
+    }
+  ],
+  "identity_cases": [
+    {
+      "id": "rerun-keeps-sheet-id",
+      "change": "rerun_without_edits",
+      "expect": "sheet_id_unchanged"
+    },
+    {
+      "id": "manual-page-rename-keeps-sheet-id",
+      "change": "page_renamed_by_user",
+      "expect": "sheet_id_unchanged"
+    },
+    {
+      "id": "insert-page-keeps-sheet-id",
+      "change": "page_inserted_before",
+      "expect": "sheet_id_unchanged"
+    }
+  ],
+  "active_cases": [
+    {
+      "id": "frame-on-page-is-active",
+      "pages_with_frame": ["IN__201__立面圖"],
+      "metadata_sheet_ids": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
+      "frame_sheet_ids": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
+      "expect_active": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]
+    },
+    {
+      "id": "orphan-metadata-not-active",
+      "pages_with_frame": ["IN__201__立面圖"],
+      "metadata_sheet_ids": [
+        "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+      ],
+      "frame_sheet_ids": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
+      "expect_active": ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"]
+    }
+  ],
+  "stale_cases": [
+    {
+      "id": "page-position-matches-is-current",
+      "recorded_page_position": 2,
+      "current_page_position": 2,
+      "expect": "current"
+    },
+    {
+      "id": "page-moved-without-rerun-is-stale",
+      "recorded_page_position": 2,
+      "current_page_position": 4,
+      "expect": "stale"
+    },
+    {
+      "id": "missing-record-is-stale",
+      "recorded_page_position": null,
+      "current_page_position": 1,
+      "expect": "stale"
+    }
+  ],
+  "frame_cases": [
+    {
+      "id": "single-frame-writes",
+      "frames_on_page": 1,
+      "expect": "write"
+    },
+    {
+      "id": "no-frame-skips-page",
+      "frames_on_page": 0,
+      "expect": "skip"
+    },
+    {
+      "id": "two-frames-skips-page",
+      "frames_on_page": 2,
+      "expect": "skip"
+    },
+    {
+      "id": "locked-frame-skips-page",
+      "frames_on_page": 1,
+      "locked": true,
+      "expect": "skip"
+    },
+    {
+      "id": "unregistered-block-zero-write",
+      "frames_on_page": 0,
+      "unregistered_blocks": ["Random_Furniture"],
+      "expect": "skip"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "schema_id": "loopflow.registry",
+  "schema_version": 1,
+  "required_root": [
+    "schema_id",
+    "schema_version",
+    "project_id",
+    "registry_revision",
+    "published_at",
+    "model_unit",
+    "types",
+    "spaces",
+    "objects",
+    "extension"
+  ],
+  "type_keys": [
+    "type_id",
+    "type_category",
+    "type_sequence",
+    "type_display_name",
+    "layer_path",
+    "estimation_unit",
+    "measurement_rule",
+    "elevation_basis",
+    "construction_default",
+    "remarks_default"
+  ],
+  "space_keys": [
+    "space_id",
+    "level_id",
+    "space_display"
+  ],
+  "object_keys": [
+    "object_id",
+    "type_id",
+    "type_category",
+    "type_sequence",
+    "type_display_name",
+    "construction_status",
+    "space_id",
+    "space_display",
+    "elevation_basis",
+    "elevation_value",
+    "elevation_display",
+    "remarks",
+    "data_revision"
+  ],
+  "reserved_space_id": "EXT",
+  "notes": [
+    "Tag、View、Drawing、Sheet 不進 Registry。",
+    "未知核心欄阻擋；非核心資料只放 extension。",
+    "type_display_name 在 objects[] 是發布快照，不回寫物件 UserText。",
+    "dimension_*、quantity、local_frame 不進 2.0 Registry；數量欄留在 types[] 的 estimation_unit／measurement_rule，供後續 GH 使用。"
+  ]
+}

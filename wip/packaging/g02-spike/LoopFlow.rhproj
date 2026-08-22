@@ -1,0 +1,234 @@
+{
+  "host": {
+    "name": "Rhino3D",
+    "version": "8.34.26223+11001",
+    "os": "windows",
+    "arch": "x64"
+  },
+  "id": "e6822bb2-91ef-4bee-9564-45de3508ccfb",
+  "identity": {
+    "name": "LoopFlow",
+    "version": "2.0",
+    "publisher": {
+      "email": "chihyu@proton.me",
+      "name": "Chihyu Tsai",
+      "url": "https://chihyu-tsai.com/"
+    }
+  },
+  "settings": {
+    "buildPath": "build/",
+    "buildTarget": {
+      "host": {
+        "name": "Rhino3D",
+        "version": "8"
+      },
+      "title": "Rhino3D (8.*)",
+      "slug": "rh8"
+    },
+    "publishTarget": {
+      "title": "McNeel Yak Server"
+    }
+  },
+  "codes": [
+    {
+      "id": "bf905152-c699-57a1-a417-a5a85e587c83",
+      "name": "LFOpenDictionary",
+      "title": "LFOpenDictionary",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFOpenDictionary.py"
+    },
+    {
+      "id": "cf23f0ae-9fc4-5f93-80c0-9c83ee17a0ba",
+      "name": "LFOpenDictExport",
+      "title": "LFOpenDictExport",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFOpenDictExport.py"
+    },
+    {
+      "id": "b285fad7-3ef2-522c-bf00-f576048019b5",
+      "name": "LFNexus",
+      "title": "LFNexus",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFNexus.py"
+    },
+    {
+      "id": "bdd40cda-1353-5d61-9a86-8cc9ae05d712",
+      "name": "LFExportTypeLayers",
+      "title": "LFExportTypeLayers",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFExportTypeLayers.py"
+    },
+    {
+      "id": "3f2ed76a-3a57-58d5-a2a2-17a38c2773b6",
+      "name": "LFPublishExchange",
+      "title": "LFPublishExchange",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFPublishExchange.py"
+    },
+    {
+      "id": "9d72fd0c-4a1e-5eb0-b37a-74b1efada758",
+      "name": "LFDataViewer",
+      "title": "LFDataViewer",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFDataViewer.py"
+    },
+    {
+      "id": "32c0f343-ab5f-524b-b526-ad92e90c1aa2",
+      "name": "LFTaggerGrab",
+      "title": "LFTaggerGrab",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFTaggerGrab.py"
+    },
+    {
+      "id": "4e91c836-a3a2-5a87-985c-4b82b4c2a3b5",
+      "name": "LFTaggerLaser",
+      "title": "LFTaggerLaser",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFTaggerLaser.py"
+    },
+    {
+      "id": "3ccbe5fd-e760-56cb-b893-e44563a2d16e",
+      "name": "LFTaggerIndex",
+      "title": "LFTaggerIndex",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFTaggerIndex.py"
+    },
+    {
+      "id": "d101fbc2-9acd-5e88-99b8-0e776b60a1a7",
+      "name": "LFTaggerLayoutID",
+      "title": "LFTaggerLayoutID",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFTaggerLayoutID.py"
+    },
+    {
+      "id": "4c729a78-e09d-56ff-82c7-7c12a7e7d1b9",
+      "name": "LFAnchorFrame",
+      "title": "LFAnchorFrame",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFAnchorFrame.py"
+    },
+    {
+      "id": "02bf282d-8d8b-5df3-bcbd-886d4d91fe67",
+      "name": "LFCatalog",
+      "title": "LFCatalog",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFCatalog.py"
+    },
+    {
+      "id": "8c1a2c6c-5b4e-5f76-9bf8-f805aa70854d",
+      "name": "LFInfuserPart",
+      "title": "LFInfuserPart",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFInfuserPart.py"
+    },
+    {
+      "id": "bad8e1c1-0c84-5a12-989b-eabe0e653ec8",
+      "name": "LFInfuserAll",
+      "title": "LFInfuserAll",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFInfuserAll.py"
+    },
+    {
+      "id": "7ad6ae62-c470-578b-96b5-aa2761a1fb74",
+      "name": "LFTagO",
+      "title": "LFTagO",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFTagO.py"
+    },
+    {
+      "id": "9058225d-d22c-59cf-8bea-f8df24528178",
+      "name": "LFExtractCP",
+      "title": "LFExtractCP",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFExtractCP.py"
+    },
+    {
+      "id": "5b520199-bf4f-5596-a3d8-ae7690a35296",
+      "name": "LFDuplicateLayout",
+      "title": "LFDuplicateLayout",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFDuplicateLayout.py"
+    },
+    {
+      "id": "7da0bd4e-f8e8-5e51-ac1c-5d39bc034e1e",
+      "name": "LFSyncWorksession",
+      "title": "LFSyncWorksession",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFSyncWorksession.py"
+    },
+    {
+      "id": "c3a91f4e-2b7d-4e18-9f0a-6d5c8b1e4a22",
+      "name": "LFDocument",
+      "title": "LFDocument",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFDocument.py"
+    },
+    {
+      "id": "e7b2c91a-4d18-4f6e-9a33-2c8f1b0d47ae",
+      "name": "LFLanguage",
+      "title": "LFLanguage",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFLanguage.py"
+    }
+  ]
+}

@@ -4,6 +4,18 @@ All notable changes to LoopFlow will be documented here.
 
 ---
 
+## [2.0.0] - 2026-08-22
+
+Rebuild for Rhino 8. Install with one `.yak`. Do not mix 1.x and 2.0 in the same project.
+
+- Excel Dictionary (Chinese or English headers), Type layers, space frames, write/validate metadata, and a published Registry
+- Tags, Layout ID, Catalog, Infuser, TAG-O (marks stale or disconnected tags; no auto-repair)
+- Anchor Frame, Extract, Duplicate Layout, Worksession, bilingual UI
+- Official `Tag_Blocks.3dm` and Dictionary templates copy to `Documents\LoopFlow` on first command
+- Cabinets, 2D tools, and quantity takeoff are not in 2.0
+
+---
+
 ## [1.0.0] - 2026-04-23
 
 First public release.

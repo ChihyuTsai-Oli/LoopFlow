@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "ping_from_m2": 0.3025,
+  "cai_cm2": 918.09,
+  "cai_side_cm": 30.3,
+  "cases": [
+    {
+      "id": "count-one",
+      "rule": "COUNT",
+      "unit": "樘",
+      "w": 90,
+      "d": 40,
+      "h": 210,
+      "expect_quantity": 1
+    },
+    {
+      "id": "area-wd-cai",
+      "rule": "AREA_WD",
+      "unit": "才",
+      "w": 303,
+      "d": 303,
+      "h": 10,
+      "expect_quantity": 100.0
+    },
+    {
+      "id": "area-wd-ping",
+      "rule": "AREA_WD",
+      "unit": "坪",
+      "w": 100,
+      "d": 100,
+      "h": 10,
+      "model_unit": "cm",
+      "expect_quantity": 0.3025
+    }
+  ]
+}
