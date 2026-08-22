@@ -24,7 +24,7 @@ class ImportSmokeTests(unittest.TestCase):
         import loopflow
         from loopflow import bootstrap, command_catalog
 
-        self.assertTrue(loopflow.__version__.startswith("2.0.0"))
+        self.assertTrue(loopflow.__version__.startswith("2.0."))
         self.assertTrue(callable(bootstrap.run_command))
         self.assertGreaterEqual(len(command_catalog.CORE_COMMANDS), 1)
 

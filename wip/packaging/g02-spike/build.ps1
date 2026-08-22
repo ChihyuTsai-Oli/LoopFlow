@@ -10,7 +10,7 @@ $RhinoCode = "C:\Program Files\Rhino 8\System\RhinoCode.exe"
 $Rhproj = Join-Path $Spike "LoopFlow.rhproj"
 $CommandsDir = Join-Path $Spike "commands"
 $ProductRui = Join-Path $RepoWip "docs\toolbar\LoopFlow.rui"
-$Version = "2.0.0"
+$Version = "2.0.1"
 
 if (-not (Test-Path $Rhproj)) { throw "找不到 LoopFlow.rhproj" }
 if (-not (Test-Path (Join-Path $CommandsDir "LFLanguage.py"))) { throw "找不到 commands\LFLanguage.py" }
@@ -57,6 +57,11 @@ Copy-Item -LiteralPath $TagBlocks (Join-Path $TemplatesDir "Tag_Blocks.3dm")
 Copy-Item -LiteralPath $DictTw.FullName (Join-Path $TemplatesDir "LoopFlow_Dictionary_tw.xlsx")
 Copy-Item -LiteralPath $DictEn.FullName (Join-Path $TemplatesDir "LoopFlow_Dictionary_en.xlsx")
 
+$IconSrc = Join-Path $RepoWip "..\docs\images\icon\LoopFlow_2.png"
+$IconSrc = [System.IO.Path]::GetFullPath($IconSrc)
+if (-not (Test-Path -LiteralPath $IconSrc)) { throw "missing docs/images/icon/LoopFlow_2.png" }
+Copy-Item -LiteralPath $IconSrc (Join-Path $StageDir "icon.png")
+
 Get-ChildItem $StageDir -Filter "*.yak" | Remove-Item -Force
 
 Copy-Item -Force (Join-Path $Spike "manifest.yml") (Join-Path $StageDir "manifest.yml")
@@ -83,6 +88,7 @@ try {
         foreach ($Required in $RequiredTemplates) {
             if ($Names -notcontains $Required) { throw "yak missing $Required" }
         }
+        if ($Names -notcontains "icon.png") { throw "yak missing icon.png" }
     }
     finally {
         $Zip.Dispose()

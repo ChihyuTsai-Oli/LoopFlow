@@ -43,7 +43,7 @@ LoopFlow 2.0 是一套以 Rhino 8 為核心、貫穿 SD（Schematic Design）、
 
 不要使用 1.x 的 ZIP、`install_LoopFlow.bat` 或拖放 `.rhc` 工具列。同一專案不可混用 1.x 與 2.0
 
-1. 到 [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 下載 `loopflow-2.0.0-rh8_0-win.yak`（不要下載 1.x 的 ZIP）
+1. 到 [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 下載 `loopflow-2.0.1-rh8_0-win.yak`（不要下載 1.x 的 ZIP）
 2. 開啟 Rhino 8，命令列執行 `PackageManager`
 3. 選擇從檔案安裝剛才下載的 `.yak`
 4. **完全關掉 Rhino 再開**

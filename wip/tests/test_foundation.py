@@ -403,7 +403,7 @@ class VersionConfigLogTests(unittest.TestCase):
     def test_known_schema_passes(self):
         from loopflow.foundation.version import PACKAGE_VERSION, check_schema
 
-        self.assertTrue(PACKAGE_VERSION.startswith("2.0.0"))
+        self.assertTrue(PACKAGE_VERSION.startswith("2.0."))
         result = check_schema("loopflow.registry", 1)
         self.assertTrue(result.ok)
 

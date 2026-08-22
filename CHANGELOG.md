@@ -4,6 +4,15 @@ All notable changes to LoopFlow will be documented here.
 
 ---
 
+## [2.0.1] - 2026-08-22
+
+Package Manager listing only. Same product as 2.0.0.
+
+- Package icon and a short purpose description
+- Install from Package Manager or the `v2.0.1` yak. Do not mix 1.x and 2.0 in the same project
+
+---
+
 ## [2.0.0] - 2026-08-22
 
 Rebuild for Rhino 8. Install with one `.yak`. Do not mix 1.x and 2.0 in the same project.

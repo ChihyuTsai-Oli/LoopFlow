@@ -1,11 +1,12 @@
 ---
 name: loopflow
-version: 2.0.0
+version: 2.0.1
 authors:
 - Chihyu Tsai
 description: >
-  LoopFlow 2.0. Official commands, toolbar, Tag_Blocks, and Chinese/English Dictionary templates.
+  LoopFlow for Rhino: Half-automatic 2D/3D Sync. Accelerate your workflow from SD through DD to CD.
 url: https://github.com/ChihyuTsai-Oli/LoopFlow
+icon: icon.png
 keywords:
 - rhino
 - loopflow

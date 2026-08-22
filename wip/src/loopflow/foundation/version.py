@@ -10,7 +10,7 @@ from typing import Mapping, Optional
 
 from . import results
 
-PACKAGE_VERSION = "2.0.0"
+PACKAGE_VERSION = "2.0.1"
 
 SCHEMA_VERSIONS = {
     "loopflow.project": 1,

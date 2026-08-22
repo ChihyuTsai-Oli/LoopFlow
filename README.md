@@ -43,7 +43,7 @@ Bilingual interface: English / Traditional Chinese
 
 Do not use the 1.x ZIP, `install_LoopFlow.bat`, or drag-and-drop `.rhc` toolbar. Do not mix 1.x and 2.0 in the same project.
 
-1. Download `loopflow-2.0.0-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest). Do not download the 1.x ZIP.
+1. Download `loopflow-2.0.1-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest). Do not download the 1.x ZIP.
 2. Open Rhino 8 and run `PackageManager`.
 3. Install from file and choose the `.yak` you downloaded.
 4. **Quit Rhino completely and reopen it.**
