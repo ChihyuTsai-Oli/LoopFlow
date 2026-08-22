@@ -40,6 +40,12 @@ def _emit_result(result: Result) -> Result:
 def run_command(command_id: str) -> Result:
     """轉交已登錄指令。尚未實作時回報 not_implemented。"""
     ensure_src_on_path()
+    try:
+        from loopflow.foundation.templates import seed_official_templates
+
+        seed_official_templates()
+    except Exception:
+        pass
     spec = get_command(command_id)
     if spec is None:
         result = unknown_command(

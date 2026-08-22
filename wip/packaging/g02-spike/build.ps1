@@ -10,7 +10,7 @@ $RhinoCode = "C:\Program Files\Rhino 8\System\RhinoCode.exe"
 $Rhproj = Join-Path $Spike "LoopFlow.rhproj"
 $CommandsDir = Join-Path $Spike "commands"
 $ProductRui = Join-Path $RepoWip "docs\toolbar\LoopFlow.rui"
-$Version = "0.2.3"
+$Version = "0.2.4"
 
 if (-not (Test-Path $Rhproj)) { throw "找不到 LoopFlow.rhproj" }
 if (-not (Test-Path (Join-Path $CommandsDir "LFLanguage.py"))) { throw "找不到 commands\LFLanguage.py" }
@@ -43,6 +43,20 @@ $RuiPath = Join-Path $StageDir "LoopFlow.rui"
 if (Test-Path $RuiPath) { Remove-Item $RuiPath -Force }
 Copy-Item -Force $ProductRui $RuiPath
 if (-not (Test-Path $RuiPath)) { throw "product LoopFlow.rui was not copied into the yak stage" }
+
+$TemplatesDir = Join-Path $StageDir "templates"
+New-Item -ItemType Directory -Force -Path $TemplatesDir | Out-Null
+$Docs = Join-Path $RepoWip "docs"
+$TagBlocks = Join-Path $Docs "Tag_Blocks_3dm\Tag_Blocks.3dm"
+$DictTw = Get-ChildItem -LiteralPath $Docs -Recurse -Filter "LoopFlow_Dictionary_tw.xlsx" | Select-Object -First 1
+$DictEn = Get-ChildItem -LiteralPath $Docs -Recurse -Filter "LoopFlow_Dictionary_en.xlsx" | Select-Object -First 1
+if (-not (Test-Path -LiteralPath $TagBlocks)) { throw "missing Tag_Blocks.3dm" }
+if (-not $DictTw) { throw "missing LoopFlow_Dictionary_tw.xlsx" }
+if (-not $DictEn) { throw "missing LoopFlow_Dictionary_en.xlsx" }
+Copy-Item -LiteralPath $TagBlocks (Join-Path $TemplatesDir "Tag_Blocks.3dm")
+Copy-Item -LiteralPath $DictTw.FullName (Join-Path $TemplatesDir "LoopFlow_Dictionary_tw.xlsx")
+Copy-Item -LiteralPath $DictEn.FullName (Join-Path $TemplatesDir "LoopFlow_Dictionary_en.xlsx")
+
 Get-ChildItem $StageDir -Filter "*.yak" | Remove-Item -Force
 
 Copy-Item -Force (Join-Path $Spike "manifest.yml") (Join-Path $StageDir "manifest.yml")
@@ -60,6 +74,15 @@ try {
         if ($RuiInside.Count -ne 1) { throw "yak must contain exactly one rui" }
         if ($RuiInside[0].FullName -ne "LoopFlow.rui") { throw "yak rui must be named LoopFlow.rui" }
         if ($RuiInside[0].Length -lt 1000) { throw "packed LoopFlow.rui looks empty" }
+        $RequiredTemplates = @(
+            "templates/Tag_Blocks.3dm",
+            "templates/LoopFlow_Dictionary_tw.xlsx",
+            "templates/LoopFlow_Dictionary_en.xlsx"
+        )
+        $Names = @($Zip.Entries | ForEach-Object { $_.FullName -replace '\\','/' })
+        foreach ($Required in $RequiredTemplates) {
+            if ($Names -notcontains $Required) { throw "yak missing $Required" }
+        }
     }
     finally {
         $Zip.Dispose()

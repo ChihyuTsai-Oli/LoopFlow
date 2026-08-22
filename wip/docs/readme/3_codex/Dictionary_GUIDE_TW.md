@@ -44,7 +44,7 @@ Registry 版次              唯讀的模型資料快照
 
 第一次執行「同步 Type Layers」時會跳出選檔視窗，選過一次後檔名會記在 `_LoopFlow_Config/LoopFlow_Project.json` 的 `dictionary_filename`，之後不會再問。Dictionary 必須和 `.3dm` 在同一層；若已記住的檔案被改名或移走，系統會先請你把檔案放回，再從 `.3dm` 所在資料夾重新選取。選到其他資料夾時會說明並再問。**系統不會掃描資料夾裡所有 Excel，也不會保存某台電腦的絕對路徑。**
 
-`.3dm`、Dictionary 與 `_LoopFlow_Config/` 只靠相對位置綁定。整個專案資料夾搬到其他上層目錄、磁碟或電腦仍可使用；只複製 `.3dm` 則不會帶走原專案名稱與 Dictionary 選擇。官方 Dictionary 範本日後會放到「文件\LoopFlow」，再複製到 `.3dm` 同一層使用（尚未實作）。
+`.3dm`、Dictionary 與 `_LoopFlow_Config/` 只靠相對位置綁定。整個專案資料夾搬到其他上層目錄、磁碟或電腦仍可使用；只複製 `.3dm` 則不會帶走原專案名稱與 Dictionary 選擇。官方 Dictionary 範本會放到「文件\LoopFlow」，再複製到 `.3dm` 同一層使用。
 
 **介面語言與字典檔無關。** 切換 English／正體中文只改 LoopFlow 視窗與訊息；專案字典永遠是 Nexus 選中並記住的那一本，不會依介面語言自動換成 tw 或 en 檔。
 

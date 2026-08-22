@@ -6,7 +6,7 @@
 
 ## Project folder
 
-Save the `.3dm` first. **The folder of that file is the project folder**: the official Dictionary sits beside the `.3dm`; project settings, Registry, and logs go under `_LoopFlow_Config/` in the same folder. Moving the whole pack to another parent, drive, or computer still works. LoopFlow does not depend on a fixed absolute path on one computer. Official Dictionary templates and `Tag_Blocks.3dm` will later appear in `Documents\LoopFlow` for copying into projects (not implemented yet).
+Save the `.3dm` first. **The folder of that file is the project folder**: the official Dictionary sits beside the `.3dm`; project settings, Registry, and logs go under `_LoopFlow_Config/` in the same folder. Moving the whole pack to another parent, drive, or computer still works. LoopFlow does not depend on a fixed absolute path on one computer. Official Dictionary templates and `Tag_Blocks.3dm` appear in `Documents\LoopFlow` after the first product command, ready to copy into a project.
 
 ## Quick index
 

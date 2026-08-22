@@ -18,7 +18,7 @@ The folder of the saved `.3dm` is the LoopFlow project folder. Keep the Dictiona
 
 When you change computers or drives, move the whole project folder. As long as the `.3dm`, Dictionary, and `_LoopFlow_Config/` stay together, you do not edit absolute paths. Copying only the `.3dm` does not bring the original project settings.
 
-Official Dictionary templates and `Tag_Blocks.3dm` will later ship with the installer: one copy stays in the package folder, and Rhino copies them to `Documents\LoopFlow` on load (existing files are not overwritten). That folder is a convenient source to copy into each project, not the project folder itself. This is not implemented yet.
+Official Dictionary templates and `Tag_Blocks.3dm` ship with the installer: one copy stays in the package folder, and the first product command copies missing files to `Documents\LoopFlow` (existing files are not overwritten; Explorer opens only if something was copied). That folder is a convenient source to copy into each project, not the project folder itself.
 
 ## Interface language is per computer, not per project
 

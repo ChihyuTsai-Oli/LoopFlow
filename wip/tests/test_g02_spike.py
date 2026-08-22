@@ -112,8 +112,10 @@ class G02SpikePackagingTests(unittest.TestCase):
     def test_manifest_includes_toolbar(self):
         text = (SPIKE / "manifest.yml").read_text(encoding="utf-8")
         self.assertIn("name: loopflow", text)
-        self.assertIn("version: 0.2.3", text)
-        self.assertIn("LoopFlow toolbar", text)
+        self.assertIn("version: 0.2.4", text)
+        self.assertIn("toolbar", text)
+        self.assertIn("Tag_Blocks", text)
+        self.assertIn("Dictionary templates", text)
         self.assertNotIn("Toolbar RUI is not included yet", text)
         self.assertNotIn("LF_D08_Migrate_Display_Keys", text)
         self.assertNotIn("Package Manager 上架", text)
@@ -123,7 +125,12 @@ class G02SpikePackagingTests(unittest.TestCase):
         self.assertIn("docs\\toolbar\\LoopFlow.rui", text)
         self.assertIn("Replace generated LoopFlow.rui", text)
         self.assertIn("yak must contain exactly one rui", text)
-        self.assertIn('Version = "0.2.3"', text)
+        self.assertIn('Version = "0.2.4"', text)
+        self.assertIn("Tag_Blocks_3dm\\Tag_Blocks.3dm", text)
+        self.assertIn("LoopFlow_Dictionary_tw.xlsx", text)
+        self.assertIn("LoopFlow_Dictionary_en.xlsx", text)
+        self.assertIn("-Recurse -Filter", text)
+        self.assertIn("yak missing", text)
         self.assertNotIn("refuse to pack yak", text)
 
     def test_prepare_rhproj_rewrites_every_command_uri(self):
@@ -165,6 +172,14 @@ class G02SpikePackagingTests(unittest.TestCase):
         self.assertTrue((WIP / "src" / "loopflow" / "bootstrap.py").is_file())
         for _dev, official in _official_pairs():
             self.assertTrue((SPIKE / "commands" / ("%s.py" % official)).is_file())
+
+    def test_official_templates_exist_for_packaging(self):
+        tag_blocks = WIP / "docs" / "Tag_Blocks_3dm" / "Tag_Blocks.3dm"
+        dict_dir = WIP / "docs" / "字典"
+        self.assertTrue(tag_blocks.is_file())
+        self.assertGreater(tag_blocks.stat().st_size, 1000)
+        self.assertTrue((dict_dir / "LoopFlow_Dictionary_tw.xlsx").is_file())
+        self.assertTrue((dict_dir / "LoopFlow_Dictionary_en.xlsx").is_file())
 
 
 if __name__ == "__main__":

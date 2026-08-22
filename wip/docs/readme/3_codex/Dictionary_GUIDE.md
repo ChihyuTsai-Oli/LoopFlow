@@ -44,7 +44,7 @@ Registry revision         read-only snapshot of model data
 
 The first **Sync Type Layers** run asks you to pick a file. After that, the name is stored as `dictionary_filename` in `_LoopFlow_Config/LoopFlow_Project.json` and is not asked again. The Dictionary must sit beside the `.3dm`. If the remembered file was renamed or moved, LoopFlow asks you to put it back, then pick again from the `.3dm` folder. Picking a file in another folder is rejected and asked again. **LoopFlow does not scan every Excel in the folder, and it does not store a computer-specific absolute path.**
 
-The `.3dm`, Dictionary, and `_LoopFlow_Config/` are bound by relative location only. Moving the whole project folder to another parent, drive, or computer still works. Copying only the `.3dm` does not take the project name or Dictionary choice with it. Official templates will later go into `Documents\LoopFlow`, then you copy them beside the `.3dm` (not implemented yet).
+The `.3dm`, Dictionary, and `_LoopFlow_Config/` are bound by relative location only. Moving the whole project folder to another parent, drive, or computer still works. Copying only the `.3dm` does not take the project name or Dictionary choice with it. Official templates go into `Documents\LoopFlow`, then you copy them beside the `.3dm`.
 
 **Interface language and the Dictionary file are independent.** Switching English / 正體中文 only changes LoopFlow windows and messages. The project Dictionary stays the workbook Nexus selected and remembered. It is not swapped to the tw or en file based on UI language.
 

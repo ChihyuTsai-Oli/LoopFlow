@@ -1,10 +1,10 @@
 ---
 name: loopflow
-version: 0.2.3
+version: 0.2.4
 authors:
 - Chihyu Tsai
 description: >
-  LoopFlow 2.0 G02 spike. Registers official commands and the LoopFlow toolbar.
+  LoopFlow 2.0. Official commands, toolbar, Tag_Blocks, and Chinese/English Dictionary templates.
 url: https://github.com/ChihyuTsai-Oli/LoopFlow
 keywords:
 - rhino
