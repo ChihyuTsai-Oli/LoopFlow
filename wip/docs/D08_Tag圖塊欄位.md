@@ -2,14 +2,13 @@
 
 本文件是 **LF-D08** 的 Rhino 操作指示。編輯在 Rhino 進行；AI 不直接改 `.3dm`。資料欄位以 `資料契約.md` 的「顯示欄 owner」為準。
 
-目標：圖塊畫面上的字改讀 `lf_*`，預設提示改英文。2.0 **只維護一份英文 `Tag_Blocks.3dm`**，日後不另做中文圖塊庫。
+目標：圖塊畫面上的字改讀 `lf_*`，預設提示改英文。2.0 **只維護一份 `Tag_Blocks.3dm`**：檔內中英說明並列，不另做中／英兩個 3dm。
 
 ## 開始前
 
 1. **不要改** Git 裡的 `releases/LoopFlow/Tag_Blocks.3dm`（那是 1.x 發布檔）。
-2. 把它複製到這台電腦的 Dropbox 工作檔資料夾（路徑見工作區根目錄 `工作檔路徑.md`），例如 `source/Tag_Blocks.3dm`。
-3. 再開一份測試用副本，例如 `source/Tag_Blocks_d08.3dm`。只改副本。
-4. 用 Rhino 8 開啟副本。改完存檔後，先在測試 `.3dm` 插入新圖塊驗證，不要直接改正式專案。
+2. 2.0 官方檔是 `wip/docs/Tag_Blocks_3dm/Tag_Blocks.3dm`（一份，檔內中英說明並列）。
+3. 改圖塊請先複製再改，不要直接改唯一那份。用 Rhino 8 開啟副本。改完存檔後，先在測試 `.3dm` 插入新圖塊驗證。
 
 固定字不要動：`Grab`、`Laser`、`W.`、`H.`。圖框上的專案名與日期是專案內容，不是圖塊庫提示。
 
@@ -159,4 +158,4 @@ Attribute User Text 列表上的 **Key 名字來自 Block 裡的文字公式**�
 - 不要改巢狀裝飾線、引線、固定標籤 `Grab`／`Laser`／`W.`／`H.`
 - 此檔是當時改圖塊的操作指示。改圖塊時不要順手改 Infuser／TAG-O／Extract 程式。Infuser／TAG-O 其後已實機通過；Extract 仍尚未實作、不要開
 - 不要把改好的檔覆寫進 `releases/` 或正式專案
-- 不要另存一份中文 `Tag_Blocks.3dm`；2.0 只維護這份英文圖塊庫
+- 不要另存 `Tag_Blocks_TW.3dm`／`Tag_Blocks_EN.3dm`；中英說明都寫在同一份 `Tag_Blocks.3dm`
