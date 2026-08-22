@@ -29,6 +29,7 @@
 !docs/**/.gitkeep
 !docs/*.html
 !docs/**/*.svg
+!docs/images/icon/*.png
 
 # 重構工作區（只追蹤文件與輕量測試定義，不放 Dropbox 工作檔）
 !wip/
