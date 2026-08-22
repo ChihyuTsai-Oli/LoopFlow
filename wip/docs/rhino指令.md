@@ -1,14 +1,14 @@
 # LoopFlow 2.0 — Rhino 指令與按鈕巨集
 
-本文件是**開發期**目前可跑的 Rhino 指令與測試按鈕巨集的單一來源，隨開發進度同步更新。指令 ID 的正式契約在 `資料契約.md`；本文件負責「現在有哪些按鈕、巨集怎麼寫」。日後要統一調整指令名稱，先改這份，再同步契約、入口檔名與程式。
+本文件記錄**開發按鈕**（ScriptEditor 指向 repo）與**正式無底線指令**的對照。使用者安裝的是 yak 裡的 `LoopFlow.rui`。指令 ID 的正式契約在 `資料契約.md`。日後要統一調整指令名稱，先改這份與 `指令名稱.txt`，再同步契約、入口檔名與程式。
 
 規則：
 
-- 入口檔名即指令 ID。入口只轉交 command，不放業務邏輯。
+- 入口檔名即開發期指令 ID。入口只轉交 command，不放業務邏輯。
 - 巨集路徑指向這台開發機的 repo 位置；換機只改路徑，不改指令名稱。程式與契約不得寫死任何電腦的絕對路徑。
 - 改程式後須**完全關掉 Rhino 再開**。
 - 不要按 1.x 工具列上的同名按鈕。
-- **現在不要改入口檔名。** G02 才把正式指令登錄成無底線名稱（見下方對照）。
+- **不要改入口檔名。** 正式指令已登錄成無底線名稱（見下方對照）。
 
 ## 目前可跑的指令
 
@@ -223,8 +223,8 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Test_Random_M3D_
 ! _UpdateClippingDrawings
 ```
 
-## 預定新增
+## 現況
 
-核心主鏈指令已齊。Extract CP **公司 Rhino 8 已測（2026-08-20）**。Duplicate Layout／Sync Worksession **家中 Rhino 8 已測（2026-08-20）**。Document **家中 Rhino 8 已測（2026-08-21）**。G02 已登錄全部正式指令，並附產品 `LoopFlow.rui`。G01 只查上傳用 3dm 範例。1.x 與 2.0 不可混用。
+核心主鏈指令已齊，且已打進 yak。Extract CP **公司 Rhino 8 已測（2026-08-20）**。Duplicate Layout／Sync Worksession **家中 Rhino 8 已測（2026-08-20）**。Document **家中 Rhino 8 已測（2026-08-21）**。G01 只查上傳用 3dm 範例，不進工具列。1.x 與 2.0 不可混用。
 
 Cabinet／三支 2D 工具不屬 2.0。

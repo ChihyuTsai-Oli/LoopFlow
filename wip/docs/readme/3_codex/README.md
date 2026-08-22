@@ -1,3 +1,5 @@
+<!-- 草稿。公開入口以 docs/README.md 為準。 -->
+
 # LoopFlow 2.0 Documentation
 
 This page is the **documentation entry** opened by the Rhino command `LFDocument`. It is not the project homepage. For the product overview, installation, and what changed from 1.0, see the [project homepage](../README.md).
@@ -9,6 +11,8 @@ This page is the **documentation entry** opened by the Rhino command `LFDocument
 | Rhino commands | [Open](./COMMANDS_TW.md) | [Open](./COMMANDS.md) |
 | Tag Blocks | [Open](./TAG_BLOCKS_TW.md) | [Open](./TAG_BLOCKS.md) |
 | Tutorials | [YouTube](https://www.youtube.com/@Chihyu-Oli/playlists) | [YouTube](https://www.youtube.com/@Chihyu-Oli/playlists) |
+
+Videos are not all updated for 2.0 yet. Install 2.0 from Package Manager. Do not mix with 1.0.
 
 ---
 
@@ -23,3 +27,5 @@ This page is the **documentation entry** opened by the Rhino command `LFDocument
 | Rhino 指令 | [開啟](./COMMANDS_TW.md) | [開啟](./COMMANDS.md) |
 | Tag Blocks | [開啟](./TAG_BLOCKS_TW.md) | [開啟](./TAG_BLOCKS.md) |
 | 教學影片 | [YouTube](https://www.youtube.com/@Chihyu-Oli/playlists) | [YouTube](https://www.youtube.com/@Chihyu-Oli/playlists) |
+
+教學影片尚未全部更新為 2.0。請用 Package Manager 安裝 2.0，不要與 1.0 混用。

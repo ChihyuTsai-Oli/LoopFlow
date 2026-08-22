@@ -37,18 +37,18 @@ Bilingual interface: English / Traditional Chinese
 
 ## Quick start
 
-- [Tutorial playlists](https://www.youtube.com/@Chihyu-Oli/playlists)
+- [Tutorial playlists](https://www.youtube.com/@Chihyu-Oli/playlists) (not all videos have been updated for 2.0 yet)
 
 ### Installation
 
 Do not use the 1.x ZIP, `install_LoopFlow.bat`, or drag-and-drop `.rhc` toolbar. Do not mix 1.x and 2.0 in the same project.
 
-1. Download `loopflow-2.0.1-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest). Do not download the 1.x ZIP.
-2. Open Rhino 8 and run `PackageManager`.
-3. Install from file and choose the `.yak` you downloaded.
-4. **Quit Rhino completely and reopen it.**
+1. Open Rhino 8, run `PackageManager`, search for `LoopFlow`, and install 2.0.1.
+2. **Quit Rhino completely and reopen it.**
 
-You can also search for `LoopFlow` in Package Manager after it is listed. After install:
+You can also download `loopflow-2.0.1-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) and install from file. Do not download the 1.x ZIP.
+
+After install:
 
 - The first LoopFlow command asks English / 正體中文 if this computer has not chosen a language yet.
 - Missing official files are copied to `Documents\LoopFlow` (`Tag_Blocks.3dm` and both Dictionary workbooks). Existing files are not overwritten.

@@ -1,4 +1,4 @@
-# G02 正式 Rhino 指令。每組兩行：開發期 ID、無底線正式名稱。開發期入口不要改成這些名字。2.0 安裝主格式是 .yak，見 系統設定.md。
+# 正式 Rhino 指令。每組兩行：開發期 ID、無底線正式名稱。開發期入口不要改成這些名字。2.0 安裝主格式是 .yak，見 系統設定.md。
 LF_Open_Dictionary
 LFOpenDictionary
 
