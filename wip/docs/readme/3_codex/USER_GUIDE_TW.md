@@ -2,10 +2,6 @@
 
 > 一分鐘理解 LoopFlow 怎麼運作。操作細節見 [指令逐項說明](./COMMANDS_TW.md)；Excel 字典見 [字典使用說明](./Dictionary_GUIDE_TW.md)；圖面上的 Tag 圖塊欄位見 [Tag Block 說明](./TAG_BLOCKS_TW.md)。
 
-下面這張圖是整套邏輯的濃縮版；本頁文字是它的延伸說明，講得比圖更細一點，但重點還是「邏輯」，不是操作步驟。
-
-<img src="./loopflow_workflow.svg" alt="LoopFlow 2.0 工作流程圖" width="100%">
-
 ## 核心邏輯：三段式
 
 **先自由建模，再由字典灌入資料，最後銜接給 2D 使用。**
