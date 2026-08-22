@@ -30,6 +30,8 @@ LoopFlow 介面支援 **English** 與**正體中文**。第一次執行任一產
 
 選定後會記在這台電腦的 `%APPDATA%\LoopFlow\preferences.json`，不寫進 `.3dm` 或 `_LoopFlow_Config/`。之後可在 **Document** 工具列按鈕上按右鍵，或執行 `LFLanguage` 切換；同一專案在不同電腦可以各用自己的介面語言。`Tag_Blocks.3dm` 內固定的標籤與公式提示維持英文，不會跟著切換。
 
+專案採用的 Dictionary 只認 Nexus「同步 Type Layers」選中並記住的那本 `.xlsx`。繁中與英文欄名的 Excel 都能載入；介面語言不會自動換成另一本字典。
+
 ## 2D／3D 的分界在哪裡：Rhino Section
 
 LoopFlow 沒有自己另外做一套剖面工具，2D 幾何流程建立在 **Rhino 8 原生的 Section／Clipping Drawing** 之上。這一步是 3D 與 2D 的主要幾何分界：
