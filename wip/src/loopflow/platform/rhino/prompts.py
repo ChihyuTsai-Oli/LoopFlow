@@ -23,7 +23,8 @@ def _ui_font(drawing, size: float = 11.0):
 # 對齊 Nexus／rs.ListBox 的 Windows 系統鈕。
 DIALOG_BUTTON_WIDTH = 75
 DIALOG_BUTTON_HEIGHT = 23
-LOCALE_BUTTON_WIDTH = 90
+LOCALE_CHOICE_BUTTON_HEIGHT = 59
+LOCALE_HINT_BUTTON_GAP = 18
 # 對齊 Index 綁定：系統預設字、外框 10、區塊間距 5。
 DIALOG_PADDING = 10
 DIALOG_SPACING = 5
@@ -297,6 +298,7 @@ def ask_popup_choice(
 
 
 LOCALE_PROMPT_TITLE = "LoopFlow"
+# 定稿仍有「選擇介面語言」；此窗與 ListBox 後備都不顯示該行。
 LOCALE_PROMPT_HEADING = "選擇介面語言 / Choose interface language"
 LOCALE_PROMPT_HINT = (
     "Document 按鈕右鍵切換語言介面 (LFLanguage)\n"
@@ -306,8 +308,29 @@ LOCALE_LABEL_ZH = "正體中文"
 LOCALE_LABEL_EN = "English"
 
 
+def _fit_locale_choice_buttons(dialog, btn_en, btn_zh, drawing) -> None:
+    """兩顆選擇鈕各佔一半寬、高度固定。"""
+    try:
+        inner = int(dialog.ClientSize.Width) - (2 * DIALOG_PADDING)
+    except Exception:
+        inner = 0
+    if inner <= 0:
+        inner = int(getattr(dialog, "Width", 0) or 0) - (2 * DIALOG_PADDING)
+    width = max(80, (inner - DIALOG_SPACING) // 2)
+    size = drawing.Size(width, LOCALE_CHOICE_BUTTON_HEIGHT)
+    for button in (btn_en, btn_zh):
+        button.Width = width
+        button.Height = LOCALE_CHOICE_BUTTON_HEIGHT
+        button.Size = size
+        try:
+            button.MinimumSize = size
+            button.MaximumSize = size
+        except Exception:
+            pass
+
+
 def ask_ui_locale() -> Optional[str]:
-    """第一次或切換語系。回傳「正體中文」／「English」；取消 None；沒有介面 ImportError。"""
+    """第一次或切換語系。回傳「正體中文」／「English」；Esc／關閉鈕 None；沒有介面 ImportError。"""
     try:
         import Eto.Drawing as drawing  # type: ignore
         import Eto.Forms as forms  # type: ignore
@@ -317,8 +340,8 @@ def ask_ui_locale() -> Optional[str]:
         import rhinoscriptsyntax as rs  # type: ignore
 
         value = rs.ListBox(
-            [LOCALE_LABEL_ZH, LOCALE_LABEL_EN],
-            "%s\n%s" % (LOCALE_PROMPT_HEADING, LOCALE_PROMPT_HINT),
+            [LOCALE_LABEL_EN, LOCALE_LABEL_ZH],
+            LOCALE_PROMPT_HINT,
             LOCALE_PROMPT_TITLE,
         )
         if value is None:
@@ -332,34 +355,46 @@ def ask_ui_locale() -> Optional[str]:
             self.Padding = _dialog_padding(drawing)
             self.Resizable = False
             self.choice = None
-            heading = forms.Label()
-            heading.Text = LOCALE_PROMPT_HEADING
-            heading.Font = _ui_font(drawing, 11)
             hint = forms.Label()
             hint.Text = LOCALE_PROMPT_HINT
             hint.Font = _ui_font(drawing, 10)
-            btn_zh = forms.Button()
-            btn_zh.Text = LOCALE_LABEL_ZH
-            _apply_dialog_button_size(btn_zh, drawing, LOCALE_BUTTON_WIDTH)
-            btn_zh.Click += self._pick_zh
-            btn_en = forms.Button()
-            btn_en.Text = LOCALE_LABEL_EN
-            _apply_dialog_button_size(btn_en, drawing, LOCALE_BUTTON_WIDTH)
-            btn_en.Click += self._pick_en
-            btn_cancel = forms.Button()
-            btn_cancel.Text = "Cancel"
-            _apply_dialog_button_size(btn_cancel, drawing, LOCALE_BUTTON_WIDTH)
-            btn_cancel.Click += self._on_cancel
-            self.AbortButton = btn_cancel
-            row = forms.DynamicLayout()
-            row.DefaultSpacing = drawing.Size(10, 0)
-            row.AddRow(None, btn_zh, btn_en, btn_cancel)
+            self._btn_en = forms.Button()
+            self._btn_en.Text = LOCALE_LABEL_EN
+            _lock_control_height(self._btn_en, drawing, LOCALE_CHOICE_BUTTON_HEIGHT)
+            self._btn_en.Click += self._pick_en
+            self._btn_zh = forms.Button()
+            self._btn_zh.Text = LOCALE_LABEL_ZH
+            _lock_control_height(self._btn_zh, drawing, LOCALE_CHOICE_BUTTON_HEIGHT)
+            self._btn_zh.Click += self._pick_zh
+            row = forms.TableLayout()
+            row.Spacing = drawing.Size(DIALOG_SPACING, 0)
+            table_row = forms.TableRow()
+            table_row.ScaleHeight = False
+            table_row.Cells.Add(forms.TableCell(self._btn_en, True))
+            table_row.Cells.Add(forms.TableCell(self._btn_zh, True))
+            row.Rows.Add(table_row)
             layout = forms.DynamicLayout()
-            layout.Spacing = _dialog_spacing(drawing)
-            layout.AddRow(heading)
+            layout.Spacing = drawing.Size(DIALOG_SPACING, LOCALE_HINT_BUTTON_GAP)
             layout.AddRow(hint)
             layout.AddRow(row)
             self.Content = layout
+            self.DefaultButton = self._btn_en
+            btn_abort = forms.Button()
+            btn_abort.Visible = False
+            btn_abort.Click += self._on_cancel
+            self.AbortButton = btn_abort
+            try:
+                self.KeyDown += self._on_key_down
+            except Exception:
+                pass
+
+        def _on_key_down(self, sender, e) -> None:
+            try:
+                if e.Key == forms.Keys.Escape:
+                    e.Handled = True
+                    self._on_cancel(sender, e)
+            except Exception:
+                pass
 
         def _pick_zh(self, sender, e) -> None:
             self.choice = LOCALE_LABEL_ZH
@@ -374,6 +409,14 @@ def ask_ui_locale() -> Optional[str]:
             self.Close(False)
 
     dialog = _LocaleDialog()
+
+    def _on_shown(sender, e) -> None:
+        _fit_locale_choice_buttons(dialog, dialog._btn_en, dialog._btn_zh, drawing)
+
+    try:
+        dialog.Shown += _on_shown
+    except Exception:
+        _fit_locale_choice_buttons(dialog, dialog._btn_en, dialog._btn_zh, drawing)
     dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
     if not dialog.choice:
         return None

@@ -39,6 +39,10 @@ class LocalePreferenceTests(unittest.TestCase):
 
     def test_missing_file_is_unset(self):
         self.assertIsNone(locale_store.read_locale())
+        from loopflow.foundation.i18n import current_locale
+
+        self.assertEqual(locale_store.DEFAULT_LOCALE, locale_store.LOCALE_EN)
+        self.assertEqual(current_locale(), locale_store.LOCALE_EN)
 
     def test_write_and_read_roundtrip(self):
         path = locale_store.write_locale(locale_store.LOCALE_EN)
@@ -81,7 +85,7 @@ class LocalePreferenceTests(unittest.TestCase):
         result = ensure_locale(ask=lambda: None)
         self.assertFalse(result.ok)
         self.assertEqual(result.status, "cancelled")
-        self.assertIn("尚未記住", result.message)
+        self.assertIn("Nothing was saved", result.message)
         self.assertIsNone(locale_store.read_locale())
 
     def test_ensure_without_ui_does_not_block(self):
@@ -124,8 +128,20 @@ class LocalePreferenceTests(unittest.TestCase):
     def test_switch_cancel(self):
         result = run_language(ask=lambda: None)
         self.assertEqual(result.status, "cancelled")
-        self.assertIn("已取消切換", result.message)
+        self.assertIn("Language switch cancelled", result.message)
         self.assertIsNone(locale_store.read_locale())
+
+    def test_locale_dialog_copy_and_size(self):
+        from loopflow.platform.rhino import prompts
+
+        self.assertEqual(prompts.LOCALE_LABEL_EN, "English")
+        self.assertEqual(prompts.LOCALE_LABEL_ZH, "正體中文")
+        self.assertEqual(prompts.LOCALE_CHOICE_BUTTON_HEIGHT, 59)
+        self.assertEqual(prompts.LOCALE_HINT_BUTTON_GAP, 18)
+        self.assertIn("LFLanguage", prompts.LOCALE_PROMPT_HINT)
+        self.assertNotIn("選擇介面語言", prompts.LOCALE_PROMPT_HINT)
+        source = prompts.ask_ui_locale.__doc__ or ""
+        self.assertIn("Esc", source)
 
 
 if __name__ == "__main__":

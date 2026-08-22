@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Mapping, Optional
 
-from loopflow.foundation.locale import LOCALE_EN, LOCALE_ZH_TW, read_locale
+from loopflow.foundation.locale import LOCALE_EN, LOCALE_ZH_TW, resolved_locale
 
 CATALOG_PATH = Path(__file__).with_name("i18n_catalog.json")
 _CACHE = None
@@ -20,17 +20,17 @@ def load_catalog() -> Mapping[str, Mapping[str, str]]:
 
 
 def current_locale() -> str:
-    """未記住時畫面仍用繁中，與第一次詢問前行為相同。"""
-    return read_locale() or LOCALE_ZH_TW
+    """未記住時畫面用英文。"""
+    return resolved_locale()
 
 
-def t(key: str, *args) -> str:
+def t(key: str, *args, locale: Optional[str] = None) -> str:
     """取句子。缺 key 視為程式錯誤；%s 由呼叫端傳入，不翻譯。"""
     entry = load_catalog().get(key)
     if not entry:
         raise KeyError("未知句子 id：%s" % key)
-    locale = current_locale()
-    text = entry.get(locale) or entry.get(LOCALE_ZH_TW)
+    chosen = locale or current_locale()
+    text = entry.get(chosen) or entry.get(LOCALE_ZH_TW)
     if text is None:
         raise KeyError("句子 id 沒有繁中：%s" % key)
     if args:

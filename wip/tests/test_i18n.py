@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""畫面句子表：與定稿一致；未記住語系時仍繁中。"""
+"""畫面句子表：與定稿一致；未記住語系時用英文。"""
 from __future__ import annotations
 
 import os
@@ -43,9 +43,16 @@ class I18nCatalogTests(unittest.TestCase):
         self.assertGreaterEqual(len(rows), 600)
         self.assertIn("nexus.033", rows)
 
-    def test_unset_locale_stays_traditional_chinese(self):
+    def test_unset_locale_defaults_to_english(self):
         self.assertIsNone(locale_store.read_locale())
-        self.assertEqual(i18n.current_locale(), locale_store.LOCALE_ZH_TW)
+        self.assertEqual(i18n.current_locale(), locale_store.LOCALE_EN)
+        self.assertEqual(
+            i18n.t("nexus.022"),
+            i18n.load_catalog()["nexus.022"]["en"],
+        )
+
+    def test_traditional_chinese_locale_uses_catalog_zh(self):
+        locale_store.write_locale(locale_store.LOCALE_ZH_TW)
         self.assertEqual(
             i18n.t("nexus.022"),
             i18n.load_catalog()["nexus.022"]["zh-TW"],

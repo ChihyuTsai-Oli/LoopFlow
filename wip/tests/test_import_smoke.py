@@ -176,7 +176,12 @@ class ImportSmokeTests(unittest.TestCase):
         self.assertTrue(
             any(
                 token in completed.stdout
-                for token in ("不在 Rhino", "請先把這份檔案存成")
+                for token in (
+                    "不在 Rhino",
+                    "請先把這份檔案存成",
+                    "Rhino is not available",
+                    "Save this file as a .3dm",
+                )
             ),
             completed.stdout,
         )

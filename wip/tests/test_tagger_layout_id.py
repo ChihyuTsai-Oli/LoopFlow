@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import copy
 import io
+import os
 import sys
+import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -43,6 +45,7 @@ from loopflow.features.tagger.layout_id import (
     run_tagger_layout_id,
 )
 from loopflow.foundation.i18n import t
+from loopflow.foundation import locale as locale_store
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.prompts import format_result_popup
 from loopflow.platform.rhino.state import ObjectViewState
@@ -229,6 +232,28 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertEqual(format_result_popup(result), t("layout_id.001"))
         self.assertTrue(result.details["skipped"])
         self.assertIsNone(session.get_object_user_text("frame-1", DRAWING_NO_KEY))
+
+    def test_missing_star_english_locale_still_blocks_series_start(self):
+        old = os.environ.get(locale_store.PREFS_ENV)
+        tmp = tempfile.TemporaryDirectory()
+        os.environ[locale_store.PREFS_ENV] = str(Path(tmp.name) / "preferences.json")
+        try:
+            locale_store.write_locale(locale_store.LOCALE_EN)
+            session = _session(["IN__101__一樓平面圖"])
+            _add_block(session, "frame-1", "IN__101__一樓平面圖", "Sample_Frame")
+            result = run_tagger_layout_id(
+                session, confirm=lambda _lines: True, ask_register=lambda _names: ()
+            )
+            self.assertFalse(result.ok)
+            self.assertIn("missing_series_start", result.blocking)
+            self.assertNotIn("missing_title_frame", result.blocking)
+            self.assertEqual(result.message, t("layout_id.001"))
+        finally:
+            if old is None:
+                os.environ.pop(locale_store.PREFS_ENV, None)
+            else:
+                os.environ[locale_store.PREFS_ENV] = old
+            tmp.cleanup()
 
     def test_missing_star_with_cover_still_only_help(self):
         session = _session(["Preset", "IN__101__一樓平面圖"])

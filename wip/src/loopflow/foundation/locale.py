@@ -10,6 +10,7 @@ from typing import Optional
 
 LOCALE_ZH_TW = "zh-TW"
 LOCALE_EN = "en"
+DEFAULT_LOCALE = LOCALE_EN
 VALID_LOCALES = frozenset({LOCALE_ZH_TW, LOCALE_EN})
 PREFS_ENV = "LOOPFLOW_PREFS_PATH"
 PREFS_FILENAME = "preferences.json"
@@ -25,7 +26,7 @@ def preferences_path() -> Path:
     if override:
         return Path(override)
     if _in_unittest():
-        # 不讀這台電腦記住的語系，測試預設仍是繁中。
+        # 不讀這台電腦記住的語系，避免測試跟著 AppData 走。
         return Path(os.environ.get("TEMP") or ".") / "loopflow-unittest-prefs-absent.json"
     appdata = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
     return Path(appdata) / "LoopFlow" / PREFS_FILENAME
@@ -45,6 +46,16 @@ def read_locale() -> Optional[str]:
     if locale in VALID_LOCALES:
         return locale
     return None
+
+
+def resolved_locale() -> str:
+    """已記住用記住的；未記住時產品預設英文。測試未指定 LOOPFLOW_PREFS_PATH 時仍繁中。"""
+    saved = read_locale()
+    if saved:
+        return saved
+    if _in_unittest() and not str(os.environ.get(PREFS_ENV) or "").strip():
+        return LOCALE_ZH_TW
+    return DEFAULT_LOCALE
 
 
 def write_locale(locale: str) -> Path:

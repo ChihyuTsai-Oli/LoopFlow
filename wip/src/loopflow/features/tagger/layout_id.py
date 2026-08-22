@@ -41,8 +41,13 @@ from loopflow.features.tagger.keys import TARGET_LAYOUT_KEY, is_tag_locked
 from loopflow.features.tagger.templates import TagTemplateSet, load_tag_templates
 from loopflow.features.viewer.inspect import check_document_schema
 from loopflow.foundation import results
-from loopflow.platform.rhino.session import RhinoSession, run_guarded
 from loopflow.foundation.i18n import t
+from loopflow.platform.rhino.session import RhinoSession, run_guarded
+
+SKIP_MISSING_FRAME = "missing_title_frame"
+SKIP_MISSING_START = "missing_series_start"
+SKIP_BLANK_PAGE = "blank_page_name"
+SKIP_MANUAL_INVALID = "manual_invalid"
 
 COMMAND_ID = "LF_Tagger_Layout_ID"
 STAGE = "write_sheet_id"
@@ -88,12 +93,9 @@ def _no_writable_pages_result(
     unknown: Sequence[str],
 ) -> results.Result:
     """沒有可寫入頁時，依實際原因說明；不要把「缺 ** 起點」說成缺圖框。"""
-    reasons = tuple(str(item.get("reason") or "") for item in skipped)
-    missing_start = any(t("layout_id.011") in reason for reason in reasons)
-    frame_problem = any(
-        reason and t("layout_id.011") not in reason and t("layout_id.025") not in reason
-        for reason in reasons
-    )
+    codes = tuple(str(item.get("code") or "") for item in skipped)
+    missing_start = SKIP_MISSING_START in codes
+    frame_problem = any(code in (SKIP_MISSING_FRAME, SKIP_MANUAL_INVALID) for code in codes)
     details = {"skipped": skipped, "unregistered_blocks": unknown}
     if missing_start:
         return results.blocked(
@@ -156,6 +158,7 @@ def build_sheet_rows(
                 {
                     "page_name": scan.page_name,
                     "page_number": scan.page_number,
+                    "code": SKIP_MISSING_FRAME,
                     "reason": _skip_reason(scan),
                 }
             )
@@ -201,14 +204,18 @@ def build_sheet_rows(
         if plan.status in (STATUS_SKIPPED, STATUS_UNNUMBERED, STATUS_MANUAL_INVALID):
             if plan.status == STATUS_UNNUMBERED:
                 reason = t("layout_id.018")
+                code = SKIP_MISSING_START
             elif plan.status == STATUS_MANUAL_INVALID:
                 reason = t("layout_id.026")
+                code = SKIP_MANUAL_INVALID
             else:
                 reason = t("layout_id.025")
+                code = SKIP_BLANK_PAGE
             skipped.append(
                 {
                     "page_name": scan.page_name,
                     "page_number": scan.page_number,
+                    "code": code,
                     "reason": reason,
                 }
             )
