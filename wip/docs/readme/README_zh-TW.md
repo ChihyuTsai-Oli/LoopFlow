@@ -2,7 +2,7 @@
 
 # LoopFlow
 
-英文稍後
+[English](./README.md)
 
 > **Embrace the loop. Let it flow.**
 
@@ -23,16 +23,16 @@ LoopFlow 2.0 是一套以 Rhino 8 為核心、貫穿 SD（Schematic Design）、
 
 ## 與 1.0 的差異
 
-- 2.0 是重建，不是 1.x 的修補版；同一專案不要混用資料、指令或工具列
-- 模型改完不會自動灌進圖面；要先寫入、檢核，再發布一版給圖紙讀
-- 櫃體與部分 2D 小工具不在 2.0（日後獨立專案）
+- 2.0 是重建，不是 1.x 的修補版；同一專案不可混用資料、Tag Block、指令或工具列
+- 模型改完不會自動灌進圖面；要先寫入、檢核，再發布一版給圖紙讀取
+- 1.0 的櫃體與部分 2D 工具，不併入 2.0；獨立為日後獨立專案
 - 2.0 不算尺寸或數量
 - 安裝改為一份 `.yak`（Package Manager），不再用 1.x 的解壓與拖工具列
-- 介面可選 English／正體中文；Tag 過期或斷開會標示，但不自動修
+- 介面可選 English / 正體中文；Tag 過期或斷開會標示，但不自動修
 
 ## 系統需求
 
-- **Rhino 8**（必要；2D 出圖使用 Rhino 原生 Section／Clipping Drawing）
+- **Rhino 8**（必要；2D 出圖使用 Rhino 原生 Section / Clipping Drawing）
 - Windows 10 或 Windows 11
 
 支援雙語介面：English / 正體中文
@@ -74,4 +74,4 @@ LoopFlow 是由建築及室內設計師從實際工作中發展的單人專案�
 
 ## 授權與致謝
 
-LoopFlow 採用 [MIT License](./LICENSE) 發布。開發背景與致謝請參考 [CREDITS](./CREDITS.md)。
+LoopFlow 採用 [MIT License](./LICENSE) 發布。開發背景與致謝請參考 [CREDITS](./CREDITS.md)
