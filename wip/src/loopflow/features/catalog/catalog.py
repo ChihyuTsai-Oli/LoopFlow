@@ -54,10 +54,6 @@ from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Catalog"
 STAGE = "catalog"
-PANEL_REMINDER = (
-    "目錄定位點是持久控制物件，建立目錄後請勿刪除；"
-    "移動目錄時請連同定位點一起移動。"
-)
 
 ConfirmPlan = Callable[[Sequence[str]], bool]
 AskPath = Callable[[Optional[str]], Optional[str]]
@@ -986,7 +982,7 @@ def build_catalog(
         )
         message = t("catalog.018") % created
         if skipped:
-            message += " 略過 %s 列。" % len(skipped)
+            message += " " + t("catalog.040") % len(skipped)
         return results.ok(
             STAGE,
             message,
@@ -1051,7 +1047,7 @@ def refresh_catalog(
         )
         message = t("catalog.019") % created
         if skipped:
-            message += " 略過 %s 列。" % len(skipped)
+            message += " " + t("catalog.040") % len(skipped)
         return results.ok(
             STAGE,
             message,
@@ -1244,7 +1240,7 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
             layout.Spacing = _dialog_spacing(drawing)
 
             reminder = forms.Label()
-            reminder.Text = PANEL_REMINDER
+            reminder.Text = t("catalog.001")
             layout.Add(reminder, True, False)
 
             self.count_label = forms.Label()

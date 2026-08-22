@@ -20,7 +20,7 @@ from loopflow.foundation.project_config import (
 )
 from loopflow.foundation.version import PACKAGE_VERSION, check_schema
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
-from loopflow.foundation.i18n import t
+from loopflow.foundation.i18n import is_english, t
 
 COMMAND_ID = "LF_Nexus"
 CM_UNITS = frozenset(("cm", "centimeter", "centimeters"))
@@ -58,8 +58,24 @@ def _is_cm(unit: str) -> bool:
     return (unit or "").strip().lower() in CM_UNITS
 
 
+STEP_TITLE_IDS = {
+    "open_check": "nexus.002",
+    "sync_type_layers": "nexus.003",
+    "level_boundary": "nexus.004",
+    "space_boundary": "nexus.005",
+    "scan_apply_verify": "nexus.006",
+}
+
+
 def _copy_steps() -> Tuple[dict, ...]:
-    return tuple(dict(step) for step in CONSOLE_STEPS)
+    copied = []
+    for step in CONSOLE_STEPS:
+        item = dict(step)
+        title_id = STEP_TITLE_IDS.get(step["id"])
+        if title_id:
+            item["title"] = t(title_id)
+        copied.append(item)
+    return tuple(copied)
 
 
 def compose_scan_apply_message(mode: str, identity, placement) -> str:
@@ -73,15 +89,16 @@ def compose_scan_apply_message(mode: str, identity, placement) -> str:
         return t("nexus.009") % (count, ext)
     written = []
     if details.get("applied"):
-        written.append("ID／Type")
+        written.append(t("nexus.033"))
     if (placement.details or {}).get("applied"):
         written.append(t("nexus.010"))
     n_applied = len(details.get("applied") or ())
+    sep = ", " if is_english() else "、"
     if written:
-        message = t("nexus.011") % (n_applied, "、".join(written))
+        message = t("nexus.011") % (n_applied, sep.join(written))
     else:
         message = t("nexus.007")
-    return message + " 不可發布。"
+    return "%s %s" % (message, t("nexus.008"))
 
 
 def run_open_check(
@@ -184,10 +201,7 @@ def run_open_check(
             "scan_apply_verify",
         ),
     }
-    message = (
-        "開案檢查完成。可執行 Type Layers、高程／空間框、寫入／檢核 Metadata。"
-        "匯出字典與發布請用獨立指令。"
-    )
+    message = t("nexus.001")
     if warnings:
         return results.ok_with_warnings(
             "open_check",

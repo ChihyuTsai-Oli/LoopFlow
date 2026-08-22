@@ -47,38 +47,6 @@ from loopflow.foundation.i18n import t
 COMMAND_ID = "LF_Tagger_Layout_ID"
 STAGE = "write_sheet_id"
 PAGE_TAG_TEMPLATE_ID = "TAG_ELEV_0"
-SERIES_START_HELP = (
-    "圖框已就緒，但尚未設定系列起點，因此未執行。\n"
-    "請將每個系列的第一頁按照下列規則命名：\n"
-    "**圖類別__圖號__圖名\n"
-    "**IN__101.01__一樓平面圖\n"
-    "**A__101__一樓平面圖\n"
-    "\n"
-    "---\n"
-    "1. ** 作為自動編號起點，勿刪\n"
-    "2. ** 之間的頁面為同一系列\n"
-    "3. ** 頁面之外的Layout名稱，只需要填寫圖名\n"
-    "4. // 頁面不參與自動編號，但仍需使用相同命名格式規範\n"
-    "5. 圖號、圖名 的編號與命名可以從Layout列表手動調整\n"
-    "　經由自動編號寫入圖框中，不可直接修改圖框內容\n"
-    "---\n"
-    "\n"
-    "Sample\n"
-    "**IN__101.01__一樓平面圖\n"
-    "二樓平面圖\n"
-    "三樓平面圖\n"
-    "**IN__201.01__立面圖1\n"
-    "立面圖2\n"
-    "//S__901__結構平面圖\n"
-    "\n"
-    "（Layout自動編號如下）\n"
-    "**IN__101.01__一樓平面圖\n"
-    "IN__101.02__二樓平面圖\n"
-    "IN__101.03__三樓平面圖\n"
-    "**IN__201.01__立面圖1\n"
-    "IN__201.02__立面圖2\n"
-    "//S__901__結構平面圖"
-)
 
 ConfirmPlan = Callable[[Sequence[Sequence[str]]], bool]
 AskRegister = Callable[[Sequence[str]], Sequence[str]]
@@ -130,7 +98,7 @@ def _no_writable_pages_result(
     if missing_start:
         return results.blocked(
             STAGE,
-            SERIES_START_HELP,
+            t("layout_id.001"),
             ("missing_series_start",),
             command_id=COMMAND_ID,
             details=details,
@@ -262,9 +230,6 @@ def build_sheet_rows(
             )
         )
     return tuple(rows), tuple(skipped)
-
-
-PREVIEW_HEADERS = ("原始名稱", "修改後名稱", "狀態")
 
 
 def _preview_status(row: SheetRow) -> str:
@@ -450,7 +415,7 @@ def _default_confirm(table_rows: Sequence[Sequence[str]]) -> bool:
     from loopflow.platform.rhino.prompts import ask_confirm_table
 
     return ask_confirm_table(
-        PREVIEW_HEADERS, table_rows, title=t("layout_id.014")
+        (t("layout_id.002"), t("layout_id.003"), t("layout_id.004")), table_rows, title=t("layout_id.014")
     )
 
 

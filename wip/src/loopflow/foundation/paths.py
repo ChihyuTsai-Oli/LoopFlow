@@ -19,11 +19,6 @@ REGISTRY_LOCK_FILENAME = "Project_Registry.lock"
 REGISTRY_PENDING_FILENAME = "Project_Registry.pending.json"
 REGISTRY_LAST_GOOD_FILENAME = "Project_Registry.last-good.json"
 
-_UNSAVED_HINT = (
-    "請先把這份檔案存成 .3dm。工作資料夾就是 .3dm 所在的資料夾；"
-    "尚未存檔就沒有資料夾，無法建立設定、字典位置與 %s。" % CONFIG_DIR_NAME
-)
-_NO_RHINO_HINT = "目前不在 Rhino 內，無法取得 .3dm 位置。不修改檔案。"
 _EXTENDED_PATH_PREFIX = "\\\\?\\"
 _EXTENDED_UNC_PREFIX = "\\\\?\\UNC\\"
 
@@ -168,7 +163,7 @@ def document_directory(document_path: Optional[Union[str, Path]]) -> results.Res
     if not text:
         return results.blocked(
             "resolve_document",
-            _UNSAVED_HINT,
+            t("paths.002") % CONFIG_DIR_NAME,
             blocking=("unsaved_document",),
         )
     folder = Path(text).expanduser()
@@ -176,7 +171,7 @@ def document_directory(document_path: Optional[Union[str, Path]]) -> results.Res
     if str(parent) in ("", "."):
         return results.blocked(
             "resolve_document",
-            _UNSAVED_HINT,
+            t("paths.002") % CONFIG_DIR_NAME,
             blocking=("unsaved_document",),
         )
     return results.ok(
@@ -224,7 +219,7 @@ def project_paths_for_document(
 def resolve_project_folder(session, dictionary_filename: Optional[str] = None) -> results.Result:
     """目前 Rhino 文件的工作資料夾。沒有 session 或未存檔時停止。"""
     if session is None:
-        return results.failed("rhino_session", _NO_RHINO_HINT)
+        return results.failed("rhino_session", t("paths.001"))
     return project_paths_for_document(
         document_path_of(session),
         dictionary_filename=dictionary_filename,

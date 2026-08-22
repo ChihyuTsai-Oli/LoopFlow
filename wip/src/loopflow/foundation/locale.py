@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -14,11 +15,18 @@ PREFS_ENV = "LOOPFLOW_PREFS_PATH"
 PREFS_FILENAME = "preferences.json"
 
 
+def _in_unittest() -> bool:
+    return "unittest.case" in sys.modules or "unittest.loader" in sys.modules
+
+
 def preferences_path() -> Path:
     """AppData\\LoopFlow\\preferences.json；測試可設 LOOPFLOW_PREFS_PATH。"""
     override = str(os.environ.get(PREFS_ENV) or "").strip().strip('"')
     if override:
         return Path(override)
+    if _in_unittest():
+        # 不讀這台電腦記住的語系，測試預設仍是繁中。
+        return Path(os.environ.get("TEMP") or ".") / "loopflow-unittest-prefs-absent.json"
     appdata = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
     return Path(appdata) / "LoopFlow" / PREFS_FILENAME
 

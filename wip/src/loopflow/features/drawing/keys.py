@@ -2,6 +2,8 @@
 """Extract／Drawing 的 UserText、圖層與顏色。"""
 from __future__ import annotations
 
+from loopflow.foundation.i18n import t
+
 DRAWING_SCHEMA_ID = "loopflow.drawing"
 DRAWING_SCHEMA_VERSION = "1"
 
@@ -47,8 +49,10 @@ MODE_REPLACE = "replace"
 MODE_ADD = "add"
 MODE_SKIP = "skip"
 
-MODE_LABELS = (
-    ("取代前次產出", MODE_REPLACE),
-    ("新增一版（保留舊的）", MODE_ADD),
-    ("略過", MODE_SKIP),
-)
+
+def mode_labels():
+    return (
+        (t("extract_cp.025"), MODE_REPLACE),
+        (t("extract_cp.026"), MODE_ADD),
+        (t("extract_cp.027"), MODE_SKIP),
+    )

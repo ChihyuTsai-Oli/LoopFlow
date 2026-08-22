@@ -20,9 +20,9 @@ from loopflow.features.dictionary import schema
 from loopflow.features.dictionary.loader import load_from_table
 from loopflow.features.viewer.command import run_data_viewer
 from loopflow.features.viewer.inspect import (
-    MISSING_MARK,
     format_report,
     inspect_object,
+    missing_mark,
 )
 from loopflow.foundation.usertext import (
     CONSTRUCTION_KEY,
@@ -109,7 +109,7 @@ class InspectTests(unittest.TestCase):
         self.assertIn("客廳", text)
         self.assertIn("EX-01", text)
         self.assertIn(OBJECT_ID, text)
-        self.assertIn(MISSING_MARK, text)
+        self.assertIn(missing_mark(), text)
         self.assertIn("_08_備註*", report.missing_keys)
         self.assertIn("_02_建構狀態*", text)
         self.assertIn("_08_備註*", text)
@@ -263,7 +263,7 @@ class ViewerCommandTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(result.details["viewed"], 1)
         self.assertEqual(len(shown), 1)
-        self.assertIn(MISSING_MARK, shown[0])
+        self.assertIn(missing_mark(), shown[0])
         self.assertEqual(_snapshot_text(session)["objects"], before["objects"])
         self.assertFalse(session.document_modified())
         self.assertTrue(session.get_view_state("wall").selected)

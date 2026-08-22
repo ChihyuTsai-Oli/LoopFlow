@@ -19,10 +19,6 @@ from loopflow.foundation.i18n import t
 
 COMMAND_ID = schema.COMMAND_ID
 REPLACE_WAITS = (0.2, 0.4, 0.8, 1.6)
-LOCKED_REGISTRY_MESSAGE = (
-    "正式 Registry 檔被佔用（常見是雲端同步還在寫檔）。"
-    "請等同步結束後再開 Rhino 發一次，不要刪 Project_Registry.json。"
-)
 
 
 def _stamp_now() -> str:
@@ -208,10 +204,10 @@ def publish_registry(
                 copied = atomic_io.copy_file(pending, last_good)
                 extra = ""
                 if copied.ok:
-                    extra = " 新內容已寫入 last-good，等同步後再發一次。"
+                    extra = " " + t("registry.022")
                 return results.failed(
                     "replace_registry",
-                    LOCKED_REGISTRY_MESSAGE + extra,
+                    t("registry.012") + extra,
                     command_id=command_id,
                     details={
                         "filename": official.name,

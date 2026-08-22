@@ -487,7 +487,7 @@ def _default_pick_roots(session: RhinoSession, roots: Sequence[str]) -> Optional
 def _default_pick_mode(_session: RhinoSession, info: Mapping) -> Optional[str]:
     from loopflow.platform.rhino.prompts import ask_popup_choice
 
-    labels = [label for label, _mode in drawing_keys.MODE_LABELS]
+    labels = [label for label, _mode in drawing_keys.mode_labels()]
     chosen = ask_popup_choice(
         t("extract_cp.010") % info.get("root"),
         labels,
@@ -495,7 +495,7 @@ def _default_pick_mode(_session: RhinoSession, info: Mapping) -> Optional[str]:
     )
     if chosen is None:
         return None
-    for label, mode in drawing_keys.MODE_LABELS:
+    for label, mode in drawing_keys.mode_labels():
         if chosen == label:
             return mode
     return None

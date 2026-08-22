@@ -22,8 +22,8 @@ from loopflow.features.health.tag_o import (
     COLOR_RULE,
     COLOR_WARN,
     PANEL_TITLE,
-    UNASSIGNED_PAGE,
     run_tag_o,
+    unassigned_page,
 )
 from loopflow.foundation.usertext import SPACE_FRAME_DISPLAY_KEY
 from loopflow.features.health.appearance import COLOR_BROKEN_RGB, COLOR_STALE_RGB
@@ -663,7 +663,7 @@ class HealthTests(unittest.TestCase):
         result = _run(session)
         self.assertTrue(result.ok, result.message)
         self.assertEqual(result.details["counts"]["unbound"], 1)
-        self.assertEqual(result.details["issues"][0]["page_name"], UNASSIGNED_PAGE)
+        self.assertEqual(result.details["issues"][0]["page_name"], unassigned_page())
 
 
 class PanelTests(unittest.TestCase):

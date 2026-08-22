@@ -70,6 +70,26 @@ def _lock_control_height(control, drawing, height: int) -> None:
         pass
 
 
+def _center_dialog_on_screen(dialog, drawing) -> None:
+    """放到螢幕工作區正中。Shown 後再呼叫，避免 ShowModal 依主窗重算。"""
+    try:
+        import Eto.Forms as forms  # type: ignore
+        area = forms.Screen.PrimaryScreen.WorkingArea
+    except Exception:
+        return
+    width = int(getattr(dialog, "Width", 0) or 0)
+    height = int(getattr(dialog, "Height", 0) or 0)
+    size = getattr(dialog, "Size", None)
+    if size is not None:
+        width = int(getattr(size, "Width", 0) or width)
+        height = int(getattr(size, "Height", 0) or height)
+    if width <= 0 or height <= 0:
+        return
+    x = int(area.X + (area.Width - width) / 2)
+    y = int(area.Y + (area.Height - height) / 2)
+    dialog.Location = drawing.Point(x, y)
+
+
 def _apply_dialog_button_size(button, drawing) -> None:
     size = drawing.Size(DIALOG_BUTTON_WIDTH, DIALOG_BUTTON_HEIGHT)
     button.Width = DIALOG_BUTTON_WIDTH
@@ -507,6 +527,14 @@ def ask_layout_pages_choice(
             self.Close(False)
 
     dialog = _PageSelectDialog()
+
+    def _on_shown(sender, e) -> None:
+        _center_dialog_on_screen(dialog, drawing)
+
+    try:
+        dialog.Shown += _on_shown
+    except Exception:
+        _center_dialog_on_screen(dialog, drawing)
     result = dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
     if result:
         chosen = dialog._chosen_names()
@@ -845,10 +873,7 @@ def ask_pick_title_frames(
             layout = forms.DynamicLayout()
             layout.Spacing = _dialog_spacing(drawing)
             note = forms.Label()
-            note.Text = (
-                "這些圖塊還沒登錄為圖框。請勾選真正的圖框；"
-                "沒勾選的會略過，不會寫入圖號。"
-            )
+            note.Text = t("prompts.013")
             layout.AddRow(note)
 
             scroll = forms.Scrollable()
@@ -1000,10 +1025,7 @@ def ask_pick_catalog_sheets(
             layout = forms.DynamicLayout()
             layout.Spacing = _dialog_spacing(drawing)
             note = forms.Label()
-            note.Text = (
-                "Shift 連選、Ctrl 加選或取消選取。選取列會反白。"
-                "未選的不納入；新增頁不會自動加入既有目錄。"
-            )
+            note.Text = t("prompts.014")
             layout.AddRow(note)
 
             scroll = forms.Scrollable()

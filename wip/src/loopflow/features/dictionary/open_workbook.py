@@ -51,8 +51,7 @@ def resolve_workbook_path(
     if not filename:
         return results.blocked(
             "open_dictionary",
-            "這份檔案還沒指定 Dictionary，找不到要開的檔。"
-            "請先存檔，再用 Nexus 選單 2 指定與 .3dm 同資料夾的 .xlsx。",
+            t("dictionary.019"),
             blocking=("dictionary_not_selected",),
             command_id=command_id,
         )
@@ -62,10 +61,7 @@ def resolve_workbook_path(
     root = resolved.details["paths"].root
     if kind == KIND_OFFICIAL:
         target = root / filename
-        missing = (
-            "找不到 Dictionary 檔案 %s。請把字典移回 .3dm 所在的資料夾，"
-            "或用 Nexus 選單 2 重新指定同資料夾內的 .xlsx。" % target.name
-        )
+        missing = t("dictionary.020") % target.name
         blocking = "dictionary_file_missing"
     else:
         target = root / export_dictionary_filename(filename)

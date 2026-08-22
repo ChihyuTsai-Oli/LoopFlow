@@ -45,11 +45,7 @@ EXPORT_HEADERS = schema.DISPLAY_COLUMNS + ("diff_status",)
 
 
 def export_hint(official_name: str = DICTIONARY_FILENAME) -> str:
-    return (
-        "此檔只供核對，不能當正式字典開啟，也不可覆寫 %s。"
-        "藍字 added_in_rhino 合併時必須給新的 _03_ID編號，不可沿用舊圖層編號。"
-        % (official_name or DICTIONARY_FILENAME)
-    )
+    return t("dictionary.031") % (official_name or DICTIONARY_FILENAME)
 
 
 EXPORT_HINT = export_hint()
@@ -181,10 +177,7 @@ def _should_ask_dictionary(session: RhinoSession, root: Path) -> bool:
 
 def dictionary_missing_hint(filename: str) -> str:
     """字典改名或搬走時的說明。請使用者移回，再從 .3dm 目錄選。"""
-    return (
-        "找不到字典 %s。請把字典移回 .3dm 所在的資料夾（字典可以改名），"
-        "接著在開啟的視窗選這份專案要用的 .xlsx。" % filename
-    )
+    return t("dictionary.034") % filename
 
 
 def sync_type_layers(

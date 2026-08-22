@@ -37,32 +37,40 @@ from loopflow.platform.rhino.state import ObjectViewState
 from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Nexus"
-FIELD_LABELS = {
-    OBJECT_ID_KEY: "UUID",
-    TYPE_ID_KEY: "ID編號",
-    TYPE_CATEGORY_KEY: "類型類別",
-    TYPE_SEQUENCE_KEY: "類型序號",
-    CONSTRUCTION_KEY: "建構狀態",
-    REMARKS_KEY: "備註",
-    DATA_REVISION_KEY: "資料版次",
-    SPACE_ID_KEY: "空間ID",
-    SPACE_DISPLAY_KEY: "空間名稱",
-    ELEVATION_BASIS_KEY: "高程基準",
-    ELEVATION_VALUE_KEY: "高程計算",
-    ELEVATION_DISPLAY_KEY: "高程顯示",
-}
-ISSUE_LABELS = {
-    "missing_object_id": "尚未寫入 UUID",
-    "invalid_object_id": "UUID 格式不正確",
-    "duplicate_object_id": "UUID 重複",
-    "unknown_type": "未知 Type",
-    "unmapped_layer": "圖層未對應 Dictionary",
-    "ambiguous_space": "空間命中不唯一",
-    "bc_on_non_block": "高程基準 BC 但不是圖塊",
-    "invalid_elevation_basis": "高程基準不合法",
-    "bbox_unavailable": "取不到範圍",
-    "stale_dimension": "殘留尺寸／數量欄",
-}
+
+
+def field_labels():
+    return {
+        OBJECT_ID_KEY: "UUID",
+        TYPE_ID_KEY: t("nexus_metadata.047"),
+        TYPE_CATEGORY_KEY: t("nexus_metadata.048"),
+        TYPE_SEQUENCE_KEY: t("nexus_metadata.049"),
+        CONSTRUCTION_KEY: t("nexus_metadata.050"),
+        REMARKS_KEY: t("nexus_metadata.051"),
+        DATA_REVISION_KEY: t("nexus_metadata.052"),
+        SPACE_ID_KEY: t("nexus_metadata.053"),
+        SPACE_DISPLAY_KEY: t("nexus_metadata.040"),
+        ELEVATION_BASIS_KEY: t("nexus_metadata.054"),
+        ELEVATION_VALUE_KEY: t("nexus_metadata.055"),
+        ELEVATION_DISPLAY_KEY: t("nexus_metadata.056"),
+    }
+
+
+def issue_labels():
+    return {
+        "missing_object_id": t("nexus_metadata.057"),
+        "invalid_object_id": t("nexus_metadata.058"),
+        "duplicate_object_id": t("nexus_metadata.059"),
+        "unknown_type": t("nexus_metadata.060"),
+        "unmapped_layer": t("nexus_metadata.061"),
+        "ambiguous_space": t("nexus_metadata.062"),
+        "bc_on_non_block": t("nexus_metadata.063"),
+        "invalid_elevation_basis": t("nexus_metadata.064"),
+        "bbox_unavailable": t("nexus_metadata.065"),
+        "stale_dimension": t("nexus_metadata.066"),
+    }
+
+
 HARD_PLACEMENT_ISSUES = (
     "ambiguous_space",
     "bc_on_non_block",
@@ -70,7 +78,6 @@ HARD_PLACEMENT_ISSUES = (
     "bbox_unavailable",
 )
 MAX_POPUP_LINES = 12
-APPLY_REMINDER = "請執行 Nexus 5 寫入模型 Metadata，把正確資料寫回。"
 
 
 def _text(value) -> str:
@@ -134,7 +141,7 @@ def _field_mismatches(session: RhinoSession, object_id: str, expected: Mapping[s
         want = _text(wanted)
         if actual == want:
             continue
-        label = FIELD_LABELS.get(key, key)
+        label = field_labels().get(key, key)
         if not actual:
             notes.append(t("nexus_metadata.073") % (label, want or t("nexus_metadata.076")))
         elif not want:
@@ -149,7 +156,7 @@ def _stale_notes(session: RhinoSession, object_id: str) -> List[str]:
         key for key in STALE_OBJECT_KEYS if session.get_object_user_text(object_id, key) not in (None, "")
     ]
     if leftover:
-        return [ISSUE_LABELS["stale_dimension"]]
+        return [issue_labels()["stale_dimension"]]
     return []
 
 
@@ -193,11 +200,11 @@ def compare_apply_usertext(
         place = placement_by_id.get(object_id) or {}
         notes = []
         for issue in ident.get("issues") or ():
-            notes.append(ISSUE_LABELS.get(issue, issue))
+            notes.append(issue_labels().get(issue, issue))
         for issue in place.get("issues") or ():
             if issue == "migration_th_bh":
                 continue
-            notes.append(ISSUE_LABELS.get(issue, issue))
+            notes.append(issue_labels().get(issue, issue))
         expected = {}
         expected.update(_identity_expected(ident, session, type_catalog, revision))
         expected.update(_placement_expected(place))
@@ -281,7 +288,7 @@ def format_verify_popup(result: results.Result, *, cannot_publish: bool = False)
     extra = len(mismatches) - MAX_POPUP_LINES
     if extra > 0:
         lines.append(t("nexus_metadata.071") % extra)
-    lines.append(APPLY_REMINDER)
+    lines.append(t("nexus_metadata.046"))
     return "\n".join(lines)
 
 

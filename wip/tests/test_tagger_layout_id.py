@@ -38,11 +38,11 @@ from loopflow.features.tagger.keys import (
 )
 from loopflow.features.sheet.naming import STATUS_BASELINE, STATUS_MANUAL, STATUS_NUMBERED, PagePlan
 from loopflow.features.tagger.layout_id import (
-    SERIES_START_HELP,
     SheetRow,
     preview_table_rows,
     run_tagger_layout_id,
 )
+from loopflow.foundation.i18n import t
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.prompts import format_result_popup
 from loopflow.platform.rhino.state import ObjectViewState
@@ -179,8 +179,8 @@ class LayoutIdCommandTests(unittest.TestCase):
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertFalse(result.ok)
         self.assertIn("missing_series_start", result.blocking)
-        self.assertEqual(result.message, SERIES_START_HELP)
-        self.assertEqual(format_result_popup(result), SERIES_START_HELP)
+        self.assertEqual(result.message, t("layout_id.001"))
+        self.assertEqual(format_result_popup(result), t("layout_id.001"))
         self.assertEqual(session._object_meta, objects)
         self.assertEqual(session._document_text, document)
         self.assertEqual(session._layout_pages, pages)
@@ -225,8 +225,8 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertIn("missing_series_start", result.blocking)
         self.assertNotIn("missing_title_frame", result.blocking)
-        self.assertEqual(result.message, SERIES_START_HELP)
-        self.assertEqual(format_result_popup(result), SERIES_START_HELP)
+        self.assertEqual(result.message, t("layout_id.001"))
+        self.assertEqual(format_result_popup(result), t("layout_id.001"))
         self.assertTrue(result.details["skipped"])
         self.assertIsNone(session.get_object_user_text("frame-1", DRAWING_NO_KEY))
 
@@ -236,8 +236,8 @@ class LayoutIdCommandTests(unittest.TestCase):
         result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
         self.assertFalse(result.ok)
         self.assertEqual(result.blocking, ("missing_series_start",))
-        self.assertEqual(result.message, SERIES_START_HELP)
-        self.assertEqual(format_result_popup(result), SERIES_START_HELP)
+        self.assertEqual(result.message, t("layout_id.001"))
+        self.assertEqual(format_result_popup(result), t("layout_id.001"))
 
     def test_slash_page_writes_without_consuming_series(self):
         session = _session([START_IN, "//S__901__結構平面圖", "天花詳圖"])

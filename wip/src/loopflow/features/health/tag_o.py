@@ -73,7 +73,11 @@ COLOR_BROK = "brok"
 COLOR_RULE = "rule"
 EXT_SPACE = "EXT"
 PANEL_TITLE = "TAG-O ~ Holy Cargo ~~"
-UNASSIGNED_PAGE = "（未分頁）"
+
+
+def unassigned_page() -> str:
+    return t("tag_o.001")
+
 
 STATUS_HEALTHY = "healthy"
 STATUS_UNBOUND = "unbound"
@@ -93,15 +97,16 @@ PROBLEM_STATUSES = (
 BROKEN_STATUSES = (STATUS_ORPHANED, STATUS_MISSING_TARGET)
 STALE_STATUSES = (STATUS_STALE, STATUS_AMBIGUOUS)
 
-STATUS_LINE = {
-    STATUS_HEALTHY: ("正常", COLOR_OK),
-    STATUS_UNBOUND: (t("tag_o.003"), COLOR_WARN),
-    STATUS_ORPHANED: (t("tag_o.004"), COLOR_BROK),
-    STATUS_STALE: ("過期", COLOR_WARN),
-    STATUS_MISSING_TARGET: (t("tag_o.004"), COLOR_BROK),
-    STATUS_AMBIGUOUS: ("過期", COLOR_WARN),
-    STATUS_UNCHECKED: ("未檢查", COLOR_DIM),
-}
+def status_line():
+    return {
+        STATUS_HEALTHY: (t("tag_o.002"), COLOR_OK),
+        STATUS_UNBOUND: (t("tag_o.003"), COLOR_WARN),
+        STATUS_ORPHANED: (t("tag_o.004"), COLOR_BROK),
+        STATUS_STALE: (t("tag_o.005"), COLOR_WARN),
+        STATUS_MISSING_TARGET: (t("tag_o.004"), COLOR_BROK),
+        STATUS_AMBIGUOUS: (t("tag_o.005"), COLOR_WARN),
+        STATUS_UNCHECKED: (t("tag_o.006"), COLOR_DIM),
+    }
 
 
 def _layout_page_names(session: RhinoSession):
@@ -160,7 +165,7 @@ def _issue_sort_key(issue: Mapping, page_names: Sequence[str]):
     try:
         page_index = list(page_names).index(page)
     except ValueError:
-        page_index = len(page_names) + (0 if page == UNASSIGNED_PAGE else 1)
+        page_index = len(page_names) + (0 if page == unassigned_page() else 1)
     orphaned = 0 if issue.get("status") in BROKEN_STATUSES else 1
     return (
         page_index,
@@ -419,7 +424,7 @@ def inspect_pages(
             continue
         seen.add(object_id)
         host = page_of(object_id) if callable(page_of) else None
-        targets.append((str(host or UNASSIGNED_PAGE), object_id))
+        targets.append((str(host or unassigned_page()), object_id))
 
     for page_name, object_id in targets:
         row = _inspect_block(
@@ -590,9 +595,9 @@ def build_panel_lines(
     lines.append((t("tag_o.019") % len(rows), COLOR_HEAD))
     if not rows:
         if scanned == 0:
-            lines.append(("  沒有掃到可檢查的 Tag", COLOR_DIM))
+            lines.append(("  " + t("tag_o.030"), COLOR_DIM))
         else:
-            lines.append(("  沒有已綁定的 Tag", COLOR_DIM))
+            lines.append(("  " + t("tag_o.031"), COLOR_DIM))
     else:
         ranked = sorted(rows, key=lambda row: _issue_sort_key(row, page_names))
         names = [str(row.get("block_name") or "") for row in ranked]
@@ -604,8 +609,8 @@ def build_panel_lines(
                 lines.append(("", COLOR_RULE))
             last_page = page
             status = row.get("status")
-            label, color = STATUS_LINE.get(status, (str(status or ""), COLOR_TEXT))
-            lock = "  （鎖定）" if row.get("locked") else ""
+            label, color = status_line().get(status, (str(status or ""), COLOR_TEXT))
+            lock = "  " + t("tag_o.020") if row.get("locked") else ""
             name = str(row.get("block_name") or "").ljust(width)
             lines.append(
                 (

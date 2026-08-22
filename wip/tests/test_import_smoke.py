@@ -161,6 +161,7 @@ class ImportSmokeTests(unittest.TestCase):
     def test_entrypoint_script_loads(self):
         env = dict(os.environ)
         env["PYTHONIOENCODING"] = "utf-8"
+        env["LOOPFLOW_PREFS_PATH"] = str(WIP / "tests" / "_absent_preferences.json")
         completed = subprocess.run(
             [sys.executable, str(ENTRY)],
             cwd=str(WIP.parent),

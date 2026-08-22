@@ -1387,6 +1387,10 @@
     "zh-TW": "Dictionary 檔名（.3dm 同資料夾內的 .xlsx）",
     "en": "Dictionary filename (.xlsx in the same folder as the .3dm file)"
   },
+  "nexus.033": {
+    "zh-TW": "ID／Type",
+    "en": "ID/Type"
+  },
   "registry.001": {
     "zh-TW": "使用者取消發布。",
     "en": "Publishing cancelled."

@@ -421,6 +421,7 @@ English 欄是定稿，可直接改這份檔。`%s` 是程式填入的數字或�
 | `nexus.030` | 請輸入專案名稱（圖層前綴） | Enter the project name (layer prefix) |
 | `nexus.031` | 選這份專案的 Dictionary Excel（須與 .3dm 同資料夾） | Choose this project's Dictionary Excel file (must be in the same folder as the .3dm file) |
 | `nexus.032` | Dictionary 檔名（.3dm 同資料夾內的 .xlsx） | Dictionary filename (.xlsx in the same folder as the .3dm file) |
+| `nexus.033` | ID／Type | ID/Type |
 
 ## 發布 Registry
 

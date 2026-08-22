@@ -40,7 +40,12 @@ from loopflow.platform.rhino.session import RhinoSession
 from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Data_Viewer"
-MISSING_MARK = "（缺）"
+
+
+def missing_mark() -> str:
+    return t("data_viewer.004")
+
+
 LEVEL_LAYER_MARK = "Level_Boundaries"
 SPACE_LAYER_MARK = "Space_Boundaries"
 
@@ -138,7 +143,7 @@ def check_document_schema(session: RhinoSession) -> results.Result:
         return results.failed(
             "check_schema",
             t("data_viewer.010")
-            % (schema_id or MISSING_MARK, version_text or MISSING_MARK),
+            % (schema_id or missing_mark(), version_text or missing_mark()),
             command_id=COMMAND_ID,
             details={"schema_id": schema_id, "schema_version": version_text},
         )
@@ -300,19 +305,19 @@ def inspect_object(
 
 def format_report(report: ObjectReport) -> str:
     lines = [
-        t("data_viewer.007") % (report.layer or MISSING_MARK),
+        t("data_viewer.007") % (report.layer or missing_mark()),
         t("data_viewer.008") % (report.name or t("grab.019")),
     ]
     if report.block_name:
         lines.append(t("data_viewer.012") % report.block_name)
-    lines.append(t("data_viewer.009") % (report.project_id or MISSING_MARK))
+    lines.append(t("data_viewer.009") % (report.project_id or missing_mark()))
     if report.schema_id or report.schema_version:
         lines.append(
             t("data_viewer.013")
-            % (report.schema_id or MISSING_MARK, report.schema_version or MISSING_MARK)
+            % (report.schema_id or missing_mark(), report.schema_version or missing_mark())
         )
     else:
-        lines.append(t("data_viewer.014") % MISSING_MARK)
+        lines.append(t("data_viewer.014") % missing_mark())
     if report.type_display_name:
         lines.append(t("data_viewer.015") % report.type_display_name)
     lines.append("-" * 48)
@@ -321,7 +326,7 @@ def format_report(report: ObjectReport) -> str:
     labels = [field.key for field in visible]
     key_width = max([_display_width(label) for label in labels] + [12])
     for field, label in zip(visible, labels):
-        value = field.value if field.value is not None else MISSING_MARK
+        value = field.value if field.value is not None else missing_mark()
         suffix = ("  " + "；".join(field.notes)) if field.notes else ""
         lines.append("  %s : %s%s" % (_pad_key(label, key_width), value, suffix))
 
