@@ -10,8 +10,6 @@ This page is the **documentation entry** opened by the Rhino command `LFDocument
 | Tag Blocks | [Open](./TAG_BLOCKS_TW.md) | [Open](./TAG_BLOCKS.md) |
 | Tutorials | [YouTube](https://www.youtube.com/@Chihyu-Oli/playlists) | [YouTube](https://www.youtube.com/@Chihyu-Oli/playlists) |
 
-Until the G03 public-documentation pass is complete, `LFDocument` still opens the public `docs/README.md` (still 1.x). This folder is the 2.0 draft that will replace it.
-
 ---
 
 # LoopFlow 2.0 使用說明
@@ -25,5 +23,3 @@ Until the G03 public-documentation pass is complete, `LFDocument` still opens th
 | Rhino 指令 | [開啟](./COMMANDS_TW.md) | [開啟](./COMMANDS.md) |
 | Tag Blocks | [開啟](./TAG_BLOCKS_TW.md) | [開啟](./TAG_BLOCKS.md) |
 | 教學影片 | [YouTube](https://www.youtube.com/@Chihyu-Oli/playlists) | [YouTube](https://www.youtube.com/@Chihyu-Oli/playlists) |
-
-G03 公開文件完成前，`LFDocument` 仍會開啟公開的 `docs/README.md`（目前仍是 1.x）。本資料夾是準備接替的 2.0 草稿。

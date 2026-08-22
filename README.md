@@ -4,52 +4,66 @@
 
 > **Embrace the loop. Let it flow.**
 
-> **Development status:** LoopFlow v2 is under active development. The current public release remains v1; unless otherwise noted, the documentation below describes the stable release.
-
-LoopFlow is a Rhino 8-based, semi-automated design and documentation workflow built to carry a project from schematic design (SD), through design development (DD), to construction documentation (CD). It is not another BIM system, and it does not require fixed templates or a parametric workflow. You remain in control of every step while LoopFlow handles data updates, drawing synchronization, and other repetitive work.
+LoopFlow 2.0 is a Rhino 8-based, semi-automated design and documentation workflow built to carry a project from schematic design (SD), through design development (DD), to construction documentation (CD). It is not another BIM system, and it does not require fixed templates or a parametric workflow. You remain in control of every step while LoopFlow handles data updates, drawing synchronization, and other repetitive work.
 
 The main workflow stays inside Rhino, allowing model data, drawings, and Layout documentation to evolve continuously with the design. LoopFlow has been used on multiple real-world design projects. Its goal is to preserve Rhino's design freedom while reducing repetitive cleanup after design changes.
 
-## Core Features
+## Features
 
-- Manage model data with dictionaries and UserText.
-- Maintain relationships between objects and data with UUIDs.
-- Regenerate and update related 2D drawings after 3D model changes.
-- Create cabinets, Tag Blocks, sheet numbers, elevation and section indexes, and other documentation data.
-- Inspect object data and Tag states through visual panels.
-- Support multi-user collaboration and data synchronization with Worksession.
-- Keep the workflow semi-automated, letting the user decide when to run each update.
+- Model in Rhino the way you already work. Define finishes and work items in an Excel Dictionary, then write that data into the model.
+- After the model changes, write and validate again, then hand the passed revision to the drawings. 3D is not rewritten from the sheets.
+- Cut plans, elevations, or sections with Rhino Section, then arrange sheet numbers, material tags, and elevation or section indexes.
+- Stale or missing sources are marked on the drawing. You decide whether to rebind or update. LoopFlow does not change things on its own.
+- When two computers or several people draw from the same folder, LoopFlow can watch the 3D files for updates.
+- Every step and every action is started by you. You can stop at any time. It is not a black box and will not run the whole chain by itself.
 
-For complete command and workflow instructions, see the [LoopFlow User Guide](./docs/USER_GUIDE.md).
+For complete command and workflow instructions, see the [LoopFlow 2.0 documentation](./docs/README.md).
 
-## System Requirements
+## What changed from 1.0
 
-- Rhino 8
-- Rhino Section Tools
+- 2.0 is a rebuild, not a patched 1.x. Do not mix data, Tag Blocks, commands, or toolbars in the same project.
+- Changing the model does not automatically fill the drawings. Write, validate, then publish a revision for the sheets to read.
+- Cabinets and some 2D tools from 1.0 are not part of 2.0. They will become a separate project later.
+- 2.0 does not calculate size or quantity.
+- Installation is a single `.yak` (Package Manager). Do not use the 1.x extract-and-drag-toolbar steps.
+- The interface can be English or Traditional Chinese. Stale or disconnected tags are marked, but they are not auto-repaired.
+
+## System requirements
+
+- **Rhino 8** (required; 2D drawings use native Rhino Section / Clipping Drawing)
 - Windows 10 or Windows 11
-- Python 3.9 or later (included with Rhino 8)
 
-## Quick Start
+Bilingual interface: English / Traditional Chinese
 
-- [YouTube Tutorial Series](https://www.youtube.com/playlist?list=PLiJmu8T_uzJIjokbOcpvvCoHdQn5SJ2NB): full workflow walkthrough
+## Quick start
+
+- [Tutorial playlists](https://www.youtube.com/@Chihyu-Oli/playlists)
 
 ### Installation
 
-1. Download and extract the latest version from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest).
-2. Run `install_LoopFlow.bat`, or manually copy the `.py` files from `Python/` to `%AppData%\McNeel\Rhinoceros\8.0\scripts\LoopFlow\`.
-3. Drag `LoopFlow.rhc` into the Rhino window to load the toolbar.
+Do not use the 1.x ZIP, `install_LoopFlow.bat`, or drag-and-drop `.rhc` toolbar. Do not mix 1.x and 2.0 in the same project.
 
-These steps can be completed while Rhino is open. To remove the toolbar, select LoopFlow in Rhino's Toolbars settings and delete it.
+1. Download `loopflow-2.0.0-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest). Do not download the 1.x ZIP.
+2. Open Rhino 8 and run `PackageManager`.
+3. Install from file and choose the `.yak` you downloaded.
+4. **Quit Rhino completely and reopen it.**
 
-## Basic Workflow
+You can also search for `LoopFlow` in Package Manager after it is listed. After install:
 
-1. Write project dictionary data into the Rhino model.
-2. Create cabinets as needed and inspect object information in the data panel.
-3. Create sections and elevations with Rhino Section Tools.
-4. Create Layout numbers, material Tags, and elevation or section index Tags.
-5. Write the latest data into Tag Blocks so the model, drawings, and sheets remain consistent.
+- The first LoopFlow command asks English / 正體中文 if this computer has not chosen a language yet.
+- Missing official files are copied to `Documents\LoopFlow` (`Tag_Blocks.3dm` and both Dictionary workbooks). Existing files are not overwritten.
+- Copy what you need beside your saved `.3dm`.
+- Use the LoopFlow 2.0 toolbar. Do not press old 1.x buttons.
 
-Each step can be repeated as the project evolves; the workflow does not need to follow one fixed path.
+## Basic workflow
+
+1. Sync Type layers from the project Dictionary and write data into the Rhino model.
+2. After validation passes, publish a Registry revision.
+3. Create sections, elevations, or plans with Rhino Section Tools.
+4. Create Layout numbers, material tags, and elevation or section index tags.
+5. Infuse the published data into Tag Blocks so the model, drawings, and sheets point at the same revision.
+
+Each step can pause, rerun, or continue later. You do not have to finish the chain in one sitting.
 
 ## Support
 
@@ -61,13 +75,13 @@ LoopFlow is a solo project designed and developed by an architect and interior d
 
 Maintenance and response times vary with project workload.
 
-## Related Projects
+## Related projects
 
 External rendering synchronization is provided by separate projects and is not included with LoopFlow itself:
 
 - [LoopFlow | Rhino to Blender Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Blender-Sync)
 - [LoopFlow | Rhino to Octane Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Octane-Sync)
 
-## License and Credits
+## License and credits
 
 LoopFlow is released under the [MIT License](./LICENSE). See [CREDITS](./CREDITS.md) for the project background and acknowledgments.

@@ -1,207 +1,67 @@
-# LoopFlow User Guide
+# LoopFlow 2.0 overview
 
-> All LoopFlow commands run in Rhino 8 (CPython 3.9).
-> Files prefixed with `_` are internal system modules — do not execute or modify them directly.
+> A one-minute picture of how LoopFlow works. Command details: [command reference](./COMMANDS.md). Excel Dictionary: [Dictionary guide](./Dictionary_GUIDE.md). On-drawing Tag fields: [Tag Block reference](./TAG_BLOCKS.md).
 
-Last updated: 2026-04-22
+## Core logic: three stages
 
----
+**Model freely in 3D, load Type data from the Dictionary, then hand off to 2D.**
 
-## Table of Contents
+1. **Free 3D modelling**: model in Rhino as usual. LoopFlow does not write anything in the background, and it does not restrict how you draw.
+2. **Dictionary into the model**: the Excel Dictionary defines defaults for each finish / work item, then syncs them to Rhino layers. After the model is built, put objects on the matching layers and write that data onto each object (ID, finish, elevation, space, and so on).
+3. **Publish for 2D**: after validation, publish a read-only **Registry**. That snapshot is how model data moves from 3D to 2D. 2D tags read Type, elevation, and space from a chosen revision.
 
-1. [Main Workflow](#main-workflow)
-2. [Standalone Utility Commands](#standalone-utility-commands)
-3. [Configuration & System Modules](#configuration--system-modules)
+Model data flows one way: **3D owns object data, the Registry freezes one validated revision, and 2D does not write back 3D Types or objects**. 2D is still active work: sheet numbers / names, tag bindings, detail numbers, remarks, and other manual fields stay on the drawing side. If 3D changes later, return to the affected nodes, rewrite, validate, publish, and infuse again. You do not have to throw away the drawings.
 
----
+## The project is a folder
 
-## Main Workflow
+The folder of the saved `.3dm` is the LoopFlow project folder. Keep the Dictionary beside the `.3dm`. LoopFlow stores the project name, the chosen Dictionary filename, Registry revisions, and logs under `_LoopFlow_Config/` in that same folder.
 
-<img src="./images/guide/USER_GUIDE.svg" alt="LoopFlow Workflow Diagram" width="100%">
+When you change computers or drives, move the whole project folder. As long as the `.3dm`, Dictionary, and `_LoopFlow_Config/` stay together, you do not edit absolute paths. Copying only the `.3dm` does not bring the original project settings.
 
-The following commands have sequential dependencies and should be executed in order.
+Official Dictionary templates and `Tag_Blocks.3dm` ship with the installer: one copy stays in the package folder, and the first product command copies missing files to `Documents\LoopFlow` (existing files are not overwritten; Explorer opens only if something was copied). That folder is a convenient source to copy into each project, not the project folder itself.
 
-```
-LF_Nexus (set up layers / tag 3D objects)
-  → LF_Cabinet_Suite (build cabinet models)
-  → LF_Push_3D_to_JSON (push data to registry)
-  → [Rhino Section Tools] + LF_Anchor_Frame (generate 2D drawings)
-  → LF_Tagger_Layout_ID (assign drawing numbers)
-  → LF_Tagger_Laser / LF_Tagger_Grab / LF_Tagger_Index (link Tag Blocks)
-  → LF_Infuser_Part / LF_Infuser_All (write data into Tag Blocks)
-```
+## Interface language is per computer, not per project
 
----
+The LoopFlow interface supports **English** and **Traditional Chinese**. The first product command shows a language picker: English on the left, 正體中文 on the right. English is the default; Enter selects English. Esc or closing the window cancels that command, saves nothing, and asks again next time.
 
-### LF_Nexus
+The choice is stored in `%APPDATA%\LoopFlow\preferences.json` on this computer, not in the `.3dm` or `_LoopFlow_Config/`. Later, right-click the **Document** toolbar button or run `LFLanguage`. The same project can use different interface languages on different computers. Fixed labels and formula prompts inside `Tag_Blocks.3dm` stay in English.
 
-The data hub, containing 5 sub-commands:
+The project Dictionary is whichever `.xlsx` Nexus remembered after **Sync Type Layers**. Workbooks with Chinese or English header rows both load. Switching the interface language does not switch the Dictionary file.
 
-| Sub-command | Description |
-|---|---|
-| **Dict. to Layer** | Generate Rhino layers from the dictionary Excel file |
-| **SpaceBoundary** | Select closed curves to define space name data |
-| **TagTrigger** | Write data from the dictionary into all 3D objects on M3D layers, regardless of layer or object visibility/lock state |
-| **TagChecker** | Warns if any 3D object has incorrect or incomplete data. Re-run TagTrigger to fix |
-| **Layer to Dict.** | Reverse-export Rhino layers to Excel (LoopFlow_Dictionary_Export.xlsx) as a basis for updating the original dictionary. Layers are always modified during modeling, so you will end up with two Excel files — merge them manually according to your preference |
+## The 2D / 3D boundary: Rhino Section
 
----
+LoopFlow does not ship its own section engine. The 2D geometry flow sits on **Rhino 8 native Section / Clipping Drawing**. That step is the main geometric handoff:
 
-### LF_Cabinet_Suite
+- **Before the line**: the 3D world — free modelling, spaces, data, and publish all happen in the model.
+- **After the line**: the 2D world — sheet numbering, tag binding, and display organise data that already exists. They do not rebuild geometry or redefine model data. You still choose which Views to make, how to arrange Layouts, and whether to lock tags. 2D is not a fully automatic dump.
 
-Cabinet generator with 30 model combinations, including carcasses, doors, shelves, and BOM dimension data.
-
-BOM Update supports two data-writing modes:
-
-1. **Models generated by LF_Cabinet_Suite** — dimensions are written automatically (models can be on any layer)
-2. **Manually built models** — use the BOM Update button to write dimensions (models must be on the `M3D::04_CB` layer)
-
-BOM Update only writes data to objects on the cabinet layer (`M3D::04_CB`); objects on other layers are unaffected. You can safely select all objects when running BOM Update.
-
-> **Note**: Models generated by LF_Cabinet_Suite have a 1mm gap between panels for rendering purposes. BOM automatically compensates for this gap when writing dimensions.
-
----
-
-### LF_Push_3D_to_JSON
-
-Pushes 3D object data to `Project_Registry.json` (created in the same directory as the .3dm file). All subsequent 2D commands read from this file.
-
-> **Important**: After any changes to 3D models, re-run this command to keep 2D and 3D data in sync.
-
-This command also prompts automatically after TagTrigger completes. If working in a Dropbox folder, the first push may fail due to sync latency — wait a few seconds and re-push when prompted.
-
----
-
-### [ Rhino 8 Section Tools ] (Rhino Built-in)
-
-The following are Rhino 8 built-in tools, not LoopFlow commands. They generate 2D section drawings used in subsequent LoopFlow steps:
-
-- Create clipping sections
-- Create clipping section drawings
-- Clear clipping sections
-- Edit clipping drawings
-- Update clipping drawings
-
----
-
-### LF_Anchor_Frame
-
-Generates a bounding frame around a selected 2D drawing, used as an anchor by subsequent Tagger commands.
-
-> **This frame must not be deleted.**
-> Think of Anchor Frame as a target — Tagger commands aim at this target when linking data. If you move the 2D drawing, the Anchor Frame must move with it.
-
----
-
-### LF_Tagger_Layout_ID
-
-Automatically assigns drawing numbers to Layouts and writes them into the title block.
-
-Command-line options:
-
-- **Rule** — description of the default numbering system
-- **CreateTemplate** — generates `NamingRules_Config.json` in the .3dm directory; edit the file to customize numbering logic, then re-run the command to apply
-
-> The customization options in CreateTemplate may not yet cover all edge cases — feedback is welcome.
-
----
-
-### LF_Tagger_Laser / LF_Tagger_Grab
-
-Links material and furniture Tag Blocks to their data sources for Infuser to render later. `TAG_DW` was later changed to manual entry and does not use Grab/Laser binding.
-
-- **Laser** — laser-positioning mode (suited for section Detail Views)
-- **Grab** — click-to-pick mode
-
-> **Write-protection**: Enter exactly one `x` or `X` in the lock Attribute UserText field (surrounding whitespace is ignored). A locked Tag is not overwritten by Infuser and cannot be rebound with Grab, Laser, or Index until the lock is cleared. Other marks such as `1` or `yes` do not lock the Tag, and 1.x gives no warning.
-
----
-
-### LF_Tagger_Index
-
-Links elevation and section Tag Blocks (index tags) to Layout Detail View data, for Infuser to write later.
-
-> Write-protection applies here as well.
-
-> **Known `TAG_DW` limitation**: Door/window ID, width, and height are now entered manually and the Block has no lock field. However, the 1.x Infuser still colors an unbound `TAG_DW` orange and replaces its manual ID with `?`. Review existing door/window Tags before running Part/All; this conflict is planned to be removed in 2.0.
-
----
-
-### LF_Infuser_Part / LF_Infuser_All
-
-Writes data into Tag Blocks. Tag Blocks display one of three states:
-
-| Color | State | Description |
+| 3D model | Rhino Section | 2D drawing |
 |---|---|---|
-| Purple | Linked | Data successfully written |
-| Orange | Unlinked | Tagger has not been run yet |
-| Red | Broken link | The linked 3D object or Detail View has been deleted |
+| Free modelling and Type Layers | Updatable plans, elevations, or sections | Register Views and the 2D↔3D map |
+| Space, elevation, UUID, data revision | Passes geometry; does not redefine model data | Drawings, Layouts, Sheets, and title frames |
+| Validate and publish the Registry | Geometry exit | Tag binding, infuse, and manual fields |
 
-- **Infuser_Part** — writes only to Tag Blocks in the current Layout
-- **Infuser_All** — writes to all Tag Blocks across all Layouts at once
+In short: **3D produces model data, the Registry is the snapshot, Section is the geometry exit, and 2D is the layout and judgement workspace.**
 
----
+## The chain can pause and resume
 
-## Standalone Utility Commands
+This is a design premise, not an extra rule:
 
-The following commands can be used independently at any point in the workflow.
+- **Every node is a safe stop.** After Dictionary sync, after writing to the model, after registering a section — save and stop. You do not have to finish the chain in one sitting. A later person or computer can continue without losing completed work.
+- **Nothing runs itself.** Each step is user-started. Actions with a wide effect (publish, write) show what will change before they change it.
+- **A mistake stays local.** If a source is edited or deleted, LoopFlow marks that node. It does not auto-repair, and it does not break unrelated finished work. Go back to that node and redo it.
+- **1.x and 2.0 are different architectures.** Do not mix their files or toolbar buttons.
 
----
+## Five names to learn first
 
-### LF_2D_DW_Gen
-
-Quickly generates basic door and window symbols: 8 door styles and 3 window styles.
-
-### LF_2D_Cabinet_Gen
-
-One-click generation of 2D cabinet symbols: tall unit, base unit, wardrobe.
-
-### LF_2D_Shelf_Gap
-
-Quickly generates equally spaced shelf dividers.
-
-### LF_Sync_Worksession
-
-Multi-user collaboration and automatic worksession updates.
-
-### LF_Dictionary_Editor
-
-Opens the dictionary Excel file directly.
-
-> The .3dm and .xlsx files must be in the same directory.
->
-> For column reference, authoring rules, and the full data table, see [`Dictionary_GUIDE_EN.md`](./Dictionary_GUIDE_EN.md).
-
-### LF_Data_Viewer
-
-Quickly inspect the UserText data stored on any 3D object.
-
-### LF_Extract_CP
-
-Extracts 2D linework generated by Section Tools into new layers by color, making it easier to select and reassign to target layers.
-
-> **Note**: If you need to move the extracted 2D lines to a different position, the Anchor Frame must move with them — Tagger commands rely on the frame to anchor their target.
-
-### LF_Duplicate_Layout
-
-Duplicates one or more selected Layouts at once.
-
-### LF_TAG-O
-
-Displays the status of all Tag Blocks across the entire file: linked / unlinked / broken.
-
----
-
-## Configuration & System Modules
-
-### `_LoopFlow_Config.py` — Global Configuration Hub (editable)
-
-Centralizes all customizable constants: layer names, colors, filenames, naming conventions, and more. Changes take effect the next time the relevant script is run in Rhino — no restart required.
-
-### System Modules (do not modify)
-
-| File | Description |
+| Term | Meaning |
 |---|---|
-| `_LF_Debug.py` | Exception logger — writes errors to `cursor_LF_debug_log.txt` |
-| `_LF_NamingRules.py` | Drawing naming rules engine — customize indirectly via `NamingRules_Config.json`, not by editing this file |
-| `_LF_Registry.py` | Read/write bridge for `Project_Registry.json`, with file-lock collision prevention |
+| **Project Folder** | The folder of the saved `.3dm`. Dictionary and `_LoopFlow_Config/` are rooted here. |
+| **Dictionary** | Type Catalog. Stable Type IDs, layers, display names, initial defaults, and rules. It does not store each 3D object's current values. |
+| **Registry** | A read-only snapshot published from 3D so 2D knows which revision it is reading. Not a hand-edited database. |
+| **Sheet** | The real source of drawing number, name, and revision. The Layout page name is a display result, not the identity. |
+| **Health** | Whether a tag is live, stale, or disconnected. Colour is a recoverable hint; infuse or rebind to restore. |
+
+## How to operate
+
+This page is logic only. For clicks, the six Nexus items, Excel columns, and who writes each Tag field, see the [command reference](./COMMANDS.md), [Dictionary guide](./Dictionary_GUIDE.md), and [Tag Block reference](./TAG_BLOCKS.md).
