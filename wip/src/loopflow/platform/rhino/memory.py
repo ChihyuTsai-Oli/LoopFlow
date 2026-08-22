@@ -159,6 +159,9 @@ class MemorySession:
             self._document_text[key] = value
         self._modified = True
 
+    def document_user_text_keys(self):
+        return tuple(self._document_text)
+
     def model_unit_system(self) -> str:
         return self._model_unit
 

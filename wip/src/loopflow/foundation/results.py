@@ -63,6 +63,7 @@ STAGES = (
     "sync_worksession",
     "open_document",
     "choose_locale",
+    "check_sample",
 )
 
 

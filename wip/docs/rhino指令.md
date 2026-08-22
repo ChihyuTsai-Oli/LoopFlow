@@ -75,6 +75,9 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_Language.py"
 
 LF_D08_Migrate_Display_Keys
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Display_Keys.py"
+
+LF_G01_Check_Sample
+_-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_G01_Check_Sample.py"
 ```
 
 ## 按鈕配置
@@ -100,11 +103,11 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\wip\src\entrypoints\LF_D08_Migrate_Disp
 | Sync Worksession | `LF_Sync_Worksession` | — |
 | Document | `LF_Document`（開啟文件入口） | `LF_Language`（繁中／English） |
 
-開發期輔助（**不是產品指令**，不進正式工具列）：`LF_D08_Migrate_Display_Keys` 全檔把圖塊舊顯示欄抄到 `lf_*` 後刪舊名字。鎖定欄若寫 `x`／`X` 會抄到 `lf_00_lock_state` 後刪舊名字；提示文字只刪不抄。圖塊公式改完後跑一次即可，不必逐張刪 UserText。
+開發期輔助（**不是產品指令**，不進正式工具列）：`LF_D08_Migrate_Display_Keys` 全檔把圖塊舊顯示欄抄到 `lf_*` 後刪舊名字。鎖定欄若寫 `x`／`X` 會抄到 `lf_00_lock_state` 後刪舊名字；提示文字只刪不抄。圖塊公式改完後跑一次即可，不必逐張刪 UserText。`LF_G01_Check_Sample` 只讀檢查目前 `.3dm` 是否為乾淨 2.0 範例（1.x 殘欄、文件環境設定、Dictionary／schema）；**不寫入**、不做 1.x 升級。要上傳範例前在**副本**上跑。
 
 ## 正式指令名稱（G02）
 
-封裝後使用者在 Rhino 命令列輸入的是**無底線**名稱。開發期 ID、入口檔名與契約維持底線（例如 `LF_Open_Dictionary`）。精簡清單見 `指令名稱.txt`。現在不要改開發期入口檔名。`LF_D08_Migrate_Display_Keys` 不登錄、不進安裝包。
+封裝後使用者在 Rhino 命令列輸入的是**無底線**名稱。開發期 ID、入口檔名與契約維持底線（例如 `LF_Open_Dictionary`）。精簡清單見 `指令名稱.txt`。現在不要改開發期入口檔名。`LF_D08_Migrate_Display_Keys` 與 `LF_G01_Check_Sample` 不登錄、不進安裝包。
 
 2.0 安裝主格式是 `.yak`（同一份上 Package Manager 與 GitHub Release）；不做 RHI。工具列存 RUI，不存 RHC。細節見 `系統設定.md`「Build 與 Release」。
 
