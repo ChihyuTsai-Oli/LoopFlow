@@ -7,6 +7,7 @@ from typing import Callable, Optional, Sequence, Tuple
 
 from loopflow.features.project.console import COMMAND_ID, open_console
 from loopflow.foundation import results
+from loopflow.foundation.i18n import load_catalog, t
 from loopflow.foundation.paths import normalize_dictionary_filename
 from loopflow.platform.rhino.session import RhinoSession
 
@@ -14,26 +15,37 @@ MenuChoice = Tuple[str, str]
 Chooser = Callable[[Sequence[str]], Optional[str]]
 
 MENU_ITEMS: Tuple[Tuple[str, str, str], ...] = (
-    ("open_check", "scan", "1  開案檢查"),
-    ("sync_type_layers", "scan", "2  從字典同步 Type Layers"),
-    ("level_boundary", "scan", "3  登記高程框（封閉曲線）"),
-    ("space_boundary", "scan", "4  登記空間框（封閉曲線，須在高程框內）"),
-    ("scan_apply_verify", "apply", "5  寫入模型 Metadata"),
-    ("scan_apply_verify", "verify", "6  檢核模型 Metadata（不寫入）"),
+    ("open_check", "scan", "nexus.021"),
+    ("sync_type_layers", "scan", "nexus.022"),
+    ("level_boundary", "scan", "nexus.023"),
+    ("space_boundary", "scan", "nexus.024"),
+    ("scan_apply_verify", "apply", "nexus.025"),
+    ("scan_apply_verify", "verify", "nexus.026"),
 )
-MENU_LABELS: Tuple[str, ...] = tuple(item[2] for item in MENU_ITEMS)
+
+
+def menu_labels() -> Tuple[str, ...]:
+    return tuple(t(key) for _step, _action, key in MENU_ITEMS)
+
+
+MENU_LABELS: Tuple[str, ...] = tuple(
+    load_catalog()[key]["zh-TW"] for _step, _action, key in MENU_ITEMS
+)
 
 
 def parse_menu_choice(text: Optional[str]) -> Optional[MenuChoice]:
     if text is None:
         return None
     stripped = str(text).strip()
-    if stripped in ("", "0", "取消", "Esc", "ESC"):
+    if stripped in ("", "0", "取消", "Cancel", "Esc", "ESC"):
         return None
-    for step, action, label in MENU_ITEMS:
-        if stripped == label or stripped == step:
+    catalog = load_catalog()
+    for step, action, key in MENU_ITEMS:
+        entry = catalog[key]
+        labels = (entry["zh-TW"], entry["en"], t(key), step)
+        if stripped in labels:
             return step, action
-        number = label.split()[0]
+        number = entry["zh-TW"].split()[0]
         if stripped == number:
             return step, action
     return None
@@ -46,14 +58,14 @@ def _rhino_listbox(labels: Sequence[str]) -> Optional[str]:
         return None
     return rs.ListBox(
         list(labels),
-        "開案檢查已完成。選一個步驟；Esc 取消。",
+        t("nexus.027"),
         "LoopFlow Nexus",
     )
 
 
 def prompt_nexus_menu(chooser: Optional[Chooser] = None) -> Optional[MenuChoice]:
     picker = chooser or _rhino_listbox
-    return parse_menu_choice(picker(MENU_LABELS))
+    return parse_menu_choice(picker(menu_labels()))
 
 
 def choose_dictionary_path(opener, root: Optional[Path], default, warn=None):
@@ -90,14 +102,14 @@ def _live_ask_dictionary(session):
         def _open(_default):
             try:
                 return ask_open_filename(
-                    "選這份專案的 Dictionary Excel（須與 .3dm 同資料夾）",
+                    t("nexus.031"),
                     "Excel (*.xlsx)|*.xlsx||",
                     folder,
                     _default or DICTIONARY_FILENAME,
                 )
             except ImportError:
                 return ask_popup_string(
-                    "Dictionary 檔名（.3dm 同資料夾內的 .xlsx）",
+                    t("nexus.032"),
                     _default or DICTIONARY_FILENAME,
                     "LoopFlow",
                 )
@@ -128,7 +140,7 @@ def run_nexus_console(
     if picked is None:
         return results.cancelled(
             "dispatch",
-            "已完成開案檢查。使用者取消後續步驟。",
+            t("nexus.029"),
             command_id=COMMAND_ID,
             details=first.details,
         )
@@ -140,7 +152,7 @@ def run_nexus_console(
         from loopflow.platform.rhino.prompts import ask_popup_string
 
         def _ask_prefix(default):
-            return ask_popup_string("請輸入專案名稱（圖層前綴）", default or "", "LoopFlow")
+            return ask_popup_string(t("nexus.030"), default or "", "LoopFlow")
 
         extra["ask_prefix"] = _ask_prefix
     if step == "sync_type_layers" and extra.get("ask_dictionary") is None:

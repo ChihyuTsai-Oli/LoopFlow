@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """同目錄暫存後 os.replace。失敗不先刪目標檔。"""
 from __future__ import annotations
+from loopflow.foundation.i18n import t
 
 import json
 import os
@@ -16,7 +17,7 @@ def write_bytes_atomic(path: Path, data: bytes) -> results.Result:
     """寫入後 fsync，再以 os.replace 換成目標。不先刪正式檔。"""
     target = Path(path)
     if not target.parent.exists():
-        return results.failed("replace_registry", "輸出目錄不存在，不建立正式檔。")
+        return results.failed("replace_registry", t("foundation.002"))
     tmp = target.with_name(target.name + ".tmp")
     try:
         with open(tmp, "wb") as handle:
@@ -30,8 +31,8 @@ def write_bytes_atomic(path: Path, data: bytes) -> results.Result:
                 tmp.unlink()
         except OSError:
             pass
-        return results.failed("replace_registry", "無法寫入檔案：%s" % exc)
-    return results.ok("replace_registry", "已寫入 %s" % target.name, details={"path": str(target)})
+        return results.failed("replace_registry", t("foundation.007") % exc)
+    return results.ok("replace_registry", t("foundation.003") % target.name, details={"path": str(target)})
 
 
 def write_json_atomic(path: Path, payload: JsonValue) -> results.Result:
@@ -42,27 +43,27 @@ def write_json_atomic(path: Path, payload: JsonValue) -> results.Result:
 def read_json(path: Path) -> results.Result:
     target = Path(path)
     if not target.exists() or not target.is_file():
-        return results.failed("read_registry", "找不到 JSON：%s" % target.name)
+        return results.failed("read_registry", t("foundation.006") % target.name)
     try:
         text = target.read_text(encoding="utf-8")
         data = json.loads(text)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         return results.failed(
             "read_registry",
-            "無法讀取 JSON：%s" % exc,
+            t("foundation.008") % exc,
             details={"filename": target.name},
         )
     if not isinstance(data, dict):
-        return results.failed("read_registry", "JSON 根物件必須是 object。")
-    return results.ok("read_registry", "已讀取 JSON", details={"payload": data})
+        return results.failed("read_registry", t("foundation.004"))
+    return results.ok("read_registry", t("foundation.001"), details={"payload": data})
 
 
 def copy_file(source: Path, dest: Path) -> results.Result:
     src = Path(source)
     if not src.exists() or not src.is_file():
-        return results.failed("replace_registry", "找不到要複製的檔案。")
+        return results.failed("replace_registry", t("foundation.005"))
     try:
         data = src.read_bytes()
     except OSError as exc:
-        return results.failed("replace_registry", "無法讀取來源：%s" % exc)
+        return results.failed("replace_registry", t("foundation.009") % exc)
     return write_bytes_atomic(dest, data)

@@ -5,6 +5,7 @@
 舊檔仍帶著 `lf_*` 五個鍵時，第一次讀取會搬進 JSON 並從文件清掉。
 """
 from __future__ import annotations
+from loopflow.foundation.i18n import t
 
 import json
 import os
@@ -63,14 +64,14 @@ def _read_json(path: Path) -> results.Result:
         _cache.pop(str(path), None)
         return results.ok(
             "read_project_config",
-            "尚無專案設定檔",
+            t("project_config.003"),
             details={"values": {}, "exists": False},
         )
     cached = _cache.get(str(path))
     if cached is not None and cached[0] == signature:
         return results.ok(
             "read_project_config",
-            "已讀取專案設定",
+            t("project_config.001"),
             details={"values": dict(cached[1]), "exists": True},
         )
     try:
@@ -79,19 +80,19 @@ def _read_json(path: Path) -> results.Result:
     except (OSError, ValueError) as exc:
         return results.failed(
             "read_project_config",
-            "%s 無法解析：%s。已停止，不猜測內容。" % (path.name, exc),
+            t("project_config.005") % (path.name, exc),
             details={"path": str(path)},
         )
     if not isinstance(data, dict):
         return results.failed(
             "read_project_config",
-            "%s 內容不是設定物件。已停止，不猜測內容。" % path.name,
+            t("project_config.004") % path.name,
             details={"path": str(path)},
         )
     _cache[str(path)] = (signature, dict(data))
     return results.ok(
         "read_project_config",
-        "已讀取專案設定",
+        t("project_config.001"),
         details={"values": dict(data), "exists": True},
     )
 
@@ -109,13 +110,13 @@ def _write_json(path: Path, values: Mapping) -> results.Result:
     except OSError as exc:
         return results.failed(
             "write_project_config",
-            "無法寫入 %s：%s" % (path.name, exc),
+            t("project_config.006") % (path.name, exc),
             details={"path": str(path)},
         )
     _cache[str(path)] = (_signature(path), dict(payload))
     return results.ok(
         "write_project_config",
-        "已更新專案設定",
+        t("project_config.002"),
         details={"values": dict(payload), "path": str(path)},
     )
 
@@ -176,7 +177,7 @@ def read_config(session) -> results.Result:
             migrated = True
     return results.ok(
         "read_project_config",
-        "已讀取專案設定",
+        t("project_config.001"),
         details={
             "values": values,
             "exists": exists,

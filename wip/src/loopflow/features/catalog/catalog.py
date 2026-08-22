@@ -50,6 +50,7 @@ from loopflow.features.tagger.templates import TagTemplateSet, load_tag_template
 from loopflow.features.viewer.inspect import check_document_schema
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Catalog"
 STAGE = "catalog"
@@ -266,7 +267,7 @@ def preview_lines(rows: Sequence[CatalogRow]) -> Tuple[str, ...]:
     lines = []
     for row in rows:
         if row.skip_reason == "empty_slot":
-            lines.append("（空位）")
+            lines.append(t("catalog.026"))
             continue
         drawing_no = row.drawing_no or "—"
         drawing_name = row.drawing_name or "—"
@@ -278,7 +279,7 @@ def preview_lines(rows: Sequence[CatalogRow]) -> Tuple[str, ...]:
 
 
 def format_catalog_txt(rows: Sequence[CatalogRow]) -> str:
-    lines = ["圖名, 圖號"]
+    lines = [t("catalog.002")]
     for row in rows:
         if row.skip_reason:
             continue
@@ -298,7 +299,7 @@ def _require_schema(session: RhinoSession) -> Optional[results.Result]:
     if "missing_document_schema" in (schema.warnings or ()):
         return results.blocked(
             "check_schema",
-            "文件尚未寫入 schema，已停止，不寫入。",
+            t("catalog.008"),
             ("missing_document_schema",),
             command_id=COMMAND_ID,
         )
@@ -307,7 +308,7 @@ def _require_schema(session: RhinoSession) -> Optional[results.Result]:
 
 def _load_templates(catalog: Optional[TagTemplateSet]) -> results.Result:
     if catalog is not None:
-        return results.ok(STAGE, "已載入 Tag templates", details={"catalog": catalog})
+        return results.ok(STAGE, t("catalog.009"), details={"catalog": catalog})
     loaded = load_tag_templates()
     if not loaded.ok:
         return loaded
@@ -403,7 +404,7 @@ def collect_anchors(session: RhinoSession) -> results.Result:
     if not number_ids or not name_ids:
         return results.blocked(
             STAGE,
-            "找不到成對的圖號／圖名定位點，已停止，不寫入。",
+            t("catalog.010"),
             ("missing_anchors",),
             command_id=COMMAND_ID,
         )
@@ -412,14 +413,14 @@ def collect_anchors(session: RhinoSession) -> results.Result:
     if len(number_catalog_ids) > 1 or len(name_catalog_ids) > 1:
         return results.blocked(
             STAGE,
-            "定位點混入多個圖目錄身分，已停止，不寫入。",
+            t("catalog.011"),
             ("mixed_catalog_id",),
             command_id=COMMAND_ID,
         )
     if not number_catalog_ids or not name_catalog_ids:
         return results.blocked(
             STAGE,
-            "找不到成對的圖號／圖名定位點，已停止，不寫入。",
+            t("catalog.010"),
             ("missing_anchors",),
             command_id=COMMAND_ID,
         )
@@ -432,7 +433,7 @@ def collect_anchors(session: RhinoSession) -> results.Result:
         if point is None:
             return results.blocked(
                 STAGE,
-                "圖號定位點必須是 Layout 上的獨立 Point，已停止，不寫入。",
+                t("catalog.027"),
                 ("damaged_anchor",),
                 command_id=COMMAND_ID,
             )
@@ -442,7 +443,7 @@ def collect_anchors(session: RhinoSession) -> results.Result:
         if point is None:
             return results.blocked(
                 STAGE,
-                "圖名定位點必須是 Layout 上的獨立 Point，已停止，不寫入。",
+                t("catalog.028"),
                 ("damaged_anchor",),
                 command_id=COMMAND_ID,
             )
@@ -451,13 +452,13 @@ def collect_anchors(session: RhinoSession) -> results.Result:
     if not UUID_V4_RE.match(catalog_id):
         return results.blocked(
             STAGE,
-            "圖目錄身分不是合法 UUID，已停止，不寫入。",
+            t("catalog.012"),
             ("invalid_catalog_id",),
             command_id=COMMAND_ID,
         )
     return results.ok(
         STAGE,
-        "已讀取定位點。",
+        t("catalog.003"),
         command_id=COMMAND_ID,
         details={
             "catalog_id": catalog_id,
@@ -704,13 +705,13 @@ def assign_catalog_points(
     if field not in ALLOWED_FIELDS:
         return results.failed(
             STAGE,
-            "未知的目錄欄位：%s。" % field,
+            t("catalog.029") % field,
             command_id=COMMAND_ID,
         )
     if not object_ids:
         return results.cancelled(
             STAGE,
-            "已取消選取定位點，未寫入。",
+            t("catalog.013"),
             command_id=COMMAND_ID,
         )
 
@@ -719,14 +720,14 @@ def assign_catalog_points(
             if current.is_block_instance(object_id):
                 return results.blocked(
                     STAGE,
-                    "選到 Block 或其子物件，已停止，不寫入。定位點必須是獨立 Point。",
+                    t("catalog.046"),
                     ("block_instance",),
                     command_id=COMMAND_ID,
                 )
             if not current.is_point(object_id):
                 return results.blocked(
                     STAGE,
-                    "選到的不是獨立 Point，已停止，不寫入。",
+                    t("catalog.047"),
                     ("not_point",),
                     command_id=COMMAND_ID,
                 )
@@ -734,7 +735,7 @@ def assign_catalog_points(
         if catalog_id is None:
             return results.blocked(
                 STAGE,
-                "選取的定位點屬於不同圖目錄，已停止，不寫入。",
+                t("catalog.030"),
                 (reason or "mixed_catalog_id",),
                 command_id=COMMAND_ID,
             )
@@ -749,8 +750,8 @@ def assign_catalog_points(
             current.set_object_user_text(object_id, FIELD_KEY, field)
         return results.ok(
             STAGE,
-            "已歸位 %s 個%s定位點。"
-            % (len(object_ids), "圖號" if field == FIELD_DRAWING_NO else "圖名"),
+            t("catalog.031")
+            % (len(object_ids), t("catalog.055") if field == FIELD_DRAWING_NO else t("catalog.056")),
             command_id=COMMAND_ID,
             details={
                 "catalog_id": catalog_id,
@@ -796,7 +797,7 @@ def reset_catalog_points(
     if not point_ids:
         return results.blocked(
             STAGE,
-            "沒有圖目錄定位點可清除。",
+            t("catalog.014"),
             ("missing_anchors",),
             command_id=COMMAND_ID,
         )
@@ -806,15 +807,15 @@ def reset_catalog_points(
 
         def _ask() -> bool:
             return ask_yes_no(
-                "將清除所有圖目錄定位點上的資料，把點放回原來的圖層，並刪除目錄文字。確定？",
-                "清除定位點",
+                t("catalog.032"),
+                t("catalog.033"),
             )
 
         confirmer = _ask
     if not confirmer():
         return results.cancelled(
             STAGE,
-            "已取消清除定位點，未寫入。",
+            t("catalog.015"),
             command_id=COMMAND_ID,
         )
 
@@ -842,7 +843,7 @@ def reset_catalog_points(
             removed += delete_generated_catalog_text(current, catalog_id)
         return results.ok(
             STAGE,
-            "已還原 %s 個定位點，刪除 %s 個目錄文字。" % (restored, removed),
+            t("catalog.034") % (restored, removed),
             command_id=COMMAND_ID,
             details={"points": restored, "texts": removed},
         )
@@ -860,19 +861,19 @@ def _pair_or_block(session: RhinoSession) -> results.Result:
     )
     if not paired.ok:
         messages = {
-            "page_count_mismatch": "圖號與圖名定位點的逐頁數量不一致，已停止，不寫入。",
-            "row_mismatch": "圖名定位點不在對應圖號的同一列，已停止，不寫入。",
-            "missing_anchors": "找不到成對的圖號／圖名定位點，已停止，不寫入。",
+            "page_count_mismatch": t("catalog.016"),
+            "row_mismatch": t("catalog.017"),
+            "missing_anchors": t("catalog.010"),
         }
         return results.blocked(
             STAGE,
-            messages.get(paired.reason or "", "定位點無法配對，已停止，不寫入。"),
+            messages.get(paired.reason or "", t("catalog.035")),
             (paired.reason or "pair_failed",),
             command_id=COMMAND_ID,
         )
     return results.ok(
         STAGE,
-        "定位點已配對。",
+        t("catalog.004"),
         command_id=COMMAND_ID,
         details={
             "catalog_id": collected.details["catalog_id"],
@@ -937,7 +938,7 @@ def build_catalog(
         if not sheet_ids:
             return results.blocked(
                 STAGE,
-                "尚未選取 Sheet，已停止，不寫入。",
+                t("catalog.036"),
                 ("missing_sheets",),
                 command_id=COMMAND_ID,
             )
@@ -947,13 +948,13 @@ def build_catalog(
         bound = bind_sheets_to_anchors(paired.details["pairs"], sheet_ids)
         if not bound.ok:
             messages = {
-                "too_many_sheets": "選取的 Sheet 多於可用定位點，已停止，不寫入。",
-                "missing_sheets": "尚未選取 Sheet，已停止，不寫入。",
-                "missing_anchors": "找不到成對的圖號／圖名定位點，已停止，不寫入。",
+                "too_many_sheets": t("catalog.037"),
+                "missing_sheets": t("catalog.036"),
+                "missing_anchors": t("catalog.010"),
             }
             return results.blocked(
                 STAGE,
-                messages.get(bound.reason or "", "無法綁定 Sheet，已停止，不寫入。"),
+                messages.get(bound.reason or "", t("catalog.048")),
                 (bound.reason or "bind_failed",),
                 command_id=COMMAND_ID,
             )
@@ -963,7 +964,7 @@ def build_catalog(
         if stale:
             return results.blocked(
                 STAGE,
-                "Sheet metadata 已過期，請先執行 Layout ID，已停止，不寫入。",
+                t("catalog.038"),
                 ("stale",),
                 command_id=COMMAND_ID,
                 details={"stale_sheet_ids": stale},
@@ -976,14 +977,14 @@ def build_catalog(
         if not confirmer(preview_lines(rows)):
             return results.cancelled(
                 STAGE,
-                "已取消圖目錄寫入。",
+                t("catalog.039"),
                 command_id=COMMAND_ID,
             )
         catalog_id = paired.details["catalog_id"]
         created, skipped = _apply_rows(
             current, bound.slots, rows, catalog_id, write_bindings=True
         )
-        message = "已建立圖目錄，寫入 %s 個文字。" % created
+        message = t("catalog.018") % created
         if skipped:
             message += " 略過 %s 列。" % len(skipped)
         return results.ok(
@@ -1023,7 +1024,7 @@ def refresh_catalog(
         if not bound.ok:
             return results.blocked(
                 STAGE,
-                "圖號與圖名定位點的綁定不一致，已停止，不寫入。",
+                t("catalog.041"),
                 (bound.reason or "binding_mismatch",),
                 command_id=COMMAND_ID,
             )
@@ -1034,7 +1035,7 @@ def refresh_catalog(
         if stale:
             return results.blocked(
                 STAGE,
-                "Sheet metadata 已過期，請先執行 Layout ID，已停止，不寫入。",
+                t("catalog.038"),
                 ("stale",),
                 command_id=COMMAND_ID,
                 details={"stale_sheet_ids": stale},
@@ -1048,7 +1049,7 @@ def refresh_catalog(
         created, skipped = _apply_rows(
             current, bound.slots, rows, catalog_id, write_bindings=False
         )
-        message = "已更新圖目錄文字 %s 個。" % created
+        message = t("catalog.019") % created
         if skipped:
             message += " 略過 %s 列。" % len(skipped)
         return results.ok(
@@ -1099,7 +1100,7 @@ def export_catalog_txt(
     if not bound.ok:
         return results.blocked(
             STAGE,
-            "圖號與圖名定位點的綁定不一致，已停止，不匯出。",
+            t("catalog.020"),
             (bound.reason or "binding_mismatch",),
             command_id=COMMAND_ID,
         )
@@ -1108,7 +1109,7 @@ def export_catalog_txt(
     if stale:
         return results.blocked(
             STAGE,
-            "Sheet metadata 已過期，請先執行 Layout ID，已停止，不匯出。",
+            t("catalog.021"),
             ("stale",),
             command_id=COMMAND_ID,
             details={"stale_sheet_ids": stale},
@@ -1128,14 +1129,14 @@ def export_catalog_txt(
     if not target:
         return results.blocked(
             STAGE,
-            "Rhino 檔尚未儲存，請選擇圖目錄 TXT 的儲存位置。",
+            t("catalog.022"),
             ("missing_path",),
             command_id=COMMAND_ID,
         )
     Path(target).write_text(format_catalog_txt(rows), encoding="utf-8")
     return results.ok(
         STAGE,
-        "已匯出圖目錄 TXT。",
+        t("catalog.005"),
         command_id=COMMAND_ID,
         details={"path": str(target), "rows": rows},
     )
@@ -1144,7 +1145,7 @@ def export_catalog_txt(
 def _default_confirm(lines: Sequence[str]) -> bool:
     from loopflow.platform.rhino.prompts import ask_confirm_list
 
-    return ask_confirm_list(lines, title="圖目錄核對清單")
+    return ask_confirm_list(lines, title=t("catalog.023"))
 
 
 def _default_pick_points(message: str) -> Optional[Sequence[str]]:
@@ -1178,7 +1179,7 @@ def _default_pick_sheets(
     if not items:
         from loopflow.platform.rhino.prompts import show_message
 
-        show_message("沒有可列入目錄的 Layout。請先執行 Layout ID。")
+        show_message(t("catalog.024"))
         return None
     return ask_pick_catalog_sheets(items, selected_ids=selected)
 
@@ -1193,7 +1194,7 @@ def _default_ask_path(default: Optional[str]) -> Optional[str]:
         folder = str(path.parent)
         filename = path.name
     return ask_save_filename(
-        "匯出圖目錄 TXT",
+        t("catalog.006"),
         "Text Files (*.txt)|*.txt",
         folder=folder,
         filename=filename,
@@ -1218,7 +1219,7 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
     except ImportError:
         return results.failed(
             STAGE,
-            "找不到 Eto 介面，無法開啟圖目錄面板。",
+            t("catalog.042"),
             command_id=COMMAND_ID,
         )
 
@@ -1233,7 +1234,7 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
     class _CatalogDialog(forms.Dialog[bool]):
         def __init__(self) -> None:
             super().__init__()
-            self.Title = "LF_Catalog 圖目錄"
+            self.Title = t("catalog.025")
             self.Padding = _dialog_padding(drawing)
             self.Resizable = True
             self.Width = 333
@@ -1250,12 +1251,12 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
             layout.Add(self.count_label, True, False)
 
             buttons = (
-                ("選取圖號定位點", self._on_pick_number),
-                ("選取圖名定位點", self._on_pick_name),
-                ("選取 Layout", self._on_pick_sheets),
-                ("生成 圖號/圖名", self._on_build),
-                ("清除定位點並還原圖層", self._on_reset_points),
-                ("匯出 TXT", self._on_export),
+                (t("catalog.049"), self._on_pick_number),
+                (t("catalog.050"), self._on_pick_name),
+                (t("catalog.051"), self._on_pick_sheets),
+                (t("catalog.052"), self._on_build),
+                (t("catalog.053"), self._on_reset_points),
+                (t("catalog.054"), self._on_export),
             )
             for caption, handler in buttons:
                 button = forms.Button()
@@ -1275,7 +1276,7 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
         def _refresh_counts(self) -> None:
             numbers = _layer_field_ids(session, NUMBER_LAYER, FIELD_DRAWING_NO)
             names = _layer_field_ids(session, NAME_LAYER, FIELD_DRAWING_NAME)
-            self.count_label.Text = "圖號定位點 %s　圖名定位點 %s　已選 Layout %s" % (
+            self.count_label.Text = t("catalog.043") % (
                 len(numbers),
                 len(names),
                 len(selected_sheets),
@@ -1295,7 +1296,7 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
 
         def _on_pick_number(self, sender, e) -> None:
             self.Visible = False
-            ids = _default_pick_points("選取圖號定位點（獨立 Point，Esc 取消）")
+            ids = _default_pick_points(t("catalog.044"))
             self.Visible = True
             if ids is None:
                 return
@@ -1303,7 +1304,7 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
 
         def _on_pick_name(self, sender, e) -> None:
             self.Visible = False
-            ids = _default_pick_points("選取圖名定位點（獨立 Point，Esc 取消）")
+            ids = _default_pick_points(t("catalog.045"))
             self.Visible = True
             if ids is None:
                 return
@@ -1344,7 +1345,7 @@ def _show_catalog_panel(session: RhinoSession) -> results.Result:
 
     dialog = _CatalogDialog()
     dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow)
-    return results.ok(STAGE, "已關閉圖目錄面板。", command_id=COMMAND_ID)
+    return results.ok(STAGE, t("catalog.007"), command_id=COMMAND_ID)
 
 
 def run_catalog(

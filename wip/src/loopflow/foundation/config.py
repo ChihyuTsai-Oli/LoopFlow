@@ -4,6 +4,7 @@
 Registry 檔名、layer path、schema 與 UserText key 屬契約，不放這裡。
 """
 from __future__ import annotations
+from loopflow.foundation.i18n import t
 
 from dataclasses import dataclass
 
@@ -25,7 +26,7 @@ def load_config() -> results.Result:
     cfg = DEFAULT_CONFIG
     return results.ok(
         "load_config",
-        "使用內建進階設定",
+        t("foundation.010"),
         details={
             "log_dir_name": cfg.log_dir_name,
             "log_filename": cfg.log_filename,

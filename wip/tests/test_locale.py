@@ -98,6 +98,28 @@ class LocalePreferenceTests(unittest.TestCase):
         self.assertEqual(result.message, saved_message(locale_store.LOCALE_ZH_TW))
         self.assertEqual(locale_store.read_locale(), locale_store.LOCALE_ZH_TW)
 
+    def test_saved_message_follows_locale(self):
+        locale_store.write_locale(locale_store.LOCALE_EN)
+        self.assertEqual(
+            saved_message(locale_store.LOCALE_EN),
+            "Interface language set to English.",
+        )
+        locale_store.write_locale(locale_store.LOCALE_ZH_TW)
+        self.assertEqual(
+            saved_message(locale_store.LOCALE_ZH_TW),
+            "介面語言已設為繁中。",
+        )
+
+    def test_english_menu_labels_parse(self):
+        from loopflow.features.project.menu import parse_menu_choice
+
+        locale_store.write_locale(locale_store.LOCALE_EN)
+        self.assertEqual(
+            parse_menu_choice("2  Sync Type Layers from Dictionary"),
+            ("sync_type_layers", "scan"),
+        )
+        self.assertIsNone(parse_menu_choice("Cancel"))
+
     def test_switch_cancel(self):
         result = run_language(ask=lambda: None)
         self.assertEqual(result.status, "cancelled")

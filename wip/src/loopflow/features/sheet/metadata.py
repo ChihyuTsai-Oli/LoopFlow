@@ -20,6 +20,7 @@ from loopflow.features.tagger.binding import canonical_uuid, text
 from loopflow.features.tagger.keys import LOCK_STATE_KEY, is_lock_true
 from loopflow.features.tagger.templates import TagTemplateSet
 from loopflow.platform.rhino.session import RhinoSession
+from loopflow.foundation.i18n import t
 
 STATE_CURRENT = "current"
 STATE_STALE = "stale"
@@ -55,7 +56,7 @@ class ActiveSheet:
 
 def document_key(sheet_id: str, field: str) -> str:
     if field not in METADATA_FIELDS:
-        raise ValueError("未定義的 Sheet 欄位：%s" % field)
+        raise ValueError(t("duplicate_layout.014") % field)
     cid = canonical_uuid(sheet_id) or str(sheet_id).strip()
     return "%s.%s.%s" % (DOCUMENT_NAMESPACE, cid, field)
 

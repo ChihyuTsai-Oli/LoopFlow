@@ -10,6 +10,7 @@ import time
 from typing import Any, Callable, MutableMapping, Optional
 
 from loopflow.platform.rhino.live import _load_rhino
+from loopflow.foundation.i18n import t
 
 REFRESH_SCRIPT = "_-Worksession _Refresh _Enter"
 
@@ -17,7 +18,7 @@ REFRESH_SCRIPT = "_-Worksession _Refresh _Enter"
 def _rhino_modules():
     loaded, error = _load_rhino()
     if loaded is None:
-        raise RuntimeError(error or "無法載入 Rhino")
+        raise RuntimeError(error or t("rhino.004"))
     return loaded
 
 

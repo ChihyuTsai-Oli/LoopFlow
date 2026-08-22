@@ -46,6 +46,7 @@ from loopflow.foundation.project_config import (
 from loopflow.foundation.usertext import LEGACY_KEYS, STALE_OBJECT_KEYS
 from loopflow.foundation.version import check_schema
 from loopflow.platform.rhino.session import RhinoSession
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_G01_Check_Sample"
 STAGE = "check_sample"
@@ -510,7 +511,7 @@ def format_report(findings: Sequence[Finding], document_path: Optional[Path]) ->
     warns = [item for item in findings if item.severity == "warn"]
     lines = [
         "G01 範例檔檢查（只讀，沒有改檔）",
-        "檔案：%s" % (document_path if document_path else "（尚未存成 .3dm）"),
+        t("tag_o.016") % (document_path if document_path else "（尚未存成 .3dm）"),
         "阻擋 %s、警告 %s" % (len(_group_lines(blocks, "block")), len(_group_lines(warns, "warn"))),
         "",
     ]
@@ -528,7 +529,7 @@ def format_report(findings: Sequence[Finding], document_path: Optional[Path]) ->
 def check_sample(session: Optional[RhinoSession]) -> results.Result:
     """掃描目前文件與同層 Dictionary／專案設定。不寫 UserText、不建檔。"""
     if session is None:
-        return results.failed(STAGE, "沒有 Rhino session。", command_id=COMMAND_ID)
+        return results.failed(STAGE, t("extract_cp.014"), command_id=COMMAND_ID)
     findings: List[Finding] = []
     seen = set()
     document_path = _scan_project_files(session, findings, seen)

@@ -10,6 +10,7 @@ import os
 from typing import Any, Callable, MutableMapping, Optional
 
 from loopflow.foundation import results
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Sync_Worksession"
 STAGE = "sync_worksession"
@@ -123,7 +124,7 @@ class WorksessionMonitor:
             return
         self.last_change = self._now()
         self.needs_refresh = True
-        self._note("偵測到檔案變動：%s" % name)
+        self._note(t("sync_worksession.004") % name)
 
     def on_idle(self) -> None:
         if not self.active:
@@ -141,11 +142,11 @@ class WorksessionMonitor:
         except Exception:
             success = False
         if success:
-            self._note("已更新 Worksession 參照。")
+            self._note(t("sync_worksession.005"))
             return
         self.needs_refresh = True
         self.last_change = self._now()
-        self._note("Worksession 更新未成功，稍後再試。上一份參照未改動。")
+        self._note(t("sync_worksession.002"))
 
 
 def _monitor_from(
@@ -221,12 +222,12 @@ def run_sync_worksession(
                 directory,
                 delay,
                 action="reloaded",
-                message="監看資料夾已變更，改監看：%s（延遲 %s 秒）"
+                message=t("sync_worksession.008")
                 % (directory, delay),
             )
         existing.stop()
         bag.pop(STICKY_KEY, None)
-        message = "已停止 Worksession 監看。"
+        message = t("sync_worksession.001")
         host.note(message)
         return results.ok(
             STAGE,
@@ -238,7 +239,7 @@ def run_sync_worksession(
     if not directory:
         return results.failed(
             STAGE,
-            "請先把檔案存到磁碟，再開始監看同資料夾的 .3dm。",
+            t("sync_worksession.003"),
             command_id=COMMAND_ID,
             details={"action": "unsaved"},
         )
@@ -249,5 +250,5 @@ def run_sync_worksession(
         directory,
         delay,
         action="started",
-        message="已開始監看：%s（延遲 %s 秒）" % (directory, delay),
+        message=t("sync_worksession.006") % (directory, delay),
     )

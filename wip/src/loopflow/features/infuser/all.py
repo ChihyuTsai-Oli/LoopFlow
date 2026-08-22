@@ -15,6 +15,7 @@ from loopflow.features.tagger.templates import TagTemplateSet, load_tag_template
 from loopflow.features.viewer.inspect import check_document_schema, ensure_project_schema
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Infuser_All"
 STAGE = "infuse_tags"
@@ -58,7 +59,7 @@ def run_infuser_all(
     if "missing_document_schema" in (schema.warnings or ()):
         return results.blocked(
             "check_schema",
-            "文件尚未寫入 schema，已停止，不寫入。",
+            t("catalog.008"),
             ("missing_document_schema",),
             command_id=COMMAND_ID,
         )
@@ -66,7 +67,7 @@ def run_infuser_all(
     if not page_names:
         return results.blocked(
             STAGE,
-            "這份檔案沒有 Layout 頁，已停止，不寫入。",
+            t("tag_o.015"),
             ("missing_layout_page",),
             command_id=COMMAND_ID,
         )
@@ -107,14 +108,14 @@ def run_infuser_all(
             _merge_counts(totals, outcome["counts"])
             appearances.extend(outcome.get("appearances") or ())
             for note in outcome.get("notes") or ():
-                if "尚未進 Registry" in str(note):
+                if t("infuser.003") in str(note):
                     used_live = True
                     continue
                 notes.append("%s：%s" % (page_name, note))
             if outcome.get("used_live_object"):
                 used_live = True
         if used_live:
-            notes.append("有些 Height／Finish 是從模型現況讀的，尚未進 Registry。")
+            notes.append(t("infuser.002"))
         extra = dict(extra_warnings)
         if used_live:
             extra["used_live_object"] = True
@@ -125,13 +126,13 @@ def run_infuser_all(
         if callable(redraw):
             redraw()
         result = _result_from_counts(
-            "全檔",
+            t("infuser.001"),
             revision,
             totals,
             notes,
             extra=extra,
             command_id=COMMAND_ID,
-            headline="已處理 %s 頁 Layout。" % len(page_names),
+            headline=t("infuser.004") % len(page_names),
         )
         if show_message and result.ok:
             show_message(result.message)

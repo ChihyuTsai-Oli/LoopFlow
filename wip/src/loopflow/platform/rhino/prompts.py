@@ -7,6 +7,8 @@ import time
 from pathlib import Path
 from typing import Callable, Optional, Sequence, Tuple
 
+from loopflow.foundation.i18n import t
+
 
 def _ui_font(drawing, size: float = 11.0):
     """開發期繁中介面用微軟正黑體；找不到再退回系統無襯線。"""
@@ -359,12 +361,14 @@ def ask_ui_locale() -> Optional[str]:
 
 def ask_layout_pages_choice(
     items: Sequence[str],
-    title: str = "複製 Layout",
+    title: Optional[str] = None,
 ) -> Optional[Tuple[str, ...]]:
     """加高可捲動反白列，Ctrl／Shift 複選 Layout。不用 GridView（會空白並閃退）。
 
     取消或確定但沒選＝None。
     """
+    if title is None:
+        title = t("prompts.003")
     names = [str(item).strip() for item in items if str(item).strip()]
     if not names:
         return None
@@ -397,7 +401,7 @@ def ask_layout_pages_choice(
             layout = forms.DynamicLayout()
             layout.Spacing = _dialog_spacing(drawing)
             hint = forms.Label()
-            hint.Text = "可按住 Ctrl 或 Shift 一次選多頁。選取列會反白。"
+            hint.Text = t("prompts.011")
             layout.AddRow(hint)
 
             scroll = forms.Scrollable()
@@ -550,9 +554,11 @@ def _restore_page_view(original_view) -> None:
 def ask_layout_detail_choice(
     items: Sequence[dict],
     on_select=None,
-    title: str = "Index 綁定",
+    title: Optional[str] = None,
 ) -> Optional[dict]:
     """可搜尋的 Layout Detail 清單；選取變更時可 zoom。取消回傳 None。"""
+    if title is None:
+        title = t("prompts.004")
     if not items:
         return None
     try:
@@ -582,7 +588,7 @@ def ask_layout_detail_choice(
             layout.Spacing = _dialog_spacing(drawing)
 
             self.search_box = forms.TextBox()
-            self.search_box.PlaceholderText = "輸入圖名或圖號搜尋"
+            self.search_box.PlaceholderText = t("prompts.012")
             self.search_box.TextChanged += self._on_search_changed
             layout.AddRow(self.search_box)
 
@@ -634,7 +640,7 @@ def ask_layout_detail_choice(
         def _on_ok(self, sender, e) -> None:
             idx = self.listbox.SelectedIndex
             if idx < 0 or idx >= len(self.filtered_data):
-                show_message("請先選一個 Detail。", title)
+                show_message(t("prompts.022"), title)
                 return
             self.selected_item = self.filtered_data[idx]
             self.Close(True)
@@ -955,9 +961,11 @@ def sheet_picker_preselected_indices(
 def ask_pick_catalog_sheets(
     items: Sequence[dict],
     selected_ids: Sequence[str] = (),
-    title: str = "選取 Layout",
+    title: Optional[str] = None,
 ) -> Optional[Tuple[str, ...]]:
     """以反白多選 Layout。Shift 連選、Ctrl 加選或取消。取消回 None。"""
+    if title is None:
+        title = t("catalog.051")
     if not items:
         return ()
     try:
@@ -1018,11 +1026,11 @@ def ask_pick_catalog_sheets(
             layout.Add(scroll, True, True)
 
             btn_all = forms.Button()
-            btn_all.Text = "全選"
+            btn_all.Text = t("prompts.015")
             btn_all.Height = DIALOG_BUTTON_HEIGHT
             btn_all.Click += self._on_select_all
             btn_clear = forms.Button()
-            btn_clear.Text = "清除選取"
+            btn_clear.Text = t("prompts.016")
             btn_clear.Height = DIALOG_BUTTON_HEIGHT
             btn_clear.Click += self._on_clear
             btn_ok, btn_cancel = _ok_cancel_buttons(
@@ -1042,7 +1050,7 @@ def ask_pick_catalog_sheets(
         def _make_header_row(self):
             row = forms.TableRow()
             row.ScaleHeight = False
-            for index, caption in enumerate(("頁序", "圖號", "圖名", "頁名")):
+            for index, caption in enumerate((t("prompts.023"), t("catalog.055"), t("catalog.056"), t("prompts.024"))):
                 label = forms.Label()
                 label.Text = caption
                 label.TextColor = self._header_fg
@@ -1219,7 +1227,7 @@ def format_result_popup(result) -> str:
     for item in details.get("skipped") or ():
         if not isinstance(item, dict):
             continue
-        text = "%s：%s" % (item.get("page_name") or "（未命名頁）", item.get("reason") or "")
+        text = "%s：%s" % (item.get("page_name") or t("tag_o.032"), item.get("reason") or "")
         if text.strip("：") and text not in lines:
             lines.append(text)
     return "\n".join(item for item in lines if item)
@@ -1273,13 +1281,15 @@ def pick_curves() -> Optional[Tuple[str, ...]]:
         import rhinoscriptsyntax as rs  # type: ignore
     except ImportError:
         return None
-    ids = rs.GetObjects("選取封閉曲線，按 Enter 完成", FILTER_CURVE, True, True)
+    ids = rs.GetObjects(t("prompts.010"), FILTER_CURVE, True, True)
     if not ids:
         return None
     return tuple(str(item) for item in ids)
 
 
-def pick_object(message: str = "點選要查看的物件（Enter／Esc 結束）") -> Optional[str]:
+def pick_object(message: Optional[str] = None) -> Optional[str]:
+    if message is None:
+        message = t("prompts.005")
     try:
         import rhinoscriptsyntax as rs  # type: ignore
     except ImportError:
@@ -1291,10 +1301,12 @@ def pick_object(message: str = "點選要查看的物件（Enter／Esc 結束）
 
 
 def pick_block_instance(
-    message: str = "選取圖塊（Esc 取消）",
+    message: Optional[str] = None,
     *,
     debug_ray_option: bool = False,
 ) -> Optional[str]:
+    if message is None:
+        message = t("prompts.006")
     if debug_ray_option:
         try:
             import Rhino  # type: ignore
@@ -1338,12 +1350,12 @@ def pick_source_through_detail(
         return None
     page_view = sc.doc.Views.ActiveView
     if not isinstance(page_view, Rhino.Display.RhinoPageView):
-        show_message("請在 Layout 執行 Grab。")
+        show_message(t("prompts.017"))
         return None
     page_view.SetPageAsActive()
     sc.doc.Views.Redraw()
     getter = Rhino.Input.Custom.GetPoint()
-    getter.SetCommandPrompt("在目標 Detail 內點一下（Esc 取消）")
+    getter.SetCommandPrompt(t("prompts.007"))
     getter.Get()
     if getter.CommandResult() != Rhino.Commands.Result.Success:
         return None
@@ -1355,7 +1367,7 @@ def pick_source_through_detail(
             target_detail_id = detail.Id
             break
     if target_detail_id is None:
-        show_message("點擊位置不在任何 Detail 內。")
+        show_message(t("prompts.018"))
         return None
     object_id = None
     try:
@@ -1418,7 +1430,7 @@ def _run_getter_with_debug_ray(getter, Rhino):
 
 
 def pick_layout_detail_model_point(
-    message: str = "在目標 Detail 內點一下（Esc 取消）",
+    message: Optional[str] = None,
     *,
     debug_ray_option: bool = False,
 ):
@@ -1426,6 +1438,8 @@ def pick_layout_detail_model_point(
 
     Laser 傳 debug_ray_option=True，命令列出現 DebugRay=No／Yes，記住到關 Rhino。
     """
+    if message is None:
+        message = t("prompts.007")
     try:
         import Rhino  # type: ignore
         import scriptcontext as sc  # type: ignore
@@ -1433,7 +1447,7 @@ def pick_layout_detail_model_point(
         return None
     page_view = sc.doc.Views.ActiveView
     if not isinstance(page_view, Rhino.Display.RhinoPageView):
-        show_message("請在 Layout 執行 Laser。")
+        show_message(t("prompts.019"))
         return None
     page_view.SetPageAsActive()
     sc.doc.Views.Redraw()
@@ -1453,7 +1467,7 @@ def pick_layout_detail_model_point(
             detail_obj = detail
             break
     if detail_obj is None:
-        show_message("點擊位置不在任何 Detail 內。")
+        show_message(t("prompts.018"))
         return None
     model_pt = Rhino.Geometry.Point3d(point)
     model_pt.Transform(detail_obj.PageToWorldTransform)
@@ -1461,9 +1475,11 @@ def pick_layout_detail_model_point(
 
 
 def pick_anchor_selection(
-    message: str = "框選剖面物件與對應的 Text Dot（Esc 取消）",
+    message: Optional[str] = None,
 ) -> Optional[Tuple[str, ...]]:
     """2D 模型空間框選。第三參數是 group，不可把 True 當 filter。"""
+    if message is None:
+        message = t("prompts.008")
     try:
         import rhinoscriptsyntax as rs  # type: ignore
     except ImportError:
@@ -1476,9 +1492,11 @@ def pick_anchor_selection(
 
 
 def pick_catalog_points(
-    message: str = "選取目錄定位點（獨立 Point，Esc 取消）",
+    message: Optional[str] = None,
 ) -> Optional[Tuple[str, ...]]:
     """只選 Point。第三參數是 group，不可把 True 當 filter。"""
+    if message is None:
+        message = t("prompts.009")
     try:
         import rhinoscriptsyntax as rs  # type: ignore
     except ImportError:
@@ -1520,7 +1538,7 @@ def ask_popup_real(
         return None
     number = float(value)
     if number < minimum:
-        show_message("距離不可小於 %s。" % minimum, title)
+        show_message(t("prompts.021") % minimum, title)
         return None
     return number
 
@@ -1542,7 +1560,7 @@ def ask_popup_integer(
         return None
     number = int(round(float(value)))
     if number < minimum or number > maximum:
-        show_message("份數須為 %s 到 %s。" % (minimum, maximum), title)
+        show_message(t("duplicate_layout.011") % (minimum, maximum), title)
         return None
     return number
 
@@ -1702,7 +1720,7 @@ def show_colored_log_panel(
             scroll.ExpandContentHeight = False
 
             close_btn = forms.Button()
-            close_btn.Text = "關閉"
+            close_btn.Text = t("prompts.020")
             close_btn.Font = ui_font
             close_btn.Click += self._on_close
 

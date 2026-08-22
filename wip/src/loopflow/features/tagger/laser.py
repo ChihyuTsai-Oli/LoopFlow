@@ -25,6 +25,7 @@ from loopflow.features.viewer.inspect import check_document_schema
 from loopflow.foundation import results
 from loopflow.foundation.usertext import OBJECT_ID_KEY, read_text
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Tagger_Laser"
 DRAW_DEBUG_RAY = False
@@ -42,16 +43,16 @@ ChooseHit = Callable[[Sequence[dict]], Optional[dict]]
 
 def _refuse_reason(template: TagTemplate) -> str:
     if template.template_id in ("TAG_HEIGHT_GRAB", "TAG_FINISH_GRAB") or "GRAB" in template.template_id:
-        return "「%s」請用 Grab 綁定，Laser 不寫入。" % template.template_id
+        return t("laser.006") % template.template_id
     if template.template_id == "TAG_ITEM":
-        return "家具 Tag 請用 Grab 綁定，Laser 不寫入。"
+        return t("laser.001")
     if template.template_id == "TAG_DW" or "manual" in template.binding_modes:
-        return "「%s」是純手動標籤，不接受 Laser 綁定。" % template.template_id
+        return t("laser.007") % template.template_id
     if template.family == "index":
-        return "「%s」請用 Index 綁定，Laser 不寫入。" % template.template_id
+        return t("laser.008") % template.template_id
     if template.role == "title_frame" or "none" in template.binding_modes:
-        return "「%s」不綁模型來源，Laser 不寫入。" % template.template_id
-    return "「%s」不是 Laser 可用的標籤，已停止，不寫入。" % template.template_id
+        return t("laser.009") % template.template_id
+    return t("laser.002") % template.template_id
 
 
 def bbox_contains_xy(box, point) -> bool:
@@ -157,7 +158,7 @@ def _default_pick_tag(_session: RhinoSession) -> Optional[str]:
     from loopflow.platform.rhino.prompts import pick_block_instance
 
     return pick_block_instance(
-        "選取要綁定的 Laser Tag（Esc 取消）",
+        t("laser.003"),
         debug_ray_option=True,
     )
 
@@ -177,7 +178,7 @@ def _default_probe(session: RhinoSession, origin, direction):
 
 def hit_choice_label(item: dict) -> str:
     """選取清單只顯示圖層終端名；有物件名稱才附上。不顯示 GUID／UUID。"""
-    layer = str(item.get("layer") or "").split("::")[-1].strip() or "（無圖層）"
+    layer = str(item.get("layer") or "").split("::")[-1].strip() or t("laser.004")
     name = str(item.get("name") or "").strip()
     if name:
         return "%s  %s" % (layer, name)
@@ -209,7 +210,7 @@ def _default_choose(hits: Sequence[dict]):
     from loopflow.platform.rhino.prompts import ask_popup_choice
 
     labels = list(choice_labels(hits))
-    chosen = ask_popup_choice("多個重疊物件，請選要標註的來源", labels)
+    chosen = ask_popup_choice(t("laser.005"), labels)
     if chosen is None:
         return None
     return hits[labels.index(chosen)]
@@ -225,7 +226,7 @@ def bind_laser_hit(
     if not session.is_block_instance(tag_id):
         return results.blocked(
             "bind_tag",
-            "請選 Tag 圖塊。已停止，不寫入。",
+            t("grab.009"),
             ("not_a_block",),
             command_id=COMMAND_ID,
         )
@@ -234,7 +235,7 @@ def bind_laser_hit(
     if template is None:
         return results.blocked(
             "bind_tag",
-            "未知圖塊「%s」，已停止，不寫入。" % (block_name or "（未命名）"),
+            t("grab.013") % (block_name or t("grab.019")),
             ("unknown_block",),
             command_id=COMMAND_ID,
             details={"block_name": block_name},
@@ -242,7 +243,7 @@ def bind_laser_hit(
     if is_tag_locked(session, tag_id):
         return results.blocked(
             "bind_tag",
-            "此 Tag 已鎖定，請先解除鎖定再綁定。",
+            t("grab.010"),
             ("tag_locked",),
             command_id=COMMAND_ID,
         )
@@ -258,14 +259,14 @@ def bind_laser_hit(
     if object_uuid is None or not UUID_V4_RE.match(object_uuid):
         return results.blocked(
             "bind_tag",
-            "來源物件尚未寫入 UUID。請先跑 Nexus 寫入模型 Metadata。",
+            t("grab.015"),
             ("missing_object_id",),
             command_id=COMMAND_ID,
         )
     write_object_binding(session, tag_id, template, object_uuid)
     return results.ok(
         "bind_tag",
-        "已綁定來源 UUID。",
+        t("grab.011"),
         command_id=COMMAND_ID,
         details={
             "tag_id": tag_id,
@@ -297,7 +298,7 @@ def run_tagger_laser(
     if "missing_document_schema" in (schema.warnings or ()):
         return results.blocked(
             "check_schema",
-            "文件尚未寫入 schema，已停止，不寫入。",
+            t("catalog.008"),
             ("missing_document_schema",),
             command_id=COMMAND_ID,
         )
@@ -317,20 +318,20 @@ def run_tagger_laser(
         if not tag_id:
             return results.cancelled(
                 "bind_tag",
-                "已取消 Laser。",
+                t("laser.010"),
                 command_id=COMMAND_ID,
             )
         if current.get_view_state(tag_id) is None:
             return results.blocked(
                 "bind_tag",
-                "找不到選取的 Tag。",
+                t("grab.018"),
                 ("missing_tag",),
                 command_id=COMMAND_ID,
             )
         if not current.is_block_instance(tag_id):
             return results.blocked(
                 "bind_tag",
-                "請選 Tag 圖塊。已停止，不寫入。",
+                t("grab.009"),
                 ("not_a_block",),
                 command_id=COMMAND_ID,
             )
@@ -339,7 +340,7 @@ def run_tagger_laser(
         if template is None:
             return results.blocked(
                 "bind_tag",
-                "未知圖塊「%s」，已停止，不寫入。" % (block_name or "（未命名）"),
+                t("grab.013") % (block_name or t("grab.019")),
                 ("unknown_block",),
                 command_id=COMMAND_ID,
                 details={"block_name": block_name},
@@ -355,7 +356,7 @@ def run_tagger_laser(
         if is_tag_locked(current, tag_id):
             return results.blocked(
                 "bind_tag",
-                "此 Tag 已鎖定，請先解除鎖定再綁定。",
+                t("grab.010"),
                 ("tag_locked",),
                 command_id=COMMAND_ID,
             )
@@ -363,21 +364,21 @@ def run_tagger_laser(
         if not point_2d:
             return results.cancelled(
                 "probe_view",
-                "已取消 Laser。",
+                t("laser.010"),
                 command_id=COMMAND_ID,
             )
         frames = view_frames_containing(current, point_2d)
         if not frames:
             return results.blocked(
                 "probe_view",
-                "這一點不在任何已登記的 View 框內。請先執行 Anchor Frame。",
+                t("laser.011"),
                 ("missing_view",),
                 command_id=COMMAND_ID,
             )
         if len(frames) > 1:
             return results.blocked(
                 "probe_view",
-                "這一點落在 %s 個重疊的 View 框內，已停止，不猜測。" % len(frames),
+                t("laser.015") % len(frames),
                 ("ambiguous_view",),
                 command_id=COMMAND_ID,
                 details={"frame_ids": list(frames)},
@@ -386,7 +387,7 @@ def run_tagger_laser(
         if payload is None:
             return results.blocked(
                 "probe_view",
-                "View 框沒有合法的固定 transform。請重新執行 Anchor Frame。",
+                t("laser.012"),
                 ("invalid_transform",),
                 command_id=COMMAND_ID,
                 details={"frame_id": frames[0]},
@@ -400,13 +401,13 @@ def run_tagger_laser(
             if debug_ray_enabled():
                 return results.ok(
                     "probe_view",
-                    "已畫出射線。沒打到帶 UUID 的 3D 物件。請到 3D 視窗查看。",
+                    t("laser.016"),
                     command_id=COMMAND_ID,
                     details={"debug_ray": True, "hit_count": 0},
                 )
             return results.blocked(
                 "probe_view",
-                "射線沒有打到帶 UUID 的 3D 物件。",
+                t("laser.013"),
                 ("no_hit",),
                 command_id=COMMAND_ID,
             )
@@ -414,14 +415,14 @@ def run_tagger_laser(
         if not chosen:
             return results.cancelled(
                 "probe_view",
-                "已取消 Laser。",
+                t("laser.010"),
                 command_id=COMMAND_ID,
             )
         source_id = chosen.get("object_id")
         if not source_id:
             return results.blocked(
                 "probe_view",
-                "射線命中沒有物件 ID，已停止，不寫入。",
+                t("laser.014"),
                 ("no_hit",),
                 command_id=COMMAND_ID,
             )

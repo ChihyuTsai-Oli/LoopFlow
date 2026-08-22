@@ -11,6 +11,7 @@ from loopflow.features.registry.payload import assemble_payload
 from loopflow.features.registry.publisher import publish_registry
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Publish_Exchange"
 
@@ -31,13 +32,13 @@ def publish_from_session(
         if cancel:
             return results.cancelled(
                 "publish_registry",
-                "使用者取消發布。",
+                t("registry.001"),
                 command_id=command_id,
             )
         if selected_only:
             return results.blocked(
                 "publish_registry",
-                "局部選取不得發布。請先跑 Nexus 選單 6 檢核通過後再發布。",
+                t("registry.002"),
                 blocking=("partial_scan_cannot_publish",),
                 command_id=command_id,
                 details={"publish_ready": False},
@@ -46,7 +47,7 @@ def publish_from_session(
         if not project_id:
             return results.blocked(
                 "publish_registry",
-                "尚未填專案名稱。請先跑 Nexus 選單 2 從字典同步 Type Layers。",
+                t("registry.003"),
                 blocking=("missing_project_id",),
                 command_id=command_id,
             )

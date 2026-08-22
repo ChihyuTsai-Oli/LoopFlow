@@ -7,6 +7,7 @@ from pathlib import Path
 
 from loopflow.command_catalog import get_command
 from loopflow.foundation.results import Result, unknown_command
+from loopflow.foundation.i18n import t
 
 SRC_ROOT = Path(__file__).resolve().parents[1]
 
@@ -32,7 +33,7 @@ def _emit_result(result: Result) -> Result:
         if warning in seen:
             continue
         seen.append(warning)
-        print("警告：%s" % warning)
+        print(t("dispatch.001") % warning)
     return result
 
 
@@ -43,7 +44,7 @@ def run_command(command_id: str) -> Result:
     if spec is None:
         result = unknown_command(
             "dispatch",
-            "未知指令：%s" % command_id,
+            t("dispatch.002") % command_id,
             command_id=command_id,
         )
         return _emit_result(result)

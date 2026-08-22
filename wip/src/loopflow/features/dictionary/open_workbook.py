@@ -14,6 +14,7 @@ from loopflow.foundation.paths import (
 )
 from loopflow.foundation.project_config import remembered_dictionary_filename
 from loopflow.platform.rhino.session import RhinoSession
+from loopflow.foundation.i18n import t
 
 KIND_OFFICIAL = "official"
 KIND_EXPORT = "export"
@@ -43,7 +44,7 @@ def resolve_workbook_path(
     if kind not in (KIND_OFFICIAL, KIND_EXPORT):
         return results.failed(
             "open_dictionary",
-            "未知的字典檔種類：%s" % kind,
+            t("dictionary.025") % kind,
             command_id=command_id,
         )
     filename = remembered_dictionary_filename(session)
@@ -69,7 +70,7 @@ def resolve_workbook_path(
     else:
         target = root / export_dictionary_filename(filename)
         missing = (
-            "找不到匯出檔 %s。請先執行 LF_Export_Type_Layers。"
+            t("dictionary.021")
             % target.name
         )
         blocking = "export_file_missing"
@@ -83,7 +84,7 @@ def resolve_workbook_path(
         )
     return results.ok(
         "open_dictionary",
-        "已找到 %s" % target.name,
+        t("dictionary.022") % target.name,
         command_id=command_id,
         details={"path": str(target), "filename": target.name, "kind": kind},
     )
@@ -108,14 +109,14 @@ def open_workbook(
     except OSError as exc:
         return results.failed(
             "open_dictionary",
-            "無法開啟 %s：%s" % (path.name, exc),
+            t("dictionary.026") % (path.name, exc),
             command_id=cid,
             details={"path": str(path), "filename": path.name, "kind": kind},
         )
     if kind == KIND_EXPORT:
-        message = "已開啟匯出字典 %s。" % path.name
+        message = t("dictionary.023") % path.name
     else:
-        message = "已開啟原字典 %s。" % (path.name or DICTIONARY_FILENAME)
+        message = t("dictionary.024") % (path.name or DICTIONARY_FILENAME)
     return results.ok(
         "open_dictionary",
         message,

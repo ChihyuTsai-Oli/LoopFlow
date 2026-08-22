@@ -42,6 +42,7 @@ from loopflow.features.tagger.templates import TagTemplateSet, load_tag_template
 from loopflow.features.viewer.inspect import check_document_schema
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Tagger_Layout_ID"
 STAGE = "write_sheet_id"
@@ -106,12 +107,12 @@ class SheetRow:
 
 def _skip_reason(scan: PageScan) -> str:
     if scan.locked_frame_ids:
-        return "圖框已鎖定"
+        return t("layout_id.005")
     if not scan.frame_ids:
         if scan.unregistered_blocks:
-            return "沒有登錄的圖框（未登錄圖塊：%s）" % "、".join(scan.unregistered_blocks)
-        return "這一頁沒有圖框"
-    return "這一頁有 %s 個圖框，無法決定身分" % len(scan.frame_ids)
+            return t("layout_id.016") % "、".join(scan.unregistered_blocks)
+        return t("layout_id.006")
+    return t("layout_id.007") % len(scan.frame_ids)
 
 
 def _no_writable_pages_result(
@@ -120,9 +121,9 @@ def _no_writable_pages_result(
 ) -> results.Result:
     """沒有可寫入頁時，依實際原因說明；不要把「缺 ** 起點」說成缺圖框。"""
     reasons = tuple(str(item.get("reason") or "") for item in skipped)
-    missing_start = any("系列起點" in reason for reason in reasons)
+    missing_start = any(t("layout_id.011") in reason for reason in reasons)
     frame_problem = any(
-        reason and "系列起點" not in reason and "頁名是空的" not in reason
+        reason and t("layout_id.011") not in reason and t("layout_id.025") not in reason
         for reason in reasons
     )
     details = {"skipped": skipped, "unregistered_blocks": unknown}
@@ -138,19 +139,19 @@ def _no_writable_pages_result(
     blocking = []
     if frame_problem:
         blocking.append("missing_title_frame")
-        lines.append("沒有可寫入的 Layout 頁。請確認每一頁只有一個已登錄的圖框。")
+        lines.append(t("layout_id.008"))
     else:
         blocking.append("missing_title_frame")
-        lines.append("沒有可寫入的 Layout 頁。")
+        lines.append(t("layout_id.009"))
     if not skipped:
-        lines.append("這份檔案沒有可編號的 Layout 頁。")
+        lines.append(t("layout_id.010"))
     for item in skipped[:12]:
         lines.append(
             "%s：%s"
-            % (item.get("page_name") or "（未命名頁）", item.get("reason") or "")
+            % (item.get("page_name") or t("tag_o.032"), item.get("reason") or "")
         )
     if len(skipped) > 12:
-        lines.append("…另有 %s 頁。" % (len(skipped) - 12))
+        lines.append(t("layout_id.017") % (len(skipped) - 12))
     return results.blocked(
         STAGE,
         "\n".join(lines),
@@ -231,11 +232,11 @@ def build_sheet_rows(
     for (scan, frame_id), plan in zip(writable, plans):
         if plan.status in (STATUS_SKIPPED, STATUS_UNNUMBERED, STATUS_MANUAL_INVALID):
             if plan.status == STATUS_UNNUMBERED:
-                reason = "頁序中還沒有系列起點，未編號"
+                reason = t("layout_id.018")
             elif plan.status == STATUS_MANUAL_INVALID:
-                reason = "手動頁格式不正確，需 //圖類別__圖號__圖名"
+                reason = t("layout_id.026")
             else:
-                reason = "頁名是空的"
+                reason = t("layout_id.025")
             skipped.append(
                 {
                     "page_name": scan.page_name,
@@ -269,19 +270,19 @@ PREVIEW_HEADERS = ("原始名稱", "修改後名稱", "狀態")
 def _preview_status(row: SheetRow) -> str:
     marks = []
     if row.plan.status == STATUS_BASELINE:
-        marks.append("系列起點")
+        marks.append(t("layout_id.011"))
     if row.plan.status == STATUS_MANUAL:
-        marks.append("手動頁，不編號")
+        marks.append(t("layout_id.012"))
     if row.plan.status == STATUS_DUPLICATE_BASELINE:
-        marks.append("重複的系列起點，已接續目前系列")
+        marks.append(t("layout_id.013"))
     if row.previous_drawing_no and row.previous_drawing_no != row.plan.drawing_no:
-        marks.append("圖號 %s → %s" % (row.previous_drawing_no, row.plan.drawing_no))
+        marks.append(t("layout_id.019") % (row.previous_drawing_no, row.plan.drawing_no))
     if (
         row.previous_drawing_name
         and row.previous_drawing_name != (row.plan.drawing_name or "")
     ):
         marks.append(
-            "圖名 %s → %s" % (row.previous_drawing_name, row.plan.drawing_name or "（空）")
+            t("layout_id.020") % (row.previous_drawing_name, row.plan.drawing_name or t("nexus_metadata.076"))
         )
     return "；".join(marks)
 
@@ -294,15 +295,15 @@ def preview_table_rows(
     """核對清單列，順序跟 Layout 列表相同。確認前不寫入。"""
     cells_by_name = {}
     for row in rows:
-        name = row.page_name or "（未命名頁）"
+        name = row.page_name or t("tag_o.032")
         cells_by_name[name] = (
             name,
             row.plan.new_page_name or row.page_name or "",
             _preview_status(row),
         )
     for item in skipped:
-        name = str(item.get("page_name") or "（未命名頁）")
-        cells_by_name[name] = (name, "", "跳過：%s" % (item.get("reason") or ""))
+        name = str(item.get("page_name") or t("tag_o.032"))
+        cells_by_name[name] = (name, "", t("layout_id.021") % (item.get("reason") or ""))
     if page_order:
         table = []
         seen = set()
@@ -316,11 +317,11 @@ def preview_table_rows(
         return tuple(table)
     entries = []
     for row in rows:
-        name = row.page_name or "（未命名頁）"
+        name = row.page_name or t("tag_o.032")
         number = row.page_number if row.page_number is not None else 0
         entries.append((int(number), cells_by_name[name]))
     for item in skipped:
-        name = str(item.get("page_name") or "（未命名頁）")
+        name = str(item.get("page_name") or t("tag_o.032"))
         raw = item.get("page_number")
         number = 0 if raw in (None, "") else int(raw)
         entries.append((number, cells_by_name[name]))
@@ -449,7 +450,7 @@ def _default_confirm(table_rows: Sequence[Sequence[str]]) -> bool:
     from loopflow.platform.rhino.prompts import ask_confirm_table
 
     return ask_confirm_table(
-        PREVIEW_HEADERS, table_rows, title="Layout ID 核對清單"
+        PREVIEW_HEADERS, table_rows, title=t("layout_id.014")
     )
 
 
@@ -500,7 +501,7 @@ def run_tagger_layout_id(
     if "missing_document_schema" in (schema.warnings or ()):
         return results.blocked(
             "check_schema",
-            "文件尚未寫入 schema，已停止，不寫入。",
+            t("catalog.008"),
             ("missing_document_schema",),
             command_id=COMMAND_ID,
         )
@@ -518,7 +519,7 @@ def run_tagger_layout_id(
         if not scans:
             return results.blocked(
                 STAGE,
-                "這份檔案沒有 Layout 分頁，已停止，不寫入。",
+                t("layout_id.022"),
                 ("missing_layout",),
                 command_id=COMMAND_ID,
             )
@@ -537,19 +538,19 @@ def run_tagger_layout_id(
         if not confirmer(preview_table_rows(rows, skipped, page_order=page_order)):
             return results.cancelled(
                 STAGE,
-                "已取消 Layout ID，未寫入。",
+                t("layout_id.023"),
                 command_id=COMMAND_ID,
             )
         summary = apply_sheet_rows(current, rows, scans, rules, loaded)
         summary["skipped"] = skipped
         summary["unregistered_blocks"] = unknown
-        message = "已寫入 %s 頁圖號；新建 %s 個 Sheet 身分，改名 %s 頁。" % (
+        message = t("layout_id.015") % (
             summary["sheets"],
             summary["created_sheet_ids"],
             summary["renamed_pages"],
         )
         if skipped:
-            message += "跳過 %s 頁，詳見報告。" % len(skipped)
+            message += t("layout_id.024") % len(skipped)
         return results.ok(STAGE, message, command_id=COMMAND_ID, details=summary)
 
     return run_guarded(session, action, command_id=COMMAND_ID)

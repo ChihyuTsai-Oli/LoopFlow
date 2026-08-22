@@ -57,6 +57,7 @@ from loopflow.foundation.usertext import (
     read_text,
 )
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_TAG-O"
 STAGE = "health_check"
@@ -94,10 +95,10 @@ STALE_STATUSES = (STATUS_STALE, STATUS_AMBIGUOUS)
 
 STATUS_LINE = {
     STATUS_HEALTHY: ("正常", COLOR_OK),
-    STATUS_UNBOUND: ("缺來源", COLOR_WARN),
-    STATUS_ORPHANED: ("斷連", COLOR_BROK),
+    STATUS_UNBOUND: (t("tag_o.003"), COLOR_WARN),
+    STATUS_ORPHANED: (t("tag_o.004"), COLOR_BROK),
     STATUS_STALE: ("過期", COLOR_WARN),
-    STATUS_MISSING_TARGET: ("斷連", COLOR_BROK),
+    STATUS_MISSING_TARGET: (t("tag_o.004"), COLOR_BROK),
     STATUS_AMBIGUOUS: ("過期", COLOR_WARN),
     STATUS_UNCHECKED: ("未檢查", COLOR_DIM),
 }
@@ -486,7 +487,7 @@ def inspect_space_coverage(
 ) -> Tuple[Tuple[str, ...], Optional[str]]:
     spaces = _listed_spaces(session)
     if not spaces:
-        return (), "沒有空間框，略過覆蓋檢查"
+        return (), t("tag_o.009")
     objects, _dupes = _object_index(payload)
     types_by_id = _types_by_id(payload)
     cache = {}
@@ -526,7 +527,7 @@ def _doc_label(session: RhinoSession) -> str:
     getter = getattr(session, "document_path", None)
     raw = getter() if callable(getter) else getattr(session, "_document_path", None)
     if not raw:
-        return "（未存檔）"
+        return t("tag_o.007")
     return os.path.basename(str(raw))
 
 
@@ -576,9 +577,9 @@ def build_panel_lines(
     rows = [row for row in (outcome.get("tags") or ()) if _panel_visible(row)]
     lines: List[tuple] = [
         (PANEL_TITLE, COLOR_HEAD),
-        ("檔案：%s" % doc_name, COLOR_DIM),
-        ("掃描：%s" % stamp, COLOR_DIM),
-        ("已掃描 %s 個 Tag" % scanned, COLOR_DIM),
+        (t("tag_o.016") % doc_name, COLOR_DIM),
+        (t("tag_o.017") % stamp, COLOR_DIM),
+        (t("tag_o.018") % scanned, COLOR_DIM),
     ]
     if revision not in (None, ""):
         lines.append(("Registry revision %s" % revision, COLOR_DIM))
@@ -586,7 +587,7 @@ def build_panel_lines(
         lines.append((str(note), COLOR_DIM))
     lines.append(("", COLOR_TEXT))
 
-    lines.append(("── Tag 綁定狀態  （%s 項）──" % len(rows), COLOR_HEAD))
+    lines.append((t("tag_o.019") % len(rows), COLOR_HEAD))
     if not rows:
         if scanned == 0:
             lines.append(("  沒有掃到可檢查的 Tag", COLOR_DIM))
@@ -598,7 +599,7 @@ def build_panel_lines(
         width = max((len(name) for name in names), default=0)
         last_page = None
         for row in ranked:
-            page = str(row.get("page_name") or "（未命名頁）")
+            page = str(row.get("page_name") or t("tag_o.032"))
             if last_page is not None and page != last_page:
                 lines.append(("", COLOR_RULE))
             last_page = page
@@ -614,17 +615,17 @@ def build_panel_lines(
                     page,
                 )
             )
-        lines.append(("點選項目可跳到該 Tag（略拉開以看見圖框）", COLOR_DIM))
+        lines.append((t("tag_o.021"), COLOR_DIM))
 
     lines.append(("", COLOR_TEXT))
     missing = tuple(outcome.get("space_missing") or ())
     space_note = outcome.get("space_note")
     if missing:
         lines.append(
-            ("── 未被 Finish Tag 涵蓋的空間  （%s）──" % len(missing), COLOR_HEAD)
+            (t("tag_o.033") % len(missing), COLOR_HEAD)
         )
     else:
-        lines.append(("── 未被 Finish Tag 涵蓋的空間 ──", COLOR_HEAD))
+        lines.append((t("tag_o.022"), COLOR_HEAD))
     if space_note:
         lines.append(("  ［說明］%s" % space_note, COLOR_DIM))
     if not missing and not space_note:
@@ -633,42 +634,42 @@ def build_panel_lines(
         lines.append(("  %s" % space, COLOR_TEXT))
 
     lines.append(("", COLOR_TEXT))
-    lines.append(("過期塗橘寫 !，斷連塗紅寫 ?。未綁定不列出。Repair 尚未實作。", COLOR_DIM))
+    lines.append((t("tag_o.010"), COLOR_DIM))
     return tuple(lines)
 
 
 def _summary(counts: Mapping[str, int], revision, notes: Sequence[str]) -> str:
-    lines = ["已檢查 %s 個 Tag。" % counts.get("scanned", 0)]
+    lines = [t("tag_o.011") % counts.get("scanned", 0)]
     if revision not in (None, ""):
         lines.append("Registry revision %s。" % revision)
-    lines.append("活著 %s。" % counts.get("healthy", 0))
+    lines.append(t("tag_o.012") % counts.get("healthy", 0))
     problems = []
     labels = (
-        ("unbound", "缺來源"),
-        ("orphaned", "斷連"),
-        ("missing_target", "斷連"),
-        ("stale", "過期未同步"),
-        ("ambiguous", "過期／歧義"),
+        ("unbound", t("tag_o.003")),
+        ("orphaned", t("tag_o.004")),
+        ("missing_target", t("tag_o.004")),
+        ("stale", t("tag_o.013")),
+        ("ambiguous", t("tag_o.014")),
     )
     for key, label in labels:
         if counts.get(key):
             problems.append("%s %s" % (label, counts[key]))
     if problems:
-        lines.append("斷連：%s。" % "、".join(problems))
+        lines.append(t("tag_o.024") % "、".join(problems))
     if counts.get("locked_disconnected"):
-        lines.append("鎖定仍斷連 %s。" % counts["locked_disconnected"])
+        lines.append(t("tag_o.025") % counts["locked_disconnected"])
     if counts.get("unchecked"):
-        lines.append("未檢查（未知圖塊）%s，不計入通過。" % counts["unchecked"])
+        lines.append(t("tag_o.026") % counts["unchecked"])
     extra = []
     if counts.get("skipped_title_frame"):
-        extra.append("圖框 %s" % counts["skipped_title_frame"])
+        extra.append(t("tag_o.027") % counts["skipped_title_frame"])
     if counts.get("skipped_manual"):
-        extra.append("門窗 %s" % counts["skipped_manual"])
+        extra.append(t("tag_o.028") % counts["skipped_manual"])
     if counts.get("skipped_elev_0"):
         extra.append("TAG_ELEV_0 %s" % counts["skipped_elev_0"])
     if extra:
-        lines.append("涵蓋但不判 unbound：%s。" % "、".join(extra))
-    lines.append("過期會把自動欄改成 ! 並塗橘；斷連改成 ? 並塗紅。Repair 尚未實作。")
+        lines.append(t("tag_o.029") % "、".join(extra))
+    lines.append(t("tag_o.008"))
     for note in notes[:6]:
         lines.append(note)
     return "\n".join(lines)
@@ -695,7 +696,7 @@ def run_tag_o(
     if "missing_document_schema" in (schema.warnings or ()):
         return results.blocked(
             "check_schema",
-            "文件尚未寫入 schema，已停止，不寫入。",
+            t("catalog.008"),
             ("missing_document_schema",),
             command_id=COMMAND_ID,
         )
@@ -703,7 +704,7 @@ def run_tag_o(
     if not page_names:
         return results.blocked(
             STAGE,
-            "這份檔案沒有 Layout 頁，已停止，不寫入。",
+            t("tag_o.015"),
             ("missing_layout_page",),
             command_id=COMMAND_ID,
         )
@@ -731,11 +732,11 @@ def run_tag_o(
         for warning in registry_result.warnings or ():
             extra_warnings[warning] = True
             if warning == "missing_registry":
-                notes.append("沒有 Registry，無法判斷過期，仍檢查來源是否還在。")
+                notes.append(t("tag_o.035"))
             elif warning == "used_last_good":
-                notes.append("正式 Registry 不在，改用 last-good。")
+                notes.append(t("tag_o.036"))
             elif warning == "missing_project_id":
-                notes.append("尚未填專案名稱，無法讀 Registry。請先跑 Nexus 選單 2。")
+                notes.append(t("tag_o.037"))
     elif isinstance(payload, Mapping):
         revision = payload.get("registry_revision")
 

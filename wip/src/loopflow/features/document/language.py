@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-"""LF_Language：記住這台電腦的介面語系。不寫 .3dm，畫面句子尚未接表。"""
+"""LF_Language：記住這台電腦的介面語系。不寫 .3dm。"""
 from __future__ import annotations
 
 from typing import Callable, Optional
 
 from loopflow.foundation import locale as locale_store
 from loopflow.foundation import results
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Language"
 STAGE = "choose_locale"
@@ -27,7 +28,7 @@ def parse_locale_choice(text: Optional[str]) -> Optional[str]:
     if text is None:
         return None
     stripped = str(text).strip()
-    if stripped in (LOCALE_ZH_TW, LABEL_ZH, "zh", "zh_TW"):
+    if stripped in (LOCALE_ZH_TW, LABEL_ZH, "zh", "zh_TW", "Traditional Chinese"):
         return LOCALE_ZH_TW
     if stripped in (LOCALE_EN, LABEL_EN, "en-US", "en_US"):
         return LOCALE_EN
@@ -36,8 +37,8 @@ def parse_locale_choice(text: Optional[str]) -> Optional[str]:
 
 def saved_message(locale: str) -> str:
     if locale == LOCALE_EN:
-        return "介面語言已設為 English。"
-    return "介面語言已設為繁中。"
+        return t("locale.saved.en")
+    return t("locale.saved.zh")
 
 
 def ensure_locale(*, ask: Optional[AskLocale] = None) -> Optional[results.Result]:
@@ -53,7 +54,7 @@ def ensure_locale(*, ask: Optional[AskLocale] = None) -> Optional[results.Result
     if locale is None:
         return results.cancelled(
             STAGE,
-            "已取消選擇語系。尚未記住，下次仍會詢問。",
+            t("locale.cancelled.first"),
             command_id=COMMAND_ID,
         )
     locale_store.write_locale(locale)
@@ -61,21 +62,21 @@ def ensure_locale(*, ask: Optional[AskLocale] = None) -> Optional[results.Result
 
 
 def run_language(*, ask: Optional[AskLocale] = None) -> results.Result:
-    """Document 右鍵／LFLanguage：每次都問，記住後回報。畫面句子尚未切換。"""
+    """Document 右鍵／LFLanguage：每次都問，記住後回報。"""
     picker = ask or _live_ask
     try:
         choice = picker()
     except ImportError:
         return results.failed(
             STAGE,
-            "找不到語系選單介面。",
+            t("document.006"),
             command_id=COMMAND_ID,
         )
     locale = parse_locale_choice(choice)
     if locale is None:
         return results.cancelled(
             STAGE,
-            "已取消切換語系。",
+            t("locale.cancelled.switch"),
             command_id=COMMAND_ID,
         )
     path = locale_store.write_locale(locale)

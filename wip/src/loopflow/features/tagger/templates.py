@@ -9,6 +9,7 @@ from typing import Optional, Tuple
 
 from loopflow.foundation import results
 from loopflow.foundation.version import check_schema
+from loopflow.foundation.i18n import t
 
 SCHEMA_ID = "loopflow.tag_template_set"
 DEFAULT_PATH = (
@@ -64,7 +65,7 @@ def load_tag_templates(path: Optional[Path] = None) -> results.Result:
     if not source.is_file():
         return results.failed(
             "check_schema",
-            "找不到 Tag template manifest：%s" % source.name,
+            t("other.005") % source.name,
             details={"path": str(source)},
         )
     payload = json.loads(source.read_text(encoding="utf-8"))
@@ -76,7 +77,7 @@ def load_tag_templates(path: Optional[Path] = None) -> results.Result:
     if schema_id != SCHEMA_ID:
         return results.failed(
             "check_schema",
-            "未知 schema_id：%s。應為 %s。已停止，不猜測解析。" % (schema_id, SCHEMA_ID),
+            t("other.006") % (schema_id, SCHEMA_ID),
             details={"schema_id": schema_id},
         )
     templates = []
@@ -116,6 +117,6 @@ def load_tag_templates(path: Optional[Path] = None) -> results.Result:
     )
     return results.ok(
         "check_schema",
-        "已載入 %s 份 Tag template。" % len(catalog.templates),
+        t("other.004") % len(catalog.templates),
         details={"catalog": catalog, "count": len(catalog.templates)},
     )

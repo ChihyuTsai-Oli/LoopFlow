@@ -31,6 +31,7 @@ from loopflow.features.tagger.keys import (
 from loopflow.features.tagger.templates import TagTemplate, TagTemplateSet, load_tag_templates
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Duplicate_Layout"
 STAGE = "duplicate_layout"
@@ -302,17 +303,17 @@ def _default_pick_pages(
 def _default_pick_count(_session: RhinoSession) -> Optional[int]:
     from loopflow.platform.rhino.prompts import ask_popup_integer
 
-    return ask_popup_integer("要複製幾份？", 1, MIN_COPIES, MAX_COPIES, COMMAND_ID)
+    return ask_popup_integer(t("duplicate_layout.001"), 1, MIN_COPIES, MAX_COPIES, COMMAND_ID)
 
 
 def _summary(created_by_source: Sequence[Tuple[str, Sequence[str]]]) -> str:
     total = sum(len(created) for _source, created in created_by_source)
-    lines = ["已複製 %s 份 Layout。" % total]
+    lines = [t("duplicate_layout.003") % total]
     for source, created in created_by_source:
-        lines.append("來源：%s" % source)
+        lines.append(t("duplicate_layout.006") % source)
         for name in created:
             lines.append("  • %s" % name)
-    lines.append("請重新綁定新頁 Tag，並視需要跑 Layout ID。")
+    lines.append(t("duplicate_layout.002"))
     return "\n".join(lines)
 
 
@@ -326,7 +327,7 @@ def duplicate_layout_pages(
     if source_name not in names:
         return results.blocked(
             STAGE,
-            "找不到 Layout「%s」。" % source_name,
+            t("duplicate_layout.007") % source_name,
             ("missing_layout",),
             command_id=COMMAND_ID,
         )
@@ -334,7 +335,7 @@ def duplicate_layout_pages(
     if not callable(objects_fn) or not tuple(objects_fn(source_name) or ()):
         return results.blocked(
             STAGE,
-            "來源 Layout 沒有物件。",
+            t("duplicate_layout.004"),
             ("empty_layout",),
             command_id=COMMAND_ID,
         )
@@ -344,7 +345,7 @@ def duplicate_layout_pages(
     if not callable(adder) or not callable(copier):
         return results.failed(
             STAGE,
-            "此 Rhino session 不能複製 Layout 頁。",
+            t("duplicate_layout.005"),
             command_id=COMMAND_ID,
         )
     size = size_fn(source_name) if callable(size_fn) else None
@@ -362,7 +363,7 @@ def duplicate_layout_pages(
                 _rollback_pages(session, created)
                 return results.failed(
                     STAGE,
-                    "無法建立 Layout「%s」。" % new_name,
+                    t("duplicate_layout.012") % new_name,
                     command_id=COMMAND_ID,
                 )
             created.append(added)
@@ -372,7 +373,7 @@ def duplicate_layout_pages(
                 _rollback_pages(session, created)
                 return results.failed(
                     STAGE,
-                    "複製「%s」的物件失敗。" % source_name,
+                    t("duplicate_layout.013") % source_name,
                     command_id=COMMAND_ID,
                 )
             sanitize_copied_objects(session, mapping, catalog, source_sheet, cache)
@@ -404,7 +405,7 @@ def run_duplicate_layout(
     show_message: Optional[ShowMessage] = None,
 ) -> results.Result:
     if session is None:
-        return results.failed(STAGE, "沒有 Rhino session。", command_id=COMMAND_ID)
+        return results.failed(STAGE, t("extract_cp.014"), command_id=COMMAND_ID)
 
     def _action(current: RhinoSession) -> results.Result:
         loaded = load_tag_templates()
@@ -415,19 +416,19 @@ def run_duplicate_layout(
         if not names:
             return results.blocked(
                 STAGE,
-                "目前文件沒有 Layout。請先建立至少一頁。",
+                t("duplicate_layout.008"),
                 ("no_layouts",),
                 command_id=COMMAND_ID,
             )
         picker = pick_pages or pick_page or _default_pick_pages
         chosen = _normalize_page_names(picker(current, names))
         if chosen is None:
-            return results.cancelled(STAGE, "已取消複製 Layout。", command_id=COMMAND_ID)
+            return results.cancelled(STAGE, t("duplicate_layout.009"), command_id=COMMAND_ID)
         missing = [name for name in chosen if name not in names]
         if missing:
             return results.blocked(
                 STAGE,
-                "找不到 Layout「%s」。" % "、".join(missing),
+                t("duplicate_layout.007") % "、".join(missing),
                 ("missing_layout",),
                 command_id=COMMAND_ID,
             )
@@ -439,9 +440,9 @@ def run_duplicate_layout(
         ]
         if empty:
             if len(chosen) == 1:
-                message = "來源 Layout 沒有物件。"
+                message = t("duplicate_layout.004")
             else:
-                message = "來源 Layout 沒有物件：%s。整批未複製。" % "、".join(empty)
+                message = t("duplicate_layout.010") % "、".join(empty)
             return results.blocked(
                 STAGE,
                 message,
@@ -450,7 +451,7 @@ def run_duplicate_layout(
             )
         count = (pick_count or _default_pick_count)(current)
         if count is None:
-            return results.cancelled(STAGE, "已取消複製 Layout。", command_id=COMMAND_ID)
+            return results.cancelled(STAGE, t("duplicate_layout.009"), command_id=COMMAND_ID)
         try:
             copies = int(count)
         except (TypeError, ValueError):
@@ -458,7 +459,7 @@ def run_duplicate_layout(
         if copies < MIN_COPIES or copies > MAX_COPIES:
             return results.blocked(
                 STAGE,
-                "份數須為 %s 到 %s。" % (MIN_COPIES, MAX_COPIES),
+                t("duplicate_layout.011") % (MIN_COPIES, MAX_COPIES),
                 ("invalid_count",),
                 command_id=COMMAND_ID,
             )

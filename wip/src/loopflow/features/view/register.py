@@ -32,6 +32,7 @@ from loopflow.features.view.transform import (
 )
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Anchor_Frame"
 UUID_V4_RE = re.compile(
@@ -149,7 +150,7 @@ def register_view(
         reason = "missing_text_dot" if not dots else "ambiguous_text_dot"
         return results.blocked(
             "register_view",
-            "請恰好選一個 Text Dot 作為剖面名稱提示。已停止，不寫入。",
+            t("anchor_frame.004"),
             (reason,),
             command_id=COMMAND_ID,
             details={"text_dot_count": len(dots)},
@@ -158,14 +159,14 @@ def register_view(
     if hint is None:
         return results.blocked(
             "register_view",
-            "Text Dot 沒有文字，已停止，不寫入。",
+            t("anchor_frame.005"),
             ("missing_text_dot",),
             command_id=COMMAND_ID,
         )
     if len(hosts) > 1:
         return results.blocked(
             "register_view",
-            "選到多個既有 View 框，已停止，不猜測要升級哪一個。",
+            t("anchor_frame.006"),
             ("ambiguous_host",),
             command_id=COMMAND_ID,
             details={"host_count": len(hosts)},
@@ -174,7 +175,7 @@ def register_view(
     if not source_ids:
         return results.blocked(
             "register_view",
-            "沒有可用的剖面幾何，已停止，不寫入。",
+            t("anchor_frame.007"),
             ("missing_geometry",),
             command_id=COMMAND_ID,
         )
@@ -182,7 +183,7 @@ def register_view(
     if not box:
         return results.blocked(
             "register_view",
-            "無法計算剖面範圍，已停止，不寫入。",
+            t("anchor_frame.008"),
             ("missing_geometry",),
             command_id=COMMAND_ID,
         )
@@ -190,7 +191,7 @@ def register_view(
     if not hits:
         return results.blocked(
             "register_view",
-            "找不到名稱包含「%s」的 Clipping Plane。已停止，不寫入。" % hint,
+            t("anchor_frame.011") % hint,
             ("missing_clipping_plane",),
             command_id=COMMAND_ID,
             details={"hint": hint},
@@ -198,7 +199,7 @@ def register_view(
     if len(hits) > 1:
         return results.blocked(
             "register_view",
-            "名稱包含「%s」的 Clipping Plane 有 %s 個，已停止，不猜測。" % (hint, len(hits)),
+            t("anchor_frame.012") % (hint, len(hits)),
             ("ambiguous_clipping_plane",),
             command_id=COMMAND_ID,
             details={"hint": hint, "clipping_plane_ids": list(hits)},
@@ -211,7 +212,7 @@ def register_view(
     if plane is None or origin_2d is None or origin_3d_local is None:
         return results.blocked(
             "register_view",
-            "找不到與 Clipping Plane 相交的 3D 模型，無法寫入固定 transform。",
+            t("anchor_frame.009"),
             ("missing_section_intersection",),
             command_id=COMMAND_ID,
             details={"clipping_plane_id": cp_id},
@@ -226,7 +227,7 @@ def register_view(
     if not transform_ok(payload):
         return results.failed(
             "register_view",
-            "計算出的 View transform 不合法，已停止，不寫入。",
+            t("anchor_frame.010"),
             command_id=COMMAND_ID,
         )
     session.ensure_layer(ANCHOR_LAYER)
@@ -260,7 +261,7 @@ def register_view(
         raise
     return results.ok(
         "register_view",
-        "已登記 View。",
+        t("anchor_frame.002"),
         command_id=COMMAND_ID,
         details={
             "frame_id": frame_id,
@@ -281,7 +282,7 @@ def _default_pick(session: RhinoSession) -> Optional[Sequence[str]]:
 def _default_offset(_session: RhinoSession) -> Optional[float]:
     from loopflow.platform.rhino.prompts import ask_popup_real
 
-    return ask_popup_real("輸入框線外擴距離", DEFAULT_OFFSET, 0.0)
+    return ask_popup_real(t("anchor_frame.003"), DEFAULT_OFFSET, 0.0)
 
 
 def run_anchor_frame(
@@ -299,14 +300,14 @@ def run_anchor_frame(
         if not selected:
             return results.cancelled(
                 "register_view",
-                "已取消登記 View。",
+                t("anchor_frame.013"),
                 command_id=COMMAND_ID,
             )
         offset = offsetter(current)
         if offset is None:
             return results.cancelled(
                 "register_view",
-                "已取消登記 View。",
+                t("anchor_frame.013"),
                 command_id=COMMAND_ID,
             )
         return register_view(current, selected, offset)

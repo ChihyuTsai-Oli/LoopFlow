@@ -34,6 +34,7 @@ from loopflow.foundation.usertext import (
 )
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 from loopflow.platform.rhino.state import ObjectViewState
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Nexus"
 FIELD_LABELS = {
@@ -135,11 +136,11 @@ def _field_mismatches(session: RhinoSession, object_id: str, expected: Mapping[s
             continue
         label = FIELD_LABELS.get(key, key)
         if not actual:
-            notes.append("%s 尚未寫入（應為 %s）" % (label, want or "（空）"))
+            notes.append(t("nexus_metadata.073") % (label, want or t("nexus_metadata.076")))
         elif not want:
-            notes.append("%s 現值「%s」不應存在" % (label, actual))
+            notes.append(t("nexus_metadata.074") % (label, actual))
         else:
-            notes.append("%s「%s」應為「%s」" % (label, actual, want))
+            notes.append(t("nexus_metadata.075") % (label, actual, want))
     return notes
 
 
@@ -224,9 +225,9 @@ def compare_apply_usertext(
         "placement": placement.details,
     }
     if not mismatches:
-        message = "檢核通過。%s 個物件的資料與寫入結果相符。" % count
+        message = t("nexus_metadata.069") % count
         return results.ok("verify_model", message, command_id=command_id, details=payload)
-    message = "檢核發現 %s 個物件不符。" % len(mismatches)
+    message = t("nexus_metadata.067") % len(mismatches)
     return results.ok_with_warnings(
         "verify_model",
         message,
@@ -267,19 +268,19 @@ def format_verify_popup(result: results.Result, *, cannot_publish: bool = False)
     mismatches = details.get("mismatches") or ()
     lines = []
     if cannot_publish:
-        lines.append("尚未通過檢核，不能發布。")
+        lines.append(t("nexus_metadata.070"))
     if not mismatches:
         if result.message:
             lines.append(result.message)
         return "\n".join(lines) if lines else (result.message or "")
     lines.append(result.message)
-    lines.append("不符合的物件已選取：")
+    lines.append(t("nexus_metadata.068"))
     for item in mismatches[:MAX_POPUP_LINES]:
         notes = "；".join(item["notes"])
         lines.append("- %s：%s" % (item["label"], notes))
     extra = len(mismatches) - MAX_POPUP_LINES
     if extra > 0:
-        lines.append("…其餘 %s 項。" % extra)
+        lines.append(t("nexus_metadata.071") % extra)
     lines.append(APPLY_REMINDER)
     return "\n".join(lines)
 
@@ -301,7 +302,7 @@ def verify_model_data(
         if cancel:
             return results.cancelled(
                 "verify_model",
-                "使用者取消檢核。",
+                t("nexus_metadata.072"),
                 command_id=command_id,
             )
         return compare_apply_usertext(

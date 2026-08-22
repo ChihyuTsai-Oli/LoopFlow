@@ -27,6 +27,7 @@ from loopflow.features.tagger.keys import (
 from loopflow.features.tagger.templates import DEFAULT_PATH
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 STAGE = "d08_migrate_display_keys"
 COMMAND_ID = "LF_D08_Migrate_Display_Keys"
@@ -237,7 +238,7 @@ def run_migrate_block_display_keys(
     confirm: Optional[Confirm] = None,
 ) -> results.Result:
     if session is None:
-        return results.failed(STAGE, "沒有 Rhino session。", command_id=COMMAND_ID)
+        return results.failed(STAGE, t("extract_cp.014"), command_id=COMMAND_ID)
 
     def _run(current: RhinoSession) -> results.Result:
         steps = collect_steps(current)

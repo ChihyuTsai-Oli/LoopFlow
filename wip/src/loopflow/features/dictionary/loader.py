@@ -12,6 +12,7 @@ from loopflow.foundation.paths import resolve_project_folder
 from loopflow.foundation.project_config import dictionary_filename_from_session
 from loopflow.foundation.version import check_schema
 from loopflow.platform import excel
+from loopflow.foundation.i18n import t
 
 TYPE_OWNED_KEYS = (
     "layer_path",
@@ -84,7 +85,7 @@ def _header_failure(headers: Sequence[Optional[str]]) -> Optional[results.Result
     if any(schema.is_forbidden_cb_column(name) for name in names):
         return results.blocked(
             "validate_dictionary",
-            "Dictionary 含有禁止的 _CB.* 欄，已停止。",
+            t("dictionary.001"),
             blocking=("cb_columns_forbidden",),
             details={"headers": tuple(names)},
         )
@@ -92,9 +93,9 @@ def _header_failure(headers: Sequence[Optional[str]]) -> Optional[results.Result
         extra = [name for name in names if name not in schema.DISPLAY_COLUMNS]
         code = "unknown_column" if extra or len(names) == len(schema.DISPLAY_COLUMNS) else "wrong_column_count"
         message = (
-            "Dictionary 欄名與 schema 1 不符，已停止。不靠欄名前綴猜測。"
+            t("dictionary.002")
             if code == "unknown_column"
-            else "Dictionary 應為 15 欄，實際為 %s 欄。已停止。" % len(names)
+            else t("dictionary.004") % len(names)
         )
         return results.blocked(
             "validate_dictionary",
@@ -120,7 +121,7 @@ def load_from_table(
     if (title or "").strip() != schema.TITLE_ROW:
         return results.failed(
             "check_schema",
-            "未知 Dictionary 版本標題：%s。已停止，不猜測解析。" % (title or "(空白)"),
+            t("dictionary.005") % (title or t("dictionary.009")),
             details={"title": title, "expected_title": schema.TITLE_ROW},
         )
     header_error = _header_failure(headers)
@@ -139,22 +140,22 @@ def load_from_table(
         owned = {key: _text(mapping.get(schema.MACHINE_TO_DISPLAY[key])) for key in TYPE_OWNED_KEYS}
         for display in schema.COMPUTED_DISPLAY_COLUMNS:
             if _text(mapping.get(display)) is not None:
-                warnings.append("第 %s 列計算欄 %s 應留白，已忽略。" % (row_number, display))
+                warnings.append(t("dictionary.011") % (row_number, display))
 
         layer_path = owned["layer_path"]
         if not layer_path:
-            issues.append(("missing_layer_path", "第 %s 列缺少 layer_path。" % row_number))
+            issues.append(("missing_layer_path", t("dictionary.012") % row_number))
             continue
         split = schema.split_type_id(owned["type_id"])
         if not split.ok:
-            issues.append((split.blocking[0], "第 %s 列：%s" % (row_number, split.message)))
+            issues.append((split.blocking[0], t("dictionary.013") % (row_number, split.message)))
             continue
         type_id = split.details["type_id"]
         if type_id in seen_ids:
             issues.append(
                 (
                     "duplicate_type_id",
-                    "第 %s 列 type_id 與第 %s 列重複：%s" % (row_number, seen_ids[type_id], type_id),
+                    t("dictionary.014") % (row_number, seen_ids[type_id], type_id),
                 )
             )
             continue
@@ -162,7 +163,7 @@ def load_from_table(
             issues.append(
                 (
                     "duplicate_layer_path",
-                    "第 %s 列 layer_path 與第 %s 列重複。" % (row_number, seen_layers[layer_path]),
+                    t("dictionary.015") % (row_number, seen_layers[layer_path]),
                 )
             )
             continue
@@ -171,7 +172,7 @@ def load_from_table(
             issues.append(
                 (
                     "invalid_elevation_basis",
-                    "第 %s 列高程基準不合法：%s" % (row_number, elevation or "(空白)"),
+                    t("dictionary.016") % (row_number, elevation or t("dictionary.009")),
                 )
             )
             continue
@@ -180,15 +181,15 @@ def load_from_table(
             issues.append(
                 (
                     "measurement_mismatch",
-                    "第 %s 列單位／計量規則量綱不符或未知：%s／%s"
-                    % (row_number, owned["estimation_unit"] or "(空白)", owned["measurement_rule"] or "(空白)"),
+                    t("dictionary.017")
+                    % (row_number, owned["estimation_unit"] or t("dictionary.009"), owned["measurement_rule"] or t("dictionary.009")),
                 )
             )
             continue
         if measure == "warn_no_quantity":
-            warnings.append("第 %s 列計量規則未定義，quantity 將為空。" % row_number)
+            warnings.append(t("dictionary.010") % row_number)
         if not owned["type_display_name"]:
-            issues.append(("missing_type_display_name", "第 %s 列缺少 type_display_name。" % row_number))
+            issues.append(("missing_type_display_name", t("dictionary.018") % row_number))
             continue
         seen_ids[type_id] = row_number
         seen_layers[layer_path] = row_number
@@ -211,7 +212,7 @@ def load_from_table(
         codes = tuple(dict.fromkeys(code for code, _ in issues))
         return results.blocked(
             "validate_dictionary",
-            "Dictionary 驗證失敗 %s 項，已停止。" % len(issues),
+            t("dictionary.006") % len(issues),
             blocking=codes,
             details={"issues": tuple(message for _, message in issues)},
         )
@@ -228,13 +229,13 @@ def load_from_table(
     if warnings:
         return results.ok_with_warnings(
             "load_dictionary",
-            "已載入 Dictionary，%s 筆 Type，%s 則警告。" % (len(catalog.types), len(warnings)),
+            t("dictionary.007") % (len(catalog.types), len(warnings)),
             tuple(warnings),
             details=payload,
         )
     return results.ok(
         "load_dictionary",
-        "已載入 Dictionary，%s 筆 Type。" % len(catalog.types),
+        t("dictionary.003") % len(catalog.types),
         details=payload,
     )
 
@@ -266,7 +267,7 @@ def load_dictionary(
     if not dictionary.exists() or not dictionary.is_file():
         return results.failed(
             "resolve_dictionary",
-            "找不到 Dictionary 檔案 %s。請把它放回 .3dm 所在的資料夾，或改用該資料夾內的其他 .xlsx。不建立檔案。"
+            t("dictionary.008")
             % dictionary.name,
             details={"filename": dictionary.name},
         )

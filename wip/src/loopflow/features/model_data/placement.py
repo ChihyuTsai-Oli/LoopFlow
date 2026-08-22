@@ -27,6 +27,7 @@ from loopflow.foundation.usertext import (
 )
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 from loopflow.platform.rhino.state import ObjectViewState
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Nexus"
 ALLOWED_BASES = ("BH", "TH", "CH", "BC")
@@ -218,7 +219,7 @@ def _resolve_basis(session: RhinoSession, object_id: str, catalog: TypeCatalog) 
 
 def _load_catalog(catalog: Optional[TypeCatalog], session=None) -> results.Result:
     if catalog is not None:
-        return results.ok("load_dictionary", "已使用注入的 Type Catalog。", details={"catalog": catalog})
+        return results.ok("load_dictionary", t("nexus_metadata.002"), details={"catalog": catalog})
     return load_dictionary(session)
 
 
@@ -237,7 +238,7 @@ def scan_placement(
         if cancel:
             return results.cancelled(
                 "scan_placement",
-                "使用者取消 Space／高程 Scan。",
+                t("nexus_metadata.019"),
                 command_id=command_id,
             )
         loaded = _load_catalog(catalog, current)
@@ -312,7 +313,7 @@ def scan_placement(
                 if any(issue != "migration_th_bh" for issue in item["issues"])
             ),
         }
-        message = "Space／高程 Scan 完成，%s 個物件、%s 個 EXT。不可發布。" % (
+        message = t("nexus_metadata.018") % (
             len(items),
             len(ext_items),
         )
@@ -368,7 +369,7 @@ def _ask_space_name(
         return ask_space(object_id, names)
     from loopflow.platform.rhino.prompts import ask_popup_choice
 
-    return ask_popup_choice("此物件同時落在多個空間。請選擇所屬空間：", names)
+    return ask_popup_choice(t("nexus_metadata.016"), names)
 
 
 def _pick_candidate(candidates: Sequence[dict], typed: Optional[str]) -> Optional[dict]:
@@ -409,7 +410,7 @@ def apply_placement(
         if cancel:
             return results.cancelled(
                 "apply_placement",
-                "使用者取消 Space／高程 Apply。",
+                t("nexus_metadata.020"),
                 command_id=command_id,
             )
         scanned = scan_placement(
@@ -471,12 +472,12 @@ def apply_placement(
         if remaining and not applied:
             return results.blocked(
                 "apply_placement",
-                "沒有可寫入的 Space／高程。",
+                t("nexus_metadata.021"),
                 blocking=scanned.details.get("blocking") or ("nothing_to_apply",),
                 command_id=command_id,
                 details=payload,
             )
-        message = "已 Apply Space／高程。不可發布。"
+        message = t("nexus_metadata.017")
         if remaining:
             return results.ok_with_warnings(
                 "apply_placement",

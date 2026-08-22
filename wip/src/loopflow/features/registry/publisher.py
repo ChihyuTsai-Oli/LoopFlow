@@ -15,6 +15,7 @@ from loopflow.features.registry.lock import acquire_lock, release_lock
 from loopflow.features.registry.validate import validate_payload
 from loopflow.foundation import atomic_io, results
 from loopflow.foundation.paths import normalize_project_id, resolve_registry_for_document
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = schema.COMMAND_ID
 REPLACE_WAITS = (0.2, 0.4, 0.8, 1.6)
@@ -98,7 +99,7 @@ def publish_registry(
     if not isinstance(payload, Mapping):
         return results.blocked(
             "validate_registry",
-            "Registry payload 必須是 object。",
+            t("registry.013"),
             blocking=("invalid_payload",),
             command_id=command_id,
         )
@@ -106,7 +107,7 @@ def publish_registry(
     if not project_id:
         return results.blocked(
             "validate_registry",
-            "project_id 必須是合法專案名稱（與圖層前綴相同）。請先跑 Nexus 選單 2。",
+            t("registry.014"),
             blocking=("invalid_project_id",),
             command_id=command_id,
         )
@@ -124,7 +125,7 @@ def publish_registry(
     except OSError as exc:
         return results.failed(
             "resolve_registry",
-            "無法建立 Registry 目錄：%s" % exc,
+            t("registry.016") % exc,
             command_id=command_id,
         )
 
@@ -147,7 +148,7 @@ def publish_registry(
             if not loaded.ok:
                 return results.failed(
                     "read_registry",
-                    "正式 Registry 無法讀取，已停止，未覆寫。%s" % loaded.message,
+                    t("registry.020") % loaded.message,
                     command_id=command_id,
                     details={"filename": official.name},
                 )
@@ -155,7 +156,7 @@ def publish_registry(
             if str(current.get("project_id") or "") != project_id:
                 return results.blocked(
                     "read_registry",
-                    "正式 Registry 的 project_id 與本次發布不符。",
+                    t("registry.017"),
                     blocking=("project_id_mismatch",),
                     command_id=command_id,
                 )
@@ -176,7 +177,7 @@ def publish_registry(
         if not from_disk.ok:
             return results.failed(
                 "validate_registry",
-                "pending 寫入後無法重讀：%s" % from_disk.message,
+                t("registry.018") % from_disk.message,
                 command_id=command_id,
             )
         rechecked = validate_payload(from_disk.details["payload"])
@@ -190,7 +191,7 @@ def publish_registry(
             if not copied.ok:
                 return results.failed(
                     "replace_registry",
-                    "無法更新 last-good，已停止，未覆寫正式檔。%s" % copied.message,
+                    t("registry.021") % copied.message,
                     command_id=command_id,
                 )
 
@@ -219,7 +220,7 @@ def publish_registry(
                 )
             return results.failed(
                 "replace_registry",
-                "atomic replace 失敗，正式檔未刪。%s" % exc,
+                t("registry.023") % exc,
                 command_id=command_id,
             )
         published = True
@@ -229,7 +230,7 @@ def publish_registry(
             if not copied.ok:
                 return results.ok_with_warnings(
                     "publish_registry",
-                    "已發布 Registry revision %s，但 last-good 未寫入。" % body["registry_revision"],
+                    t("registry.024") % body["registry_revision"],
                     ("last_good_copy_failed",),
                     command_id=command_id,
                     details={
@@ -240,7 +241,7 @@ def publish_registry(
                 )
         return results.ok(
             "publish_registry",
-            "已發布 Registry revision %s。" % body["registry_revision"],
+            t("registry.015") % body["registry_revision"],
             command_id=command_id,
             details={
                 "filename": official.name,
@@ -252,7 +253,7 @@ def publish_registry(
     except Exception as exc:
         return results.failed(
             "publish_registry",
-            "發布中斷：%s" % exc,
+            t("registry.019") % exc,
             command_id=command_id,
             details={"exception": str(exc)},
         )

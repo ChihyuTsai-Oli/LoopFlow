@@ -8,6 +8,7 @@ from typing import Mapping, Optional
 from loopflow.features.registry.validate import validate_payload
 from loopflow.foundation import atomic_io, results
 from loopflow.foundation.paths import normalize_project_id, resolve_registry_for_document
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Infuser_Part"
 
@@ -32,7 +33,7 @@ def _from_file(path: Path, source: str, command_id: str) -> results.Result:
     if not loaded.ok:
         return results.failed(
             "read_registry",
-            "Registry 無法讀取：%s" % loaded.message,
+            t("infuser.038") % loaded.message,
             command_id=command_id,
             details={"filename": path.name, "source": source},
         )
@@ -41,14 +42,14 @@ def _from_file(path: Path, source: str, command_id: str) -> results.Result:
     if not checked.ok:
         return results.blocked(
             "validate_registry",
-            "Registry 不合規，已停止，不注入。%s" % checked.message,
+            t("infuser.039") % checked.message,
             checked.blocking or ("invalid_registry",),
             command_id=command_id,
             details={"filename": path.name, "source": source},
         )
     return results.ok(
         "read_registry",
-        "已讀取 Registry revision %s。" % payload.get("registry_revision"),
+        t("infuser.036") % payload.get("registry_revision"),
         command_id=command_id,
         details={
             "payload": payload,
@@ -71,7 +72,7 @@ def load_published_registry(
         return _empty(
             command_id,
             "missing_project_id",
-            "尚未填專案名稱，無法讀 Registry。請先跑 Nexus 選單 2 從字典同步 Type Layers。",
+            t("infuser.037"),
         )
     resolved = resolve_registry_for_document(document_path, pid)
     if not resolved.ok:
@@ -86,7 +87,7 @@ def load_published_registry(
             return loaded
         return results.ok_with_warnings(
             loaded.stage,
-            "正式 Registry 不在，改用 last-good revision %s。"
+            t("infuser.040")
             % loaded.details.get("registry_revision"),
             ("used_last_good",),
             command_id=command_id,
@@ -95,5 +96,5 @@ def load_published_registry(
     return _empty(
         command_id,
         "missing_registry",
-        "找不到 Registry，將只注入不需 Registry 的 Tag。",
+        t("infuser.035"),
     )

@@ -37,6 +37,7 @@ from loopflow.foundation.project_config import (
 )
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Nexus"
 EXPORT_FILENAME = "LoopFlow_Dictionary_Export.xlsx"
@@ -95,7 +96,7 @@ def _sync_body(
     if cancel:
         return results.cancelled(
             "sync_type_layers",
-            "使用者取消 Type layer 同步。",
+            t("dictionary.036"),
             command_id=COMMAND_ID,
         )
     layers_before = set(session.layer_paths())
@@ -142,7 +143,7 @@ def _sync_body(
         _rollback(session, layers_before, objects_before)
         return results.failed(
             "sync_type_layers",
-            "Type layer 同步失敗，已還原本次新增圖層與參考線。",
+            t("dictionary.040"),
             command_id=COMMAND_ID,
             details={"exception": repr(exc)},
         )
@@ -153,12 +154,12 @@ def _sync_body(
         "skipped_dw_children": tuple(skipped_dw_children),
         "created_layer_count": len(created_types),
         "layer_prefix": prefix,
-        "steps_hint": "layer 已同步，可存檔。Scan／Apply／發布尚未實作。",
+        "steps_hint": t("dictionary.032"),
     }
     warnings = ()
     if skipped_dw_children:
-        warnings = ("已排除 %s 個 20_DW 子圖層，不建 Type。" % len(skipped_dw_children),)
-    message = "Type layer 同步完成（%s）：新建 %s、保留 %s。" % (prefix, len(created_types), len(kept_types))
+        warnings = (t("dictionary.041") % len(skipped_dw_children),)
+    message = t("dictionary.033") % (prefix, len(created_types), len(kept_types))
     if warnings:
         return results.ok_with_warnings(
             "sync_type_layers",
@@ -210,7 +211,7 @@ def sync_type_layers(
             if chosen is None:
                 return results.cancelled(
                     "sync_type_layers",
-                    "使用者取消輸入專案名稱。",
+                    t("dictionary.044"),
                     command_id=command_id,
                 )
         if chosen is None:
@@ -234,7 +235,7 @@ def sync_type_layers(
             if chosen_dict is None:
                 return results.cancelled(
                     "sync_type_layers",
-                    "使用者取消選擇 Dictionary。",
+                    t("dictionary.045"),
                     command_id=command_id,
                 )
         if chosen_dict is None:
@@ -324,14 +325,14 @@ def export_layer_diff(
     if target.resolve() == Path(dictionary_path).resolve():
         return results.blocked(
             "sync_type_layers",
-            "反向匯出不得覆寫正式 Dictionary。",
+            t("dictionary.037"),
             blocking=("overwrite_dictionary_forbidden",),
             command_id=COMMAND_ID,
         )
     if not target.parent.exists():
         return results.failed(
             "sync_type_layers",
-            "匯出目錄不存在，不建立。",
+            t("dictionary.038"),
             command_id=COMMAND_ID,
         )
     rows = _diff_rows(session, catalog, prefix)
@@ -340,7 +341,7 @@ def export_layer_diff(
         return written
     return results.ok(
         "sync_type_layers",
-        "已匯出 layer 差異，未改正式 Dictionary。",
+        t("dictionary.035"),
         command_id=COMMAND_ID,
         details={"filename": target.name, "row_count": len(rows)},
     )
@@ -441,14 +442,14 @@ def export_dictionary(
         if target.resolve() == Path(dictionary_path).resolve():
             return results.blocked(
                 "export_dictionary",
-                "匯出 Type Layers 不得覆寫正式 Dictionary。",
+                t("dictionary.043"),
                 blocking=("overwrite_dictionary_forbidden",),
                 command_id=command_id,
             )
         if not target.parent.exists():
             return results.failed(
                 "export_dictionary",
-                "匯出目錄不存在，不建立。",
+                t("dictionary.038"),
                 command_id=command_id,
             )
         rows = _dictionary_export_rows(current, catalog, prefix)
@@ -462,7 +463,7 @@ def export_dictionary(
         )
         if not written.ok:
             return written
-        message = "已在 .3dm 同資料夾匯出 %s，未改正式 Dictionary。" % target.name
+        message = t("dictionary.039") % target.name
         if callable(show_message):
             show_message(message)
         else:

@@ -37,6 +37,7 @@ from loopflow.foundation.project_config import (
 )
 from loopflow.foundation.version import check_schema
 from loopflow.platform.rhino.session import RhinoSession
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Data_Viewer"
 MISSING_MARK = "（缺）"
@@ -128,7 +129,7 @@ def check_document_schema(session: RhinoSession) -> results.Result:
     if schema_id is None and version_text is None:
         return results.ok_with_warnings(
             "check_schema",
-            "專案設定尚未寫入 schema，仍可查看物件欄位。",
+            t("data_viewer.005"),
             ("missing_document_schema",),
             command_id=COMMAND_ID,
             details={"schema_id": None, "schema_version": None},
@@ -136,7 +137,7 @@ def check_document_schema(session: RhinoSession) -> results.Result:
     if schema_id is None or version_text is None:
         return results.failed(
             "check_schema",
-            "專案 schema 不完整：schema_id=%s，schema_version=%s。已停止，不猜測解析。"
+            t("data_viewer.010")
             % (schema_id or MISSING_MARK, version_text or MISSING_MARK),
             command_id=COMMAND_ID,
             details={"schema_id": schema_id, "schema_version": version_text},
@@ -146,7 +147,7 @@ def check_document_schema(session: RhinoSession) -> results.Result:
     except (TypeError, ValueError):
         return results.failed(
             "check_schema",
-            "未知 schema_version：%s 的 %s。已停止，不猜測解析。"
+            t("data_viewer.018")
             % (schema_id, version_text),
             command_id=COMMAND_ID,
             details={"schema_id": schema_id, "schema_version": version_text},
@@ -162,7 +163,7 @@ def check_document_schema(session: RhinoSession) -> results.Result:
     if schema_id != PROJECT_SCHEMA_ID:
         return results.failed(
             "check_schema",
-            "未知 schema_id：%s。專案設定應為 %s。已停止，不猜測解析。"
+            t("data_viewer.011")
             % (schema_id, PROJECT_SCHEMA_ID),
             command_id=COMMAND_ID,
             details={"schema_id": schema_id, "schema_version": version},
@@ -187,7 +188,7 @@ def _resolve_field(session: RhinoSession, object_id: str, key: str, layer: Optio
                 value,
                 "legacy",
                 legacy,
-                ("來源：舊 key %s" % legacy,),
+                (t("data_viewer.022") % legacy,),
             )
     if key == LEVEL_DATUM_KEY and LEVEL_LAYER_MARK in (layer or ""):
         name = _text(session.object_name(object_id))
@@ -197,7 +198,7 @@ def _resolve_field(session: RhinoSession, object_id: str, key: str, layer: Optio
                 name,
                 "object_name",
                 "ObjectName",
-                ("來源：物件名稱（舊檔相容）",),
+                (t("data_viewer.019"),),
             )
     return FieldView(key, None, "missing", None)
 
@@ -211,11 +212,11 @@ def _override_notes(field: FieldView, catalog: Optional[TypeCatalog], type_id: O
     if field.key == CONSTRUCTION_KEY:
         default = _text(record.construction_default)
         if default and field.value != default:
-            return ("覆寫（字典預設 %s）" % default,)
+            return (t("data_viewer.020") % default,)
     if field.key == REMARKS_KEY:
         default = _text(record.remarks_default)
         if default and field.value != default:
-            return ("覆寫（字典預設 %s）" % default,)
+            return (t("data_viewer.020") % default,)
     return ()
 
 
@@ -255,7 +256,7 @@ def inspect_object(
     if catalog is not None and type_id:
         record = catalog.by_type_id(type_id)
         if record is None:
-            notes.append("字典找不到 Type %s。" % type_id)
+            notes.append(t("data_viewer.021") % type_id)
         else:
             type_display_name = record.type_display_name
     fields = []
@@ -280,7 +281,7 @@ def inspect_object(
     )
     has_any = any(not field.missing for field in fields) or bool(stale)
     if not has_any:
-        notes.append("這個物件沒有 UserText。")
+        notes.append(t("data_viewer.006"))
 
     return ObjectReport(
         object_id=str(object_id),
@@ -299,21 +300,21 @@ def inspect_object(
 
 def format_report(report: ObjectReport) -> str:
     lines = [
-        "圖層：%s" % (report.layer or MISSING_MARK),
-        "名稱：%s" % (report.name or "（未命名）"),
+        t("data_viewer.007") % (report.layer or MISSING_MARK),
+        t("data_viewer.008") % (report.name or t("grab.019")),
     ]
     if report.block_name:
-        lines.append("圖塊：%s" % report.block_name)
-    lines.append("專案：%s" % (report.project_id or MISSING_MARK))
+        lines.append(t("data_viewer.012") % report.block_name)
+    lines.append(t("data_viewer.009") % (report.project_id or MISSING_MARK))
     if report.schema_id or report.schema_version:
         lines.append(
-            "文件 schema：%s %s"
+            t("data_viewer.013")
             % (report.schema_id or MISSING_MARK, report.schema_version or MISSING_MARK)
         )
     else:
-        lines.append("文件 schema：%s" % MISSING_MARK)
+        lines.append(t("data_viewer.014") % MISSING_MARK)
     if report.type_display_name:
-        lines.append("字典名稱：%s" % report.type_display_name)
+        lines.append(t("data_viewer.015") % report.type_display_name)
     lines.append("-" * 48)
 
     visible = report.fields
@@ -326,10 +327,10 @@ def format_report(report: ObjectReport) -> str:
 
     if report.missing_keys:
         lines.append("")
-        lines.append("缺值：%s" % "、".join(report.missing_keys))
+        lines.append(t("data_viewer.016") % "、".join(report.missing_keys))
     if report.stale:
         lines.append("")
-        lines.append("殘留（不屬 2.0）：%s" % "、".join(report.stale))
+        lines.append(t("data_viewer.017") % "、".join(report.stale))
     for note in report.notes:
         lines.append("")
         lines.append(note)

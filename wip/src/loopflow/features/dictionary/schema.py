@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Optional, Tuple
 
 from loopflow.foundation import results
+from loopflow.foundation.i18n import t
 
 SCHEMA_ID = "loopflow.dictionary"
 SCHEMA_VERSION = 1
@@ -123,7 +124,7 @@ def split_type_id(raw: Optional[str]) -> results.Result:
     if not text:
         return results.blocked(
             "validate_dictionary",
-            "缺少 type_id。",
+            t("dictionary.027"),
             blocking=("missing_type_id",),
         )
     for prefix in _CATEGORY_PREFIXES:
@@ -133,13 +134,13 @@ def split_type_id(raw: Optional[str]) -> results.Result:
             if not sequence:
                 return results.blocked(
                     "validate_dictionary",
-                    "type_id 缺少序號：%s" % text,
+                    t("dictionary.030") % text,
                     blocking=("invalid_type_id",),
                     details={"type_id": text, "type_category": category},
                 )
             return results.ok(
                 "validate_dictionary",
-                "已拆分 type_id",
+                t("dictionary.029"),
                 details={
                     "type_id": "%s-%s" % (category, sequence),
                     "type_category": category,
@@ -148,7 +149,7 @@ def split_type_id(raw: Optional[str]) -> results.Result:
             )
     return results.blocked(
         "validate_dictionary",
-        "未知 type_category，無法拆分 type_id：%s" % text,
+        t("dictionary.028") % text,
         blocking=("unknown_type_category",),
         details={"type_id": text},
     )

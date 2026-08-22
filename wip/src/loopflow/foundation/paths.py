@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """以目前 .3dm 所在資料夾解析路徑。字典與 `_LoopFlow_Config` 一律與 .3dm 同層。"""
 from __future__ import annotations
+from loopflow.foundation.i18n import t
 
 import os
 from dataclasses import dataclass
@@ -68,7 +69,7 @@ def normalize_dictionary_filename(
     if not text:
         return results.failed(
             "resolve_dictionary",
-            "Dictionary 檔名不能空白。",
+            t("paths.007"),
             details={"filename": ""},
         )
     candidate = Path(text)
@@ -76,7 +77,7 @@ def normalize_dictionary_filename(
         if root is None:
             return results.blocked(
                 "resolve_dictionary",
-                "請只輸入檔名。完整路徑須先知道 .3dm 所在資料夾。",
+                t("paths.013"),
                 blocking=("dictionary_outside_project_folder",),
                 details={"filename": text},
             )
@@ -96,7 +97,7 @@ def normalize_dictionary_filename(
         if len(relative.parts) != 1:
             return results.blocked(
                 "resolve_dictionary",
-                "Dictionary 須和 .3dm 同一層，不能放在子資料夾。",
+                t("paths.014"),
                 blocking=("dictionary_not_basename",),
                 details={"filename": Path(candidate).name},
             )
@@ -107,7 +108,7 @@ def normalize_dictionary_filename(
         if ".." in parts or len(parts) != 1:
             return results.blocked(
                 "resolve_dictionary",
-                "請只輸入檔名，不可含資料夾路徑。",
+                t("paths.015"),
                 blocking=("dictionary_not_basename",),
                 details={"filename": text},
             )
@@ -124,7 +125,7 @@ def normalize_dictionary_filename(
         if suffix:
             return results.blocked(
                 "resolve_dictionary",
-                "Dictionary 必須是 .xlsx 檔。",
+                t("paths.016"),
                 blocking=("invalid_dictionary_filename",),
                 details={"filename": name},
             )
@@ -133,13 +134,13 @@ def normalize_dictionary_filename(
     if stem.lower().endswith("_export") or name.lower() == "loopflow_dictionary_export.xlsx":
         return results.blocked(
             "resolve_dictionary",
-            "不能把匯出檔當正式 Dictionary。",
+            t("paths.009"),
             blocking=("export_file_not_dictionary",),
             details={"filename": name},
         )
     return results.ok(
         "resolve_dictionary",
-        "已確認 Dictionary 檔名",
+        t("paths.003"),
         details={"filename": name},
     )
 
@@ -180,7 +181,7 @@ def document_directory(document_path: Optional[Union[str, Path]]) -> results.Res
         )
     return results.ok(
         "resolve_document",
-        "已確認檔案所在資料夾",
+        t("paths.004"),
         details={"document_path": folder, "document_dir": parent},
     )
 
@@ -215,7 +216,7 @@ def project_paths_for_document(
     )
     return results.ok(
         "resolve_project_folder",
-        "已解析 .3dm 工作資料夾",
+        t("paths.005"),
         details={"paths": paths},
     )
 
@@ -249,7 +250,7 @@ def config_dir_for_document(document_path: Optional[Union[str, Path]]) -> result
     details["config_dir"] = config_dir
     return results.ok(
         "resolve_config_dir",
-        "已解析 %s 資料夾" % CONFIG_DIR_NAME,
+        t("paths.010") % CONFIG_DIR_NAME,
         details=details,
     )
 
@@ -279,7 +280,7 @@ def registry_paths(config_dir: Path, project_id: str) -> results.Result:
     if not raw:
         return results.failed(
             "resolve_registry",
-            "缺少專案名稱，停止解析 Registry。請先跑 Nexus 選單 2 填專案名稱。",
+            t("paths.011"),
         )
     pid = normalize_project_id(raw)
     if pid is None:
@@ -292,7 +293,7 @@ def registry_paths(config_dir: Path, project_id: str) -> results.Result:
     folder = Path(config_dir) / pid
     return results.ok(
         "resolve_registry",
-        "已解析 Registry 路徑",
+        t("paths.006"),
         details={
             "project_id": pid,
             "folder": folder,

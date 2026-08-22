@@ -20,6 +20,7 @@ from loopflow.foundation import results
 from loopflow.foundation.usertext import OBJECT_ID_KEY, read_text
 from loopflow.platform.rhino.session import EXTRACT_LAYER_ROOT, RhinoSession, run_guarded
 from loopflow.features.tagger.binding import UUID_V4_RE, text
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Extract_CP"
 STAGE = "extract_drawing"
@@ -168,23 +169,23 @@ def listed_views(session: RhinoSession):
 def match_view_for_root(root: str, views: Sequence[Mapping]) -> results.Result:
     needle = _norm(root)
     if needle is None:
-        return results.ok(STAGE, "沒有根圖層名。", details={"view": None})
+        return results.ok(STAGE, t("extract_cp.006"), details={"view": None})
     hits = [
         dict(view)
         for view in views
         if _norm(view.get("name")) == needle
     ]
     if len(hits) == 1:
-        return results.ok(STAGE, "已對到 View。", details={"view": hits[0]})
+        return results.ok(STAGE, t("extract_cp.007"), details={"view": hits[0]})
     if len(hits) > 1:
         return results.blocked(
             STAGE,
-            "剖面圖層「%s」對到兩個以上 View，已跳過，不猜測。" % root,
+            t("extract_cp.015") % root,
             ("ambiguous_view",),
             command_id=COMMAND_ID,
             details={"root": root},
         )
-    return results.ok(STAGE, "沒有對到 View。", details={"view": None})
+    return results.ok(STAGE, t("extract_cp.001"), details={"view": None})
 
 
 def is_drawing_element(session: RhinoSession, object_id: str) -> bool:
@@ -336,7 +337,7 @@ def extract_root(
         if mode == drawing_keys.MODE_SKIP:
             return results.ok(
                 STAGE,
-                "已略過「%s」的前次產出。" % root,
+                t("extract_cp.021") % root,
                 command_id=COMMAND_ID,
                 details={"root": root, "mode": mode, "copied": 0, "coverage": {}},
             )
@@ -344,7 +345,7 @@ def extract_root(
             if previous_is_modified(session, previous):
                 return results.blocked(
                     STAGE,
-                    "「%s」的 Drawing 已人工修改，不會覆蓋。若要另存一版請選新增。" % root,
+                    t("extract_cp.024") % root,
                     ("modified_drawing",),
                     command_id=COMMAND_ID,
                     details={"root": root},
@@ -356,7 +357,7 @@ def extract_root(
         else:
             return results.blocked(
                 STAGE,
-                "未知的重跑選項。",
+                t("extract_cp.022"),
                 ("invalid_mode",),
                 command_id=COMMAND_ID,
             )
@@ -390,7 +391,7 @@ def extract_root(
             if not callable(copier):
                 return results.failed(
                     STAGE,
-                    "此 Rhino session 不能複製物件。",
+                    t("extract_cp.023"),
                     command_id=COMMAND_ID,
                 )
             new_id = copier(object_id)
@@ -419,7 +420,7 @@ def extract_root(
 
     return results.ok(
         STAGE,
-        "已抽出「%s」%s 個物件。" % (root, copied),
+        t("extract_cp.008") % (root, copied),
         command_id=COMMAND_ID,
         details={
             "root": root,
@@ -462,7 +463,7 @@ def extract_drawings(
     incomplete = (total["unindexed"] + total["ambiguous"]) > 0
     return results.ok(
         STAGE,
-        "抽出完成：複製 %s 個物件。" % total["copied"],
+        t("extract_cp.009") % total["copied"],
         command_id=COMMAND_ID,
         details={
             "counts": total,
@@ -478,8 +479,8 @@ def _default_pick_roots(session: RhinoSession, roots: Sequence[str]) -> Optional
 
     return ask_checklist(
         list(roots),
-        "勾選要抽出的剖面圖層（可複選）：",
-        "抽出可編輯線稿",
+        t("extract_cp.002"),
+        t("extract_cp.003"),
     )
 
 
@@ -488,9 +489,9 @@ def _default_pick_mode(_session: RhinoSession, info: Mapping) -> Optional[str]:
 
     labels = [label for label, _mode in drawing_keys.MODE_LABELS]
     chosen = ask_popup_choice(
-        "「%s」已有前次抽出。請選取代、新增或略過。" % info.get("root"),
+        t("extract_cp.010") % info.get("root"),
         labels,
-        "辨識前次產出",
+        t("extract_cp.004"),
     )
     if chosen is None:
         return None
@@ -503,10 +504,10 @@ def _default_pick_mode(_session: RhinoSession, info: Mapping) -> Optional[str]:
 def _summary(details: Mapping) -> str:
     counts = details.get("counts") or {}
     lines = [
-        "已抽出可編輯線稿。",
-        "複製 %s 個物件到 %s。"
+        t("extract_cp.005"),
+        t("extract_cp.011")
         % (counts.get("copied", 0), EXTRACT_LAYER_ROOT),
-        "來源索引：唯一 %s、無法辨識 %s、多來源 %s。"
+        t("extract_cp.012")
         % (
             counts.get("indexed", 0),
             counts.get("unindexed", 0),
@@ -514,9 +515,9 @@ def _summary(details: Mapping) -> str:
         ),
     ]
     if details.get("coverage_incomplete"):
-        lines.append("索引不完整仍已產出，不阻擋。")
+        lines.append(t("extract_cp.013"))
     if counts.get("skipped"):
-        lines.append("略過 %s 個已有產出的剖面。" % counts.get("skipped"))
+        lines.append(t("extract_cp.016") % counts.get("skipped"))
     return "\n".join(lines)
 
 
@@ -528,13 +529,13 @@ def run_extract_cp(
     show_message: Optional[ShowMessage] = None,
 ) -> results.Result:
     if session is None:
-        return results.failed(STAGE, "沒有 Rhino session。", command_id=COMMAND_ID)
+        return results.failed(STAGE, t("extract_cp.014"), command_id=COMMAND_ID)
 
     def _action(current: RhinoSession) -> results.Result:
         if current.is_layout_active():
             return results.blocked(
                 STAGE,
-                "請在 2D 模型空間執行 Extract，不要在 Layout 頁。",
+                t("extract_cp.017"),
                 ("layout_active",),
                 command_id=COMMAND_ID,
             )
@@ -542,17 +543,17 @@ def run_extract_cp(
         if not roots:
             return results.blocked(
                 STAGE,
-                "找不到 Clipping Drawing 的 Visible／Hatch／Curve 圖層。",
+                t("extract_cp.018"),
                 ("missing_section_layers",),
                 command_id=COMMAND_ID,
             )
         picker = pick_roots or _default_pick_roots
         selected = picker(current, roots)
         if selected is None:
-            return results.cancelled(STAGE, "已取消抽出。", command_id=COMMAND_ID)
+            return results.cancelled(STAGE, t("extract_cp.019"), command_id=COMMAND_ID)
         wanted = [name for name in selected if name in roots]
         if not wanted:
-            return results.cancelled(STAGE, "沒有勾選剖面圖層。", command_id=COMMAND_ID)
+            return results.cancelled(STAGE, t("extract_cp.020"), command_id=COMMAND_ID)
 
         views = listed_views(current)
         modes = {}
@@ -577,7 +578,7 @@ def run_extract_cp(
                 },
             )
             if chosen is None:
-                return results.cancelled(STAGE, "已取消抽出。", command_id=COMMAND_ID)
+                return results.cancelled(STAGE, t("extract_cp.019"), command_id=COMMAND_ID)
             modes[root] = chosen
 
         layer_snapshot = _snapshot_layers(current)

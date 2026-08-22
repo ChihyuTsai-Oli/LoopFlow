@@ -4,6 +4,7 @@
 取消、失敗、阻擋與尚未實作都必須可區分；顏色或對話框不是真相來源。
 """
 from __future__ import annotations
+from loopflow.foundation.i18n import t
 
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Optional, Tuple
@@ -103,7 +104,7 @@ def _result(
     details: Optional[Mapping[str, Any]] = None,
 ) -> Result:
     if status not in STATUSES:
-        raise ValueError("未知結果狀態：%s" % status)
+        raise ValueError(t("foundation.016") % status)
     return Result(
         ok=ok,
         status=status,

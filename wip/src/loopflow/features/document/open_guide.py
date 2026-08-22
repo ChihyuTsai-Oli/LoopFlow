@@ -6,6 +6,7 @@ import os
 from typing import Callable, Optional
 
 from loopflow.foundation import results
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Document"
 STAGE = "open_document"
@@ -41,7 +42,7 @@ def open_document(*, opener: Optional[Opener] = None) -> results.Result:
         )
     return results.ok(
         STAGE,
-        "已開啟 LoopFlow 使用說明。",
+        t("document.007"),
         command_id=COMMAND_ID,
         details={"url": DOCUMENT_URL},
     )

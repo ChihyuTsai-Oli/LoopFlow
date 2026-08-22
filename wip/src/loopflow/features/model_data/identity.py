@@ -34,6 +34,7 @@ from loopflow.foundation.usertext import (
     write_text,
 )
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Nexus"
 UUID_V4_RE = re.compile(
@@ -179,7 +180,7 @@ def _blocking_codes(items: Sequence[dict]) -> Tuple[str, ...]:
 
 def _load_catalog(catalog: Optional[TypeCatalog], session=None) -> results.Result:
     if catalog is not None:
-        return results.ok("load_dictionary", "已使用注入的 Type Catalog。", details={"catalog": catalog})
+        return results.ok("load_dictionary", t("nexus_metadata.002"), details={"catalog": catalog})
     return load_dictionary(session)
 
 
@@ -198,7 +199,7 @@ def scan_identity(
         if cancel:
             return results.cancelled(
                 "scan_identity",
-                "使用者取消 Scan。",
+                t("nexus_metadata.004"),
                 command_id=command_id,
             )
         loaded = _load_catalog(catalog, current)
@@ -217,9 +218,9 @@ def scan_identity(
             "remaining": tuple(item["rhino_id"] for item in items if item["issues"]),
         }
         if selected_only:
-            message = "局部 Scan 完成，%s 個物件。不得宣告全案可發布。" % len(items)
+            message = t("nexus_metadata.005") % len(items)
         else:
-            message = "正式 Scan 完成，%s 個物件。尚未寫入。不可發布。" % len(items)
+            message = t("nexus_metadata.006") % len(items)
         if blocking:
             return results.ok_with_warnings(
                 "scan_identity",
@@ -274,7 +275,7 @@ def apply_identity(
         if cancel:
             return results.cancelled(
                 "apply_identity",
-                "使用者取消 Apply。",
+                t("nexus_metadata.007"),
                 command_id=command_id,
             )
         loaded = _load_catalog(catalog, current)
@@ -287,7 +288,7 @@ def apply_identity(
             if not UUID_V4_RE.match(new_id):
                 return results.blocked(
                     "apply_identity",
-                    "mapping 的新 ID 必須是小寫 UUID v4。",
+                    t("nexus_metadata.012"),
                     blocking=("invalid_mapping",),
                     command_id=command_id,
                 )
@@ -307,7 +308,7 @@ def apply_identity(
             if object_id in seen:
                 return results.blocked(
                     "apply_identity",
-                    "Apply 後仍會發生 object_id 碰撞，已停止，不靜默換號。",
+                    t("nexus_metadata.013"),
                     blocking=("duplicate_object_id",),
                     command_id=command_id,
                 )
@@ -344,12 +345,12 @@ def apply_identity(
         if not applied and remaining:
             return results.blocked(
                 "apply_identity",
-                "沒有可寫入的物件。剩餘 %s 項需 mapping 或修正 Type。" % len(remaining),
+                t("nexus_metadata.014") % len(remaining),
                 blocking=_blocking_codes(remaining) or ("nothing_to_apply",),
                 command_id=command_id,
                 details=payload,
             )
-        message = "已 Apply %s 個物件的 ID／Type。未寫 Space／高程。不可發布。" % len(applied)
+        message = t("nexus_metadata.003") % len(applied)
         if remaining:
             return results.ok_with_warnings(
                 "apply_identity",
@@ -391,14 +392,14 @@ def verify_identity(
     if remaining:
         return results.ok_with_warnings(
             "verify_identity",
-            "Verify 仍有 %s 項未完成。不可發布。" % len(remaining),
+            t("nexus_metadata.008") % len(remaining),
             scanned.warnings or ("remaining_identity_work",),
             command_id=command_id,
             details=details,
         )
     return results.ok(
         "verify_identity",
-        "Identity Verify 通過。Space／高程尚未資料化，不可發布。",
+        t("nexus_metadata.001"),
         command_id=command_id,
         details=details,
     )
@@ -418,13 +419,13 @@ def rollback_identity(
         if cancel:
             return results.cancelled(
                 "rollback_identity",
-                "使用者取消 rollback。",
+                t("nexus_metadata.009"),
                 command_id=command_id,
             )
         if not mappings:
             return results.blocked(
                 "rollback_identity",
-                "沒有 ID mapping 可還原。",
+                t("nexus_metadata.010"),
                 blocking=("missing_mapping",),
                 command_id=command_id,
             )
@@ -440,7 +441,7 @@ def rollback_identity(
             restored.append(rhino_id)
         return results.ok(
             "rollback_identity",
-            "已還原 %s 個 object_id。" % len(restored),
+            t("nexus_metadata.011") % len(restored),
             command_id=command_id,
             details={"restored": tuple(restored), "publish_ready": False},
         )

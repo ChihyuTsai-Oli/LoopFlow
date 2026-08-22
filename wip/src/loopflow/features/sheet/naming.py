@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Optional, Sequence, Tuple
 
 from loopflow.features.sheet.keys import NAMING_DEFAULTS, NAMING_KEYS
+from loopflow.foundation.i18n import t
 
 PARSE_BASELINE = "baseline"
 PARSE_INHERIT = "inherit"
@@ -86,7 +87,7 @@ def increment_number(token: str, steps: int = 1) -> str:
         return raw
     match = TRAILING_DIGITS_RE.match(raw)
     if match is None:
-        raise ValueError("無法遞增的圖編號：%s" % token)
+        raise ValueError(t("duplicate_layout.015") % token)
     head, tail = match.group(1), match.group(2)
     next_value = int(tail) + steps
     width = len(tail)

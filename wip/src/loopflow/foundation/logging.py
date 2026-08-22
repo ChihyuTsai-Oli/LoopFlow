@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """log 寫在 .3dm 旁的 `_LoopFlow_Config/logs/`，不把某台電腦的絕對路徑當成契約資料。"""
 from __future__ import annotations
+from loopflow.foundation.i18n import t
 
 import datetime
 import traceback
@@ -22,14 +23,14 @@ def resolve_log_path(
     log_path: Optional[Path] = None,
 ) -> results.Result:
     if log_path is not None:
-        return results.ok("write_log", "使用指定 log 路徑", details={"log_path": Path(log_path)})
+        return results.ok("write_log", t("foundation.014"), details={"log_path": Path(log_path)})
     resolved = paths.resolve_project_folder(session)
     if not resolved.ok:
         return resolved
     project = resolved.details["paths"]
     return results.ok(
         "write_log",
-        "使用專案設定資料夾的 log 路徑",
+        t("foundation.012"),
         details={"log_path": project.log_file(config)},
     )
 
@@ -50,8 +51,8 @@ def append_log(
         with target.open("a", encoding="utf-8") as handle:
             handle.write("[%s] %s\n" % (_now(), message))
     except OSError as exc:
-        return results.failed("write_log", "寫入 log 失敗：%s" % exc)
-    return results.ok("write_log", "已寫入 log", details={"log_path": target})
+        return results.failed("write_log", t("foundation.015") % exc)
+    return results.ok("write_log", t("foundation.013"), details={"log_path": target})
 
 
 def log_exception(

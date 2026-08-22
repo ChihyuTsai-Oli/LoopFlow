@@ -26,6 +26,7 @@ from loopflow.foundation.usertext import (
 from loopflow.foundation.version import check_schema
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 from loopflow.platform.rhino.state import ObjectViewState
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Nexus"
 SCHEMA_ID = "loopflow.space"
@@ -320,14 +321,14 @@ def register_level_boundaries(
         if cancel:
             return results.cancelled(
                 "register_levels",
-                "使用者取消高程框。",
+                t("nexus_metadata.023"),
                 command_id=command_id,
             )
         chosen = (kind or "").strip().upper()
         if chosen not in ("FFL", "FL"):
             return results.blocked(
                 "register_levels",
-                "高程框請選 FFL 或 FL。",
+                t("nexus_metadata.024"),
                 blocking=("invalid_level_kind",),
                 command_id=command_id,
             )
@@ -335,7 +336,7 @@ def register_level_boundaries(
         if parse_level_datum(display) is None:
             return results.blocked(
                 "register_levels",
-                "高程必須是數字，例如 0 或 320。",
+                t("nexus_metadata.025"),
                 blocking=("invalid_level_datum",),
                 command_id=command_id,
             )
@@ -343,7 +344,7 @@ def register_level_boundaries(
         if not ids:
             return results.blocked(
                 "register_levels",
-                "沒有選取高程框。請選取封閉曲線後按 Enter。",
+                t("nexus_metadata.026"),
                 blocking=("missing_level_selection",),
                 command_id=command_id,
             )
@@ -361,7 +362,7 @@ def register_level_boundaries(
         if invalid:
             return results.blocked(
                 "register_levels",
-                "有 %s 條無效曲線（未封閉或頂點不足）。" % len(invalid),
+                t("nexus_metadata.032") % len(invalid),
                 blocking=("invalid_level_curve",),
                 command_id=command_id,
                 details={"invalid_object_ids": tuple(invalid)},
@@ -381,7 +382,7 @@ def register_level_boundaries(
             written.append(level_id)
         return results.ok(
             "register_levels",
-            "已登記 %s 個 %s 高程框（高程 %s）。" % (len(written), chosen, display),
+            t("nexus_metadata.027") % (len(written), chosen, display),
             command_id=command_id,
             details={
                 "count": len(written),
@@ -423,13 +424,13 @@ def register_level_boundaries_interactive(
         chosen = kind
         if chosen is None:
             if ask_kind is not None:
-                chosen = ask_kind("高程框類型", ("FFL", "FL"), "FFL")
+                chosen = ask_kind(t("nexus_metadata.033"), ("FFL", "FL"), "FFL")
             else:
-                chosen = _ask_or_live(None, "ask_popup_choice", "請選擇高程框類型", ("FFL", "FL"))
+                chosen = _ask_or_live(None, "ask_popup_choice", t("nexus_metadata.034"), ("FFL", "FL"))
             if chosen is None:
                 return results.cancelled(
                     "register_levels",
-                    "使用者取消高程框類型。",
+                    t("nexus_metadata.035"),
                     command_id=command_id,
                 )
         if isolate:
@@ -443,19 +444,19 @@ def register_level_boundaries_interactive(
             if not ids:
                 return results.cancelled(
                     "register_levels",
-                    "使用者取消選取高程框。",
+                    t("nexus_metadata.036"),
                     command_id=command_id,
                 )
         text = datum
         if text is None:
             if ask_text is not None:
-                text = ask_text("高程（例如 0 或 320）", "")
+                text = ask_text(t("nexus_metadata.037"), "")
             else:
-                text = _ask_or_live(None, "ask_popup_string", "高程（例如 0 或 320）", "", "LoopFlow")
+                text = _ask_or_live(None, "ask_popup_string", t("nexus_metadata.037"), "", "LoopFlow")
             if text is None:
                 return results.cancelled(
                     "register_levels",
-                    "使用者取消輸入高程。",
+                    t("nexus_metadata.038"),
                     command_id=command_id,
                 )
         return register_level_boundaries(
@@ -498,19 +499,19 @@ def register_space_boundaries_interactive(
             if not ids:
                 return results.cancelled(
                     "register_spaces",
-                    "使用者取消選取空間框。",
+                    t("nexus_metadata.039"),
                     command_id=command_id,
                 )
         name = space_name
         if name is None:
             if ask_text is not None:
-                name = ask_text("空間名稱", "")
+                name = ask_text(t("nexus_metadata.040"), "")
             else:
-                name = _ask_or_live(None, "ask_popup_string", "空間名稱", "", "LoopFlow")
+                name = _ask_or_live(None, "ask_popup_string", t("nexus_metadata.040"), "", "LoopFlow")
             if name is None:
                 return results.cancelled(
                     "register_spaces",
-                    "使用者取消輸入空間名稱。",
+                    t("nexus_metadata.041"),
                     command_id=command_id,
                 )
         display = (name or "").strip()
@@ -550,7 +551,7 @@ def register_space_boundaries(
         if cancel:
             return results.cancelled(
                 "register_spaces",
-                "使用者取消 Space Boundary。",
+                t("nexus_metadata.028"),
                 command_id=command_id,
             )
         schema = check_schema(SCHEMA_ID, 1)
@@ -559,7 +560,7 @@ def register_space_boundaries(
         if not drafts:
             return results.blocked(
                 "register_spaces",
-                "沒有選取 Space Boundary。請選取封閉曲線後再執行。",
+                t("nexus_metadata.029"),
                 blocking=("missing_space_selection",),
                 command_id=command_id,
             )
@@ -625,7 +626,7 @@ def register_space_boundaries(
         if invalid:
             return results.blocked(
                 "register_spaces",
-                "有 %s 條無效曲線（未封閉、頂點不足、或缺名稱／樓層）。" % len(invalid),
+                t("nexus_metadata.042") % len(invalid),
                 blocking=("invalid_space_curve",),
                 command_id=command_id,
                 details={"invalid_object_ids": tuple(invalid)},
@@ -633,7 +634,7 @@ def register_space_boundaries(
         if ambiguous:
             return results.blocked(
                 "register_spaces",
-                "有 %s 個空間同時對到多個同高程樓層框，已停止。" % len(ambiguous),
+                t("nexus_metadata.043") % len(ambiguous),
                 blocking=("ambiguous_level_frame",),
                 command_id=command_id,
                 details={"invalid_object_ids": tuple(ambiguous)},
@@ -641,7 +642,7 @@ def register_space_boundaries(
         if not_in_level:
             return results.blocked(
                 "register_spaces",
-                "有 %s 個空間對不到樓層框。空間框須與樓層框高程差在 ±%s 內，且整圈在樓層框裡面。"
+                t("nexus_metadata.044")
                 % (len(not_in_level), int(LEVEL_Z_TOLERANCE) if LEVEL_Z_TOLERANCE == int(LEVEL_Z_TOLERANCE) else LEVEL_Z_TOLERANCE),
                 blocking=("space_not_in_level",),
                 command_id=command_id,
@@ -654,7 +655,7 @@ def register_space_boundaries(
         if len(space_ids) != len(set(space_ids)):
             return results.blocked(
                 "register_spaces",
-                "同一個 space_id 出現在多條 boundary，已停止，不靜默換號。",
+                t("nexus_metadata.030"),
                 blocking=("duplicate_space_id",),
                 command_id=command_id,
             )
@@ -662,7 +663,7 @@ def register_space_boundaries(
         if conflicts:
             return results.blocked(
                 "register_spaces",
-                "Space 面積重疊（同一樓層），已停止。衝突：%s" % "、".join("%s/%s" % pair for pair in conflicts),
+                t("nexus_metadata.045") % "、".join("%s/%s" % pair for pair in conflicts),
                 blocking=("space_overlap",),
                 command_id=command_id,
                 details={"conflicts": conflicts},
@@ -685,10 +686,10 @@ def register_space_boundaries(
             "level_ids": tuple(sorted(set(item["level_id"] for item in parsed))),
             "xy_overlap_other_level": cross_level,
         }
-        message = "已登記 %s 個 Space Boundary。未改模型物件空間欄。" % len(parsed)
+        message = t("nexus_metadata.022") % len(parsed)
         if cross_level:
             warning = (
-                "平面重疊但樓層不同（已允許）：%s。同樓層請對到同一個樓層框。"
+                t("nexus_metadata.031")
                 % "、".join("%s/%s" % pair for pair in cross_level)
             )
             return results.ok_with_warnings(

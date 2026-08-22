@@ -20,6 +20,7 @@ from loopflow.foundation.project_config import (
 )
 from loopflow.foundation.version import PACKAGE_VERSION, check_schema
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Nexus"
 CM_UNITS = frozenset(("cm", "centimeter", "centimeters"))
@@ -69,17 +70,17 @@ def compose_scan_apply_message(mode: str, identity, placement) -> str:
         count = len(details.get("applied") or details.get("items") or ())
     ext = len((placement.details or {}).get("ext") or ())
     if mode == "scan":
-        return "Scan 完成，%s 個物件。尚未寫入。空間 %s 個 EXT。不可發布。" % (count, ext)
+        return t("nexus.009") % (count, ext)
     written = []
     if details.get("applied"):
         written.append("ID／Type")
     if (placement.details or {}).get("applied"):
-        written.append("空間／高程")
+        written.append(t("nexus.010"))
     n_applied = len(details.get("applied") or ())
     if written:
-        message = "已寫入 %s 個物件的 %s。" % (n_applied, "、".join(written))
+        message = t("nexus.011") % (n_applied, "、".join(written))
     else:
-        message = "沒有可寫入的欄位。"
+        message = t("nexus.007")
     return message + " 不可發布。"
 
 
@@ -92,13 +93,13 @@ def run_open_check(
     if cancel:
         return results.cancelled(
             "open_check",
-            "使用者取消開案檢查。",
+            t("nexus.012"),
             command_id=command_id,
         )
     if session is None:
         return results.failed(
             "rhino_session",
-            "目前不在 Rhino 內，無法讀取專案名稱與文件單位。不修改檔案。",
+            t("nexus.013"),
             command_id=command_id,
         )
     located = resolve_project_folder(session)
@@ -116,7 +117,7 @@ def run_open_check(
     except (TypeError, ValueError):
         return results.failed(
             "check_schema",
-            "未知 schema_version：%s。已停止，不猜測解析。" % raw_version,
+            t("nexus.018") % raw_version,
             command_id=command_id,
         )
     version = check_schema(schema_id, schema_version)
@@ -130,7 +131,7 @@ def run_open_check(
     type_count = None
     if not catalog.ok and catalog.stage == "resolve_dictionary":
         extra_warnings = (
-            "找不到 Dictionary 檔案 %s。請把字典放回 .3dm 所在的資料夾，或用選單 2 重新指定。"
+            t("nexus.015")
             % ((catalog.details or {}).get("filename") or filename),
         )
     elif not catalog.ok:
@@ -154,9 +155,9 @@ def run_open_check(
     warnings: Sequence[str] = catalog_warnings
     extra = []
     if not project_id:
-        extra.append("尚未填專案名稱。請用選單 2 從字典同步 Type Layers。")
+        extra.append(t("nexus.014"))
     if not _is_cm(unit):
-        extra.append("文件單位為 %s，不是 cm。可繼續，但量綱尚未保證安全，建議切換為 cm。" % unit)
+        extra.append(t("nexus.016") % unit)
     if session.__class__.__name__ == "LiveSession":
         from loopflow.platform.rhino.live import LIVE_VERIFIED_IN_RHINO
 
@@ -347,7 +348,7 @@ def open_console(
                 if not has_registered_boundaries(current):
                     return results.blocked(
                         "apply_identity",
-                        "請先登記高程框（3）與空間框（4）。",
+                        t("nexus.020"),
                         blocking=("missing_level_or_space_boundary",),
                         command_id=command_id,
                         details={"publish_ready": False},
@@ -390,12 +391,12 @@ def open_console(
                 )
             return results.not_implemented(
                 "dispatch",
-                "未知 Identity 動作：%s" % action_name,
+                t("nexus.019") % action_name,
                 command_id=command_id,
             )
         return results.not_implemented(
             "dispatch",
-            "Console 步驟尚未實作：%s" % step,
+            t("nexus.017") % step,
             command_id=command_id,
         )
 

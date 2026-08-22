@@ -17,6 +17,7 @@ from loopflow.platform.rhino.session import (
     silence_loopflow_layers,
 )
 from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
+from loopflow.foundation.i18n import t
 
 LIVE_VERIFIED_IN_RHINO = True
 COLOR_SOURCE_BY_LAYER = 0
@@ -65,27 +66,27 @@ def _load_rhino() -> Tuple[Optional[tuple], Optional[str]]:
         import rhinoscriptsyntax as rs  # type: ignore
         import scriptcontext as sc  # type: ignore
     except ImportError as exc:
-        return None, "目前不在 Rhino 內：%s" % exc
+        return None, t("rhino.007") % exc
     return (Rhino, rs, sc), None
 
 
 def open_session() -> results.Result:
     loaded, error = _load_rhino()
     if loaded is None:
-        return results.failed("rhino_session", error or "無法載入 Rhino")
+        return results.failed("rhino_session", error or t("rhino.004"))
     _Rhino, rs, sc = loaded
     if sc.doc is None:
-        return results.failed("rhino_session", "沒有作用中的 Rhino 文件")
+        return results.failed("rhino_session", t("rhino.002"))
     session = LiveSession(rs, sc, _Rhino)
     if LIVE_VERIFIED_IN_RHINO:
         return results.ok(
             "rhino_session",
-            "已連接 Rhino 文件。",
+            t("rhino.003"),
             details={"session": session, "verified": True},
         )
     return results.ok(
         "rhino_session",
-        "已連接 Rhino 文件。live adapter 尚未實機驗證。",
+        t("rhino.001"),
         warnings=("live_adapter_unverified",),
         details={"session": session, "verified": False},
     )
@@ -326,7 +327,7 @@ class LiveSession:
     def set_layer_user_text(self, path: str, key: str, value: str) -> None:
         layer = self._layer_obj(path)
         if layer is None:
-            raise KeyError("未知圖層：%s" % path)
+            raise KeyError(t("rhino.008") % path)
         layer.SetUserString(key, value)
         layer.CommitChanges()
 
@@ -431,7 +432,7 @@ class LiveSession:
 
     def set_layer_appearance(self, path: str, rgb, material_name: Optional[str] = None) -> None:
         if not self.has_layer(path):
-            raise KeyError("未知圖層：%s" % path)
+            raise KeyError(t("rhino.008") % path)
         color = rgb_tuple(rgb)
         self._rs.LayerColor(path, color)
         if not material_name or self._rhino is None:
@@ -797,7 +798,7 @@ class LiveSession:
             1 | 65536,  # Left + Bottom，左下角對齊定位點
         )
         if not text_id:
-            raise RuntimeError("無法建立目錄文字")
+            raise RuntimeError(t("rhino.005"))
         object_id = str(text_id)
         if layer:
             self.ensure_layer(layer)
@@ -1366,7 +1367,7 @@ class LiveSession:
     def add_closed_polyline(self, points, *, layer: str, name: str) -> str:
         pts = [tuple(pt) for pt in points]
         if len(pts) < 3:
-            raise ValueError("封閉框至少需要 3 點")
+            raise ValueError(t("rhino.006"))
         if pts[0] != pts[-1]:
             pts = pts + [pts[0]]
         object_id = str(self._rs.AddPolyline(pts))

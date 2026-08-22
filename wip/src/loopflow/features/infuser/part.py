@@ -59,6 +59,7 @@ from loopflow.foundation.usertext import (
     read_text,
 )
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Infuser_Part"
 STAGE = "infuse_tags"
@@ -451,7 +452,7 @@ def _fields_from_pages(
     if not unique_pages:
         return results.blocked(
             STAGE,
-            "目標 View 的頁沒有 Sheet metadata。請先跑 Layout ID。",
+            t("infuser.007"),
             ("missing_sheet",),
             command_id=COMMAND_ID,
         )
@@ -465,7 +466,7 @@ def _fields_from_pages(
     if len(unique_sheets) > 1:
         return results.blocked(
             STAGE,
-            "目標 View 對到兩個以上 Sheet，不猜測。",
+            t("infuser.008"),
             ("ambiguous_sheet",),
             command_id=COMMAND_ID,
         )
@@ -475,7 +476,7 @@ def _fields_from_pages(
         if len(extra_unique) > 1:
             return results.blocked(
                 STAGE,
-                "目標 View 對到兩個以上 Sheet，不猜測。",
+                t("infuser.008"),
                 ("ambiguous_sheet",),
                 command_id=COMMAND_ID,
             )
@@ -486,13 +487,13 @@ def _fields_from_pages(
             if parsed is not None:
                 return results.ok(
                     STAGE,
-                    "已從目標頁名讀到圖號。",
+                    t("infuser.028"),
                     command_id=COMMAND_ID,
                     details={"sheet_id": None, "fields": parsed},
                 )
             return results.blocked(
                 STAGE,
-                "目標 View 的頁沒有 Sheet metadata。請先跑 Layout ID。",
+                t("infuser.007"),
                 ("missing_sheet",),
                 command_id=COMMAND_ID,
             )
@@ -503,19 +504,19 @@ def _fields_from_pages(
         if parsed is not None:
             return results.ok(
                 STAGE,
-                "已從目標頁名讀到圖號。",
+                t("infuser.028"),
                 command_id=COMMAND_ID,
                 details={"sheet_id": sheet_id, "fields": parsed},
             )
         return results.blocked(
             STAGE,
-            "目標 Sheet 沒有圖號資料。",
+            t("infuser.009"),
             ("missing_sheet",),
             command_id=COMMAND_ID,
         )
     return results.ok(
         STAGE,
-        "已從目標 View 對到 Sheet。",
+        t("infuser.005"),
         command_id=COMMAND_ID,
         details={"sheet_id": sheet_id, "fields": fields},
     )
@@ -547,7 +548,7 @@ def _resolve_index_sheet(
         if not matched:
             return results.blocked(
                 STAGE,
-                "綁定的目標 Layout 已不在。",
+                t("infuser.029"),
                 ("missing_target",),
                 command_id=COMMAND_ID,
             )
@@ -556,7 +557,7 @@ def _resolve_index_sheet(
         ):
             return results.blocked(
                 STAGE,
-                "綁定的目標 Detail 已不在。",
+                t("infuser.011"),
                 ("missing_target",),
                 command_id=COMMAND_ID,
             )
@@ -567,20 +568,20 @@ def _resolve_index_sheet(
         if fields is not None:
             return results.ok(
                 STAGE,
-                "已用目標 Sheet。",
+                t("infuser.030"),
                 command_id=COMMAND_ID,
                 details={"sheet_id": sheet_id, "fields": fields},
             )
         return results.blocked(
             STAGE,
-            "目標 Sheet 沒有圖號資料。",
+            t("infuser.009"),
             ("missing_sheet",),
             command_id=COMMAND_ID,
         )
     if view_id is None:
         return results.blocked(
             STAGE,
-            "Index Tag 沒有目標 View。",
+            t("infuser.010"),
             ("missing_source",),
             command_id=COMMAND_ID,
         )
@@ -588,7 +589,7 @@ def _resolve_index_sheet(
     if not pages:
         return results.blocked(
             STAGE,
-            "綁定的目標 Detail 已不在。",
+            t("infuser.011"),
             ("missing_target",),
             command_id=COMMAND_ID,
         )
@@ -667,7 +668,7 @@ def _item_fields(block_name: Optional[str], pattern: Optional[str]) -> results.R
     if name is None:
         return results.blocked(
             STAGE,
-            "家具 Tag 沒有來源 Block 名稱。",
+            t("infuser.012"),
             ("missing_source",),
             command_id=COMMAND_ID,
         )
@@ -676,13 +677,13 @@ def _item_fields(block_name: Optional[str], pattern: Optional[str]) -> results.R
     if matched is None:
         return results.blocked(
             STAGE,
-            "家具 Block 名稱「%s」不符合 FF-01__Chair-1。" % name,
+            t("infuser.031") % name,
             ("invalid_block_name",),
             command_id=COMMAND_ID,
         )
     return results.ok(
         STAGE,
-        "已解析家具名稱。",
+        t("infuser.006"),
         command_id=COMMAND_ID,
         details={
             "fields": {
@@ -782,7 +783,7 @@ def infuse_page(
         if status == "updated":
             continue
     if cache.get("used_live_object"):
-        notes.append("有些 Height／Finish 是從模型現況讀的，尚未進 Registry。")
+        notes.append(t("infuser.002"))
     if redraw:
         redraw_fn = getattr(session, "redraw", None)
         if callable(redraw_fn):
@@ -933,46 +934,46 @@ def _infuse_tag(
 
 def _summary(page_name: str, revision, counts: Mapping[str, int], notes: Sequence[str]) -> str:
     lines = [
-        "已處理 Layout 頁「%s」。" % (page_name or "（未命名頁）"),
+        t("infuser.013") % (page_name or t("tag_o.032")),
     ]
     if revision not in (None, ""):
         lines.append("Registry revision %s。" % revision)
     lines.append(
-        "已注入 %s 個 Tag。" % counts.get("updated", 0)
+        t("infuser.014") % counts.get("updated", 0)
     )
     skipped = []
     labels = (
-        ("skipped_locked", "鎖定"),
-        ("skipped_manual", "門窗／手動"),
-        ("skipped_title_frame", "圖框"),
+        ("skipped_locked", t("infuser.015")),
+        ("skipped_manual", t("infuser.016")),
+        ("skipped_title_frame", t("infuser.017")),
         ("skipped_elev_0", "TAG_ELEV_0"),
     )
     for key, label in labels:
         if counts.get(key):
             skipped.append("%s %s" % (label, counts[key]))
     if skipped:
-        lines.append("跳過：%s。" % "、".join(skipped))
+        lines.append(t("infuser.032") % "、".join(skipped))
     problems = []
     problem_labels = (
-        ("unknown_template", "未知圖塊"),
-        ("missing_source", "缺來源"),
-        ("orphaned", "Registry 找不到物件"),
-        ("missing_registry", "沒有 Registry（請先發布）"),
-        ("ambiguous", "來源歧義"),
-        ("invalid_block_name", "家具名稱不符"),
-        ("missing_sheet", "缺目標圖號"),
-        ("missing_target", "目標消失"),
-        ("skipped_broken", "斷連未灌回"),
+        ("unknown_template", t("infuser.018")),
+        ("missing_source", t("tag_o.003")),
+        ("orphaned", t("infuser.019")),
+        ("missing_registry", t("infuser.020")),
+        ("ambiguous", t("infuser.021")),
+        ("invalid_block_name", t("infuser.022")),
+        ("missing_sheet", t("infuser.023")),
+        ("missing_target", t("infuser.024")),
+        ("skipped_broken", t("infuser.025")),
     )
     for key, label in problem_labels:
         if counts.get(key):
             problems.append("%s %s" % (label, counts[key]))
     if problems:
-        lines.append("警告：%s。" % "、".join(problems))
+        lines.append(t("infuser.033") % "、".join(problems))
     for note in notes[:8]:
         lines.append(note)
     if len(notes) > 8:
-        lines.append("…另有 %s 則。" % (len(notes) - 8))
+        lines.append(t("infuser.034") % (len(notes) - 8))
     return "\n".join(lines)
 
 
@@ -1050,14 +1051,14 @@ def run_infuser_part(
     if "missing_document_schema" in (schema.warnings or ()):
         return results.blocked(
             "check_schema",
-            "文件尚未寫入 schema，已停止，不寫入。",
+            t("catalog.008"),
             ("missing_document_schema",),
             command_id=COMMAND_ID,
         )
     if not session.is_layout_active():
         return results.blocked(
             STAGE,
-            "請在 Layout 頁執行 Infuser Part。已停止，不寫入。",
+            t("infuser.026"),
             ("not_on_layout",),
             command_id=COMMAND_ID,
         )
@@ -1068,7 +1069,7 @@ def run_infuser_part(
     if not page_name:
         return results.blocked(
             STAGE,
-            "無法判斷目前 Layout 頁，已停止，不寫入。",
+            t("infuser.027"),
             ("missing_layout_page",),
             command_id=COMMAND_ID,
         )

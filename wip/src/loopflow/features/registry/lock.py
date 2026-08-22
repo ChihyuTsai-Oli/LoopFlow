@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from loopflow.foundation import results
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Publish_Exchange"
 STALE_LOCK_SECONDS = 30.0
@@ -131,7 +132,7 @@ def acquire_lock(
                 return None
             return results.failed(
                 "acquire_registry_lock",
-                "無法建立 lock：%s" % exc,
+                t("registry.011") % exc,
                 command_id=command_id,
             )
         try:
@@ -141,7 +142,7 @@ def acquire_lock(
             os.close(fd)
         return results.ok(
             "acquire_registry_lock",
-            "已取得 Registry lock",
+            t("registry.006"),
             command_id=command_id,
             details={"lock": str(target), "pid": owner_pid, "host": owner_host},
         )
@@ -160,7 +161,7 @@ def acquire_lock(
     ):
         return results.blocked(
             "acquire_registry_lock",
-            "Registry 正被其他程序鎖定，不覆寫。",
+            t("registry.004"),
             blocking=("registry_locked",),
             command_id=command_id,
             details={"lock": str(target), "owner": existing},
@@ -170,7 +171,7 @@ def acquire_lock(
     except OSError as exc:
         return results.failed(
             "acquire_registry_lock",
-            "無法清除過期 lock：%s" % exc,
+            t("registry.009") % exc,
             command_id=command_id,
         )
     created = try_create()
@@ -178,7 +179,7 @@ def acquire_lock(
         return created
     return results.blocked(
         "acquire_registry_lock",
-        "Registry 正被其他程序鎖定，不覆寫。",
+        t("registry.004"),
         blocking=("registry_locked",),
         command_id=command_id,
         details={"lock": str(target)},
@@ -195,7 +196,7 @@ def release_lock(
     """只刪自己持有的 lock，避免清掉別人的。"""
     target = Path(path)
     if not target.exists():
-        return results.ok("acquire_registry_lock", "沒有 lock 可釋放", command_id=command_id)
+        return results.ok("acquire_registry_lock", t("registry.007"), command_id=command_id)
     owner_pid = os.getpid() if pid is None else int(pid)
     owner_host = socket.gethostname() if host is None else str(host)
     data = _read_lock(target)
@@ -207,7 +208,7 @@ def release_lock(
         if lock_pid != owner_pid or str(data.get("host") or "") != owner_host:
             return results.ok(
                 "acquire_registry_lock",
-                "lock 已易主，不刪除。",
+                t("registry.008"),
                 command_id=command_id,
             )
     try:
@@ -215,7 +216,7 @@ def release_lock(
     except OSError as exc:
         return results.failed(
             "acquire_registry_lock",
-            "無法釋放 lock：%s" % exc,
+            t("registry.010") % exc,
             command_id=command_id,
         )
-    return results.ok("acquire_registry_lock", "已釋放 Registry lock", command_id=command_id)
+    return results.ok("acquire_registry_lock", t("registry.005"), command_id=command_id)

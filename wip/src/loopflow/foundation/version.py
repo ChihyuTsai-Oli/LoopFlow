@@ -4,6 +4,7 @@
 未知 schema_id 或 schema_version 必須停止，不得猜測解析。
 """
 from __future__ import annotations
+from loopflow.foundation.i18n import t
 
 from typing import Mapping, Optional
 
@@ -39,14 +40,14 @@ def check_schema(
     if schema_id not in table:
         return results.failed(
             "check_schema",
-            "未知 schema_id：%s。已停止，不猜測解析。" % schema_id,
+            t("foundation.017") % schema_id,
             details={"schema_id": schema_id, "schema_version": schema_version},
         )
     current = table[schema_id]
     if schema_version != current:
         return results.failed(
             "check_schema",
-            "未知 schema_version：%s 的 %s（目前為 %s）。已停止，不猜測解析。"
+            t("foundation.018")
             % (schema_id, schema_version, current),
             details={
                 "schema_id": schema_id,

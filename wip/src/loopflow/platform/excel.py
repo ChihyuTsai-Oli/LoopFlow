@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Sequence
 from xml.etree import ElementTree as ET
 
 from loopflow.foundation import results
+from loopflow.foundation.i18n import t as ui
 
 MAIN_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 PKG_REL_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
@@ -175,7 +176,7 @@ def read_table(path: Path) -> results.Result:
     if not xlsx.exists() or not xlsx.is_file():
         return results.failed(
             "read_excel",
-            "找不到 Dictionary 檔案 %s。不建立檔案。" % xlsx.name,
+            ui("other.015") % xlsx.name,
             details={"filename": xlsx.name},
         )
     try:
@@ -187,7 +188,7 @@ def read_table(path: Path) -> results.Result:
     except (OSError, KeyError, zipfile.BadZipFile, ET.ParseError, ValueError, IndexError) as exc:
         return results.failed(
             "read_excel",
-            "無法讀取 xlsx：%s" % exc,
+            ui("other.016") % exc,
             details={"filename": xlsx.name},
         )
 
@@ -206,7 +207,7 @@ def read_table(path: Path) -> results.Result:
         max_col = max(max_col, col)
 
     if max_row < 2 or max_col < 1:
-        return results.failed("read_excel", "xlsx 缺少標題列或欄名列。")
+        return results.failed("read_excel", ui("other.012"))
 
     def row_values(row_number: int) -> List[Optional[object]]:
         return [grid.get((row_number, col)) for col in range(1, max_col + 1)]
@@ -224,7 +225,7 @@ def read_table(path: Path) -> results.Result:
         rows.append(padded[: len(headers)])
     return results.ok(
         "read_excel",
-        "已讀取工作表",
+        ui("other.008"),
         details={"title": title, "headers": headers, "rows": rows, "header_row": header_row},
     )
 
@@ -324,7 +325,7 @@ def write_table(
     """寫入僅供測試／反向匯出使用的簡單 xlsx。不覆寫不存在的父目錄以外的檔案。"""
     target = Path(path)
     if not target.parent.exists():
-        return results.failed("read_excel", "輸出目錄不存在，不建立。")
+        return results.failed("read_excel", ui("other.014"))
     styled = profile == "dictionary"
     strings = []
     index_of = {}
@@ -519,8 +520,8 @@ def write_table(
             if styled:
                 zf.writestr("xl/styles.xml", dump(_dictionary_styles_xml(with_hint=bool(hint))))
     except OSError as exc:
-        return results.failed("read_excel", "無法寫入 xlsx：%s" % exc)
-    return results.ok("read_excel", "已寫入工作表", details={"filename": target.name})
+        return results.failed("read_excel", ui("other.017") % exc)
+    return results.ok("read_excel", ui("other.009"), details={"filename": target.name})
 
 
 def read_font_table(path: Path) -> List[dict]:

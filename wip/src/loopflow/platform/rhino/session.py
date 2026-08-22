@@ -7,6 +7,7 @@ from typing import Callable, Optional, Protocol, Sequence, Tuple
 
 from loopflow.foundation import results
 from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
+from loopflow.foundation.i18n import t
 
 
 class RhinoSession(Protocol):
@@ -305,10 +306,10 @@ def restore_snapshot(
     if missing:
         return results.failed(
             "restore",
-            "還原時找不到 %s 個快照物件，其餘狀態已寫回。" % len(missing),
+            t("rhino.012") % len(missing),
             blocking=tuple(missing),
         )
-    return results.ok("restore", "已還原 Rhino 視圖狀態")
+    return results.ok("restore", t("rhino.010"))
 
 
 def run_guarded(
@@ -346,7 +347,7 @@ def run_guarded(
         restore_snapshot(session, snapshot, restore_document_modified=True)
         return results.failed(
             "guarded_run",
-            "指令未回傳 Result，已還原 Rhino 狀態。",
+            t("rhino.011"),
             command_id=command_id,
         )
     restored = restore_snapshot(

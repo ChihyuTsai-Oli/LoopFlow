@@ -20,6 +20,7 @@ from loopflow.features.viewer.inspect import check_document_schema
 from loopflow.foundation import results
 from loopflow.foundation.usertext import OBJECT_ID_KEY, read_text
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 COMMAND_ID = "LF_Tagger_Grab"
 Pick = Callable[[RhinoSession], Optional[str]]
@@ -27,32 +28,32 @@ Pick = Callable[[RhinoSession], Optional[str]]
 
 def _refuse_reason(template: TagTemplate) -> str:
     if template.template_id == "TAG_DW" or "manual" in template.binding_modes:
-        return "「%s」是純手動標籤，不接受 Grab 綁定。" % template.template_id
+        return t("grab.005") % template.template_id
     if template.template_id.endswith("_LASER"):
-        return "「%s」請用 Laser 綁定，Grab 不寫入。" % template.template_id
+        return t("grab.006") % template.template_id
     if template.family == "index":
-        return "「%s」請用 Index 綁定，Grab 不寫入。" % template.template_id
+        return t("grab.007") % template.template_id
     if template.role == "title_frame" or "none" in template.binding_modes:
-        return "「%s」不綁模型來源，Grab 不寫入。" % template.template_id
-    return "「%s」不是 Grab 可用的標籤，已停止，不寫入。" % template.template_id
+        return t("grab.008") % template.template_id
+    return t("grab.001") % template.template_id
 
 
 def _default_pick_tag(_session: RhinoSession) -> Optional[str]:
     from loopflow.platform.rhino.prompts import pick_block_instance
 
-    return pick_block_instance("選取要綁定的 Tag（Esc 取消）")
+    return pick_block_instance(t("grab.002"))
 
 
 def _default_pick_object(_session: RhinoSession) -> Optional[str]:
     from loopflow.platform.rhino.prompts import pick_source_through_detail
 
-    return pick_source_through_detail("選取模型來源（Esc 取消）")
+    return pick_source_through_detail(t("grab.003"))
 
 
 def _default_pick_block(_session: RhinoSession) -> Optional[str]:
     from loopflow.platform.rhino.prompts import GRAB_BLOCK_FILTER, pick_source_through_detail
 
-    return pick_source_through_detail("選取家具圖塊來源（Esc 取消）", GRAB_BLOCK_FILTER)
+    return pick_source_through_detail(t("grab.004"), GRAB_BLOCK_FILTER)
 
 
 def resolve_grab_object_uuid(session: RhinoSession, source_id: str) -> Tuple[Optional[str], Optional[str]]:
@@ -88,7 +89,7 @@ def bind_tag(
     if not session.is_block_instance(tag_id):
         return results.blocked(
             "bind_tag",
-            "請選 Tag 圖塊。已停止，不寫入。",
+            t("grab.009"),
             ("not_a_block",),
             command_id=COMMAND_ID,
         )
@@ -97,7 +98,7 @@ def bind_tag(
     if template is None:
         return results.blocked(
             "bind_tag",
-            "未知圖塊「%s」，已停止，不寫入。" % (block_name or "（未命名）"),
+            t("grab.013") % (block_name or t("grab.019")),
             ("unknown_block",),
             command_id=COMMAND_ID,
             details={"block_name": block_name},
@@ -105,7 +106,7 @@ def bind_tag(
     if is_tag_locked(session, tag_id):
         return results.blocked(
             "bind_tag",
-            "此 Tag 已鎖定，請先解除鎖定再綁定。",
+            t("grab.010"),
             ("tag_locked",),
             command_id=COMMAND_ID,
         )
@@ -114,21 +115,21 @@ def bind_tag(
         if reason == "ambiguous_source":
             return results.blocked(
                 "bind_tag",
-                "來源對到兩個以上 3D 物件，已停止，不猜測。",
+                t("grab.014"),
                 ("ambiguous_source",),
                 command_id=COMMAND_ID,
             )
         if object_uuid is None:
             return results.blocked(
                 "bind_tag",
-                "來源物件尚未寫入 UUID。請先跑 Nexus 寫入模型 Metadata。",
+                t("grab.015"),
                 ("missing_object_id",),
                 command_id=COMMAND_ID,
             )
         write_object_binding(session, tag_id, template, object_uuid)
         return results.ok(
             "bind_tag",
-            "已綁定來源 UUID。",
+            t("grab.011"),
             command_id=COMMAND_ID,
             details={
                 "tag_id": tag_id,
@@ -141,7 +142,7 @@ def bind_tag(
         if not session.is_block_instance(source_id):
             return results.blocked(
                 "bind_tag",
-                "家具 Tag 請選家具圖塊當來源。已停止，不寫入。",
+                t("grab.016"),
                 ("source_not_block",),
                 command_id=COMMAND_ID,
             )
@@ -150,7 +151,7 @@ def bind_tag(
         if not re.match(pattern, source_name):
             return results.blocked(
                 "bind_tag",
-                "家具圖塊名稱格式不正確：%s。應為 FF-01__Chair-1。" % (source_name or "（未命名）"),
+                t("grab.020") % (source_name or t("grab.019")),
                 ("invalid_block_name",),
                 command_id=COMMAND_ID,
                 details={"source_block_name": source_name},
@@ -158,7 +159,7 @@ def bind_tag(
         write_block_binding(session, tag_id, template, source_name, source_id)
         return results.ok(
             "bind_tag",
-            "已綁定家具圖塊名稱。",
+            t("grab.012"),
             command_id=COMMAND_ID,
             details={
                 "tag_id": tag_id,
@@ -195,7 +196,7 @@ def run_tagger_grab(
     if "missing_document_schema" in (schema.warnings or ()):
         return results.blocked(
             "check_schema",
-            "文件尚未寫入 schema，已停止，不寫入。",
+            t("catalog.008"),
             ("missing_document_schema",),
             command_id=COMMAND_ID,
         )
@@ -212,20 +213,20 @@ def run_tagger_grab(
         if not tag_id:
             return results.cancelled(
                 "bind_tag",
-                "已取消 Grab。",
+                t("grab.017"),
                 command_id=COMMAND_ID,
             )
         if current.get_view_state(tag_id) is None:
             return results.blocked(
                 "bind_tag",
-                "找不到選取的 Tag。",
+                t("grab.018"),
                 ("missing_tag",),
                 command_id=COMMAND_ID,
             )
         if not current.is_block_instance(tag_id):
             return results.blocked(
                 "bind_tag",
-                "請選 Tag 圖塊。已停止，不寫入。",
+                t("grab.009"),
                 ("not_a_block",),
                 command_id=COMMAND_ID,
             )
@@ -234,7 +235,7 @@ def run_tagger_grab(
         if template is None:
             return results.blocked(
                 "bind_tag",
-                "未知圖塊「%s」，已停止，不寫入。" % (block_name or "（未命名）"),
+                t("grab.013") % (block_name or t("grab.019")),
                 ("unknown_block",),
                 command_id=COMMAND_ID,
                 details={"block_name": block_name},
@@ -252,7 +253,7 @@ def run_tagger_grab(
         if is_tag_locked(current, tag_id):
             return results.blocked(
                 "bind_tag",
-                "此 Tag 已鎖定，請先解除鎖定再綁定。",
+                t("grab.010"),
                 ("tag_locked",),
                 command_id=COMMAND_ID,
             )
@@ -267,7 +268,7 @@ def run_tagger_grab(
         if not source_id:
             return results.cancelled(
                 "bind_tag",
-                "已取消 Grab。",
+                t("grab.017"),
                 command_id=COMMAND_ID,
             )
         return bind_tag(current, tag_id, source_id, loaded)

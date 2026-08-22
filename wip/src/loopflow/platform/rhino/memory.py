@@ -14,6 +14,7 @@ from loopflow.platform.rhino.session import (
     silence_loopflow_layers,
 )
 from loopflow.platform.rhino.state import DocumentSnapshot, ObjectViewState
+from loopflow.foundation.i18n import t
 
 
 class MemorySession:
@@ -119,7 +120,7 @@ class MemorySession:
 
     def set_view_state(self, state: ObjectViewState) -> None:
         if state.object_id not in self._objects:
-            raise KeyError("未知物件：%s" % state.object_id)
+            raise KeyError(t("rhino.009") % state.object_id)
         self._objects[state.object_id] = state
 
     def set_redraw_enabled(self, enabled: bool) -> None:
@@ -198,13 +199,13 @@ class MemorySession:
 
     def set_layer_user_text(self, path: str, key: str, value: str) -> None:
         if path not in self._layers:
-            raise KeyError("未知圖層：%s" % path)
+            raise KeyError(t("rhino.008") % path)
         self._layers[path]["user_text"][key] = value
         self._modified = True
 
     def set_layer_appearance(self, path: str, rgb, material_name: Optional[str] = None) -> None:
         if path not in self._layers:
-            raise KeyError("未知圖層：%s" % path)
+            raise KeyError(t("rhino.008") % path)
         self._layers[path]["color"] = tuple(int(value) for value in rgb)
         self._layers[path]["material_name"] = material_name
         self._modified = True
@@ -680,7 +681,7 @@ class MemorySession:
         self._next_id += 1
         pts = [tuple(float(v) for v in pt) for pt in points]
         if len(pts) < 3:
-            raise ValueError("封閉框至少需要 3 點")
+            raise ValueError(t("rhino.006"))
         self.add_object(object_id, name=name, layer=layer)
         closed = list(pts)
         if closed[0] != closed[-1]:

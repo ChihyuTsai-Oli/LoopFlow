@@ -13,6 +13,7 @@ from loopflow.features.viewer.inspect import (
 )
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
+from loopflow.foundation.i18n import t
 
 PickObject = Callable[[RhinoSession], Optional[str]]
 ShowReport = Callable[[str], None]
@@ -79,20 +80,20 @@ def run_data_viewer(
                 if viewed == 0:
                     return results.cancelled(
                         "inspect_object",
-                        "已結束檢視。",
+                        t("data_viewer.002"),
                         command_id=COMMAND_ID,
                         warnings=tuple(warnings),
                         details={"viewed": 0, "reports": ()},
                     )
                 return results.ok(
                     "inspect_object",
-                    "已檢視 %s 個物件。" % viewed,
+                    t("data_viewer.003") % viewed,
                     command_id=COMMAND_ID,
                     warnings=tuple(warnings),
                     details={"viewed": viewed, "reports": tuple(texts)},
                 )
             if current.get_view_state(object_id) is None:
-                _notify(notify, "找不到物件。")
+                _notify(notify, t("data_viewer.001"))
                 continue
             report = inspect_object(current, object_id, catalog=loaded_catalog)
             text = format_report(report)

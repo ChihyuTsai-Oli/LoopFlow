@@ -6,6 +6,7 @@ from typing import Callable, Dict
 
 from loopflow.command_catalog import get_command
 from loopflow.foundation.results import Result, not_implemented
+from loopflow.foundation.i18n import t
 
 Runner = Callable[[], Result]
 
@@ -275,8 +276,8 @@ def dispatch(command_id: str) -> Result:
     if runner is None:
         return not_implemented(
             "dispatch",
-            "這是 2.0 測試入口「%s」，功能尚未實作（%s）。"
-            % (command_id, spec.get("task") or "待排程"),
+            t("runners.001")
+            % (command_id, spec.get("task") or t("runners.002")),
             command_id=command_id,
             details={"task": spec.get("task")},
         )
