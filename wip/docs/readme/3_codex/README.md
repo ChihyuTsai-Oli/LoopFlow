@@ -1,127 +1,17 @@
-# LoopFlow 2.0 Documentation
+# LoopFlow 使用說明 / Documentation
 
-LoopFlow 2.0 is a data and documentation workflow for interior design in Rhino 8. Model freely in 3D, apply traceable Type data from an Excel Dictionary, then bring geometry and published data together again in 2D drawings, sheets, and tags.
+此頁是 Rhino 指令 `LFDocument` 開啟的**文件入口**，不是專案首頁。產品介紹、安裝與 1.0 差異見 [專案主頁](../README_zh-TW.md)。
 
-Geometry moves from 3D to 2D through Rhino Section. Validated model data moves through a versioned Registry. The workflow remains user-directed: every stage can be reviewed, stopped, repeated, or resumed without forcing the entire chain to run at once.
+This page is the **documentation entry** opened by the Rhino command `LFDocument`. It is not the project homepage. For the product overview, installation, and what changed from 1.0, see the [project homepage](../README.md).
 
-## System requirements
-
-| Item | Requirement |
-|---|---|
-| Rhino | **Rhino 8, required** |
-| Operating system | Windows |
-| Project version | LoopFlow 2.0 only |
-
-### Why Rhino 8 is required
-
-LoopFlow uses Rhino 8's native Section and Clipping Drawing tools as the geometry handoff between 3D and 2D. It does not ship a separate section engine. Without Rhino 8, the main 2D workflow cannot run.
-
-> LoopFlow 1.x and 2.0 use different architectures. Do not mix their data, commands, toolbars, or workflow steps in the same project.
-
-## Project folder
-
-The folder containing the saved `.3dm` is the LoopFlow project folder. Keep the selected Dictionary beside the `.3dm`; LoopFlow stores project settings, Registry revisions, and logs under `_LoopFlow_Config/` in that same folder.
-
-```text
-<project folder>/
-  Project.3dm
-  LoopFlow_Dictionary.xlsx
-  _LoopFlow_Config/
-    LoopFlow_Project.json
-    <project name>/
-      Project_Registry.json
-```
-
-`LoopFlow_Project.json` remembers the project name and Dictionary filename. Moving the whole folder to another parent folder, drive, or computer preserves these relative links. Copying only the `.3dm` does not carry the project settings with it. Starter copies of the Dictionary and `Tag_Blocks.3dm` will later be placed in `Documents\LoopFlow` after install (not implemented yet).
-
-## Interface language
-
-The LoopFlow interface supports **English** and **Traditional Chinese**. The first product command opens a two-button language picker: English on the left and 正體中文 on the right. English is the default; pressing Enter selects it. Pressing Esc or closing the picker cancels the current command, saves nothing, and asks again next time.
-
-The choice is saved for this computer in `%APPDATA%\LoopFlow\preferences.json`, not in the `.3dm`, so different computers can use different interface languages for the same project. To change it later, right-click the **Document** toolbar button or run `LFLanguage`. Fixed labels and formula prompts inside `Tag_Blocks.3dm` remain in English and do not follow this setting.
-
-The project Dictionary is whichever `.xlsx` Nexus remembered after **Sync Type Layers**. Chinese and English header rows both load. Switching the interface language does not switch the Dictionary file.
-
-## Documentation
-
-These files are the 2.0 documentation draft in `wip/`. At official release they will be copied to the public location.
-
-| Document | Traditional Chinese | English |
+| 文件 | 繁體中文 | English |
 |---|---|---|
-| One-minute overview | [Open](./USER_GUIDE_TW.md) | [Open](./USER_GUIDE.md) |
-| Excel Dictionary | [Open](./Dictionary_GUIDE_TW.md) | [Open](./Dictionary_GUIDE.md) |
-| Rhino commands | [Open](./COMMANDS_TW.md) | [Open](./COMMANDS.md) |
-| Tag Blocks | [Open](./TAG_BLOCKS_TW.md) | [Open](./TAG_BLOCKS.md) |
+| 一分鐘總覽 | [開啟](./USER_GUIDE_TW.md) | [Open](./USER_GUIDE.md) |
+| Excel Dictionary | [開啟](./Dictionary_GUIDE_TW.md) | [Open](./Dictionary_GUIDE.md) |
+| Rhino 指令 | [開啟](./COMMANDS_TW.md) | [Open](./COMMANDS.md) |
+| Tag Blocks | [開啟](./TAG_BLOCKS_TW.md) | [Open](./TAG_BLOCKS.md) |
+| 教學影片 | [YouTube](https://www.youtube.com/@Chihyu-Oli/playlists) | [YouTube](https://www.youtube.com/@Chihyu-Oli/playlists) |
 
-## Where to start
+G03 公開文件完成前，`LFDocument` 仍會開啟公開的 `docs/README.md`（目前仍是 1.x）。本資料夾是準備接替的 2.0 草稿。
 
-1. Read the [one-minute overview](./USER_GUIDE.md) to understand the toolchain and the 3D/2D boundary.
-2. Use the [Dictionary guide](./Dictionary_GUIDE.md) when defining or maintaining Types.
-3. Use the [command reference](./COMMANDS.md) for individual tools and the six Nexus menu items.
-4. Use the [Tag Block reference](./TAG_BLOCKS.md) to choose a block and identify automatic, manual, and system-owned fields.
-
-This directory is the 2.0 documentation draft prepared for the entry opened by **LFDocument**. Until the G03 public-documentation pass is complete, the command still opens the public `docs/README.md` entry whose linked guides remain 1.x. It is not the project homepage.
-
----
-
-# LoopFlow 2.0 使用說明
-
-LoopFlow 2.0 是一套在 Rhino 8 中運作的室內設計資料與出圖工作鏈。使用者可以自由建立 3D 模型，再由 Excel Dictionary 賦予可追蹤的 Type 資料，最後在 2D Drawing、Sheet 與 Tag 中重新整合幾何與已發布資料。
-
-3D 幾何透過 Rhino Section 進入 2D；通過檢核的模型資料則透過有版次的 Registry 交接。整條流程由使用者主導，每個階段都能檢查、暫停、重跑或日後接續，不必一次執行到底。
-
-## 系統需求
-
-| 項目 | 需求 |
-|---|---|
-| Rhino | **Rhino 8，必要** |
-| 作業系統 | Windows |
-| 專案版本 | 僅限 LoopFlow 2.0 |
-
-### 為什麼必須使用 Rhino 8
-
-LoopFlow 以 Rhino 8 原生的 Section／Clipping Drawing 作為 3D 與 2D 之間的幾何交接，不另外提供一套剖面引擎。沒有 Rhino 8，2D 端的主要工作鏈無法運作。
-
-> LoopFlow 1.x 與 2.0 是不同架構。請勿在同一專案中混用兩者的資料、指令、工具列或操作流程。
-
-## 專案資料夾
-
-已存檔的 `.3dm` 所在資料夾，就是 LoopFlow 的專案工作資料夾。採用的 Dictionary 放在 `.3dm` 同一層；專案設定、Registry 版次與 log 則放在同一層的 `_LoopFlow_Config/`。
-
-```text
-<專案資料夾>/
-  Project.3dm
-  LoopFlow_Dictionary.xlsx
-  _LoopFlow_Config/
-    LoopFlow_Project.json
-    <專案名稱>/
-      Project_Registry.json
-```
-
-`LoopFlow_Project.json` 會記住專案名稱與 Dictionary 檔名。整個資料夾搬到其他上層目錄、磁碟或電腦時，相對關係仍然有效；若只複製 `.3dm`，則不會連同專案設定一起帶走。官方 Dictionary 範本與 `Tag_Blocks.3dm` 日後會放到「文件\LoopFlow」，再複製到各專案使用（尚未實作）。
-
-## 介面語言
-
-LoopFlow 介面支援 **English** 與**正體中文**。第一次執行任一產品指令時，會出現兩顆語言按鈕：左側 English、右側正體中文。預設為 English，按 Enter 會選英文；按 Esc 或關閉視窗會取消這次指令，不保存選擇，下次再問。
-
-選擇只記在這台電腦的 `%APPDATA%\LoopFlow\preferences.json`，不會寫進 `.3dm`，所以同一專案在不同電腦可以各用自己的介面語言。之後可在 **Document** 工具列按鈕上按右鍵，或直接執行 `LFLanguage` 切換。`Tag_Blocks.3dm` 內設計時固定的標籤與公式提示維持英文，不跟著介面語言改變。專案字典只認 Nexus 選中並記住的那本 `.xlsx`；繁中與英文欄名都能載入，介面語言不會自動換檔。
-
-## 說明文件
-
-本資料夾是 `wip` 裡的 2.0 說明草稿；正式發布時會複製到公開位置。
-
-| 文件 | 繁體中文 | 英文 |
-|---|---|---|
-| 一分鐘總覽 | [開啟](./USER_GUIDE_TW.md) | [開啟](./USER_GUIDE.md) |
-| Excel Dictionary | [開啟](./Dictionary_GUIDE_TW.md) | [開啟](./Dictionary_GUIDE.md) |
-| Rhino 指令 | [開啟](./COMMANDS_TW.md) | [開啟](./COMMANDS.md) |
-| Tag Blocks | [開啟](./TAG_BLOCKS_TW.md) | [開啟](./TAG_BLOCKS.md) |
-
-## 從哪裡開始
-
-1. 先閱讀[一分鐘總覽](./USER_GUIDE_TW.md)，理解整條工具鏈與 3D／2D 分界。
-2. 定義或維護 Type 時，查 [Dictionary 使用說明](./Dictionary_GUIDE_TW.md)。
-3. 操作個別工具或 Nexus 六個選單時，查 [指令逐項說明](./COMMANDS_TW.md)。
-4. 選擇 Tag、確認自動欄與人工欄時，查 [Tag Block 說明](./TAG_BLOCKS_TW.md)。
-
-本資料夾是準備給 **LFDocument** 文件入口使用的 2.0 說明草稿。G03 公開文件尚未完成前，指令仍會開啟公開的 `docs/README.md` 入口，該頁連結的指南目前仍是 1.x；文件入口不是專案首頁。
+Until the G03 public-documentation pass is complete, `LFDocument` still opens the public `docs/README.md` (still 1.x). This folder is the 2.0 draft that will replace it.

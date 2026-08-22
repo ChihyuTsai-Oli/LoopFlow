@@ -39,6 +39,8 @@ Bilingual interface: English / Traditional Chinese
 
 ## Quick start
 
+- [Tutorial playlists](https://www.youtube.com/@Chihyu-Oli/playlists)
+
 ### Installation
 
 2.0 installs as one `.yak` through Rhino Package Manager. You do not manage Python paths or copy commands one by one.

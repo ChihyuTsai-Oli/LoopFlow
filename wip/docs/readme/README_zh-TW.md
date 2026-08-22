@@ -39,6 +39,8 @@ LoopFlow 2.0 是一套以 Rhino 8 為核心、貫穿 SD（Schematic Design）、
 
 ## 快速開始
 
+- [教學播放清單](https://www.youtube.com/@Chihyu-Oli/playlists)
+
 ### 安裝
 
 2.0 以一份 `.yak` 安裝，由 Rhino Package Manager 載入，不需自行管理 Python 路徑或逐支複製指令
