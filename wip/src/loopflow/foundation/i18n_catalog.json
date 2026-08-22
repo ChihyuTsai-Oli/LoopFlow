@@ -8,7 +8,7 @@
     "en": "Choose interface language / 選擇介面語言"
   },
   "locale.zh": {
-    "zh-TW": "繁中",
+    "zh-TW": "正體中文",
     "en": "Traditional Chinese"
   },
   "locale.en": {
@@ -16,11 +16,11 @@
     "en": "English"
   },
   "locale.hint": {
-    "zh-TW": "之後可用 Document 按鈕右鍵切換（指令 LFLanguage）。 / You can change this later with the Document button's right click (LFLanguage).",
-    "en": "You can change this later with the Document button's right click (LFLanguage). / 之後可用 Document 按鈕右鍵切換（指令 LFLanguage）。"
+    "zh-TW": "Document 按鈕右鍵切換語言介面 (LFLanguage) / Right-click Document to switch the UI (LFLanguage)",
+    "en": "Right-click Document to switch the UI (LFLanguage) / Document 按鈕右鍵切換語言介面 (LFLanguage)"
   },
   "locale.saved.zh": {
-    "zh-TW": "介面語言已設為繁中。",
+    "zh-TW": "介面語言已設為正體中文。",
     "en": "Interface language set to Traditional Chinese."
   },
   "locale.saved.en": {
@@ -508,11 +508,11 @@
     "en": "Dictionary selection cancelled."
   },
   "document.001": {
-    "zh-TW": "繁中",
+    "zh-TW": "正體中文",
     "en": "Traditional Chinese"
   },
   "document.002": {
-    "zh-TW": "介面語言已設為繁中。",
+    "zh-TW": "介面語言已設為正體中文。",
     "en": "Interface language set to Traditional Chinese."
   },
   "document.003": {
@@ -2432,8 +2432,8 @@
     "en": "Choose interface language / 選擇介面語言"
   },
   "prompts.002": {
-    "zh-TW": "之後可用 Document 按鈕右鍵切換（指令 LFLanguage）。 / You can change this later with the Document button's right click (LFLanguage).",
-    "en": "You can change this later with the Document button's right click (LFLanguage)."
+    "zh-TW": "Document 按鈕右鍵切換語言介面 (LFLanguage) / Right-click Document to switch the UI (LFLanguage)",
+    "en": "Right-click Document to switch the UI (LFLanguage)"
   },
   "prompts.003": {
     "zh-TW": "複製 Layout",

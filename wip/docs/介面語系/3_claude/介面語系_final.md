@@ -24,10 +24,10 @@ English 欄是定稿，可直接改這份檔。`%s` 是程式填入的數字或�
 |---|---|---|
 | locale.title | LoopFlow | LoopFlow |
 | locale.choose | 選擇介面語言 / Choose interface language | Choose interface language / 選擇介面語言 |
-| locale.zh | 繁中 | Traditional Chinese |
+| locale.zh | 正體中文 | Traditional Chinese |
 | locale.en | English | English |
-| locale.hint | 之後可用 Document 按鈕右鍵切換（指令 LFLanguage）。 / You can change this later with the Document button's right click (LFLanguage). | You can change this later with the Document button's right click (LFLanguage). / 之後可用 Document 按鈕右鍵切換（指令 LFLanguage）。 |
-| locale.saved.zh | 介面語言已設為繁中。 | Interface language set to Traditional Chinese. |
+| locale.hint | Document 按鈕右鍵切換語言介面 (LFLanguage) / Right-click Document to switch the UI (LFLanguage) | Right-click Document to switch the UI (LFLanguage) / Document 按鈕右鍵切換語言介面 (LFLanguage) |
+| locale.saved.zh | 介面語言已設為正體中文。 | Interface language set to Traditional Chinese. |
 | locale.saved.en | 介面語言已設為 English。 | Interface language set to English. |
 | locale.cancelled.first | 已取消選擇語系。尚未記住，下次仍會詢問。 | Language choice cancelled. Nothing was saved; you will be asked again next time. |
 | locale.cancelled.switch | 已取消切換語系。 | Language switch cancelled. |
@@ -176,8 +176,8 @@ English 欄是定稿，可直接改這份檔。`%s` 是程式填入的數字或�
 
 | id | 繁中 | English |
 |---|---|---|
-| `document.001` | 繁中 | Traditional Chinese |
-| `document.002` | 介面語言已設為繁中。 | Interface language set to Traditional Chinese. |
+| `document.001` | 正體中文 | Traditional Chinese |
+| `document.002` | 介面語言已設為正體中文。 | Interface language set to Traditional Chinese. |
 | `document.003` | 介面語言已設為 English。 | Interface language set to English. |
 | `document.004` | 已取消選擇語系。尚未記住，下次仍會詢問。 | Language choice cancelled. Nothing was saved; you will be asked again next time. |
 | `document.005` | 已取消切換語系。 | Language switch cancelled. |
@@ -757,7 +757,7 @@ English 欄是定稿，可直接改這份檔。`%s` 是程式填入的數字或�
 | id | 繁中 | English |
 |---|---|---|
 | `prompts.001` | 選擇介面語言 / Choose interface language | Choose interface language / 選擇介面語言 |
-| `prompts.002` | 之後可用 Document 按鈕右鍵切換（指令 LFLanguage）。 / You can change this later with the Document button's right click (LFLanguage). | You can change this later with the Document button's right click (LFLanguage). |
+| `prompts.002` | Document 按鈕右鍵切換語言介面 (LFLanguage) / Right-click Document to switch the UI (LFLanguage) | Right-click Document to switch the UI (LFLanguage) |
 | `prompts.003` | 複製 Layout | Duplicate Layout |
 | `prompts.004` | Index 綁定 | Index binding |
 | `prompts.005` | 點選要查看的物件（Enter／Esc 結束） | Select objects to inspect (Enter or Esc to finish) |

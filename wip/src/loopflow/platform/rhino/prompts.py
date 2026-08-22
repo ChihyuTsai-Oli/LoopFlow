@@ -23,6 +23,7 @@ def _ui_font(drawing, size: float = 11.0):
 # 對齊 Nexus／rs.ListBox 的 Windows 系統鈕。
 DIALOG_BUTTON_WIDTH = 75
 DIALOG_BUTTON_HEIGHT = 23
+LOCALE_BUTTON_WIDTH = 90
 # 對齊 Index 綁定：系統預設字、外框 10、區塊間距 5。
 DIALOG_PADDING = 10
 DIALOG_SPACING = 5
@@ -90,9 +91,9 @@ def _center_dialog_on_screen(dialog, drawing) -> None:
     dialog.Location = drawing.Point(x, y)
 
 
-def _apply_dialog_button_size(button, drawing) -> None:
-    size = drawing.Size(DIALOG_BUTTON_WIDTH, DIALOG_BUTTON_HEIGHT)
-    button.Width = DIALOG_BUTTON_WIDTH
+def _apply_dialog_button_size(button, drawing, width: int = DIALOG_BUTTON_WIDTH) -> None:
+    size = drawing.Size(width, DIALOG_BUTTON_HEIGHT)
+    button.Width = width
     button.Height = DIALOG_BUTTON_HEIGHT
     button.Size = size
     try:
@@ -298,15 +299,15 @@ def ask_popup_choice(
 LOCALE_PROMPT_TITLE = "LoopFlow"
 LOCALE_PROMPT_HEADING = "選擇介面語言 / Choose interface language"
 LOCALE_PROMPT_HINT = (
-    "之後可用 Document 按鈕右鍵切換（指令 LFLanguage）。\n"
-    "You can change this later with the Document button's right click (LFLanguage)."
+    "Document 按鈕右鍵切換語言介面 (LFLanguage)\n"
+    "Right-click Document to switch the UI (LFLanguage)"
 )
-LOCALE_LABEL_ZH = "繁中"
+LOCALE_LABEL_ZH = "正體中文"
 LOCALE_LABEL_EN = "English"
 
 
 def ask_ui_locale() -> Optional[str]:
-    """第一次或切換語系。回傳「繁中」／「English」；取消 None；沒有介面 ImportError。"""
+    """第一次或切換語系。回傳「正體中文」／「English」；取消 None；沒有介面 ImportError。"""
     try:
         import Eto.Drawing as drawing  # type: ignore
         import Eto.Forms as forms  # type: ignore
@@ -339,15 +340,15 @@ def ask_ui_locale() -> Optional[str]:
             hint.Font = _ui_font(drawing, 10)
             btn_zh = forms.Button()
             btn_zh.Text = LOCALE_LABEL_ZH
-            _apply_dialog_button_size(btn_zh, drawing)
+            _apply_dialog_button_size(btn_zh, drawing, LOCALE_BUTTON_WIDTH)
             btn_zh.Click += self._pick_zh
             btn_en = forms.Button()
             btn_en.Text = LOCALE_LABEL_EN
-            _apply_dialog_button_size(btn_en, drawing)
+            _apply_dialog_button_size(btn_en, drawing, LOCALE_BUTTON_WIDTH)
             btn_en.Click += self._pick_en
             btn_cancel = forms.Button()
             btn_cancel.Text = "Cancel"
-            _apply_dialog_button_size(btn_cancel, drawing)
+            _apply_dialog_button_size(btn_cancel, drawing, LOCALE_BUTTON_WIDTH)
             btn_cancel.Click += self._on_cancel
             self.AbortButton = btn_cancel
             row = forms.DynamicLayout()

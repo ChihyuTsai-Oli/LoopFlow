@@ -12,7 +12,7 @@ COMMAND_ID = "LF_Language"
 STAGE = "choose_locale"
 LOCALE_ZH_TW = locale_store.LOCALE_ZH_TW
 LOCALE_EN = locale_store.LOCALE_EN
-LABEL_ZH = "繁中"
+LABEL_ZH = "正體中文"
 LABEL_EN = "English"
 
 AskLocale = Callable[[], Optional[str]]
@@ -28,7 +28,7 @@ def parse_locale_choice(text: Optional[str]) -> Optional[str]:
     if text is None:
         return None
     stripped = str(text).strip()
-    if stripped in (LOCALE_ZH_TW, LABEL_ZH, "zh", "zh_TW", "Traditional Chinese"):
+    if stripped in (LOCALE_ZH_TW, LABEL_ZH, "繁中", "zh", "zh_TW", "Traditional Chinese"):
         return LOCALE_ZH_TW
     if stripped in (LOCALE_EN, LABEL_EN, "en-US", "en_US"):
         return LOCALE_EN

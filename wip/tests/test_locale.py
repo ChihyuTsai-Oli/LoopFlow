@@ -54,6 +54,7 @@ class LocalePreferenceTests(unittest.TestCase):
 
     def test_parse_labels(self):
         self.assertEqual(parse_locale_choice("繁中"), locale_store.LOCALE_ZH_TW)
+        self.assertEqual(parse_locale_choice("正體中文"), locale_store.LOCALE_ZH_TW)
         self.assertEqual(parse_locale_choice("English"), locale_store.LOCALE_EN)
         self.assertEqual(parse_locale_choice("zh-TW"), locale_store.LOCALE_ZH_TW)
         self.assertIsNone(parse_locale_choice(None))
@@ -91,7 +92,7 @@ class LocalePreferenceTests(unittest.TestCase):
         self.assertIsNone(locale_store.read_locale())
 
     def test_switch_command_saves(self):
-        result = run_language(ask=lambda: "繁中")
+        result = run_language(ask=lambda: "正體中文")
         self.assertTrue(result.ok)
         self.assertEqual(result.command_id, COMMAND_ID)
         self.assertEqual(result.details["locale"], locale_store.LOCALE_ZH_TW)
@@ -107,7 +108,7 @@ class LocalePreferenceTests(unittest.TestCase):
         locale_store.write_locale(locale_store.LOCALE_ZH_TW)
         self.assertEqual(
             saved_message(locale_store.LOCALE_ZH_TW),
-            "介面語言已設為繁中。",
+            "介面語言已設為正體中文。",
         )
 
     def test_english_menu_labels_parse(self):
