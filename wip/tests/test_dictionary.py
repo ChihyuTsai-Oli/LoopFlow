@@ -79,6 +79,9 @@ class SchemaFixtureTests(unittest.TestCase):
         self.assertEqual(list(schema.MACHINE_KEYS), cols["machine_keys"])
         self.assertEqual(list(schema.TYPE_CATEGORIES), cols["type_categories"])
         self.assertEqual(len(schema.DISPLAY_COLUMNS), 15)
+        self.assertEqual(len(schema.DISPLAY_COLUMNS_EN), 15)
+        self.assertEqual(schema.DISPLAY_COLUMNS_EN[0], "Rhino Layer")
+        self.assertEqual(schema.DISPLAY_COLUMNS_EN[12], "Q_04_Unit")
 
     def test_split_type_id_uses_category_prefix_not_first_hyphen(self):
         result = schema.split_type_id("EX-A-01")
@@ -251,6 +254,43 @@ class PathAndExcelTests(unittest.TestCase):
             table = read_table(styled)
             self.assertTrue(table.ok, table.message)
             self.assertEqual([row[-1] for row in table.details["rows"]], [row[-1] for row in rows])
+
+    def test_english_headers_and_units_load(self):
+        row = _valid_row(estimation_unit="ea")
+        result = _load([row], headers=list(schema.DISPLAY_COLUMNS_EN))
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.details["header_dialect"], schema.HEADER_DIALECT_EN)
+        catalog = result.details["catalog"]
+        self.assertEqual(catalog.header_dialect, schema.HEADER_DIALECT_EN)
+        self.assertEqual(catalog.by_type_id("EX-01").estimation_unit, "ea")
+
+    def test_m2_area_unit_passes(self):
+        result = _load(
+            [_valid_row(estimation_unit="m2", measurement_rule="AREA_WD")],
+            headers=list(schema.DISPLAY_COLUMNS_EN),
+        )
+        self.assertTrue(result.ok, result.message)
+
+    def test_mixed_zh_en_headers_block(self):
+        headers = list(schema.DISPLAY_COLUMNS)
+        headers[0] = schema.DISPLAY_COLUMNS_EN[0]
+        result = _load([_valid_row()], headers=headers)
+        self.assertEqual(result.blocking, ("unknown_column",))
+
+    def test_official_tw_and_en_xlsx_load(self):
+        docs = WIP / "docs" / "字典"
+        tw = load_from_path(docs / "LoopFlow_Dictionary_tw.xlsx")
+        en = load_from_path(docs / "LoopFlow_Dictionary_en.xlsx")
+        self.assertTrue(tw.ok, tw.message)
+        self.assertTrue(en.ok, en.message)
+        self.assertEqual(tw.details["header_dialect"], schema.HEADER_DIALECT_ZH)
+        self.assertEqual(en.details["header_dialect"], schema.HEADER_DIALECT_EN)
+        self.assertEqual(len(tw.details["catalog"].types), 92)
+        self.assertEqual(len(en.details["catalog"].types), 92)
+        self.assertEqual(
+            tw.details["catalog"].by_type_id("EX-01").type_id,
+            en.details["catalog"].by_type_id("EX-01").type_id,
+        )
 
 
 if __name__ == "__main__":

@@ -46,6 +46,7 @@ class TypeCatalog:
     schema_version: int
     title: str
     types: Tuple[TypeRecord, ...]
+    header_dialect: str = schema.HEADER_DIALECT_ZH
 
     def by_type_id(self, type_id: str) -> Optional[TypeRecord]:
         for record in self.types:
@@ -89,21 +90,27 @@ def _header_failure(headers: Sequence[Optional[str]]) -> Optional[results.Result
             blocking=("cb_columns_forbidden",),
             details={"headers": tuple(names)},
         )
-    if list(headers) != list(schema.DISPLAY_COLUMNS):
-        extra = [name for name in names if name not in schema.DISPLAY_COLUMNS]
-        code = "unknown_column" if extra or len(names) == len(schema.DISPLAY_COLUMNS) else "wrong_column_count"
-        message = (
-            t("dictionary.002")
-            if code == "unknown_column"
-            else t("dictionary.004") % len(names)
-        )
-        return results.blocked(
-            "validate_dictionary",
-            message,
-            blocking=(code,),
-            details={"headers": tuple(names), "expected": schema.DISPLAY_COLUMNS},
-        )
-    return None
+    resolved = schema.resolve_display_columns(headers)
+    if resolved is not None:
+        return None
+    allowed = set(schema.DISPLAY_COLUMNS) | set(schema.DISPLAY_COLUMNS_EN)
+    extra = [name for name in names if name not in allowed]
+    code = (
+        "unknown_column"
+        if extra or len(names) == len(schema.DISPLAY_COLUMNS)
+        else "wrong_column_count"
+    )
+    message = (
+        t("dictionary.002")
+        if code == "unknown_column"
+        else t("dictionary.004") % len(names)
+    )
+    return results.blocked(
+        "validate_dictionary",
+        message,
+        blocking=(code,),
+        details={"headers": tuple(names), "expected": schema.DISPLAY_COLUMNS},
+    )
 
 
 def load_from_table(
@@ -127,6 +134,8 @@ def load_from_table(
     header_error = _header_failure(headers)
     if header_error is not None:
         return header_error
+    dialect, display_columns = schema.resolve_display_columns(headers)
+    display_for_key = dict(zip(schema.MACHINE_KEYS, display_columns))
 
     records = []
     issues = []
@@ -135,10 +144,10 @@ def load_from_table(
     seen_layers = {}
     for row_number, values in enumerate(rows, start=3):
         mapping = _row_mapping(headers, values)
-        if all(_text(mapping.get(col)) is None for col in schema.DISPLAY_COLUMNS):
+        if all(_text(mapping.get(col)) is None for col in display_columns):
             continue
-        owned = {key: _text(mapping.get(schema.MACHINE_TO_DISPLAY[key])) for key in TYPE_OWNED_KEYS}
-        for display in schema.COMPUTED_DISPLAY_COLUMNS:
+        owned = {key: _text(mapping.get(display_for_key[key])) for key in TYPE_OWNED_KEYS}
+        for display in schema.computed_display_columns_for(dialect):
             if _text(mapping.get(display)) is not None:
                 warnings.append(t("dictionary.011") % (row_number, display))
 
@@ -221,10 +230,12 @@ def load_from_table(
         schema_version=schema.SCHEMA_VERSION,
         title=schema.TITLE_ROW,
         types=tuple(records),
+        header_dialect=dialect,
     )
     payload = {
         "catalog": catalog,
         "type_count": len(catalog.types),
+        "header_dialect": dialect,
     }
     if warnings:
         return results.ok_with_warnings(

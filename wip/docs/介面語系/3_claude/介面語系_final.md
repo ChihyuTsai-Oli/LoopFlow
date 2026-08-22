@@ -34,7 +34,7 @@ English 欄是定稿，可直接改這份檔。`%s` 是程式填入的數字或�
 
 ## Dictionary 顯示欄名
 
-官方範本：`wip/docs/字典/LoopFlow_Dictionary_tw.xlsx`、`LoopFlow_Dictionary_en.xlsx`。鍵本身不翻譯。下表是句子表對照；載入器目前仍認繁中欄名。
+官方範本：`wip/docs/字典/LoopFlow_Dictionary_tw.xlsx`、`LoopFlow_Dictionary_en.xlsx`。鍵本身不翻譯。下表是句子表對照；載入器認整列繁中或整列英文 15 欄。
 
 | id | 繁中（現況標題） | English（預定顯示） |
 |---|---|---|

@@ -2,7 +2,7 @@
 """Dictionary schema_version 1 的欄位、量綱與 Type ID 拆分。"""
 from __future__ import annotations
 
-from typing import Optional, Tuple
+from typing import Optional, Sequence, Tuple
 
 from loopflow.foundation import results
 from loopflow.foundation.i18n import t
@@ -28,6 +28,27 @@ DISPLAY_COLUMNS = (
     "Q_05_計量規則",
     "Q_06_實作數量",
 )
+
+DISPLAY_COLUMNS_EN = (
+    "Rhino Layer",
+    "_01_Space Name",
+    "_02_Construction",
+    "_03_Type ID",
+    "_04_Type Name",
+    "_05_Elevation Basis",
+    "_06_Elevation Value",
+    "_07_UUID",
+    "_08_Remarks",
+    "Q_01_Width W",
+    "Q_02_Depth D",
+    "Q_03_Height H",
+    "Q_04_Unit",
+    "Q_05_Measurement Rule",
+    "Q_06_Quantity",
+)
+
+HEADER_DIALECT_ZH = "zh-TW"
+HEADER_DIALECT_EN = "en"
 
 MACHINE_KEYS = (
     "layer_path",
@@ -55,6 +76,16 @@ COMPUTED_DISPLAY_COLUMNS = (
     "Q_02_深度D",
     "Q_03_高度H",
     "Q_06_實作數量",
+)
+
+COMPUTED_DISPLAY_COLUMNS_EN = (
+    "_01_Space Name",
+    "_06_Elevation Value",
+    "_07_UUID",
+    "Q_01_Width W",
+    "Q_02_Depth D",
+    "Q_03_Height H",
+    "Q_06_Quantity",
 )
 
 TYPE_CATEGORIES = (
@@ -93,16 +124,44 @@ UNIT_DIMENSIONS = {
     "mm": "length",
     "坪": "area",
     "才": "area",
+    "m2": "area",
     "m3": "volume",
+    "ea": "count",
 }
 
 ELEVATION_BASES = ("BH", "TH", "CH", "BC")
 
 DISPLAY_TO_MACHINE = dict(zip(DISPLAY_COLUMNS, MACHINE_KEYS))
+DISPLAY_TO_MACHINE.update(zip(DISPLAY_COLUMNS_EN, MACHINE_KEYS))
 MACHINE_TO_DISPLAY = dict(zip(MACHINE_KEYS, DISPLAY_COLUMNS))
+MACHINE_TO_DISPLAY_EN = dict(zip(MACHINE_KEYS, DISPLAY_COLUMNS_EN))
 _CATEGORY_PREFIXES = tuple(
     sorted(("%s-" % code for code in TYPE_CATEGORIES), key=len, reverse=True)
 )
+
+
+def display_columns_for(dialect: str) -> Tuple[str, ...]:
+    if dialect == HEADER_DIALECT_EN:
+        return DISPLAY_COLUMNS_EN
+    return DISPLAY_COLUMNS
+
+
+def computed_display_columns_for(dialect: str) -> Tuple[str, ...]:
+    if dialect == HEADER_DIALECT_EN:
+        return COMPUTED_DISPLAY_COLUMNS_EN
+    return COMPUTED_DISPLAY_COLUMNS
+
+
+def resolve_display_columns(
+    headers: Sequence[Optional[str]],
+) -> Optional[Tuple[str, Tuple[str, ...]]]:
+    """整列等於繁中或整列等於英文才接受；混用回傳 None。"""
+    names = ["" if h in (None, "") else str(h) for h in headers]
+    if names == list(DISPLAY_COLUMNS):
+        return HEADER_DIALECT_ZH, DISPLAY_COLUMNS
+    if names == list(DISPLAY_COLUMNS_EN):
+        return HEADER_DIALECT_EN, DISPLAY_COLUMNS_EN
+    return None
 
 
 def classify_measurement(unit: Optional[str], rule: Optional[str]) -> str:

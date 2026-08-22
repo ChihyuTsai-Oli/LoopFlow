@@ -44,7 +44,9 @@ UNIT_DIM = {
     "mm": "length",
     "坪": "area",
     "才": "area",
+    "m2": "area",
     "m3": "volume",
+    "ea": "count",
 }
 UUID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"

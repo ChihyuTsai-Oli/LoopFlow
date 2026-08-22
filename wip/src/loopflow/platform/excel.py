@@ -16,7 +16,7 @@ PKG_REL_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
 OFFICE_REL_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 CONTENT_NS = "http://schemas.openxmlformats.org/package/2006/content-types"
 CELL_REF_RE = re.compile(r"^([A-Z]+)(\d+)$")
-# 繁中 Dictionary／匯出用微軟正黑體；英文版日後用 Arial。本階段只寫繁中。
+# 繁中 Dictionary／匯出用微軟正黑體；英文版用 Arial。
 DICTIONARY_FONT_NAME = "微軟正黑體"
 DICTIONARY_FONT_NAME_EN = "Arial"
 DICTIONARY_FONT_SIZE = "10"
@@ -25,7 +25,7 @@ DICTIONARY_ROW_HEIGHT = "20.1"
 DICTIONARY_TITLE_HEIGHT = "30"
 DICTIONARY_HEADER_HEIGHT = "39.9"
 DICTIONARY_HINT_HEIGHT = "60"
-DICTIONARY_HEADER_MARK = "__Rhino Layer"
+DICTIONARY_HEADER_MARKS = ("__Rhino Layer", "Rhino Layer")
 DICTIONARY_TITLE_MARK = "LoopFlow Dictionary v2.0"
 # 對齊正式 Dictionary 前 15 欄寬度；最後一欄給 diff_status。
 DICTIONARY_COLUMN_WIDTHS = (
@@ -165,7 +165,7 @@ def _header_row_number(grid: dict, max_row: int, max_col: int) -> int:
     for row_number in range(1, max_row + 1):
         for col in range(1, max_col + 1):
             value = grid.get((row_number, col))
-            if str(value or "").strip() == DICTIONARY_HEADER_MARK:
+            if str(value or "").strip() in DICTIONARY_HEADER_MARKS:
                 return row_number
     return 2
 
@@ -230,9 +230,14 @@ def read_table(path: Path) -> results.Result:
     )
 
 
-def _dictionary_styles_xml(*, with_hint: bool = False) -> ET.Element:
+def _dictionary_styles_xml(
+    *,
+    with_hint: bool = False,
+    font_name: str = DICTIONARY_FONT_NAME,
+) -> ET.Element:
     sheet = ET.Element("styleSheet", xmlns=MAIN_NS)
     fonts = ET.SubElement(sheet, "fonts", count="6" if with_hint else "5")
+    charset = "0" if font_name == DICTIONARY_FONT_NAME_EN else "136"
 
     def add_font(*, bold=False, color_rgb=None, color_theme=None, size=None):
         font = ET.SubElement(fonts, "font")
@@ -243,9 +248,9 @@ def _dictionary_styles_xml(*, with_hint: bool = False) -> ET.Element:
             ET.SubElement(font, "color", rgb=color_rgb)
         elif color_theme is not None:
             ET.SubElement(font, "color", theme=str(color_theme))
-        ET.SubElement(font, "name", val=DICTIONARY_FONT_NAME)
+        ET.SubElement(font, "name", val=font_name)
         ET.SubElement(font, "family", val="2")
-        ET.SubElement(font, "charset", val="136")
+        ET.SubElement(font, "charset", val=charset)
 
     add_font(color_theme=1)
     add_font(color_rgb=STATUS_FONT_COLORS["missing_in_rhino"])
@@ -321,12 +326,14 @@ def write_table(
     *,
     profile: Optional[str] = None,
     hint: Optional[str] = None,
+    font_name: Optional[str] = None,
 ) -> results.Result:
     """寫入僅供測試／反向匯出使用的簡單 xlsx。不覆寫不存在的父目錄以外的檔案。"""
     target = Path(path)
     if not target.parent.exists():
         return results.failed("read_excel", ui("other.014"))
     styled = profile == "dictionary"
+    dictionary_font = font_name or DICTIONARY_FONT_NAME
     strings = []
     index_of = {}
 
@@ -518,7 +525,15 @@ def write_table(
             zf.writestr("xl/worksheets/sheet1.xml", dump(sheet))
             zf.writestr("xl/sharedStrings.xml", dump(sst))
             if styled:
-                zf.writestr("xl/styles.xml", dump(_dictionary_styles_xml(with_hint=bool(hint))))
+                zf.writestr(
+                    "xl/styles.xml",
+                    dump(
+                        _dictionary_styles_xml(
+                            with_hint=bool(hint),
+                            font_name=dictionary_font,
+                        )
+                    ),
+                )
     except OSError as exc:
         return results.failed("read_excel", ui("other.017") % exc)
     return results.ok("read_excel", ui("other.009"), details={"filename": target.name})

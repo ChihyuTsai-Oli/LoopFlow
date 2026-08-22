@@ -35,17 +35,31 @@ from loopflow.foundation.project_config import (
     remembered_dictionary_filename,
     update_config,
 )
-from loopflow.platform.excel import write_table
+from loopflow.platform.excel import write_table, DICTIONARY_FONT_NAME, DICTIONARY_FONT_NAME_EN
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 from loopflow.foundation.i18n import t
+from loopflow.foundation.locale import LOCALE_EN, LOCALE_ZH_TW
 
 COMMAND_ID = "LF_Nexus"
 EXPORT_FILENAME = "LoopFlow_Dictionary_Export.xlsx"
-EXPORT_HEADERS = schema.DISPLAY_COLUMNS + ("diff_status",)
 
 
-def export_hint(official_name: str = DICTIONARY_FILENAME) -> str:
-    return t("dictionary.031") % (official_name or DICTIONARY_FILENAME)
+def export_headers_for(dialect: str) -> Tuple[str, ...]:
+    return schema.display_columns_for(dialect) + ("diff_status",)
+
+
+EXPORT_HEADERS = export_headers_for(schema.HEADER_DIALECT_ZH)
+
+
+def export_hint(
+    official_name: str = DICTIONARY_FILENAME,
+    dialect: str = schema.HEADER_DIALECT_ZH,
+) -> str:
+    """頂部紅字跟來源字典語系，不跟介面語言。"""
+    locale = (
+        LOCALE_EN if dialect == schema.HEADER_DIALECT_EN else LOCALE_ZH_TW
+    )
+    return t("dictionary.031", official_name or DICTIONARY_FILENAME, locale=locale)
 
 
 EXPORT_HINT = export_hint()
@@ -445,14 +459,22 @@ def export_dictionary(
                 t("dictionary.038"),
                 command_id=command_id,
             )
+        dialect = getattr(catalog, "header_dialect", None) or schema.HEADER_DIALECT_ZH
+        headers = export_headers_for(dialect)
+        font_name = (
+            DICTIONARY_FONT_NAME_EN
+            if dialect == schema.HEADER_DIALECT_EN
+            else DICTIONARY_FONT_NAME
+        )
         rows = _dictionary_export_rows(current, catalog, prefix)
         written = write_table(
             target,
             schema.TITLE_ROW,
-            EXPORT_HEADERS,
+            headers,
             rows,
             profile="dictionary",
-            hint=export_hint(dictionary_path.name),
+            hint=export_hint(dictionary_path.name, dialect),
+            font_name=font_name,
         )
         if not written.ok:
             return written

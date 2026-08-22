@@ -28,11 +28,13 @@ from loopflow.features.dictionary.sync import (
     EXPORT_FILENAME,
     EXPORT_HINT,
     export_dictionary,
+    export_hint,
     export_layer_diff,
     sync_type_layers,
 )
 from loopflow.platform.excel import (
     DICTIONARY_FONT_NAME,
+    DICTIONARY_FONT_NAME_EN,
     DICTIONARY_FONT_SIZE,
     DICTIONARY_HINT_FONT_SIZE,
     STATUS_FONT_COLORS,
@@ -251,6 +253,47 @@ class LayerSyncTests(unittest.TestCase):
             self.assertEqual(colors["missing_in_rhino"], STATUS_FONT_COLORS["missing_in_rhino"])
             self.assertEqual(colors["added_in_rhino"], STATUS_FONT_COLORS["added_in_rhino"])
             self.assertEqual(colors["modified"], STATUS_FONT_COLORS["modified"])
+
+    def test_export_dictionary_keeps_english_headers(self):
+        session = _session()
+        beam = to_full_path("00_STR_結構::Beam.樑")
+        session.ensure_layer(beam)
+        session.set_layer_user_text(beam, LAYER_TYPE_ID_KEY, "EX-01")
+        session.set_layer_user_text(beam, LAYER_CONSTRUCTION_KEY, "Existing")
+        loaded = load_from_table(
+            title=schema.TITLE_ROW,
+            headers=list(schema.DISPLAY_COLUMNS_EN),
+            rows=[_row(estimation_unit="ea")],
+        )
+        self.assertTrue(loaded.ok, loaded.message)
+        catalog = loaded.details["catalog"]
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx02-en-") as raw:
+            root = _bind(session, raw)
+            official = root / "LoopFlow_Dictionary.xlsx"
+            write_table(
+                official,
+                schema.TITLE_ROW,
+                schema.DISPLAY_COLUMNS_EN,
+                [_row(estimation_unit="ea")],
+            )
+            result = export_dictionary(session, catalog=catalog, show_message=lambda _m: None)
+            exported = root / EXPORT_FILENAME
+            self.assertTrue(result.ok, result.message)
+            table = read_table(exported)
+            self.assertTrue(table.ok, table.message)
+            self.assertEqual(table.details["headers"][:15], list(schema.DISPLAY_COLUMNS_EN))
+            fonts = read_font_table(exported)
+            self.assertTrue(fonts)
+            self.assertTrue(all(item["name"] == DICTIONARY_FONT_NAME_EN for item in fonts))
+            from zipfile import ZipFile
+
+            with ZipFile(exported) as zf:
+                shared = zf.read("xl/sharedStrings.xml").decode("utf-8")
+            expected = export_hint(official.name, schema.HEADER_DIALECT_EN)
+            self.assertIn(expected, shared)
+            self.assertIn("_03_Type ID", shared)
+            self.assertNotIn("_03_ID編號", shared)
+            self.assertNotIn("此檔只供核對", shared)
 
     def test_cancel_does_not_create_layers(self):
         session = _session()
