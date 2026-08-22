@@ -24,6 +24,12 @@
 
 官方 Dictionary 範本與 `Tag_Blocks.3dm` 日後會隨安裝包提供：套件目錄留一份，並在 Rhino 載入 LoopFlow 時複製到「文件\LoopFlow」（已有的檔不會覆蓋）。那是方便找、方便再複製到各專案的來源，不是專案工作資料夾。此行為尚未實作。
 
+## 介面語言記在電腦，不記在專案
+
+LoopFlow 介面支援 **English** 與**正體中文**。第一次執行任一產品指令時會先顯示語言選擇：左側 English、右側正體中文；預設為 English，按 Enter 會選英文。按 Esc 或關閉視窗會取消這次指令，不保存選擇，下次再問。
+
+選定後會記在這台電腦的 `%APPDATA%\LoopFlow\preferences.json`，不寫進 `.3dm` 或 `_LoopFlow_Config/`。之後可在 **Document** 工具列按鈕上按右鍵，或執行 `LFLanguage` 切換；同一專案在不同電腦可以各用自己的介面語言。`Tag_Blocks.3dm` 內固定的標籤與公式提示維持英文，不會跟著切換。
+
 ## 2D／3D 的分界在哪裡：Rhino Section
 
 LoopFlow 沒有自己另外做一套剖面工具，2D 幾何流程建立在 **Rhino 8 原生的 Section／Clipping Drawing** 之上。這一步是 3D 與 2D 的主要幾何分界：

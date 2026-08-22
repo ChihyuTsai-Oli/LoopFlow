@@ -34,9 +34,15 @@ The folder containing the saved `.3dm` is the LoopFlow project folder. Keep the 
 
 `LoopFlow_Project.json` remembers the project name and Dictionary filename. Moving the whole folder to another parent folder, drive, or computer preserves these relative links. Copying only the `.3dm` does not carry the project settings with it. Starter copies of the Dictionary and `Tag_Blocks.3dm` will later be placed in `Documents\LoopFlow` after install (not implemented yet).
 
+## Interface language
+
+The LoopFlow interface supports **English** and **Traditional Chinese**. The first product command opens a two-button language picker: English on the left and 正體中文 on the right. English is the default; pressing Enter selects it. Pressing Esc or closing the picker cancels the current command, saves nothing, and asks again next time.
+
+The choice is saved for this computer in `%APPDATA%\LoopFlow\preferences.json`, not in the `.3dm`, so different computers can use different interface languages for the same project. To change it later, right-click the **Document** toolbar button or run `LFLanguage`. Fixed labels and formula prompts inside `Tag_Blocks.3dm` remain in English and do not follow this setting.
+
 ## Documentation
 
-The Traditional Chinese edition is the current working edition. English documents will follow the same structure after the Traditional Chinese text is approved.
+The Traditional Chinese guides are the current working edition. English guide files will follow the same structure after that text is approved; this does not affect the interface, which already supports both languages.
 
 | Document | Traditional Chinese | English |
 |---|---|---|
@@ -92,9 +98,15 @@ LoopFlow 以 Rhino 8 原生的 Section／Clipping Drawing 作為 3D 與 2D 之�
 
 `LoopFlow_Project.json` 會記住專案名稱與 Dictionary 檔名。整個資料夾搬到其他上層目錄、磁碟或電腦時，相對關係仍然有效；若只複製 `.3dm`，則不會連同專案設定一起帶走。官方 Dictionary 範本與 `Tag_Blocks.3dm` 日後會放到「文件\LoopFlow」，再複製到各專案使用（尚未實作）。
 
+## 介面語言
+
+LoopFlow 介面支援 **English** 與**正體中文**。第一次執行任一產品指令時，會出現兩顆語言按鈕：左側 English、右側正體中文。預設為 English，按 Enter 會選英文；按 Esc 或關閉視窗會取消這次指令，不保存選擇，下次再問。
+
+選擇只記在這台電腦的 `%APPDATA%\LoopFlow\preferences.json`，不會寫進 `.3dm`，所以同一專案在不同電腦可以各用自己的介面語言。之後可在 **Document** 工具列按鈕上按右鍵，或直接執行 `LFLanguage` 切換。`Tag_Blocks.3dm` 內設計時固定的標籤與公式提示維持英文，不跟著介面語言改變。
+
 ## 說明文件
 
-目前先以繁中版定案；英文版將依相同結構翻譯。
+目前先以繁中指南定案；英文指南將依相同結構翻譯。這不影響介面本身，介面目前已支援中英文切換。
 
 | 文件 | 繁體中文 | 英文 |
 |---|---|---|
