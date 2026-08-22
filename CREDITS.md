@@ -42,5 +42,9 @@ Icons used in the LoopFlow Rhino toolbar are licensed under [CC BY 3.0](https://
 | Area | Ian Banyuke | [#7948136](https://thenounproject.com/icon/area-7948136/) |
 | Area (filled) | Ian Banyuke | [#7948155](https://thenounproject.com/icon/area-7948155/) |
 | Magic | Danang Marhendra | [#5806517](https://thenounproject.com/icon/magic-5806517/) |
+| Help | unknown | [#3370596](https://thenounproject.com/icon/help-3370596/) |
+| Catalog | unknown | [#6751983](https://thenounproject.com/icon/catalog-6751983/) |
+| Catalog (alt) | unknown | [#8212144](https://thenounproject.com/icon/catalog-8212144/) |
+| Cargo (alt) | unknown | [#8452641](https://thenounproject.com/icon/cargo-8452641/) |
 
-> **Note:** 6 icons (Cube, Rectangle, Flag, Camera, Laser, Building) show only a country flag on Noun Project and the creator name could not be confirmed. If you know the creator, please open an issue or PR to update this file.
+> **Note:** 10 icons (Cube, Rectangle, Flag, Camera, Laser, Building, Help, Catalog, Catalog (alt), Cargo (alt)) show only a country flag on Noun Project and the creator name could not be confirmed. If you know the creator, please open an issue or PR to update this file.
