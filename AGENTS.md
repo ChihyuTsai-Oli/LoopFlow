@@ -23,7 +23,7 @@ AI 必須依序完整讀取：
 - `v2-development` 是整合分支，目前與 `main` 對齊；不直接承接未分批的大型修改。
 - 每項工作從 `v2-development` 建立 `codex/v2-<scope>` 短期分支，完成後合入整合分支，再依授權合入 `main`。
 - `v1.0.0` tag 與 Release 永不移動或覆寫。1.x 僅在使用者明確要求時才開獨立 hotfix。
-- `v2.0.0` tag 與 Release 永不移動或覆寫。`v2.0.1` 是 Package Manager 清單修補（圖示與說明），不要覆寫。
+- `v2.0.0` tag 與 Release 永不移動或覆寫。`v2.0.1` 是 Package Manager 清單修補（圖示與說明），不要覆寫。`v2.0.2` 是 Tag template manifest 修補，不要覆寫。
 
 ## 重構模式
 

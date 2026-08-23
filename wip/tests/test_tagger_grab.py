@@ -5,7 +5,9 @@ from __future__ import annotations
 import copy
 import io
 import json
+import os
 import sys
+import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -82,6 +84,25 @@ class TemplateLoadTests(unittest.TestCase):
         self.assertEqual(catalog.by_block_name("Tag_Height_Grab").template_id, "TAG_HEIGHT_GRAB")
         self.assertEqual(catalog.by_block_name("TAG_ELEV_3").template_id, "TAG_ELEV")
         self.assertIsNone(catalog.by_block_name("UNKNOWN_BLOCK"))
+
+    def test_loads_from_package_templates_folder(self):
+        fixture = WIP / "fixtures" / "schema" / "tag_templates.json"
+        from loopflow.foundation import templates as seed
+
+        with tempfile.TemporaryDirectory() as tmp:
+            staged = Path(tmp) / "tag_templates.json"
+            staged.write_bytes(fixture.read_bytes())
+            old = os.environ.get(seed.SOURCE_ENV)
+            os.environ[seed.SOURCE_ENV] = tmp
+            try:
+                loaded = load_tag_templates()
+            finally:
+                if old is None:
+                    os.environ.pop(seed.SOURCE_ENV, None)
+                else:
+                    os.environ[seed.SOURCE_ENV] = old
+        self.assertTrue(loaded.ok, loaded.message)
+        self.assertEqual(len(loaded.details["catalog"].templates), 10)
 
 
 class PromptFilterTests(unittest.TestCase):

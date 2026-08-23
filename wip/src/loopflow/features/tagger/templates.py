@@ -10,9 +10,10 @@ from typing import Optional, Tuple
 from loopflow.foundation import results
 from loopflow.foundation.version import check_schema
 from loopflow.foundation.i18n import t
+from loopflow.foundation.templates import source_search_roots
 
 SCHEMA_ID = "loopflow.tag_template_set"
-DEFAULT_PATH = (
+FIXTURE_PATH = (
     Path(__file__).resolve().parents[4] / "fixtures" / "schema" / "tag_templates.json"
 )
 
@@ -59,14 +60,24 @@ class TagTemplateSet:
         return None
 
 
+def resolve_tag_templates_path() -> Optional[Path]:
+    """已裝套件讀 templates\\tag_templates.json；開發期讀 wip\\fixtures。"""
+    candidates = [root / "tag_templates.json" for root in source_search_roots()]
+    candidates.append(FIXTURE_PATH)
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 def load_tag_templates(path: Optional[Path] = None) -> results.Result:
-    """讀 fixtures 的 10 份 manifest。未知版本停止。"""
-    source = path or DEFAULT_PATH
-    if not source.is_file():
+    """讀 10 份 Tag template manifest。未知版本停止。"""
+    source = path if path is not None else resolve_tag_templates_path()
+    if source is None or not source.is_file():
         return results.failed(
             "check_schema",
-            t("other.005") % source.name,
-            details={"path": str(source)},
+            t("other.005") % "tag_templates.json",
+            details={"path": str(source) if source is not None else ""},
         )
     payload = json.loads(source.read_text(encoding="utf-8"))
     schema_id = payload.get("schema_id")

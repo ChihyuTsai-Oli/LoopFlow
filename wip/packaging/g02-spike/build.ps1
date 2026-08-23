@@ -10,7 +10,7 @@ $RhinoCode = "C:\Program Files\Rhino 8\System\RhinoCode.exe"
 $Rhproj = Join-Path $Spike "LoopFlow.rhproj"
 $CommandsDir = Join-Path $Spike "commands"
 $ProductRui = Join-Path $RepoWip "docs\toolbar\LoopFlow.rui"
-$Version = "2.0.1"
+$Version = "2.0.2"
 
 if (-not (Test-Path $Rhproj)) { throw "找不到 LoopFlow.rhproj" }
 if (-not (Test-Path (Join-Path $CommandsDir "LFLanguage.py"))) { throw "找不到 commands\LFLanguage.py" }
@@ -56,6 +56,9 @@ if (-not $DictEn) { throw "missing LoopFlow_Dictionary_en.xlsx" }
 Copy-Item -LiteralPath $TagBlocks (Join-Path $TemplatesDir "Tag_Blocks.3dm")
 Copy-Item -LiteralPath $DictTw.FullName (Join-Path $TemplatesDir "LoopFlow_Dictionary_tw.xlsx")
 Copy-Item -LiteralPath $DictEn.FullName (Join-Path $TemplatesDir "LoopFlow_Dictionary_en.xlsx")
+$TagTemplates = Join-Path $RepoWip "fixtures\schema\tag_templates.json"
+if (-not (Test-Path -LiteralPath $TagTemplates)) { throw "missing tag_templates.json" }
+Copy-Item -LiteralPath $TagTemplates (Join-Path $TemplatesDir "tag_templates.json")
 
 $IconSrc = Join-Path $RepoWip "..\docs\images\icon\LoopFlow_2.png"
 $IconSrc = [System.IO.Path]::GetFullPath($IconSrc)
@@ -82,7 +85,8 @@ try {
         $RequiredTemplates = @(
             "templates/Tag_Blocks.3dm",
             "templates/LoopFlow_Dictionary_tw.xlsx",
-            "templates/LoopFlow_Dictionary_en.xlsx"
+            "templates/LoopFlow_Dictionary_en.xlsx",
+            "templates/tag_templates.json"
         )
         $Names = @($Zip.Entries | ForEach-Object { $_.FullName -replace '\\','/' })
         foreach ($Required in $RequiredTemplates) {

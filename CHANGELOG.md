@@ -4,6 +4,15 @@ All notable changes to LoopFlow will be documented here.
 
 ---
 
+## [2.0.2] - 2026-08-23
+
+Install this version. Same workflow as 2.0.0 / 2.0.1.
+
+- Include `tag_templates.json` in the yak so Laser, Grab, Index, Infuser, and TAG-O can find Tag templates after a Package Manager install
+- Do not mix 1.x and 2.0 in the same project. Do not overwrite `v2.0.0` or `v2.0.1`
+
+---
+
 ## [2.0.1] - 2026-08-22
 
 Package Manager listing only. Same product as 2.0.0.
