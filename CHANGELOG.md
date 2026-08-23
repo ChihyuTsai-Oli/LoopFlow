@@ -4,6 +4,15 @@ All notable changes to LoopFlow will be documented here.
 
 ---
 
+## [2.0.3] - 2026-08-23
+
+Install this version. Same workflow as 2.0.2.
+
+- Tag and other commands find the installed package after Rhino copies the script to a temp folder
+- Do not mix 1.x and 2.0 in the same project. Do not overwrite `v2.0.0`, `v2.0.1`, or `v2.0.2`
+
+---
+
 ## [2.0.2] - 2026-08-23
 
 Install this version. Same workflow as 2.0.0 / 2.0.1.
