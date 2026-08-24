@@ -10,6 +10,8 @@
 - 不要按 1.x 工具列上的同名按鈕。
 - **不要改入口檔名。** 正式指令已登錄成無底線名稱（見下方對照）。
 
+本機 Rhino **開發按鈕目前仍指向舊路徑** `E:\_GitHub\LoopFlow\wip\src\entrypoints\`。下面巨集是目錄改名後的正確路徑。日常使用已裝的 Package Manager 工具列即可，不必改按鈕。日後若要用 repo 開發入口，再把各鈕巨集改成 `E:\_GitHub\LoopFlow\v2\src\entrypoints\`，改完後完全關 Rhino 再開。
+
 ## 目前可跑的指令
 
 ```text
