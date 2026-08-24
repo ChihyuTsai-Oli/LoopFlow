@@ -39,17 +39,7 @@
 !qty/
 !qty/**
 
-# 發佈資料夾（1.x ZIP 等；原始碼已改放 v1/）
-!releases/
-!releases/**/
-!releases/**/*.py
-!releases/**/*.bat
-!releases/**/*.rhc
-!releases/**/*.xlsx
-!releases/**/*.ps1
-!releases/**/*.txt
-!releases/**/*.md
-!releases/**/*.3dm
+# 本機 1.x ZIP 輸出夾（build.ps1 寫入 releases/）；不進 git。GitHub 上 1.x 安裝包在 v1.0.0 Release。
 
 # 系統排除
 **/__pycache__/
