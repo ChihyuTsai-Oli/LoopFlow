@@ -2,6 +2,8 @@
 
 > A one-minute picture of how LoopFlow works. Command details: [command reference](./COMMANDS.md). Excel Dictionary: [Dictionary guide](./Dictionary_GUIDE.md). On-drawing Tag fields: [Tag Block reference](./TAG_BLOCKS.md).
 
+![LoopFlow 2.0 overview](./images/guide/LoopFlow_v2_overview.svg)
+
 ## Core logic: three stages
 
 **Model freely in 3D, load Type data from the Dictionary, then hand off to 2D.**

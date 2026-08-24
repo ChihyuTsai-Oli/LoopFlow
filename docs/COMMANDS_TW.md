@@ -10,6 +10,8 @@
 
 ## 快速索引
 
+![LoopFlow 2.0 指令對照](./images/guide/LoopFlow_v2_command_reference.svg)
+
 | 階段 | 指令 | 一句話 |
 |---|---|---|
 | 字典 | `LFOpenDictionary` | 開啟正式 Excel 字典 |

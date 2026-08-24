@@ -10,6 +10,8 @@ Save the `.3dm` first. **The folder of that file is the project folder**: the of
 
 ## Quick index
 
+![LoopFlow 2.0 command reference](./images/guide/LoopFlow_v2_command_reference.svg)
+
 | Stage | Command | One line |
 |---|---|---|
 | Dictionary | `LFOpenDictionary` | Open the official Excel Dictionary |
