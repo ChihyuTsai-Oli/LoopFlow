@@ -31,12 +31,15 @@
 !docs/**/*.svg
 !docs/images/icon/*.png
 
-# 重構工作區（只追蹤文件與輕量測試定義，不放 Dropbox 工作檔）
-!wip/
-!wip/**/
-!wip/**
+# 三個同層產品：v1＝1.x 唯讀、v2＝已發布出圖 2.0、qty＝數量計算（不同產品）
+!v1/
+!v1/**
+!v2/
+!v2/**
+!qty/
+!qty/**
 
-# 發佈資料夾
+# 發佈資料夾（1.x ZIP 等；原始碼已改放 v1/）
 !releases/
 !releases/**/
 !releases/**/*.py
