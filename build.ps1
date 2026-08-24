@@ -1,5 +1,5 @@
 # LoopFlow Build Script
-# 用途：將 releases/LoopFlow/ 打包成發布用 ZIP
+# 用途：將 v1/（1.x 唯讀來源）打包成發布用 ZIP
 # 使用方式：在專案根目錄執行 .\build.ps1
 # 可加版本號：.\build.ps1 -Version "1.2.0"
 
@@ -8,7 +8,7 @@ param(
 )
 
 $Root       = $PSScriptRoot
-$ReleaseDir = Join-Path $Root "releases\LoopFlow"
+$ReleaseDir = Join-Path $Root "v1"
 
 # 1. 決定 ZIP 檔名
 if ($Version -ne "") {

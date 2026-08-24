@@ -6,29 +6,37 @@
 
 AI 必須依序完整讀取：
 
-1. `wip/docs/實作總覽.md`
-2. `wip/docs/資料契約.md`
-3. `wip/docs/工作流程.md`
-4. `wip/docs/開發任務與路徑.md`
-5. `wip/docs/系統設定.md`
-6. `wip/docs/重構進度.md`
+1. `v2/docs/實作總覽.md`
+2. `v2/docs/資料契約.md`
+3. `v2/docs/工作流程.md`
+4. `v2/docs/開發任務與路徑.md`
+5. `v2/docs/系統設定.md`
+6. `v2/docs/重構進度.md`
 
-`wip/docs/前期規劃/` 只保存決策過程、1.x 盤點與原始流程證據，不是實作規格；除非需要追溯特定決策，不列入每次開工作業的必讀清單。若內容與 `wip/docs/` 六份實作文件不同，以那六份為準。
+`v2/docs/前期規劃/` 只保存決策過程、1.x 盤點與原始流程證據，不是實作規格；除非需要追溯特定決策，不列入每次開工作業的必讀清單。若內容與 `v2/docs/` 六份實作文件不同，以那六份為準。
 
-公開的 `README.md`、`README_zh-TW.md`、`docs/USER_GUIDE*.md` 與 `docs/Dictionary_GUIDE*.md` 是使用者文件，不是重構指令的權威來源；改變使用行為時仍須同步更新。重構中的文件、原始碼、fixtures 與測試統一放在 `wip/`；Dropbox 工作檔路徑依上一層 `工作檔路徑.md` 解析，不得寫死單一電腦的絕對路徑。
+公開的 `README.md`、`README_zh-TW.md`、`docs/USER_GUIDE*.md` 與 `docs/Dictionary_GUIDE*.md` 是使用者文件，不是重構指令的權威來源；改變使用行為時仍須同步更新。
+
+本 repo 頂層三個同層產品目錄：
+
+- `v1/`：1.x 唯讀參考
+- `v2/`：已發布的出圖 2.0（原始碼、測試、fixtures、實作文件）
+- `qty/`：數量計算，**不同產品**；不進 2.0 yak、不寫回物件 UserText
+
+Dropbox 工作檔路徑依上一層 `工作檔路徑.md` 解析，不得寫死單一電腦的絕對路徑。
 
 ## 分支與版本
 
 - `main` 是已發布的 LoopFlow 2.0。
 - `v2-development` 是整合分支，目前與 `main` 對齊；不直接承接未分批的大型修改。
 - 每項工作從 `v2-development` 建立 `codex/v2-<scope>` 短期分支，完成後合入整合分支，再依授權合入 `main`。
-- `v1.0.0` tag 與 Release 永不移動或覆寫。1.x 僅在使用者明確要求時才開獨立 hotfix。
+- `v1.0.0` 是 1.x 歷史 tag。2.0 重構期間曾凍結以免誤傷；現已解凍。可改該 tag 的 README／Release 說明，讓 1.x 下載連到 `LoopFlow_v1.0.0.zip` 或 `/releases/tag/v1.0.0`，**不得**用 `/releases/latest`（會連到現行 2.0）。1.x 程式 hotfix 仍僅在使用者明確要求時才做。
 - `v2.0.0` tag 與 Release 永不移動或覆寫。`v2.0.1` 是 Package Manager 清單修補（圖示與說明），不要覆寫。`v2.0.2` 是 Tag template manifest 修補，不要覆寫。`v2.0.3` 是指令套件路徑查找修補，不要覆寫。
 
 ## 重構模式
 
-- 2.0 已以乾淨重建一次切換發布。後續改動仍在 `wip/src/`、同一套 yak 建置與測試資料上進行。
-- `releases/LoopFlow/` 與 `v1.0.0` 是 1.x 唯讀參考，不是現行產品。
+- 2.0 已以乾淨重建一次切換發布。後續改動仍在 `v2/src/`、同一套 yak 建置與測試資料上進行。
+- `v1/` 與 `v1.0.0` 是 1.x 唯讀參考，不是現行產品。
 - 新核心不長期保留 legacy alias、雙寫或 compatibility wrapper；舊專案轉換集中於獨立 migration 工具（2.0 不提供一鍵從 1.x 升級）。
 - 每批仍提交並做自動測試；改到已實機過的主鏈時，須在文件標明是否已重跑 Rhino 實機。
 
