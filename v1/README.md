@@ -1,6 +1,6 @@
 ### Installation
 
-1. Download the latest release from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest)
+1. Download the LoopFlow 1.0.0 ZIP from the [v1.0.0 release](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/tag/v1.0.0) (`LoopFlow_v1.0.0.zip`). Do not use GitHub Latest; that is 2.0.
 2. Extract the ZIP, then choose one of the following installation methods:
    - **2a.** Run `install_LoopFlow.bat` — copies scripts to the correct folder automatically
    - **2b.** Manually copy all files from `Python/` to `%AppData%\McNeel\Rhinoceros\8.0\scripts\LoopFlow\`
