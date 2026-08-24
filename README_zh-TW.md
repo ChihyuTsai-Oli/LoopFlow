@@ -48,7 +48,7 @@
 
 ### 安裝方式
 
-1. 從[發佈版本](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest)下載最新版本
+1. 從 [v1.0.0 Release](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/tag/v1.0.0) 下載 LoopFlow_v1.0.0.zip。不要點 GitHub Latest，那是 2.0。
 2. 解壓縮後，安裝腳本（擇一）：
    - **2a.** 執行 `install_LoopFlow.bat`，自動將 `.py` 複製到 scripts 資料夾
    - **2b.** 手動將 `Data/` 中所有 `.py` 複製到 `%AppData%\McNeel\Rhinoceros\8.0\scripts\LoopFlow\`
