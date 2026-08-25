@@ -4,6 +4,16 @@ All notable changes to LoopFlow will be documented here.
 
 ---
 
+## [2.0.5] - 2026-08-25
+
+Install this version. Same workflow as 2.0.4.
+
+- The LoopFlow toolbar file now includes a visible group, so the buttons can appear after Package Manager install
+- If the toolbar is still blank, change Toolbars back to Default, open the package `LoopFlow.rui`, and check LoopFlow
+- Do not mix 1.x and 2.0 in the same project. Do not overwrite `v2.0.0`, `v2.0.1`, `v2.0.2`, `v2.0.3`, or `v2.0.4`
+
+---
+
 ## [2.0.4] - 2026-08-25
 
 Install this version. Same workflow as 2.0.3.

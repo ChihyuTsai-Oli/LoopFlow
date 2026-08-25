@@ -10,7 +10,7 @@ $RhinoCode = "C:\Program Files\Rhino 8\System\RhinoCode.exe"
 $Rhproj = Join-Path $Spike "LoopFlow.rhproj"
 $CommandsDir = Join-Path $Spike "commands"
 $ProductRui = Join-Path $RepoWip "docs\toolbar\LoopFlow.rui"
-$Version = "2.0.4"
+$Version = "2.0.5"
 
 if (-not (Test-Path $Rhproj)) { throw "找不到 LoopFlow.rhproj" }
 if (-not (Test-Path (Join-Path $CommandsDir "LFLanguage.py"))) { throw "找不到 commands\LFLanguage.py" }
@@ -82,6 +82,16 @@ try {
         if ($RuiInside.Count -ne 1) { throw "yak must contain exactly one rui" }
         if ($RuiInside[0].FullName -ne "LoopFlow.rui") { throw "yak rui must be named LoopFlow.rui" }
         if ($RuiInside[0].Length -lt 1000) { throw "packed LoopFlow.rui looks empty" }
+        $ruiStream = $RuiInside[0].Open()
+        try {
+            $reader = New-Object System.IO.StreamReader($ruiStream)
+            $ruiXml = $reader.ReadToEnd()
+        }
+        finally {
+            $ruiStream.Dispose()
+        }
+        if ($ruiXml -match '<tool_bar_groups\s*/>') { throw "packed LoopFlow.rui has empty tool_bar_groups" }
+        if ($ruiXml -notmatch '<tool_bar_group\s') { throw "packed LoopFlow.rui has no tool_bar_group" }
         $RequiredTemplates = @(
             "templates/Tag_Blocks.3dm",
             "templates/LoopFlow_Dictionary_tw.xlsx",

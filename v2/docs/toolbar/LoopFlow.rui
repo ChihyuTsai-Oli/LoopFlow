@@ -1,6 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <RhinoUI major_ver="5" minor_ver="0" guid="29b6cc9a-ff44-4c1a-89f2-99536269ecb3">
-  <tool_bar_groups />
+  <tool_bar_groups>
+    <tool_bar_group guid="628ae8b4-9e46-4b71-973e-63e11045642f" dock="top" visable="true" active_tool_bar="c5997a99-3f10-4b7b-9601-ab25397a3234" hide_single_tab="False">
+      <text>
+        <locale_1033>LoopFlow</locale_1033>
+      </text>
+      <tool_bar_group_item guid="c5997a99-3f10-4b7b-9601-ab25397a3234" major_version="1" minor_version="1">
+        <text>
+          <locale_1033>LoopFlow</locale_1033>
+        </text>
+        <tool_bar_id>c5997a99-3f10-4b7b-9601-ab25397a3234</tool_bar_id>
+      </tool_bar_group_item>
+    </tool_bar_group>
+  </tool_bar_groups>
   <tool_bars>
     <tool_bar guid="c5997a99-3f10-4b7b-9601-ab25397a3234" bitmap_id="b5a394e8-f1a1-48c1-8bd5-85bbadf186ff">
       <text>

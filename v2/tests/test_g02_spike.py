@@ -112,7 +112,7 @@ class G02SpikePackagingTests(unittest.TestCase):
     def test_manifest_includes_toolbar(self):
         text = (SPIKE / "manifest.yml").read_text(encoding="utf-8")
         self.assertIn("name: loopflow", text)
-        self.assertIn("version: 2.0.4", text)
+        self.assertIn("version: 2.0.5", text)
         self.assertIn("icon: icon.png", text)
         self.assertIn("Half-automatic 2D/3D Sync", text)
         self.assertNotIn("Toolbar RUI is not included yet", text)
@@ -124,7 +124,7 @@ class G02SpikePackagingTests(unittest.TestCase):
         self.assertIn("docs\\toolbar\\LoopFlow.rui", text)
         self.assertIn("Replace generated LoopFlow.rui", text)
         self.assertIn("yak must contain exactly one rui", text)
-        self.assertIn('Version = "2.0.4"', text)
+        self.assertIn('Version = "2.0.5"', text)
         self.assertIn("LoopFlow_2.png", text)
         self.assertIn("icon.png", text)
         self.assertIn("Tag_Blocks_3dm\\Tag_Blocks.3dm", text)
@@ -132,7 +132,7 @@ class G02SpikePackagingTests(unittest.TestCase):
         self.assertIn("LoopFlow_Dictionary_en.xlsx", text)
         self.assertIn("-Recurse -Filter", text)
         self.assertIn("yak missing", text)
-        self.assertNotIn("refuse to pack yak", text)
+        self.assertIn("packed LoopFlow.rui has no tool_bar_group", text)
 
     def test_prepare_rhproj_rewrites_every_command_uri(self):
         source = (SPIKE / "prepare_rhproj.py").read_text(encoding="utf-8")
@@ -161,6 +161,23 @@ class G02SpikePackagingTests(unittest.TestCase):
             [""],
         )
         self.assertIn("! _LFOpenDictExport", scripts)
+
+    def test_product_rui_has_toolbar_group(self):
+        root = ET.parse(RUI).getroot()
+        self.assertEqual(root.get("guid"), "29b6cc9a-ff44-4c1a-89f2-99536269ecb3")
+        toolbar = root.find("tool_bars/tool_bar")
+        self.assertIsNotNone(toolbar)
+        self.assertEqual(toolbar.get("guid"), "c5997a99-3f10-4b7b-9601-ab25397a3234")
+        groups = root.find("tool_bar_groups")
+        self.assertIsNotNone(groups)
+        group = groups.find("tool_bar_group")
+        self.assertIsNotNone(group)
+        self.assertEqual(group.get("guid"), "628ae8b4-9e46-4b71-973e-63e11045642f")
+        self.assertEqual(group.get("active_tool_bar"), "c5997a99-3f10-4b7b-9601-ab25397a3234")
+        self.assertEqual((group.findtext("text/locale_1033") or "").strip(), "LoopFlow")
+        item = group.find("tool_bar_group_item")
+        self.assertIsNotNone(item)
+        self.assertEqual(item.findtext("tool_bar_id"), "c5997a99-3f10-4b7b-9601-ab25397a3234")
 
     def test_dev_entrypoint_filename_unchanged(self):
         self.assertTrue((SRC / "entrypoints" / "LF_Document.py").is_file())
