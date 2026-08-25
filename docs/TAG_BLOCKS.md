@@ -2,7 +2,7 @@
 
 > What each Tag / title-frame block in `Tag_Blocks.3dm` shows, who writes each field, and what you may edit by hand. Commands: [command reference](./COMMANDS.md). Overall flow: [overview](./USER_GUIDE.md).
 >
-> 2.0 keeps **one** `Tag_Blocks.3dm`. The file has Chinese and English notes together; there are not two 3dm files. Fixed labels on the block (`Grab`, `Laser`, `W.`, `H.`) are drawn text, not data fields. Formula default prompts stay in English and do not follow `LFLanguage`. After install, the library is copied to `Documents\LoopFlow`.
+> 2.0 keeps **one** `Tag_Blocks.3dm`. The file has Chinese and English notes together; there are not two 3dm files. Fixed labels on the block (`Grab`, `Laser`, `W.`, `H.`) are drawn text, not data fields. Formula default prompts stay in English and do not follow `LFLanguage`. After install, the library is copied to `Documents\LoopFlow`. Installing a new version replaces the official file there so it matches the package.
 >
 > Names follow the contract: `TAG_HEIGHT_GRAB`, `TAG_HEIGHT_LASER`, `TAG_FINISH_GRAB`, `TAG_FINISH_LASER`, `TAG_ITEM`, `TAG_DW`, `TAG_SECTION_DETAIL`, `TAG_ELEV_1`, `TAG_ELEV_2`, `TAG_ELEV_3`, `TAG_ELEV_4`, `TAG_ELEV_0`, `Sample_Frame`. Existing Rhino definitions such as `Tag_Height_Grab` still match case-insensitively.
 

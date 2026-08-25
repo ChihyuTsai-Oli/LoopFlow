@@ -2,7 +2,7 @@
 
 > 本文件說明 `Tag_Blocks.3dm` 圖塊庫裡各種 Tag／圖框圖塊，畫面上每個欄位代表什麼、誰會寫入、使用者可以手動改哪裡。指令怎麼操作見 [指令逐項說明](./COMMANDS_TW.md)；整體流程見 [使用說明總覽](./USER_GUIDE_TW.md)。
 >
-> 2.0 只維護**一份** `Tag_Blocks.3dm`，檔內同時有繁中與英文說明，不另做中／英兩個 3dm。圖塊上的固定標籤（`Grab`、`Laser`、`W.`、`H.`）是設計時就寫死的文字，不是資料欄位；公式預設提示維持英文，也不會跟著 `LFLanguage` 切換。安裝後會拷到「文件\LoopFlow」，方便再複製到各專案。
+> 2.0 只維護**一份** `Tag_Blocks.3dm`，檔內同時有繁中與英文說明，不另做中／英兩個 3dm。圖塊上的固定標籤（`Grab`、`Laser`、`W.`、`H.`）是設計時就寫死的文字，不是資料欄位；公式預設提示維持英文，也不會跟著 `LFLanguage` 切換。安裝後會拷到「文件\LoopFlow」，方便再複製到各專案。裝了新版本後，該資料夾的官方檔會換成與套件相同的版本。
 >
 > 本文件以契約中的標準名稱為準：`TAG_HEIGHT_GRAB`、`TAG_HEIGHT_LASER`、`TAG_FINISH_GRAB`、`TAG_FINISH_LASER`、`TAG_ITEM`、`TAG_DW`、`TAG_SECTION_DETAIL`、`TAG_ELEV_1`、`TAG_ELEV_2`、`TAG_ELEV_3`、`TAG_ELEV_4`、`TAG_ELEV_0`、`Sample_Frame`。Rhino 既有定義若顯示為 `Tag_Height_Grab` 等大小寫變體，仍以不分大小寫方式比對。
 

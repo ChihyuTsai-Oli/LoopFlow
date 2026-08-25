@@ -43,16 +43,15 @@ LoopFlow 2.0 是一套以 Rhino 8 為核心、貫穿 SD（Schematic Design）、
 
 不要使用 1.x 的 ZIP、`install_LoopFlow.bat` 或拖放 `.rhc` 工具列。同一專案不可混用 1.x 與 2.0
 
-1. 開啟 Rhino 8，命令列執行 `PackageManager`，搜尋 `LoopFlow`，安裝 2.0.3
+1. 開啟 Rhino 8，命令列執行 `PackageManager`，搜尋 `LoopFlow`，安裝 2.0.4
 2. **完全關掉 Rhino 再開**
 
-也可從 [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 下載 `loopflow-2.0.3-rh8_0-win.yak`，在 Package Manager 選擇從檔案安裝。不要下載 1.x 的 ZIP。
+也可從 [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 下載 `loopflow-2.0.4-rh8_0-win.yak`，在 Package Manager 選擇從檔案安裝。不要下載 1.x 的 ZIP。
 
 裝完後：
 
 - 第一次執行任一 LoopFlow 指令時，若這台電腦還沒選過語系，會問 English／正體中文
-- 缺檔時會把官方 `Tag_Blocks.3dm` 與兩本 Dictionary 拷到「文件\LoopFlow」（已有的檔不會覆蓋）
-- 請把需要的檔再複製到你的 `.3dm` 同一層
+- 官方 `Tag_Blocks.3dm` 與兩本 Dictionary 會拷到「文件\LoopFlow」。裝了新版本後，下一次執行指令會換成與套件相同的官方檔；該資料夾裡多出來的檔不會刪。請把需要的檔再複製到你的 `.3dm` 同一層
 - 使用 LoopFlow 2.0 工具列；不要按舊的 1.x 按鈕
 
 ## 基本工作流程

@@ -112,7 +112,7 @@ class G02SpikePackagingTests(unittest.TestCase):
     def test_manifest_includes_toolbar(self):
         text = (SPIKE / "manifest.yml").read_text(encoding="utf-8")
         self.assertIn("name: loopflow", text)
-        self.assertIn("version: 2.0.3", text)
+        self.assertIn("version: 2.0.4", text)
         self.assertIn("icon: icon.png", text)
         self.assertIn("Half-automatic 2D/3D Sync", text)
         self.assertNotIn("Toolbar RUI is not included yet", text)
@@ -124,7 +124,7 @@ class G02SpikePackagingTests(unittest.TestCase):
         self.assertIn("docs\\toolbar\\LoopFlow.rui", text)
         self.assertIn("Replace generated LoopFlow.rui", text)
         self.assertIn("yak must contain exactly one rui", text)
-        self.assertIn('Version = "2.0.3"', text)
+        self.assertIn('Version = "2.0.4"', text)
         self.assertIn("LoopFlow_2.png", text)
         self.assertIn("icon.png", text)
         self.assertIn("Tag_Blocks_3dm\\Tag_Blocks.3dm", text)

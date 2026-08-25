@@ -4,6 +4,16 @@ All notable changes to LoopFlow will be documented here.
 
 ---
 
+## [2.0.4] - 2026-08-25
+
+Install this version. Same workflow as 2.0.3.
+
+- Updated official `Tag_Blocks.3dm`
+- After a version change, the next product command replaces official files in `Documents\LoopFlow` so they match the installed package. Extra files in that folder are left alone. Copy them into each project again if you need the new Tag blocks
+- Do not mix 1.x and 2.0 in the same project. Do not overwrite `v2.0.0`, `v2.0.1`, `v2.0.2`, or `v2.0.3`
+
+---
+
 ## [2.0.3] - 2026-08-23
 
 Install this version. Same workflow as 2.0.2.

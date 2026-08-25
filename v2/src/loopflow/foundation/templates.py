@@ -9,9 +9,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Tuple
 
+from .version import PACKAGE_VERSION
+
 SOURCE_ENV = "LOOPFLOW_TEMPLATES_SOURCE"
 DEST_ENV = "LOOPFLOW_TEMPLATES_DEST"
 NO_OPEN_ENV = "LOOPFLOW_TEMPLATES_NO_OPEN"
+STAMP_FILENAME = "assets_version.txt"
 
 TEMPLATE_FILES = (
     "Tag_Blocks.3dm",
@@ -67,7 +70,7 @@ def find_template_source(name: str) -> Optional[Path]:
 
 @dataclass(frozen=True)
 class SeedResult:
-    """這次拷了哪些、略過哪些（目的地已有）、套件裡找不到哪些。"""
+    """這次拷了哪些、略過哪些（目的地已有且版號相同）、套件裡找不到哪些。"""
 
     dest: Path
     copied: Tuple[str, ...]
@@ -92,12 +95,30 @@ def _open_folder(path: Path) -> None:
         os.startfile(str(path))  # type: ignore[attr-defined]
 
 
+def _read_stamp(target: Path) -> Optional[str]:
+    path = target / STAMP_FILENAME
+    if not path.is_file():
+        return None
+    try:
+        return path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+
+
+def _write_stamp(target: Path, version: str) -> None:
+    (target / STAMP_FILENAME).write_text("%s\n" % version, encoding="utf-8")
+
+
+def _official_files_present(target: Path) -> bool:
+    return all((target / name).is_file() for name in TEMPLATE_FILES)
+
+
 def seed_official_templates(
     *,
     dest: Optional[Path] = None,
     open_folder: Optional[bool] = None,
 ) -> SeedResult:
-    """缺檔才從套件拷到文件\\LoopFlow；已有不蓋。失敗不擋指令。"""
+    """把官方範本拷到文件\\LoopFlow。套件版號與戳記相同時已有不蓋；版號不同或沒有戳記則先刪官方三檔再拷。失敗不擋指令。"""
     if (
         _in_unittest()
         and dest is None
@@ -120,21 +141,32 @@ def seed_official_templates(
             skipped=(),
             missing=TEMPLATE_FILES,
         )
+    refresh = _read_stamp(target) != PACKAGE_VERSION
     for name in TEMPLATE_FILES:
         source = find_template_source(name)
         if source is None:
             missing.append(name)
             continue
         destination = target / name
-        if destination.is_file():
+        if destination.is_file() and not refresh:
             skipped.append(name)
             continue
+        if destination.is_file() and refresh:
+            try:
+                destination.unlink()
+            except OSError:
+                pass
         try:
             shutil.copy2(str(source), str(destination))
         except OSError:
             missing.append(name)
             continue
         copied.append(name)
+    if _official_files_present(target):
+        try:
+            _write_stamp(target, PACKAGE_VERSION)
+        except OSError:
+            pass
     result = SeedResult(
         dest=target,
         copied=tuple(copied),
