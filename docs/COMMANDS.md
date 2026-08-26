@@ -136,7 +136,9 @@ Pick one or more closed curves as a space, and type one space name for them. The
 
 **Prerequisite**: level frames (3) and space frames (4) must already be registered, or the write is blocked.
 
-Writes each object’s ID, Type mapping, space, elevation, and data revision onto the object. If an object sits in two space frames, LoopFlow zooms to it and asks you to pick one space.
+Writes each ordinary object’s ID, Type mapping, space, elevation, and data revision onto the object. If an object sits in two space frames, LoopFlow zooms to it and asks you to pick one space.
+
+**Objects on `00_STR` structure layers are skipped and not asked for a space.** The same run clears leftover object UserText on them. Type layers and layer `lf_type_id` are still created. Structure objects are omitted from step 6 mismatches and from the Registry.
 
 ### 6　Validate model metadata (no write)
 
@@ -258,7 +260,7 @@ Click on the drawing; LoopFlow shoots along a fixed direction to find the model 
 2. Click a location on the section inside the target Detail. **That point must fall inside an [06 Register View](#06-register-view-anchor-frame) frame**, or you are told to run 06 first.
 3. The 2D origin is the current section linework centre inside the frame. The ray uses the direction frozen at register time. Each object is counted once. If several objects are hit, a candidate list appears (layer names only, no object IDs) for you to pick.
 
-**No write if**: Esc, click outside the Detail, the tag is locked, the wrong block type (Grab / Index / `TAG_DW` / title frame), 0 or 2+ registered frames at the click, the ray hits nothing, or the source has no usable ID.
+**No write if**: Esc, click outside the Detail, the tag is locked, the wrong block type (Grab / Index / `TAG_DW` / title frame), 0 or 2+ registered frames at the click, the ray hits nothing (including hits only on structure objects), or the source has no usable ID.
 
 Everyday use does not draw a test ray. To check direction, the command line shows `DebugRay` while you pick the tag; set it to `Yes` to draw a magenta debug line (not plotted).
 
@@ -274,8 +276,8 @@ No projection. Pick the source object directly — useful when section linework 
 2. Click into the target Detail to enter model space.
 3. Pick the source: a 2D section curve, a 3D object, or a furniture block.
 
-- Height / Finish tags bind the object ID.
-- Item (furniture) tags bind the **block name** (e.g. `FF-01__Chair-1`) **and that instance**. Later rename or delete then shows up in [12/13 Infuse](#1213-infuse-data) and [14 Health](#14-health-check-tag-o). The same furniture type can share one block name.
+- Height / Finish tags bind the object ID. Structure objects are not sources; Grab makes no change.
+- Item (furniture) tags bind the **block name** (e.g. `FF-01__Chair-1`) **and that instance**. Later rename or delete then shows up in [12/13 Infuse](#1213-infuse-data) and [14 Health](#14-health-check-tag-o). The same furniture type can share one block name. **`TAG_ITEM` and the furniture Block must be in the same `.3dm`**. A 2D/3D worksession split cannot pick furniture from a linked 3D file.
 
 **No write if**: Esc, click outside the Detail, the tag is locked, the wrong block type (Laser / Index / `TAG_DW` / title frame), or the source has no usable ID. Afterward you return to Layout.
 
@@ -348,7 +350,7 @@ For multi-computer work, so the drawing side can see the latest 3D reference.
 - The current file must already be saved to disk.
 - The first run pops up “watching started” and watches `.3dm` changes in **the same folder** (temp files skipped).
 - After a change, when Rhino is idle for 0.5 seconds, one Worksession Refresh runs.
-- **Refresh only.** It does not Attach or Detach references, and it does not edit the `.rws` file.
+- **Refresh only.** It does not Attach or Detach references, and it does not edit the `.rws` file. Grab `TAG_ITEM` still needs the Tag and the furniture Block in the same `.3dm`; it cannot pick furniture in a linked file.
 - A failed Refresh retries after a delay and **does not tear down the last good reference**.
 - Run again to stop watching. If the file was Save As’d to another folder, running again watches the new location.
 

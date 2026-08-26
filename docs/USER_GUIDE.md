@@ -9,7 +9,7 @@
 **Model freely in 3D, load Type data from the Dictionary, then hand off to 2D.**
 
 1. **Free 3D modelling**: model in Rhino as usual. LoopFlow does not write anything in the background, and it does not restrict how you draw.
-2. **Dictionary into the model**: the Excel Dictionary defines defaults for each finish / work item, then syncs them to Rhino layers. After the model is built, put objects on the matching layers and write that data onto each object (ID, finish, elevation, space, and so on).
+2. **Dictionary into the model**: the Excel Dictionary defines defaults for each finish / work item, then syncs them to Rhino layers. After the model is built, put objects on the matching layers and write that data onto each object (ID, finish, elevation, space, and so on). Objects on `00_STR` structure layers do not receive object metadata and are not Tag sources.
 3. **Publish for 2D**: after validation, publish a read-only **Registry**. That snapshot is how model data moves from 3D to 2D. 2D tags read Type, elevation, and space from a chosen revision.
 
 Model data flows one way: **3D owns object data, the Registry freezes one validated revision, and 2D does not write back 3D Types or objects**. 2D is still active work: sheet numbers / names, tag bindings, detail numbers, remarks, and other manual fields stay on the drawing side. If 3D changes later, return to the affected nodes, rewrite, validate, publish, and infuse again. You do not have to throw away the drawings.

@@ -20,7 +20,7 @@ Rhino Type layers         match the Dictionary by _03_Type ID; keep defaults for
       │  model; put objects on the matching layer
       │  LFNexus “Write model metadata”
       ▼
-3D objects                each object’s UUID, space, elevation, construction, remarks, revision
+3D objects                ordinary objects: UUID, space, elevation, construction, remarks, revision (`00_STR` structure layers skipped)
       │  after validation, LFPublishExchange
       ▼
 Registry revision         read-only snapshot of model data
@@ -124,6 +124,10 @@ The Chinese Dictionary has **12 top groups**, each with a fixed category prefix:
 ### `20_DW` (doors and windows) is special
 
 Door/window model data lives on the **block itself** (see [Tag Block reference](./TAG_BLOCKS.md#dw-tag--doors-and-windows)), not on sub-layers. The `20_DW` row note says blocks sit on this layer and data is on the block, not on child layers. Sync treats `20_DW` as one Type and ignores child layers. `TAG_DW` No./W./H. are 2D manual fields; they do not create child Types and they do not write back as 3D object data.
+
+### `00_STR` (structure) does not get object metadata
+
+`00_STR` structure layers and their children **are still** synced as Type layers, including layer `lf_type_id`. 3D objects on those layers **do not** receive object ID, space, or elevation metadata, and they are not Laser / Grab sources. The next Write model metadata run clears leftover object UserText on them. Quantity takeoff is a separate product and does not rely on those object UUIDs.
 
 ## 5　Writing rules
 

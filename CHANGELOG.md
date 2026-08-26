@@ -4,6 +4,17 @@ All notable changes to LoopFlow will be documented here.
 
 ---
 
+## [2.0.6] - 2026-08-26
+
+Install this version. Same workflow as 2.0.5, plus:
+
+- Objects on `00_STR` structure layers no longer get 2.0 object metadata. The next Write Model Metadata run clears leftover UserText on those objects. Type layers and layer `lf_type_id` are still created
+- Grab and Laser do not bind Tags to structure objects
+- Grab `TAG_ITEM` needs the furniture Block in the same `.3dm` as the Tag. A 2D/3D worksession split cannot pick furniture from a linked file
+- Quit Rhino completely after install. Do not mix 1.x and 2.0. Do not overwrite `v2.0.0`–`v2.0.5`
+
+---
+
 ## [2.0.5] - 2026-08-25
 
 Install this version. Same workflow as 2.0.4.
