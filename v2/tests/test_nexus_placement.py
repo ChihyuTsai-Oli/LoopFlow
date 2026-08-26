@@ -31,7 +31,7 @@ from loopflow.features.model_data.verify import verify_model_data
 from loopflow.foundation.usertext import LEVEL_DATUM_KEY, LEVEL_ID_KEY
 from loopflow.platform.rhino.memory import MemorySession
 
-LAYER = "00_STR_結構::Beam.樑"
+LAYER = "02_Wall_牆面::_Partition_Lightweight.輕隔間"
 FULL = to_full_path(LAYER)
 SPACE_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 SPACE_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
@@ -43,11 +43,11 @@ def _row(**overrides):
     row = [None] * len(schema.DISPLAY_COLUMNS)
     values = {
         "layer_path": LAYER,
-        "construction_default": "Existing",
-        "type_id": "EX-01",
-        "type_display_name": "鋼筋混凝土",
-        "estimation_unit": "樘",
-        "measurement_rule": "COUNT",
+        "construction_default": "New",
+        "type_id": "WL-01",
+        "type_display_name": "輕隔間牆",
+        "estimation_unit": "cm",
+        "measurement_rule": "LEN_W",
         "elevation_basis": "BH",
         "remarks_default": "(手動輸入備註)",
     }
@@ -279,7 +279,7 @@ class PlacementTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("b", SPACE_DISPLAY_KEY), "客廳")
         asked.clear()
         session.zoomed_object_ids = []
-        session.set_layer_user_text(FULL, "lf_type_id", "EX-01")
+        session.set_layer_user_text(FULL, "lf_type_id", "WL-01")
         apply_identity(session, catalog=_catalog(_row()))
         again = apply_placement(session, catalog=_catalog(_row()), ask_space=ask)
         self.assertTrue(again.ok, again.message)
@@ -306,6 +306,19 @@ class PlacementTests(unittest.TestCase):
         )
         self.assertIsNone(session.get_object_user_text("wall", SPACE_ID_KEY))
         self.assertIn("wall", applied.details["remaining"])
+
+    def test_structure_object_is_skipped(self):
+        session = _session()
+        _add_space(session, "s1", [[0, 0], [10, 0], [10, 8], [0, 8]], SPACE_A, "客廳")
+        _add_model(session, "wall", bbox=((1, 1, 0), (2, 2, 10)))
+        structure = to_full_path("00_STR_結構::Beam.樑")
+        session.ensure_layer(structure)
+        session.add_object("beam", layer=structure)
+        session.set_bbox("beam", (4, 4, 0), (5, 5, 10))
+        scanned = scan_placement(session, catalog=_catalog(_row()))
+        ids = [item["rhino_id"] for item in scanned.details["items"]]
+        self.assertEqual(ids, ["wall"])
+        self.assertNotIn("beam", ids)
 
 
 if __name__ == "__main__":

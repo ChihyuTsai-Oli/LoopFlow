@@ -33,7 +33,7 @@ from loopflow.platform.rhino.memory import MemorySession
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from project_fixture import bind_project  # noqa: E402
 
-LAYER = "00_STR_結構::Beam.樑"
+LAYER = "02_Wall_牆面::_Partition_Lightweight.輕隔間"
 FULL = to_full_path(LAYER)
 SPACE_A = "aaaaaaaa-aaaa-4bbb-8bbb-bbbbbbbbbbbb"
 LEVEL_A = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
@@ -44,11 +44,11 @@ def _row(**overrides):
     row = [None] * len(schema.DISPLAY_COLUMNS)
     values = {
         "layer_path": LAYER,
-        "construction_default": "Existing",
-        "type_id": "EX-01",
-        "type_display_name": "鋼筋混凝土",
-        "estimation_unit": "樘",
-        "measurement_rule": "COUNT",
+        "construction_default": "New",
+        "type_id": "WL-01",
+        "type_display_name": "輕隔間牆",
+        "estimation_unit": "cm",
+        "measurement_rule": "LEN_W",
         "elevation_basis": "BH",
         "remarks_default": "(手動輸入備註)",
     }
@@ -76,7 +76,7 @@ def _session(root) -> MemorySession:
     session = MemorySession()
     bind_project(session, root, project_id=PROJECT_ID)
     session.ensure_layer(FULL)
-    session.set_layer_user_text(FULL, "lf_type_id", "EX-01")
+    session.set_layer_user_text(FULL, "lf_type_id", "WL-01")
     return session
 
 
@@ -164,8 +164,8 @@ class PublishHandoffTests(unittest.TestCase):
             self.assertEqual(len(payload["objects"]), 1)
             obj = payload["objects"][0]
             self.assertEqual(obj["object_id"], session.get_object_user_text("wall", OBJECT_ID_KEY))
-            self.assertEqual(obj["type_id"], "EX-01")
-            self.assertEqual(obj["type_display_name"], "鋼筋混凝土")
+            self.assertEqual(obj["type_id"], "WL-01")
+            self.assertEqual(obj["type_display_name"], "輕隔間牆")
             self.assertEqual(obj["space_display"], "客廳")
             self.assertNotIn("quantity", obj)
             self.assertNotIn("dimension_w", obj)
@@ -208,6 +208,32 @@ class PublishHandoffTests(unittest.TestCase):
                 self.assertEqual(last_good.read_bytes(), good)
             finally:
                 release_lock(folder / "Project_Registry.lock", pid=4242, host="test-host")
+
+    def test_structure_object_is_not_in_registry_objects(self):
+        catalog = _catalog(_row())
+        with tempfile.TemporaryDirectory(prefix="loopflow-nx07-") as raw:
+            session = _session(raw)
+            _add_space(session)
+            _add_wall(session)
+            _write_dictionary(Path(raw))
+            _apply(session, catalog)
+            structure = to_full_path("00_STR_結構::Beam.樑")
+            session.ensure_layer(structure)
+            session.add_object("beam", layer=structure)
+            session.set_bbox("beam", (4, 4, 0), (5, 5, 10))
+            session.set_object_user_text(
+                "beam",
+                OBJECT_ID_KEY,
+                "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+            )
+            result = run_publish_exchange(session, show_message=lambda _msg: None)
+            self.assertTrue(result.ok, result.message)
+            payload = read_json(_registry_folder(raw) / "Project_Registry.json").details["payload"]
+            self.assertEqual(len(payload["objects"]), 1)
+            self.assertEqual(
+                payload["objects"][0]["object_id"],
+                session.get_object_user_text("wall", OBJECT_ID_KEY),
+            )
 
 
 if __name__ == "__main__":

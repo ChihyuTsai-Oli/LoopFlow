@@ -12,6 +12,7 @@ from loopflow.features.dictionary.layer_paths import (
     LAYER_TYPE_ID_KEY,
     data_layer,
     is_in_project,
+    is_structure_layer,
     is_system_layer,
     project_id_from_session,
     read_layer_prefix,
@@ -29,6 +30,7 @@ from loopflow.foundation.usertext import (
     TYPE_CATEGORY_KEY,
     TYPE_ID_KEY,
     TYPE_SEQUENCE_KEY,
+    clear_object_metadata,
     clear_stale_object_text,
     read_text,
     write_text,
@@ -99,8 +101,48 @@ def iter_scan_targets(
         layer = session.object_layer(object_id) or ""
         if not _in_project(layer, prefix) or _is_data_layer(layer, prefix):
             continue
+        if is_structure_layer(layer, prefix):
+            continue
         targets.append(object_id)
     return tuple(targets)
+
+
+def iter_structure_targets(
+    session: RhinoSession,
+    *,
+    selected_only: bool = False,
+) -> Tuple[str, ...]:
+    """結構層與子層上的模型物件（不含 DNA_REF_）。供 Apply 清掉舊 UserText。"""
+    prefix = read_layer_prefix(session)
+    targets = []
+    for object_id in session.iter_object_ids(include_hidden=True, include_locked=True):
+        state = session.get_view_state(object_id)
+        if selected_only and (state is None or not state.selected):
+            continue
+        if not session.is_model_object(object_id):
+            continue
+        name = session.object_name(object_id) or ""
+        if name.startswith(DNA_REF_PREFIX):
+            continue
+        layer = session.object_layer(object_id) or ""
+        if not _in_project(layer, prefix) or _is_data_layer(layer, prefix):
+            continue
+        if not is_structure_layer(layer, prefix):
+            continue
+        targets.append(object_id)
+    return tuple(targets)
+
+
+def strip_structure_metadata(
+    session: RhinoSession,
+    *,
+    selected_only: bool = False,
+) -> Tuple[str, ...]:
+    stripped = []
+    for object_id in iter_structure_targets(session, selected_only=selected_only):
+        clear_object_metadata(session, object_id)
+        stripped.append(object_id)
+    return tuple(stripped)
 
 
 def _resolve_type(session: RhinoSession, object_id: str, catalog: TypeCatalog):
@@ -282,6 +324,7 @@ def apply_identity(
         if not loaded.ok:
             return loaded
         type_catalog = loaded.details["catalog"]
+        strip_structure_metadata(current, selected_only=selected_only)
         revision = expected_data_revision(current)
         mapping_table = dict(mappings or {})
         for new_id in mapping_table.values():

@@ -31,7 +31,7 @@ from loopflow.platform.rhino.memory import MemorySession
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from project_fixture import bind_project, registry_dir  # noqa: E402
 
-LAYER = "00_STR_結構::Beam.樑"
+LAYER = "02_Wall_牆面::_Partition_Lightweight.輕隔間"
 FULL = to_full_path(LAYER)
 SPACE_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 PROJECT_NAME = "大安邸"
@@ -41,11 +41,11 @@ def _row(**overrides):
     row = [None] * len(schema.DISPLAY_COLUMNS)
     values = {
         "layer_path": LAYER,
-        "construction_default": "Existing",
-        "type_id": "EX-01",
-        "type_display_name": "鋼筋混凝土",
-        "estimation_unit": "樘",
-        "measurement_rule": "COUNT",
+        "construction_default": "New",
+        "type_id": "WL-01",
+        "type_display_name": "輕隔間牆",
+        "estimation_unit": "cm",
+        "measurement_rule": "LEN_W",
         "elevation_basis": "BH",
         "remarks_default": "(手動輸入備註)",
     }
@@ -65,7 +65,7 @@ def _catalog(*rows):
 def _session() -> MemorySession:
     session = MemorySession()
     session.ensure_layer(FULL)
-    session.set_layer_user_text(FULL, "lf_type_id", "EX-01")
+    session.set_layer_user_text(FULL, "lf_type_id", "WL-01")
     return session
 
 
@@ -185,6 +185,25 @@ class VerifyModelTests(unittest.TestCase):
             ident = apply_identity(session, catalog=catalog, guarded=False)
             self.assertTrue(ident.ok, ident.message)
             self.assertEqual(session.get_object_user_text("wall", DATA_REVISION_KEY), "3")
+
+
+    def test_structure_leftover_usertext_does_not_mismatch(self):
+        session = _session()
+        _add_space(session)
+        _add_wall(session)
+        structure = to_full_path("00_STR_結構::Beam.樑")
+        session.ensure_layer(structure)
+        session.add_object("beam", layer=structure)
+        session.set_bbox("beam", (1, 1, 0), (2, 2, 10))
+        catalog = _catalog(_row())
+        _apply(session, catalog)
+        session.set_object_user_text("beam", OBJECT_ID_KEY, "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        session.set_object_user_text("beam", SPACE_DISPLAY_KEY, "亂填")
+        popups = []
+        result = verify_model_data(session, catalog=catalog, show_message=popups.append)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.details["mismatch_count"], 0)
+        self.assertNotIn("beam", result.details.get("mismatch_object_ids") or ())
 
 
 if __name__ == "__main__":

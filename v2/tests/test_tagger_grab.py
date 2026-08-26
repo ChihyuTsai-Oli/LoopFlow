@@ -42,6 +42,9 @@ from project_fixture import bind_project  # noqa: E402
 
 PROJECT_ID = "大安邸"
 OBJECT_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+SOURCE_LAYER = "M3D::02_Wall_牆面::_Partition_Lightweight.輕隔間"
+STRUCTURE_LAYER = "M3D::00_STR_結構::Beam.樑"
+STRUCTURE_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
 
 
 def _session() -> MemorySession:
@@ -51,7 +54,7 @@ def _session() -> MemorySession:
         "wall",
         selected=True,
         name="Wall",
-        layer="M3D::00_STR_結構::Beam.樑",
+        layer=SOURCE_LAYER,
         user_text={OBJECT_ID_KEY: OBJECT_ID},
     )
     session.add_object("tag", selected=False, name="HeightTag", layer="M2D::Tags")
@@ -319,7 +322,7 @@ class BindTests(unittest.TestCase):
         session.add_object(
             "other",
             name="Other",
-            layer="M3D::00_STR_結構::Beam.樑",
+            layer=SOURCE_LAYER,
             user_text={OBJECT_ID_KEY: "cccccccc-cccc-4ccc-8ccc-cccccccccccc"},
         )
         second = bind_tag(session, "tag", "other", _catalog())
@@ -329,6 +332,21 @@ class BindTests(unittest.TestCase):
             session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY),
             "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
         )
+
+    def test_structure_source_zero_write(self):
+        session = _session()
+        session.add_object(
+            "beam",
+            name="Beam",
+            layer=STRUCTURE_LAYER,
+            user_text={OBJECT_ID_KEY: STRUCTURE_ID},
+        )
+        before = dict(session._object_meta["tag"]["user_text"])
+        result = bind_tag(session, "tag", "beam", _catalog())
+        self.assertFalse(result.ok)
+        self.assertEqual(result.blocking, ("structure_layer",))
+        self.assertEqual(session._object_meta["tag"]["user_text"], before)
+        self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
 
 
 class CommandTests(unittest.TestCase):

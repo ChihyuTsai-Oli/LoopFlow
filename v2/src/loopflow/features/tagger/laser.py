@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 from typing import Callable, Optional, Sequence, Tuple
 
+from loopflow.features.dictionary.layer_paths import is_structure_object
 from loopflow.features.tagger.binding import UUID_V4_RE, write_object_binding
 from loopflow.features.tagger.keys import (
     LASER_OBJECT_TEMPLATE_IDS,
@@ -255,6 +256,13 @@ def bind_laser_hit(
             command_id=COMMAND_ID,
             details={"template_id": template.template_id},
         )
+    if is_structure_object(session, source_id):
+        return results.blocked(
+            "bind_tag",
+            t("laser.017"),
+            ("structure_layer",),
+            command_id=COMMAND_ID,
+        )
     object_uuid = read_text(session, source_id, OBJECT_ID_KEY)
     if object_uuid is None or not UUID_V4_RE.match(object_uuid):
         return results.blocked(
@@ -397,6 +405,11 @@ def run_tagger_laser(
         probe_origin = origin_behind_plane(origin, direction)
         draw_debug_ray(current, origin, probe_origin, direction)
         hits = cluster_hits(probe_fn(current, probe_origin, direction))
+        hits = tuple(
+            item
+            for item in hits
+            if item.get("object_id") and not is_structure_object(current, item["object_id"])
+        )
         if not hits:
             if debug_ray_enabled():
                 return results.ok(

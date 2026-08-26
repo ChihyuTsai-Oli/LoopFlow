@@ -78,6 +78,9 @@ def dw_plan_layer(prefix: str = LAYER_PREFIX_3D) -> str:
     return prefix + "::20_DW"
 
 
+STRUCTURE_GROUP_CODE = "00_STR"
+
+
 def system_layers(prefix: str = LAYER_PREFIX_3D) -> Tuple[str, ...]:
     root = data_layer(prefix)
     return (
@@ -126,6 +129,20 @@ def ancestor_paths(full: str) -> Tuple[str, ...]:
 
 def is_dw_child(full: str, prefix: str = LAYER_PREFIX_3D) -> bool:
     return full.startswith(dw_plan_layer(prefix) + "::")
+
+
+def is_structure_layer(full: str, prefix: str = LAYER_PREFIX_3D) -> bool:
+    """相對路徑第一段代號為 00_STR（含 00_STR_結構 與子層）。"""
+    relative = to_relative_path(full or "", prefix)
+    if not relative:
+        return False
+    first = relative.split("::", 1)[0]
+    return first == STRUCTURE_GROUP_CODE or first.startswith(STRUCTURE_GROUP_CODE + "_")
+
+
+def is_structure_object(session, object_id: str) -> bool:
+    layer = session.object_layer(object_id) or ""
+    return is_structure_layer(layer, read_layer_prefix(session))
 
 
 def is_system_layer(full: str, prefix: str = LAYER_PREFIX_3D) -> bool:

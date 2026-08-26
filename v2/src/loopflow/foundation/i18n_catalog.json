@@ -1727,6 +1727,10 @@
     "zh-TW": "家具圖塊名稱格式不正確：%s。應為 FF-01__Chair-1。",
     "en": "Invalid furniture Block name: %s. Expected format: FF-01__Chair-1."
   },
+  "grab.021": {
+    "zh-TW": "結構體不綁定 Tag，Grab 不寫入。",
+    "en": "Structural objects are not bound to Tags. Grab made no changes."
+  },
   "index.001": {
     "zh-TW": "「TAG_ELEV_0」請用 Layout ID 寫目前頁圖號，Index 不寫入。",
     "en": "Use Layout ID to write the current page's drawing number to \"TAG_ELEV_0\". Index made no changes."
@@ -1930,6 +1934,10 @@
   "laser.016": {
     "zh-TW": "已畫出射線。沒打到帶 UUID 的 3D 物件。請到 3D 視窗查看。",
     "en": "Ray drawn. It did not hit a 3D object with a UUID. Check the 3D viewport."
+  },
+  "laser.017": {
+    "zh-TW": "結構體不綁定 Tag，Laser 不寫入。",
+    "en": "Structural objects are not bound to Tags. Laser made no changes."
   },
   "layout_id.001": {
     "zh-TW": "圖框已就緒，但尚未設定系列起點，因此未執行。 / 請將每個系列的第一頁按照下列規則命名： / **圖類別__圖號__圖名 / **IN__101.01__一樓平面圖 / **A__101__一樓平面圖 /  / --- / 1. ** 作為自動編號起點，勿刪 / 2. ** 之間的頁面為同一系列 / 3. ** 頁面之外的Layout名稱，只需要填寫圖名 / 4. // 頁面不參與自動編號，但仍需使用相同命名格式規範 / 5. 圖號、圖名 的編號與命名可以從Layout列表手動調整 / 　經由自動編號寫入圖框中，不可直接修改圖框內容 / --- /  / Sample / **IN__101.01__一樓平面圖 / 二樓平面圖 / 三樓平面圖 / **IN__201.01__立面圖1 / 立面圖2 / //S__901__結構平面圖 /  / （Layout自動編號如下） / **IN__101.01__一樓平面圖 / IN__101.02__二樓平面圖 / IN__101.03__三樓平面圖 / **IN__201.01__立面圖1 / IN__201.02__立面圖2 / //S__901__結構平面圖",

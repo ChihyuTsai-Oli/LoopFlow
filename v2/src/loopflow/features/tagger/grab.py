@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from typing import Callable, Optional, Tuple
 
+from loopflow.features.dictionary.layer_paths import is_structure_object
 from loopflow.features.tagger.binding import (
     canonical_uuid,
     write_block_binding,
@@ -111,6 +112,13 @@ def bind_tag(
             command_id=COMMAND_ID,
         )
     if template.template_id in GRAB_OBJECT_TEMPLATE_IDS:
+        if is_structure_object(session, source_id):
+            return results.blocked(
+                "bind_tag",
+                t("grab.021"),
+                ("structure_layer",),
+                command_id=COMMAND_ID,
+            )
         object_uuid, reason = resolve_grab_object_uuid(session, source_id)
         if reason == "ambiguous_source":
             return results.blocked(

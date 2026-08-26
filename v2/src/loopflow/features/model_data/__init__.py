@@ -4,6 +4,7 @@ from loopflow.features.model_data.identity import (
     apply_identity,
     rollback_identity,
     scan_identity,
+    strip_structure_metadata,
     verify_identity,
 )
 from loopflow.features.model_data.placement import apply_placement, scan_placement
@@ -30,5 +31,6 @@ __all__ = [
     "rollback_identity",
     "scan_identity",
     "scan_placement",
+    "strip_structure_metadata",
     "verify_identity",
 ]

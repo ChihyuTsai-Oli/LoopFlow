@@ -337,18 +337,39 @@ class ConsoleMenuTests(unittest.TestCase):
 
     def test_apply_writes_id_space_not_dimensions(self):
         from loopflow.features.dictionary.layer_paths import to_full_path
+        from loopflow.platform.excel import write_table
 
-        full = to_full_path("00_STR_結構::Beam.樑")
+        full = to_full_path("02_Wall_牆面::_Partition_Lightweight.輕隔間")
         space_layer = SYSTEM_LAYERS[0]
         ffl_layer = SYSTEM_LAYERS[1]
         space_id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
         level_id = "11111111-1111-4111-8111-111111111111"
+        wall_row = [None] * len(schema.DISPLAY_COLUMNS)
+        wall_values = {
+            "layer_path": "02_Wall_牆面::_Partition_Lightweight.輕隔間",
+            "construction_default": "New",
+            "type_id": "WL-01",
+            "type_display_name": "輕隔間牆",
+            "estimation_unit": "cm",
+            "measurement_rule": "LEN_W",
+            "elevation_basis": "BH",
+            "remarks_default": "(手動輸入備註)",
+        }
+        for key, value in wall_values.items():
+            wall_row[schema.MACHINE_KEYS.index(key)] = value
         with tempfile.TemporaryDirectory(prefix="loopflow-nx05-") as raw:
             root = Path(raw)
-            _write_dictionary(root)
+            written = write_table(
+                root / "LoopFlow_Dictionary.xlsx",
+                schema.TITLE_ROW,
+                schema.DISPLAY_COLUMNS,
+                [wall_row],
+            )
+            if not written.ok:
+                raise AssertionError(written.message)
             session = _session(root)
             session.ensure_layer(full)
-            session.set_layer_user_text(full, "lf_type_id", "EX-01")
+            session.set_layer_user_text(full, "lf_type_id", "WL-01")
             session.ensure_layer(ffl_layer)
             session.add_object("level", layer=ffl_layer)
             session.set_curve("level", [[-1, -1], [20, -1], [20, 20], [-1, 20]], closed=True)

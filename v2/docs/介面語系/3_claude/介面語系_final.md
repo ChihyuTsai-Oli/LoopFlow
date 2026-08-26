@@ -521,6 +521,7 @@ English 欄是定稿，可直接改這份檔。`%s` 是程式填入的數字或�
 | `grab.018` | 找不到選取的 Tag。 | The selected Tag was not found. |
 | `grab.019` | （未命名） | (unnamed) |
 | `grab.020` | 家具圖塊名稱格式不正確：%s。應為 FF-01__Chair-1。 | Invalid furniture Block name: %s. Expected format: FF-01__Chair-1. |
+| `grab.021` | 結構體不綁定 Tag，Grab 不寫入。 | Structural objects are not bound to Tags. Grab made no changes. |
 
 ## Index
 
@@ -587,6 +588,7 @@ English 欄是定稿，可直接改這份檔。`%s` 是程式填入的數字或�
 | `laser.014` | 射線命中沒有物件 ID，已停止，不寫入。 | The object hit by the ray has no object ID. Operation stopped; no changes were made. |
 | `laser.015` | 這一點落在 %s 個重疊的 View 框內，已停止，不猜測。 | This point is inside %s overlapping View frames. Operation stopped; no View was guessed. |
 | `laser.016` | 已畫出射線。沒打到帶 UUID 的 3D 物件。請到 3D 視窗查看。 | Ray drawn. It did not hit a 3D object with a UUID. Check the 3D viewport. |
+| `laser.017` | 結構體不綁定 Tag，Laser 不寫入。 | Structural objects are not bound to Tags. Laser made no changes. |
 
 ## Layout ID
 

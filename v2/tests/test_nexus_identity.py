@@ -28,7 +28,7 @@ from loopflow.features.model_data.identity import (
     verify_identity,
 )
 from loopflow.features.project.console import open_console
-from loopflow.foundation.usertext import SPACE_ID_KEY
+from loopflow.foundation.usertext import SPACE_DISPLAY_KEY, SPACE_ID_KEY
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
@@ -36,7 +36,7 @@ from loopflow.platform.rhino.state import ObjectViewState
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from project_fixture import bind_project  # noqa: E402
 
-LAYER = "00_STR_結構::Beam.樑"
+LAYER = "02_Wall_牆面::_Partition_Lightweight.輕隔間"
 FULL = to_full_path(LAYER)
 VALID_ID = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
 OLD_ID = "11111111-1111-4111-8111-111111111111"
@@ -48,11 +48,11 @@ def _row(**overrides):
     row = [None] * len(schema.DISPLAY_COLUMNS)
     values = {
         "layer_path": LAYER,
-        "construction_default": "Existing",
-        "type_id": "EX-01",
-        "type_display_name": "鋼筋混凝土",
-        "estimation_unit": "樘",
-        "measurement_rule": "COUNT",
+        "construction_default": "New",
+        "type_id": "WL-01",
+        "type_display_name": "輕隔間牆",
+        "estimation_unit": "cm",
+        "measurement_rule": "LEN_W",
         "elevation_basis": "BH",
         "remarks_default": "(手動輸入備註)",
     }
@@ -91,7 +91,7 @@ class IdentityScanApplyTests(unittest.TestCase):
         _add_model(session, "visible")
         _add_model(session, "hidden-obj", hidden=True)
         _add_model(session, "locked-obj", locked=True)
-        session.add_placeholder(layer=FULL, name=dna_ref_name("EX-01"))
+        session.add_placeholder(layer=FULL, name=dna_ref_name("WL-01"))
         session.add_object("curve-0", selected=True, name="客廳", layer="M3D::_Data::Space_Boundaries")
         session.set_curve("curve-0", [[0, 0], [4, 0], [4, 4], [0, 4]], closed=True)
         session.add_object("outside", layer="Default")
@@ -129,8 +129,8 @@ class IdentityScanApplyTests(unittest.TestCase):
         self.assertTrue(UUID_V4_RE.match(created))
         self.assertNotEqual(created, VALID_ID)
         self.assertEqual(session.get_object_user_text("keep", OBJECT_ID_KEY), VALID_ID)
-        self.assertEqual(session.get_object_user_text("new", TYPE_ID_KEY), "EX-01")
-        self.assertEqual(session.get_object_user_text("new", CONSTRUCTION_KEY), "Existing")
+        self.assertEqual(session.get_object_user_text("new", TYPE_ID_KEY), "WL-01")
+        self.assertEqual(session.get_object_user_text("new", CONSTRUCTION_KEY), "New")
         self.assertEqual(session.get_object_user_text("new", REMARKS_KEY), "(手動輸入備註)")
         self.assertEqual(session.get_object_user_text("new", DATA_REVISION_KEY), "0")
         self.assertEqual(session.get_object_user_text("keep", REMARKS_KEY), "人工備註")
@@ -164,13 +164,13 @@ class IdentityScanApplyTests(unittest.TestCase):
         session = _session()
         _add_model(session, "not-uuid")
         _add_model(session, "upper")
-        session.set_object_user_text("not-uuid", OBJECT_ID_KEY, "EX-01")
+        session.set_object_user_text("not-uuid", OBJECT_ID_KEY, "WL-01")
         session.set_object_user_text("upper", OBJECT_ID_KEY, "3FA85F64-5717-4562-B3FC-2C963F66AFA6")
         scanned = scan_identity(session, catalog=_catalog(_row()))
         self.assertIn("invalid_object_id", scanned.details["blocking"])
         blocked = apply_identity(session, catalog=_catalog(_row()))
         self.assertEqual(blocked.status, "blocked")
-        self.assertEqual(session.get_object_user_text("not-uuid", OBJECT_ID_KEY), "EX-01")
+        self.assertEqual(session.get_object_user_text("not-uuid", OBJECT_ID_KEY), "WL-01")
         mapped = apply_identity(
             session,
             catalog=_catalog(_row()),
@@ -228,6 +228,37 @@ class IdentityScanApplyTests(unittest.TestCase):
         self.assertFalse(applied.ok)
         self.assertEqual(applied.blocking, ("missing_level_or_space_boundary",))
         self.assertIsNone(session.get_object_user_text("wall", OBJECT_ID_KEY))
+
+
+    def test_structure_layer_is_skipped_and_stripped(self):
+        session = _session()
+        _add_model(session, "paint")
+        structure = to_full_path("00_STR_結構::Beam.樑")
+        session.ensure_layer(structure)
+        session.add_object("beam", layer=structure)
+        session.set_object_user_text("beam", OBJECT_ID_KEY, VALID_ID)
+        session.set_object_user_text("beam", SPACE_ID_KEY, "EXT")
+        session.set_object_user_text("beam", SPACE_DISPLAY_KEY, "客廳")
+        scanned = scan_identity(session, catalog=_catalog(_row()))
+        self.assertEqual([item["rhino_id"] for item in scanned.details["items"]], ["paint"])
+        applied = apply_identity(session, catalog=_catalog(_row()))
+        self.assertTrue(applied.ok, applied.message)
+        self.assertTrue(UUID_V4_RE.match(session.get_object_user_text("paint", OBJECT_ID_KEY)))
+        self.assertEqual(session.get_object_user_text("beam", OBJECT_ID_KEY) or "", "")
+        self.assertEqual(session.get_object_user_text("beam", SPACE_ID_KEY) or "", "")
+        self.assertEqual(session.get_object_user_text("beam", SPACE_DISPLAY_KEY) or "", "")
+
+    def test_structure_only_apply_is_ok_and_strips(self):
+        session = _session()
+        structure = to_full_path("00_STR_結構::Beam.樑")
+        session.ensure_layer(structure)
+        session.add_object("beam", layer=structure)
+        session.set_object_user_text("beam", OBJECT_ID_KEY, VALID_ID)
+        applied = apply_identity(session, catalog=_catalog(_row()))
+        self.assertTrue(applied.ok, applied.message)
+        self.assertEqual(applied.details["applied"], ())
+        self.assertEqual(applied.details["remaining"], ())
+        self.assertEqual(session.get_object_user_text("beam", OBJECT_ID_KEY) or "", "")
 
 
 if __name__ == "__main__":

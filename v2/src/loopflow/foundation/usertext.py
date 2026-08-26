@@ -48,6 +48,23 @@ LEGACY_KEYS = {
 }
 
 # 2.0 不再寫尺寸／數量／座標框；Apply 時清掉面板上的殘留。
+# 3D 物件 instance 欄；結構層 Apply 時整組清掉。不含框線專用 `_01*`／`_15*`。
+OBJECT_INSTANCE_KEYS = (
+    SPACE_DISPLAY_KEY,
+    CONSTRUCTION_KEY,
+    TYPE_ID_KEY,
+    ELEVATION_BASIS_KEY,
+    ELEVATION_VALUE_KEY,
+    OBJECT_ID_KEY,
+    REMARKS_KEY,
+    SPACE_ID_KEY,
+    LEVEL_ID_KEY,
+    TYPE_CATEGORY_KEY,
+    TYPE_SEQUENCE_KEY,
+    ELEVATION_DISPLAY_KEY,
+    DATA_REVISION_KEY,
+)
+
 STALE_OBJECT_KEYS = (
     "_05_寬度W",
     "_06_深度D",
@@ -93,3 +110,13 @@ def clear_stale_object_text(session, object_id: str) -> None:
     for key in STALE_OBJECT_KEYS:
         if session.get_object_user_text(object_id, key) not in (None, ""):
             session.set_object_user_text(object_id, key, "")
+
+
+def clear_object_metadata(session, object_id: str) -> None:
+    """清掉 3D 物件 canonical／舊鍵／尺寸殘留。不碰圖層 UserText。"""
+    clear_stale_object_text(session, object_id)
+    for key in OBJECT_INSTANCE_KEYS:
+        session.set_object_user_text(object_id, key, "")
+        for legacy in legacy_keys(key):
+            if legacy != key:
+                session.set_object_user_text(object_id, legacy, "")

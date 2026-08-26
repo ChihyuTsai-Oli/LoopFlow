@@ -6,11 +6,11 @@
 
 | 做 | 不做 |
 |---|---|
-| 單向讀 2.0 已發布的 Registry／物件資料 | 寫回物件 UserText、Registry、Nexus |
+| 單向讀 2.0 已發布的 Registry／物件資料；**結構體**改讀 `.3dm` 幾何 + 圖層 `lf_type_id`／Dictionary `layer_path` + `Q_05`，不要求 UUID／空間／高程 | 寫回物件 UserText、Registry、Nexus |
 | 輸出獨立 Excel 估價單（與明細） | 打進 2.0 `.yak` 或工具列 |
 | 依 Dictionary 的 `Q_01`～`Q_06` 規則求值 | 把「一式」寫進字典 |
 
-2.0 算出圖；數量計算讀它留下的資料，自己產出 xlsx。契約語意以 `../v2/docs/資料契約.md` 為準。
+2.0 算出圖；數量計算讀它留下的資料，自己產出 xlsx。`00_STR` 結構體不進 Registry `objects[]`，qty 日後按 Type（必要時再對 FFL 框估樓層）加總，不依房間。契約語意以 `../v2/docs/資料契約.md` 為準。
 
 ## 現況
 

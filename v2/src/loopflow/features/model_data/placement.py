@@ -413,6 +413,9 @@ def apply_placement(
                 t("nexus_metadata.020"),
                 command_id=command_id,
             )
+        from loopflow.features.model_data.identity import strip_structure_metadata
+
+        strip_structure_metadata(current, selected_only=selected_only)
         scanned = scan_placement(
             current,
             catalog=catalog,

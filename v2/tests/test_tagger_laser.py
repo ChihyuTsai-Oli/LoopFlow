@@ -57,6 +57,9 @@ from project_fixture import bind_project  # noqa: E402
 
 PROJECT_ID = "大安邸"
 OBJECT_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+SOURCE_LAYER = "M3D::02_Wall_牆面::_Partition_Lightweight.輕隔間"
+STRUCTURE_LAYER = "M3D::00_STR_結構::Beam.樑"
+STRUCTURE_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
 POINT_2D = (10.0, 5.0, 0.0)
 
 
@@ -82,7 +85,7 @@ def _session() -> MemorySession:
         "wall",
         selected=True,
         name="Wall",
-        layer="M3D::00_STR_結構::Beam.樑",
+        layer=SOURCE_LAYER,
         user_text={OBJECT_ID_KEY: OBJECT_ID},
     )
     session.add_object("tag", selected=False, name="HeightLaser", layer="M2D::Tags")
@@ -97,7 +100,7 @@ def _session() -> MemorySession:
                 "object_id": "wall",
                 "dist": 100.0,
                 "hit_type": "FRONTAL",
-                "layer": "M3D::00_STR_結構::Beam.樑",
+                "layer": SOURCE_LAYER,
                 "name": "Wall",
             }
         ]
@@ -313,6 +316,21 @@ class BindTests(unittest.TestCase):
         session.set_object_user_text("wall", OBJECT_ID_KEY, "")
         result = bind_laser_hit(session, "tag", "wall", _catalog())
         self.assertEqual(result.blocking, ("missing_object_id",))
+        self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
+
+    def test_structure_source_zero_write(self):
+        session = _session()
+        session.add_object(
+            "beam",
+            name="Beam",
+            layer=STRUCTURE_LAYER,
+            user_text={OBJECT_ID_KEY: STRUCTURE_ID},
+        )
+        before = dict(session._object_meta["tag"]["user_text"])
+        result = bind_laser_hit(session, "tag", "beam", _catalog())
+        self.assertFalse(result.ok)
+        self.assertEqual(result.blocking, ("structure_layer",))
+        self.assertEqual(session._object_meta["tag"]["user_text"], before)
         self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
 
 
@@ -613,6 +631,65 @@ class CommandTests(unittest.TestCase):
         expected_origin, expected_dir = ray_from_transform(unmoved, (15.0, 5.0, 0.0))
         self.assertEqual(captured[0][0], origin_behind_plane(expected_origin, expected_dir))
         self.assertEqual(captured[0][1], expected_dir)
+
+    def test_structure_only_hit_is_no_hit_and_zero_write(self):
+        session = _session()
+        session.add_object(
+            "beam",
+            name="Beam",
+            layer=STRUCTURE_LAYER,
+            user_text={OBJECT_ID_KEY: STRUCTURE_ID},
+        )
+        before = dict(session._object_meta["tag"]["user_text"])
+
+        def probe(_session, _origin, _direction):
+            return (
+                {
+                    "object_id": "beam",
+                    "dist": 10.0,
+                    "hit_type": "FRONTAL",
+                    "layer": STRUCTURE_LAYER,
+                    "name": "Beam",
+                },
+            )
+
+        result = _run(session, probe=probe)
+        self.assertFalse(result.ok)
+        self.assertEqual(result.blocking, ("no_hit",))
+        self.assertEqual(session._object_meta["tag"]["user_text"], before)
+        self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
+
+    def test_structure_hit_is_filtered_and_wall_still_binds(self):
+        session = _session()
+        session.add_object(
+            "beam",
+            name="Beam",
+            layer=STRUCTURE_LAYER,
+            user_text={OBJECT_ID_KEY: STRUCTURE_ID},
+        )
+
+        def probe(_session, _origin, _direction):
+            return (
+                {
+                    "object_id": "beam",
+                    "dist": 5.0,
+                    "hit_type": "FRONTAL",
+                    "layer": STRUCTURE_LAYER,
+                    "name": "Beam",
+                },
+                {
+                    "object_id": "wall",
+                    "dist": 80.0,
+                    "hit_type": "FRONTAL",
+                    "layer": SOURCE_LAYER,
+                    "name": "Wall",
+                },
+            )
+
+        result = _run(session, probe=probe)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY), OBJECT_ID)
+        self.assertEqual(result.details["hit_count"], 1)
 
     def test_catalog_and_entrypoint(self):
         from loopflow.command_catalog import get_command
