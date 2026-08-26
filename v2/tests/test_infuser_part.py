@@ -959,7 +959,7 @@ class SkipTests(unittest.TestCase):
 
 
 class RegistryFileTests(unittest.TestCase):
-    """Registry 檔在 .3dm 同層的 `_LoopFlow_Config/<專案名稱>/`。"""
+    """Registry 檔在 .3dm 同層的 `_LoopFlow_Config/loopflow/<專案名稱>/`。"""
 
     def _project(self):
         session = _session()

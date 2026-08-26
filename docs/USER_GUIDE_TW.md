@@ -16,7 +16,7 @@
 
 ## 專案以資料夾為單位
 
-已存檔的 `.3dm` 所在資料夾就是 LoopFlow 的專案工作資料夾。Dictionary 放在 `.3dm` 同一層；LoopFlow 會在同一層的 `_LoopFlow_Config/` 保存專案名稱、採用的 Dictionary 檔名、Registry 版次與 log。
+已存檔的 `.3dm` 所在資料夾就是 LoopFlow 的專案工作資料夾。Dictionary 放在 `.3dm` 同一層；LoopFlow 會在同一層的 `_LoopFlow_Config/loopflow/` 保存專案名稱、採用的 Dictionary 檔名、Registry 版次與 log。
 
 因此換電腦或搬磁碟時，應整個專案資料夾一起移動。只要 `.3dm`、Dictionary 與 `_LoopFlow_Config/` 的相對位置不變，就不必修改絕對路徑；若只複製 `.3dm`，不會把原專案的環境設定一起帶到新專案。
 

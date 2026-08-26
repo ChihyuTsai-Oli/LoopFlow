@@ -4,6 +4,16 @@ All notable changes to LoopFlow will be documented here.
 
 ---
 
+## [2.0.7] - 2026-08-26
+
+Install this version. Same workflow as 2.0.6, plus:
+
+- Project files now live in `_LoopFlow_Config/loopflow/` next to the saved `.3dm` (`LoopFlow_Project.json`, Registry, logs)
+- Opening a 2.0.6 project once moves the old root-level config, Registry folders, and logs into `loopflow/`. Older `exchange/` registries are not moved; publish again
+- Do not mix 1.x and 2.0. Do not overwrite `v2.0.0`–`v2.0.6`. Quit Rhino completely after install
+
+---
+
 ## [2.0.6] - 2026-08-26
 
 Install this version. Same workflow as 2.0.5, plus:

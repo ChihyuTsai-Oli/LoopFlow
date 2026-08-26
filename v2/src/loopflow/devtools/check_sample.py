@@ -31,6 +31,7 @@ from loopflow.foundation import results
 from loopflow.foundation.paths import (
     CONFIG_DIR_NAME,
     DICTIONARY_FILENAME,
+    PRODUCT_DIR_NAME,
     REGISTRY_FILENAME,
     resolve_project_folder,
 )
@@ -202,8 +203,8 @@ def _scan_document(session: RhinoSession, findings: List[Finding], seen: set) ->
                 Finding(
                     "block",
                     "legacy_document_env",
-                    "文件仍有環境設定 %s。應只在 %s\\%s，不寫進 .3dm。"
-                    % (key, CONFIG_DIR_NAME, CONFIG_FILENAME),
+                    "文件仍有環境設定 %s。應只在 %s\\%s\\%s，不寫進 .3dm。"
+                    % (key, CONFIG_DIR_NAME, PRODUCT_DIR_NAME, CONFIG_FILENAME),
                     "文件",
                 ),
             )
@@ -271,7 +272,7 @@ def _scan_project_files(session: RhinoSession, findings: List[Finding], seen: se
                 "warn",
                 "missing_project_config",
                 "沒有 %s。上傳前請先跑 Nexus 選單 2 寫入專案名稱與 schema。"
-                % (CONFIG_DIR_NAME + "\\" + CONFIG_FILENAME),
+                % (CONFIG_DIR_NAME + "\\" + PRODUCT_DIR_NAME + "\\" + CONFIG_FILENAME),
                 str(paths.config_dir),
             ),
         )

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-"""專案環境設定：存在 `.3dm` 旁的 `_LoopFlow_Config/LoopFlow_Project.json`。
+"""專案環境設定：存在 `.3dm` 旁的 `_LoopFlow_Config/loopflow/LoopFlow_Project.json`。
 
 `.3dm` 會被複製到各個專案，所以不在文件 UserText 留專案名稱、字典檔名這類環境設定。
 舊檔仍帶著 `lf_*` 五個鍵時，第一次讀取會搬進 JSON 並從文件清掉。
+2.0.6 以前若設定寫在 `_LoopFlow_Config` 根層，第一次解析會搬進 `loopflow/`。
 """
 from __future__ import annotations
 from loopflow.foundation.i18n import t

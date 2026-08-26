@@ -16,7 +16,7 @@ Model data flows one way: **3D owns object data, the Registry freezes one valida
 
 ## The project is a folder
 
-The folder of the saved `.3dm` is the LoopFlow project folder. Keep the Dictionary beside the `.3dm`. LoopFlow stores the project name, the chosen Dictionary filename, Registry revisions, and logs under `_LoopFlow_Config/` in that same folder.
+The folder of the saved `.3dm` is the LoopFlow project folder. Keep the Dictionary beside the `.3dm`. LoopFlow stores the project name, the chosen Dictionary filename, Registry revisions, and logs under `_LoopFlow_Config/loopflow/` in that same folder.
 
 When you change computers or drives, move the whole project folder. As long as the `.3dm`, Dictionary, and `_LoopFlow_Config/` stay together, you do not edit absolute paths. Copying only the `.3dm` does not bring the original project settings.
 

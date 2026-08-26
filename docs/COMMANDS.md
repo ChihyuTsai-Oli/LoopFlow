@@ -6,7 +6,7 @@
 
 ## Project folder
 
-Save the `.3dm` first. **The folder of that file is the project folder**: the official Dictionary sits beside the `.3dm`; project settings, Registry, and logs go under `_LoopFlow_Config/` in the same folder. Moving the whole pack to another parent, drive, or computer still works. LoopFlow does not depend on a fixed absolute path on one computer. Official Dictionary templates and `Tag_Blocks.3dm` appear in `Documents\LoopFlow` after a product command. If the installed version changed, official files there are replaced so they match the package, then copy them into a project.
+Save the `.3dm` first. **The folder of that file is the project folder**: the official Dictionary sits beside the `.3dm`; project settings, Registry, and logs go under `_LoopFlow_Config/loopflow/` in the same folder. Moving the whole pack to another parent, drive, or computer still works. LoopFlow does not depend on a fixed absolute path on one computer. Official Dictionary templates and `Tag_Blocks.3dm` appear in `Documents\LoopFlow` after a product command. If the installed version changed, official files there are replaced so they match the package, then copy them into a project.
 
 ## Quick index
 
@@ -50,7 +50,7 @@ Laser, Grab, and Index are three bind methods. Use one or more as the source req
 
 **Command**: `LFOpenDictionary`
 
-Opens this project’s remembered official Dictionary in the system Excel app (default filename `LoopFlow_Dictionary.xlsx`). The name is stored in `_LoopFlow_Config/LoopFlow_Project.json` beside the `.3dm`. The command only opens the file; it does not edit or create it.
+Opens this project’s remembered official Dictionary in the system Excel app (default filename `LoopFlow_Dictionary.xlsx`). The name is stored in `_LoopFlow_Config/loopflow/LoopFlow_Project.json` beside the `.3dm`. The command only opens the file; it does not edit or create it.
 
 - If no official Dictionary has been chosen yet, run [04 Nexus](#04-nexus-project-console) **Sync Type Layers** once to pick a file.
 - How to read the columns: [Dictionary guide](./Dictionary_GUIDE.md).
@@ -103,7 +103,7 @@ The data hub. The first run does an open check; after it passes, this 6-step men
 
 ### 1　Open check
 
-Confirms the `.3dm` is saved, then resolves Dictionary, `_LoopFlow_Config/LoopFlow_Project.json`, `project_id`, schema version, and Rhino document units from that folder.
+Confirms the `.3dm` is saved, then resolves Dictionary, `_LoopFlow_Config/loopflow/LoopFlow_Project.json`, `project_id`, schema version, and Rhino document units from that folder.
 
 - If the settings file has no schema yet, LoopFlow writes `loopflow.project` / `1`. You can still enter the menu without a project name; fill it in step 2.
 - Unreadable settings or an unknown schema version stop the command. LoopFlow does not guess.
@@ -155,7 +155,7 @@ Recomputes in memory “what a write would produce now” and compares it with t
 
 **Prerequisite**: Nexus step 6 must already pass. A partial object selection cannot publish; only the whole project can.
 
-Packs model data into a new Registry (the read-only snapshot for 2D). The official file is `_LoopFlow_Config/<project name>/Project_Registry.json` beside the `.3dm`:
+Packs model data into a new Registry (the read-only snapshot for 2D). The official file is `_LoopFlow_Config/loopflow/<project name>/Project_Registry.json` beside the `.3dm`:
 
 1. Take an exclusive lock (so two people do not publish at once).
 2. Re-read current state and bump the revision.

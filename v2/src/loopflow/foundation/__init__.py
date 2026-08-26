@@ -3,6 +3,7 @@
 from loopflow.foundation.config import AppConfig, DEFAULT_CONFIG, load_config
 from loopflow.foundation.paths import (
     CONFIG_DIR_NAME,
+    PRODUCT_DIR_NAME,
     normalize_project_id,
     registry_paths,
     resolve_project_folder,
@@ -16,6 +17,7 @@ __all__ = [
     "CONFIG_DIR_NAME",
     "DEFAULT_CONFIG",
     "PACKAGE_VERSION",
+    "PRODUCT_DIR_NAME",
     "Result",
     "SCHEMA_VERSIONS",
     "check_schema",

@@ -15,7 +15,7 @@ if str(SRC) not in sys.path:
 from loopflow.features.dictionary.sync import sync_type_layers
 from loopflow.features.project.console import open_console
 from loopflow.features.registry.publisher import publish_registry
-from loopflow.foundation.paths import CONFIG_DIR_NAME, resolve_registry_for_document
+from loopflow.foundation.paths import CONFIG_DIR_NAME, PRODUCT_DIR_NAME, resolve_registry_for_document
 from loopflow.platform.rhino.memory import MemorySession
 
 from loopflow.features.dictionary import schema
@@ -100,7 +100,7 @@ class OpenIdentityTests(unittest.TestCase):
             second = folder / "final.3dm"
             written = publish_registry(_min_payload("M3D"), document_path=str(first))
             self.assertTrue(written.ok, written.message)
-            official = folder / CONFIG_DIR_NAME / "M3D" / "Project_Registry.json"
+            official = folder / CONFIG_DIR_NAME / PRODUCT_DIR_NAME / "M3D" / "Project_Registry.json"
             self.assertTrue(official.exists())
             located = resolve_registry_for_document(second, "M3D")
             self.assertEqual(located.details["registry"], official)
@@ -111,11 +111,11 @@ class OpenIdentityTests(unittest.TestCase):
             model = folder / "model.3dm"
             first = publish_registry(_min_payload("M3D"), document_path=str(model))
             self.assertTrue(first.ok, first.message)
-            old_folder = folder / CONFIG_DIR_NAME / "M3D"
+            old_folder = folder / CONFIG_DIR_NAME / PRODUCT_DIR_NAME / "M3D"
             self.assertTrue((old_folder / "Project_Registry.json").exists())
             second = publish_registry(_min_payload("Tower"), document_path=str(model))
             self.assertTrue(second.ok, second.message)
-            new_folder = folder / CONFIG_DIR_NAME / "Tower"
+            new_folder = folder / CONFIG_DIR_NAME / PRODUCT_DIR_NAME / "Tower"
             self.assertTrue((new_folder / "Project_Registry.json").exists())
             self.assertTrue((old_folder / "Project_Registry.json").exists())
 
@@ -123,7 +123,7 @@ class OpenIdentityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="loopflow-id-") as raw:
             root = Path(raw)
             _write_dictionary(root)
-            old = root / CONFIG_DIR_NAME / "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+            old = root / CONFIG_DIR_NAME / PRODUCT_DIR_NAME / "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
             old.mkdir(parents=True)
             (old / "Project_Registry.json").write_text("{}", encoding="utf-8")
             session = MemorySession()

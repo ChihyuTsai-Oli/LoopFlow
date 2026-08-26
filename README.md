@@ -43,10 +43,10 @@ Bilingual interface: English / Traditional Chinese
 
 Do not use the 1.x ZIP, `install_LoopFlow.bat`, or drag-and-drop `.rhc` toolbar. Do not mix 1.x and 2.0 in the same project.
 
-1. Open Rhino 8, run `PackageManager`, search for `LoopFlow`, and install 2.0.6.
+1. Open Rhino 8, run `PackageManager`, search for `LoopFlow`, and install 2.0.7.
 2. **Quit Rhino completely and reopen it.**
 
-You can also download `loopflow-2.0.6-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) and install from file. Do not download the 1.x ZIP.
+You can also download `loopflow-2.0.7-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) and install from file. Do not download the 1.x ZIP.
 
 After install:
 

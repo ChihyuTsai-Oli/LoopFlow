@@ -14,7 +14,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from loopflow.devtools.check_sample import COMMAND_ID, check_sample
-from loopflow.foundation.paths import CONFIG_DIR_NAME
+from loopflow.foundation.paths import CONFIG_DIR_NAME, PRODUCT_DIR_NAME
 from loopflow.foundation.project_config import CONFIG_FILENAME
 from loopflow.platform.rhino.memory import MemorySession
 
@@ -26,7 +26,7 @@ class SampleCheckTests(unittest.TestCase):
         return MemorySession(document_path=str(document))
 
     def _write_config(self, folder: Path, **fields) -> None:
-        config_dir = folder / CONFIG_DIR_NAME
+        config_dir = folder / CONFIG_DIR_NAME / PRODUCT_DIR_NAME
         config_dir.mkdir(parents=True, exist_ok=True)
         payload = {
             "schema_id": "loopflow.project",

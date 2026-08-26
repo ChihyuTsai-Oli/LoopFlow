@@ -22,7 +22,7 @@ from loopflow.features.registry.lock import acquire_lock, release_lock
 from loopflow.features.registry.publisher import publish_registry
 from loopflow.features.registry.validate import validate_payload
 from loopflow.foundation.atomic_io import read_json
-from loopflow.foundation.paths import CONFIG_DIR_NAME
+from loopflow.foundation.paths import CONFIG_DIR_NAME, PRODUCT_DIR_NAME
 
 PROJECT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 
@@ -45,8 +45,8 @@ def _min_payload(**overrides):
 
 
 def _paths(root: Path):
-    """Registry 落在 .3dm 同層的 `_LoopFlow_Config/<專案名稱>/`。"""
-    folder = root / CONFIG_DIR_NAME / PROJECT_ID
+    """Registry 落在 .3dm 同層的 `_LoopFlow_Config/loopflow/<專案名稱>/`。"""
+    folder = root / CONFIG_DIR_NAME / PRODUCT_DIR_NAME / PROJECT_ID
     return {
         "root": root,
         "document_path": str(root / "model.3dm"),

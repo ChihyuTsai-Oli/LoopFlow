@@ -35,14 +35,14 @@ Registry 版次              唯讀的模型資料快照
 |---|---|
 | 檔案名稱 | 預設 `LoopFlow_Dictionary.xlsx`，可以改用 `.3dm` 同一層的其他 `.xlsx` 檔名 |
 | 放置位置 | 已存檔 `.3dm` 所在資料夾；這個資料夾就是 LoopFlow 的專案工作資料夾 |
-| 專案設定 | `.3dm` 同層的 `_LoopFlow_Config/LoopFlow_Project.json`，只記 Dictionary 檔名，不記絕對路徑 |
+| 專案設定 | `.3dm` 同層的 `_LoopFlow_Config/loopflow/LoopFlow_Project.json`，只記 Dictionary 檔名，不記絕對路徑 |
 | 格式要求 | 只支援 `.xlsx`；不接受 `.csv` 或 `.xls` |
 | 工作表 | 讀取第一張工作表；目前工作表名稱為 `LoopFlow_Dictionary` |
 | 第 1 列 | 版本標題列，例如 `LoopFlow Dictionary v2.0`（程式會跳過） |
 | 第 2 列 | **欄位標題列**：整列 15 欄須同一語系（全部繁中或全部英文，見「3　欄位說明」） |
 | 第 3 列起 | 每一列代表一個 Type，對應一個 Rhino 子圖層 |
 
-第一次執行「同步 Type Layers」時會跳出選檔視窗，選過一次後檔名會記在 `_LoopFlow_Config/LoopFlow_Project.json` 的 `dictionary_filename`，之後不會再問。Dictionary 必須和 `.3dm` 在同一層；若已記住的檔案被改名或移走，系統會先請你把檔案放回，再從 `.3dm` 所在資料夾重新選取。選到其他資料夾時會說明並再問。**系統不會掃描資料夾裡所有 Excel，也不會保存某台電腦的絕對路徑。**
+第一次執行「同步 Type Layers」時會跳出選檔視窗，選過一次後檔名會記在 `_LoopFlow_Config/loopflow/LoopFlow_Project.json` 的 `dictionary_filename`，之後不會再問。Dictionary 必須和 `.3dm` 在同一層；若已記住的檔案被改名或移走，系統會先請你把檔案放回，再從 `.3dm` 所在資料夾重新選取。選到其他資料夾時會說明並再問。**系統不會掃描資料夾裡所有 Excel，也不會保存某台電腦的絕對路徑。**
 
 `.3dm`、Dictionary 與 `_LoopFlow_Config/` 只靠相對位置綁定。整個專案資料夾搬到其他上層目錄、磁碟或電腦仍可使用；只複製 `.3dm` 則不會帶走原專案名稱與 Dictionary 選擇。官方 Dictionary 範本會放到「文件\LoopFlow」，再複製到 `.3dm` 同一層使用。
 
@@ -174,7 +174,7 @@ Registry 版次              唯讀的模型資料快照
 
 ## 7　字典、3dm 與專案設定的關係
 
-LoopFlow 不把專案名稱、Dictionary 檔名等環境設定寫進 `.3dm`。這些資料保存在旁邊的 `_LoopFlow_Config/LoopFlow_Project.json`；Registry 與 log 也都在 `_LoopFlow_Config/` 下面。這樣同一份 `.3dm` 被複製到新專案時，不會自動帶著舊專案的路徑與設定。
+LoopFlow 不把專案名稱、Dictionary 檔名等環境設定寫進 `.3dm`。這些資料保存在旁邊的 `_LoopFlow_Config/loopflow/LoopFlow_Project.json`；Registry 與 log 也都在 `_LoopFlow_Config/loopflow/` 下面。這樣同一份 `.3dm` 被複製到新專案時，不會自動帶著舊專案的路徑與設定。
 
 執行 [04 Nexus](./COMMANDS_TW.md#04-nexus開案主控台) 「同步 Type Layers」時的合併規則：
 

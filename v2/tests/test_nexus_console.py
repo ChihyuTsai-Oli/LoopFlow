@@ -16,7 +16,7 @@ from loopflow.features.dictionary import schema
 from loopflow.features.dictionary.layer_paths import SYSTEM_LAYERS
 from loopflow.features.project.console import open_console
 from loopflow.features.project.menu import parse_menu_choice, run_nexus_console
-from loopflow.foundation.paths import CONFIG_DIR_NAME
+from loopflow.foundation.paths import CONFIG_DIR_NAME, PRODUCT_DIR_NAME
 from loopflow.foundation.usertext import LEVEL_DATUM_KEY, LEVEL_ID_KEY, OBJECT_ID_KEY, SPACE_ID_KEY
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.memory import MemorySession
@@ -54,7 +54,7 @@ def _write_dictionary(root: Path) -> Path:
 
 
 def _session(root=None, **kwargs) -> MemorySession:
-    """3dm 存在工作資料夾內；專案設定寫在同層的 _LoopFlow_Config。"""
+    """3dm 存在工作資料夾內；專案設定寫在同層的 _LoopFlow_Config/loopflow。"""
     unsaved = kwargs.pop("unsaved", False)
     config = kwargs.pop("config", {"project_id": PROJECT_ID})
     document_path = None
@@ -139,9 +139,9 @@ class ConsoleOpenCheckTests(unittest.TestCase):
             )
             self.assertTrue(all(step["status"] == "available" for step in result.details["steps"]))
             self.assertEqual(result.details["project_folder"], str(root))
-            self.assertEqual(result.details["config_dir"], str(root / CONFIG_DIR_NAME))
+            self.assertEqual(result.details["config_dir"], str(root / CONFIG_DIR_NAME / PRODUCT_DIR_NAME))
             self.assertFalse(result.details["registry_exists"])
-            self.assertFalse((root / CONFIG_DIR_NAME / "logs").exists())
+            self.assertFalse((root / CONFIG_DIR_NAME / PRODUCT_DIR_NAME / "logs").exists())
             self.assertTrue(session.get_view_state("a").selected)
 
     def test_open_check_uses_stored_custom_dictionary_filename(self):

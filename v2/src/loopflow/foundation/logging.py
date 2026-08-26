@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""log 寫在 .3dm 旁的 `_LoopFlow_Config/logs/`，不把某台電腦的絕對路徑當成契約資料。"""
+"""log 寫在 .3dm 旁的 `_LoopFlow_Config/loopflow/logs/`，不把某台電腦的絕對路徑當成契約資料。"""
 from __future__ import annotations
 from loopflow.foundation.i18n import t
 

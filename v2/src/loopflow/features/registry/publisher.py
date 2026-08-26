@@ -91,7 +91,7 @@ def publish_registry(
     sleep: Optional[Callable[[float], None]] = None,
     replace_waits: Optional[Sequence[float]] = None,
 ) -> results.Result:
-    """寫入 <3dm 資料夾>/_LoopFlow_Config/<專案名稱>/ 的正式 Registry。失敗不刪正式檔，保留 last-good。"""
+    """寫入 <3dm 資料夾>/_LoopFlow_Config/loopflow/<專案名稱>/ 的正式 Registry。失敗不刪正式檔，保留 last-good。"""
     if not isinstance(payload, Mapping):
         return results.blocked(
             "validate_registry",

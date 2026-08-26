@@ -25,7 +25,7 @@ from loopflow.features.model_data.space import (
 from loopflow.features.registry.handoff import publish_from_session, run_publish_exchange
 from loopflow.features.registry.lock import acquire_lock, release_lock
 from loopflow.foundation.atomic_io import read_json
-from loopflow.foundation.paths import CONFIG_DIR_NAME
+from loopflow.foundation.paths import CONFIG_DIR_NAME, PRODUCT_DIR_NAME
 from loopflow.foundation.usertext import DATA_REVISION_KEY, LEVEL_ID_KEY, OBJECT_ID_KEY
 from loopflow.platform.excel import write_table
 from loopflow.platform.rhino.memory import MemorySession
@@ -81,7 +81,7 @@ def _session(root) -> MemorySession:
 
 
 def _registry_folder(root) -> Path:
-    return Path(root) / CONFIG_DIR_NAME / PROJECT_ID
+    return Path(root) / CONFIG_DIR_NAME / PRODUCT_DIR_NAME / PROJECT_ID
 
 
 def _add_space(session):

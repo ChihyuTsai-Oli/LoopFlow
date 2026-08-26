@@ -35,14 +35,14 @@ Registry revision         read-only snapshot of model data
 |---|---|
 | Filename | Default `LoopFlow_Dictionary.xlsx`; any other `.xlsx` beside the `.3dm` is allowed |
 | Location | The folder of the saved `.3dm` — that folder is the LoopFlow project folder |
-| Project settings | `_LoopFlow_Config/LoopFlow_Project.json` beside the `.3dm` remembers the Dictionary **filename**, not an absolute path |
+| Project settings | `_LoopFlow_Config/loopflow/LoopFlow_Project.json` beside the `.3dm` remembers the Dictionary **filename**, not an absolute path |
 | Format | `.xlsx` only; not `.csv` or `.xls` |
 | Worksheet | First sheet; current name `LoopFlow_Dictionary` |
 | Row 1 | Version title, e.g. `LoopFlow Dictionary v2.0` (skipped) |
 | Row 2 | **Header row**: all 15 columns must be the same language (all Chinese or all English; see section 3) |
 | Row 3 onward | One Type per row, one Rhino sub-layer |
 
-The first **Sync Type Layers** run asks you to pick a file. After that, the name is stored as `dictionary_filename` in `_LoopFlow_Config/LoopFlow_Project.json` and is not asked again. The Dictionary must sit beside the `.3dm`. If the remembered file was renamed or moved, LoopFlow asks you to put it back, then pick again from the `.3dm` folder. Picking a file in another folder is rejected and asked again. **LoopFlow does not scan every Excel in the folder, and it does not store a computer-specific absolute path.**
+The first **Sync Type Layers** run asks you to pick a file. After that, the name is stored as `dictionary_filename` in `_LoopFlow_Config/loopflow/LoopFlow_Project.json` and is not asked again. The Dictionary must sit beside the `.3dm`. If the remembered file was renamed or moved, LoopFlow asks you to put it back, then pick again from the `.3dm` folder. Picking a file in another folder is rejected and asked again. **LoopFlow does not scan every Excel in the folder, and it does not store a computer-specific absolute path.**
 
 The `.3dm`, Dictionary, and `_LoopFlow_Config/` are bound by relative location only. Moving the whole project folder to another parent, drive, or computer still works. Copying only the `.3dm` does not take the project name or Dictionary choice with it. Official templates go into `Documents\LoopFlow`, then you copy them beside the `.3dm`.
 
@@ -174,7 +174,7 @@ The Dictionary stores Type **rules and defaults**, not object instances:
 
 ## 7　Dictionary, 3dm, and project settings
 
-LoopFlow does not store the project name or Dictionary filename in the `.3dm`. Those live in `_LoopFlow_Config/LoopFlow_Project.json`. Registry and logs are also under `_LoopFlow_Config/`. Copying the `.3dm` into a new project therefore does not drag the old paths and settings along.
+LoopFlow does not store the project name or Dictionary filename in the `.3dm`. Those live in `_LoopFlow_Config/loopflow/LoopFlow_Project.json`. Registry and logs are also under `_LoopFlow_Config/loopflow/`. Copying the `.3dm` into a new project therefore does not drag the old paths and settings along.
 
 Merge rules for [04 Nexus](./COMMANDS.md#04-nexus-project-console) **Sync Type Layers**:
 

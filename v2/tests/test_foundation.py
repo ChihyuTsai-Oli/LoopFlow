@@ -81,6 +81,7 @@ class PathTests(unittest.TestCase):
         from loopflow.foundation.paths import (
             CONFIG_DIR_NAME,
             DICTIONARY_FILENAME,
+            PRODUCT_DIR_NAME,
             resolve_project_folder,
         )
         from loopflow.platform.rhino.memory import MemorySession
@@ -93,7 +94,7 @@ class PathTests(unittest.TestCase):
             project = result.details["paths"]
             self.assertEqual(project.root, root)
             self.assertEqual(project.dictionary, root / DICTIONARY_FILENAME)
-            self.assertEqual(project.config_dir, root / CONFIG_DIR_NAME)
+            self.assertEqual(project.config_dir, root / CONFIG_DIR_NAME / PRODUCT_DIR_NAME)
             self.assertEqual(project.log_file().parent.parent, project.config_dir)
             self.assertFalse(project.dictionary.exists())
             self.assertFalse(project.config_dir.exists())
@@ -130,7 +131,7 @@ class PathTests(unittest.TestCase):
         self.assertEqual(before, after)
 
     def test_registry_follows_document_directory_not_filename(self):
-        from loopflow.foundation.paths import CONFIG_DIR_NAME, resolve_registry_for_document
+        from loopflow.foundation.paths import CONFIG_DIR_NAME, PRODUCT_DIR_NAME, resolve_registry_for_document
 
         with tempfile.TemporaryDirectory(prefix="loopflow-ex-") as raw:
             folder = Path(raw)
@@ -138,9 +139,9 @@ class PathTests(unittest.TestCase):
             second = resolve_registry_for_document(folder / "b.3dm", "M3D")
             renamed = resolve_registry_for_document(folder / "a.3dm", "Tower")
             self.assertTrue(first.ok, first.message)
-            self.assertEqual(first.details["folder"], folder / CONFIG_DIR_NAME / "M3D")
+            self.assertEqual(first.details["folder"], folder / CONFIG_DIR_NAME / PRODUCT_DIR_NAME / "M3D")
             self.assertEqual(second.details["folder"], first.details["folder"])
-            self.assertEqual(renamed.details["folder"], folder / CONFIG_DIR_NAME / "Tower")
+            self.assertEqual(renamed.details["folder"], folder / CONFIG_DIR_NAME / PRODUCT_DIR_NAME / "Tower")
             self.assertNotEqual(first.details["folder"], renamed.details["folder"])
             self.assertFalse((folder / CONFIG_DIR_NAME).exists())
 
@@ -309,7 +310,7 @@ class ProjectConfigTests(unittest.TestCase):
         clear_cache()
 
     def test_settings_live_beside_the_document_not_in_the_3dm(self):
-        from loopflow.foundation.paths import CONFIG_DIR_NAME
+        from loopflow.foundation.paths import CONFIG_DIR_NAME, PRODUCT_DIR_NAME
         from loopflow.foundation.project_config import (
             CONFIG_FILENAME,
             read_config,
@@ -322,7 +323,7 @@ class ProjectConfigTests(unittest.TestCase):
             session = MemorySession(document_path=root / "a.3dm")
             written = remember_project_name(session, "大安邸")
             self.assertTrue(written.ok, written.message)
-            config_file = root / CONFIG_DIR_NAME / CONFIG_FILENAME
+            config_file = root / CONFIG_DIR_NAME / PRODUCT_DIR_NAME / CONFIG_FILENAME
             self.assertTrue(config_file.is_file())
             self.assertIn("大安邸", config_file.read_text(encoding="utf-8"))
             self.assertEqual(read_config(session).details["values"]["project_id"], "大安邸")
@@ -375,18 +376,58 @@ class ProjectConfigTests(unittest.TestCase):
         self.assertEqual(result.blocking, ("unsaved_document",))
 
     def test_broken_config_stops_instead_of_guessing(self):
-        from loopflow.foundation.paths import CONFIG_DIR_NAME
+        from loopflow.foundation.paths import CONFIG_DIR_NAME, PRODUCT_DIR_NAME
         from loopflow.foundation.project_config import CONFIG_FILENAME, read_config
         from loopflow.platform.rhino.memory import MemorySession
 
         with tempfile.TemporaryDirectory(prefix="loopflow-broken-") as raw:
             root = Path(raw)
-            folder = root / CONFIG_DIR_NAME
-            folder.mkdir()
+            folder = root / CONFIG_DIR_NAME / PRODUCT_DIR_NAME
+            folder.mkdir(parents=True)
             (folder / CONFIG_FILENAME).write_text("{不是 JSON", encoding="utf-8")
             result = read_config(MemorySession(document_path=root / "a.3dm"))
             self.assertFalse(result.ok)
             self.assertEqual(result.stage, "read_project_config")
+
+    def test_legacy_config_tree_moves_into_loopflow_dir(self):
+        from loopflow.foundation.paths import (
+            CONFIG_DIR_NAME,
+            PRODUCT_DIR_NAME,
+            PROJECT_CONFIG_FILENAME,
+            REGISTRY_FILENAME,
+            migrate_legacy_loopflow_config,
+        )
+        from loopflow.foundation.project_config import read_config
+        from loopflow.platform.rhino.memory import MemorySession
+
+        with tempfile.TemporaryDirectory(prefix="loopflow-mig-") as raw:
+            root = Path(raw)
+            shared = root / CONFIG_DIR_NAME
+            shared.mkdir()
+            (shared / PROJECT_CONFIG_FILENAME).write_text(
+                '{"schema_id":"loopflow.project","schema_version":1,"project_id":"M3D"}\n',
+                encoding="utf-8",
+            )
+            (shared / "logs").mkdir()
+            (shared / "logs" / "loopflow.log").write_text("old\n", encoding="utf-8")
+            registry = shared / "M3D"
+            registry.mkdir()
+            (registry / REGISTRY_FILENAME).write_text("{}\n", encoding="utf-8")
+            sibling = shared / "loopflow_R2B"
+            sibling.mkdir()
+            (sibling / "keep.txt").write_text("r2b\n", encoding="utf-8")
+            moved = migrate_legacy_loopflow_config(root)
+            self.assertTrue(moved.ok, moved.message)
+            self.assertTrue(moved.details["migrated"])
+            dest = shared / PRODUCT_DIR_NAME
+            self.assertTrue((dest / PROJECT_CONFIG_FILENAME).is_file())
+            self.assertTrue((dest / "logs" / "loopflow.log").is_file())
+            self.assertTrue((dest / "M3D" / REGISTRY_FILENAME).is_file())
+            self.assertFalse((shared / PROJECT_CONFIG_FILENAME).exists())
+            self.assertFalse((shared / "M3D").exists())
+            self.assertTrue((sibling / "keep.txt").is_file())
+            values = read_config(MemorySession(document_path=root / "a.3dm")).details["values"]
+            self.assertEqual(values["project_id"], "M3D")
 
 
 class VersionConfigLogTests(unittest.TestCase):
@@ -426,7 +467,7 @@ class VersionConfigLogTests(unittest.TestCase):
 
     def test_log_goes_next_to_the_document(self):
         from loopflow.foundation.logging import append_log
-        from loopflow.foundation.paths import CONFIG_DIR_NAME
+        from loopflow.foundation.paths import CONFIG_DIR_NAME, PRODUCT_DIR_NAME
         from loopflow.platform.rhino.memory import MemorySession
 
         with tempfile.TemporaryDirectory(prefix="loopflow-log-doc-") as raw:
@@ -434,7 +475,7 @@ class VersionConfigLogTests(unittest.TestCase):
             result = append_log("hello-project", session=MemorySession(document_path=root / "a.3dm"))
             self.assertTrue(result.ok, result.message)
             written = Path(result.details["log_path"])
-            self.assertEqual(written.parent.parent, root / CONFIG_DIR_NAME)
+            self.assertEqual(written.parent.parent, root / CONFIG_DIR_NAME / PRODUCT_DIR_NAME)
             self.assertIn("hello-project", written.read_text(encoding="utf-8"))
 
     def test_log_without_document_does_not_write(self):

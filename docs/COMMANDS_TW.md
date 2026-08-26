@@ -6,7 +6,7 @@
 
 ## 專案資料夾原則
 
-開始操作前先把 `.3dm` 存檔。**`.3dm` 所在資料夾就是專案工作資料夾**：正式 Dictionary 與 `.3dm` 同層，專案設定、Registry 與 log 放在同層的 `_LoopFlow_Config/`。整包搬到其他上層目錄、磁碟或電腦仍可使用；LoopFlow 不依賴某台電腦的固定絕對路徑。官方 Dictionary 範本與 `Tag_Blocks.3dm` 在執行產品指令時會出現在「文件\LoopFlow」。若安裝版號變了，該資料夾的官方檔會換成與套件相同的版本，再複製到專案資料夾使用。
+開始操作前先把 `.3dm` 存檔。**`.3dm` 所在資料夾就是專案工作資料夾**：正式 Dictionary 與 `.3dm` 同層，專案設定、Registry 與 log 放在同層的 `_LoopFlow_Config/loopflow/`。整包搬到其他上層目錄、磁碟或電腦仍可使用；LoopFlow 不依賴某台電腦的固定絕對路徑。官方 Dictionary 範本與 `Tag_Blocks.3dm` 在執行產品指令時會出現在「文件\LoopFlow」。若安裝版號變了，該資料夾的官方檔會換成與套件相同的版本，再複製到專案資料夾使用。
 
 ## 快速索引
 
@@ -50,7 +50,7 @@ Laser、Grab、Index 是三種不同的 Tag 綁定方式，依來源狀況擇一
 
 **指令**：`LFOpenDictionary`
 
-用系統預設的 Excel 開啟這份專案記住的正式字典檔（預設檔名 `LoopFlow_Dictionary.xlsx`）。檔名記在 `.3dm` 旁的 `_LoopFlow_Config/LoopFlow_Project.json`；指令只負責開檔，不編輯、不建立檔案。
+用系統預設的 Excel 開啟這份專案記住的正式字典檔（預設檔名 `LoopFlow_Dictionary.xlsx`）。檔名記在 `.3dm` 旁的 `_LoopFlow_Config/loopflow/LoopFlow_Project.json`；指令只負責開檔，不編輯、不建立檔案。
 
 - 正式字典還沒指定過時，請先跑 [04 Nexus](#04-nexus開案主控台) 的「同步 Type Layers」選一次檔。
 - 開啟後如何看懂欄位，見 [字典使用說明](./Dictionary_GUIDE_TW.md)。
@@ -103,7 +103,7 @@ LoopFlow 的資料中樞。第一次執行會先做「開案檢查」，通過�
 
 ### 1　開案檢查
 
-自動確認 `.3dm` 已存檔，並以它所在資料夾解析 Dictionary、`_LoopFlow_Config/LoopFlow_Project.json`、`project_id`、資料版本與 Rhino 文件單位。
+自動確認 `.3dm` 已存檔，並以它所在資料夾解析 Dictionary、`_LoopFlow_Config/loopflow/LoopFlow_Project.json`、`project_id`、資料版本與 Rhino 文件單位。
 
 - 第一次執行若設定檔還沒有 schema，會補上 `loopflow.project`／`1`；尚未填專案名稱時仍可進選單，請在步驟 2 填寫。
 - 設定檔無法解析或 schema 版本未知時會停止，不會亂猜內容。
@@ -155,7 +155,7 @@ LoopFlow 的資料中樞。第一次執行會先做「開案檢查」，通過�
 
 **前置**：04 的檢核（步驟 6）要先通過。局部選取的物件不能發布，只能整案發布。
 
-把模型資料打包成一份新的 Registry（提供給 2D 端使用的唯讀資料快照）。正式檔位於 `.3dm` 同層的 `_LoopFlow_Config/<專案名稱>/Project_Registry.json`：
+把模型資料打包成一份新的 Registry（提供給 2D 端使用的唯讀資料快照）。正式檔位於 `.3dm` 同層的 `_LoopFlow_Config/loopflow/<專案名稱>/Project_Registry.json`：
 
 1. 取得專屬鎖定（避免跟別人同時發布衝突）。
 2. 重新讀取現況、版次加一。

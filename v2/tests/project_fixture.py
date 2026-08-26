@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""測試共用：在 .3dm 旁準備 `_LoopFlow_Config/LoopFlow_Project.json`。
+"""測試共用：在 .3dm 旁準備 `_LoopFlow_Config/loopflow/LoopFlow_Project.json`。
 
 工作資料夾就是 .3dm 所在資料夾，所以測試一律把 3dm、字典與設定放同一層。
 """
@@ -11,7 +11,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from loopflow.foundation.paths import CONFIG_DIR_NAME
+from loopflow.foundation.paths import CONFIG_DIR_NAME, PRODUCT_DIR_NAME
 from loopflow.foundation.project_config import CONFIG_FILENAME, clear_cache
 
 DEFAULT_SCHEMA = {"schema_id": "loopflow.project", "schema_version": 1}
@@ -20,8 +20,13 @@ DOCUMENT_NAME = "project.3dm"
 _TEMP_ROOTS = []
 
 
+def product_config_dir(root) -> Path:
+    """LoopFlow 產品資料夾：`<3dm 資料夾>/_LoopFlow_Config/loopflow/`。"""
+    return Path(root) / CONFIG_DIR_NAME / PRODUCT_DIR_NAME
+
+
 def config_path(root) -> Path:
-    return Path(root) / CONFIG_DIR_NAME / CONFIG_FILENAME
+    return product_config_dir(root) / CONFIG_FILENAME
 
 
 def write_project_config(root, **values) -> Path:
@@ -48,8 +53,8 @@ def read_project_config(root) -> dict:
 
 
 def registry_dir(root, project_id) -> Path:
-    """Registry 資料夾：`<3dm 資料夾>/_LoopFlow_Config/<專案名稱>/`。"""
-    target = Path(root) / CONFIG_DIR_NAME / str(project_id)
+    """Registry 資料夾：`<3dm 資料夾>/_LoopFlow_Config/loopflow/<專案名稱>/`。"""
+    target = product_config_dir(root) / str(project_id)
     target.mkdir(parents=True, exist_ok=True)
     return target
 

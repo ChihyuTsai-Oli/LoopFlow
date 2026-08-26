@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
-"""以目前 .3dm 所在資料夾解析路徑。字典與 `_LoopFlow_Config` 一律與 .3dm 同層。"""
+"""以目前 .3dm 所在資料夾解析路徑。字典與 `_LoopFlow_Config` 一律與 .3dm 同層。
+
+LoopFlow 的設定、Registry 與 log 在 `_LoopFlow_Config/loopflow/`。
+其他產品（R2B／R2O／QTY）各用自己的子資料夾，不混在一起。
+"""
 from __future__ import annotations
 from loopflow.foundation.i18n import t
 
 import os
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Union
@@ -13,6 +18,11 @@ from .config import AppConfig, DEFAULT_CONFIG
 
 DICTIONARY_FILENAME = "LoopFlow_Dictionary.xlsx"
 CONFIG_DIR_NAME = "_LoopFlow_Config"
+PRODUCT_DIR_NAME = "loopflow"
+PROJECT_CONFIG_FILENAME = "LoopFlow_Project.json"
+SIBLING_PRODUCT_DIR_NAMES = frozenset(
+    {"loopflow", "loopflow_R2B", "loopflow_R2O", "loopflow_QTY"}
+)
 _FILENAME_FORBIDDEN = frozenset('\\/:*?"<>|')
 REGISTRY_FILENAME = "Project_Registry.json"
 REGISTRY_LOCK_FILENAME = "Project_Registry.lock"
@@ -43,7 +53,10 @@ def path_relative_to_root(path: Union[str, Path], root: Union[str, Path]) -> Opt
 
 @dataclass(frozen=True)
 class ProjectPaths:
-    """`.3dm` 所在資料夾即工作資料夾；三者只以相對關係綁定，換碟換機不受影響。"""
+    """`.3dm` 所在資料夾即工作資料夾；三者只以相對關係綁定，換碟換機不受影響。
+
+    `config_dir` 是 LoopFlow 產品資料夾：`_LoopFlow_Config/loopflow`。
+    """
 
     root: Path
     document: Path
@@ -52,6 +65,96 @@ class ProjectPaths:
 
     def log_file(self, config: AppConfig = DEFAULT_CONFIG) -> Path:
         return self.config_dir / config.log_dir_name / config.log_filename
+
+
+def shared_config_dir(root: Union[str, Path]) -> Path:
+    """各產品共用的 `_LoopFlow_Config` 父資料夾。"""
+    return Path(root) / CONFIG_DIR_NAME
+
+
+def loopflow_config_dir(root: Union[str, Path]) -> Path:
+    """LoopFlow 自己的設定／Registry／log 資料夾。"""
+    return shared_config_dir(root) / PRODUCT_DIR_NAME
+
+
+def _is_reserved_product_dir(name: str) -> bool:
+    return name.casefold() in {item.casefold() for item in SIBLING_PRODUCT_DIR_NAMES}
+
+
+def migrate_legacy_loopflow_config(root: Union[str, Path]) -> results.Result:
+    """把 2.0.6 以前寫在 `_LoopFlow_Config` 根層的 LoopFlow 檔搬進 `loopflow/`。
+
+    新路徑已有 `LoopFlow_Project.json` 時只認新路徑，不搬剩餘舊檔。
+    不搬 `loopflow_R2B`／`loopflow_R2O`／`loopflow_QTY`。失敗不刪來源。
+    """
+    root_path = Path(root)
+    dest = loopflow_config_dir(root_path)
+    dest_json = dest / PROJECT_CONFIG_FILENAME
+    if dest_json.is_file():
+        return results.ok(
+            "migrate_loopflow_config",
+            t("paths.005"),
+            details={"config_dir": dest, "migrated": False},
+        )
+    shared = shared_config_dir(root_path)
+    if not shared.exists():
+        return results.ok(
+            "migrate_loopflow_config",
+            t("paths.005"),
+            details={"config_dir": dest, "migrated": False},
+        )
+    items = []
+    src_json = shared / PROJECT_CONFIG_FILENAME
+    if src_json.is_file():
+        items.append(src_json)
+    src_logs = shared / "logs"
+    if src_logs.exists():
+        items.append(src_logs)
+    try:
+        children = list(shared.iterdir())
+    except OSError as exc:
+        return results.failed(
+            "migrate_loopflow_config",
+            "無法讀取舊設定資料夾：%s" % exc,
+            details={"config_dir": str(shared)},
+        )
+    for child in children:
+        if not child.is_dir():
+            continue
+        if child.name.casefold() == "logs":
+            continue
+        if _is_reserved_product_dir(child.name):
+            continue
+        if (child / REGISTRY_FILENAME).is_file():
+            items.append(child)
+    if not items:
+        return results.ok(
+            "migrate_loopflow_config",
+            t("paths.005"),
+            details={"config_dir": dest, "migrated": False},
+        )
+    try:
+        dest.mkdir(parents=True, exist_ok=True)
+        for item in items:
+            target = dest / item.name
+            if target.exists():
+                return results.failed(
+                    "migrate_loopflow_config",
+                    "無法把舊設定搬進 loopflow：目標已有同名項目 %s" % item.name,
+                    details={"source": str(item), "target": str(target)},
+                )
+            shutil.move(str(item), str(target))
+    except OSError as exc:
+        return results.failed(
+            "migrate_loopflow_config",
+            "搬移舊設定失敗：%s" % exc,
+            details={"config_dir": str(dest)},
+        )
+    return results.ok(
+        "migrate_loopflow_config",
+        t("paths.005"),
+        details={"config_dir": dest, "migrated": True},
+    )
 
 
 def normalize_dictionary_filename(
@@ -192,11 +295,17 @@ def project_paths_for_document(
     document_path: Optional[Union[str, Path]],
     dictionary_filename: Optional[str] = None,
 ) -> results.Result:
-    """由 .3dm 位置組出工作資料夾、設定資料夾與字典路徑。不建立任何檔案。"""
+    """由 .3dm 位置組出工作資料夾、LoopFlow 設定資料夾與字典路徑。
+
+    空專案不建檔。若 `_LoopFlow_Config` 根層還有舊的 LoopFlow 設定／Registry，會搬進 `loopflow/`。
+    """
     located = document_directory(document_path)
     if not located.ok:
         return located
     root = Path(located.details["document_dir"])
+    migrated = migrate_legacy_loopflow_config(root)
+    if not migrated.ok:
+        return migrated
     filename = DICTIONARY_FILENAME
     if dictionary_filename not in (None, ""):
         normalized = normalize_dictionary_filename(dictionary_filename, root=root)
@@ -206,7 +315,7 @@ def project_paths_for_document(
     paths = ProjectPaths(
         root=root,
         document=Path(located.details["document_path"]),
-        config_dir=root / CONFIG_DIR_NAME,
+        config_dir=loopflow_config_dir(root),
         dictionary=root / filename,
     )
     return results.ok(
@@ -240,12 +349,17 @@ def config_dir_for_document(document_path: Optional[Union[str, Path]]) -> result
     located = document_directory(document_path)
     if not located.ok:
         return located
-    config_dir = Path(located.details["document_dir"]) / CONFIG_DIR_NAME
+    root = Path(located.details["document_dir"])
+    migrated = migrate_legacy_loopflow_config(root)
+    if not migrated.ok:
+        return migrated
+    config_dir = loopflow_config_dir(root)
     details = dict(located.details)
     details["config_dir"] = config_dir
+    details["migrated"] = bool(migrated.details.get("migrated"))
     return results.ok(
         "resolve_config_dir",
-        t("paths.010") % CONFIG_DIR_NAME,
+        t("paths.010") % ("%s\\%s" % (CONFIG_DIR_NAME, PRODUCT_DIR_NAME)),
         details=details,
     )
 
@@ -254,7 +368,7 @@ def resolve_registry_for_document(
     document_path: Optional[Union[str, Path]],
     project_id: Optional[str],
 ) -> results.Result:
-    """Registry 在 <目前 3dm 資料夾>/_LoopFlow_Config/<專案名稱>/。"""
+    """Registry 在 <目前 3dm 資料夾>/_LoopFlow_Config/loopflow/<專案名稱>/。"""
     located = config_dir_for_document(document_path)
     if not located.ok:
         return located
