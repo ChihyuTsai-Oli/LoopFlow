@@ -53,6 +53,7 @@ LoopFlow 2.0 是一套以 Rhino 8 為核心、貫穿 SD（Schematic Design）、
 - 第一次執行任一 LoopFlow 指令時，若這台電腦還沒選過語系，會問 English／正體中文
 - 官方 `Tag_Blocks.3dm` 與兩本 Dictionary 會拷到「文件\LoopFlow」。裝了新版本後，下一次執行指令會換成與套件相同的官方檔；該資料夾裡多出來的檔不會刪。請把需要的檔再複製到你的 `.3dm` 同一層
 - 使用 LoopFlow 2.0 工具列；不要按舊的 1.x 按鈕
+- 若重開後工具列沒出現：到 **Tools → Options → Plug-ins**（工具 → 選項 → 外掛程式）勾選 **LoopFlow**。仍沒有時，命令列打一次 `LFDocument`
 - 若工具列是空白：工具列視窗最上面改回 Default，再「檔案 → 開啟」套件裡的 `LoopFlow.rui` 並勾選 LoopFlow
 
 ## 基本工作流程

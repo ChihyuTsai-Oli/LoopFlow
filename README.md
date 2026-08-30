@@ -53,6 +53,7 @@ After install:
 - The first LoopFlow command asks English / 正體中文 if this computer has not chosen a language yet.
 - Official `Tag_Blocks.3dm` and both Dictionary workbooks copy to `Documents\LoopFlow`. After you install a new version, the next command replaces those official files so they match the package. Extra files in that folder are left alone. Copy what you need beside your saved `.3dm`.
 - Use the LoopFlow 2.0 toolbar. Do not press old 1.x buttons.
+- If the toolbar does not appear after restart: **Tools → Options → Plug-ins**, enable **LoopFlow**. If it still does not show, type `LFDocument` once.
 - If the toolbar is blank, in Toolbars change the file back to Default, then File > Open the package `LoopFlow.rui` and check LoopFlow.
 
 ## Basic workflow
