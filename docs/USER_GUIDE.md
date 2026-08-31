@@ -20,7 +20,7 @@ The folder of the saved `.3dm` is the LoopFlow project folder. Keep the Dictiona
 
 When you change computers or drives, move the whole project folder. As long as the `.3dm`, Dictionary, and `_LoopFlow_Config/` stay together, you do not edit absolute paths. Copying only the `.3dm` does not bring the original project settings.
 
-Official Dictionary templates and `Tag_Blocks.3dm` ship with the installer: one copy stays in the package folder, and a product command copies them to `Documents\LoopFlow`. If the installed version changed, official files in that folder are replaced so they match the package (Explorer opens only if something was copied). Extra files there are left alone. That folder is a convenient source to copy into each project, not the project folder itself.
+Official Dictionary templates and `Tag_Blocks.3dm` ship with the installer: one copy stays in the package folder, and a product command copies them to `Documents\LoopFlow`. If that default folder is missing, the next command copies it back. If the installed version changed, official files in that folder are replaced so they match the package (Explorer opens only if something was copied). Extra files there are left alone. That folder is a convenient source to copy into each project, not the project folder itself.
 
 ## Interface language is per computer, not per project
 

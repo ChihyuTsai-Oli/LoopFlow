@@ -6,7 +6,7 @@
 
 ## 專案資料夾原則
 
-開始操作前先把 `.3dm` 存檔。**`.3dm` 所在資料夾就是專案工作資料夾**：正式 Dictionary 與 `.3dm` 同層，專案設定、Registry 與 log 放在同層的 `_LoopFlow_Config/loopflow/`。整包搬到其他上層目錄、磁碟或電腦仍可使用；LoopFlow 不依賴某台電腦的固定絕對路徑。官方 Dictionary 範本與 `Tag_Blocks.3dm` 在執行產品指令時會出現在「文件\LoopFlow」。若安裝版號變了，該資料夾的官方檔會換成與套件相同的版本，再複製到專案資料夾使用。
+開始操作前先把 `.3dm` 存檔。**`.3dm` 所在資料夾就是專案工作資料夾**：正式 Dictionary 與 `.3dm` 同層，專案設定、Registry 與 log 放在同層的 `_LoopFlow_Config/loopflow/`。整包搬到其他上層目錄、磁碟或電腦仍可使用；LoopFlow 不依賴某台電腦的固定絕對路徑。官方 Dictionary 範本與 `Tag_Blocks.3dm` 在執行產品指令時會出現在「文件\LoopFlow」。這個預設資料夾不見時，再跑指令會拷回來。若安裝版號變了，該資料夾的官方檔會換成與套件相同的版本，再複製到專案資料夾使用。
 
 ## 快速索引
 
