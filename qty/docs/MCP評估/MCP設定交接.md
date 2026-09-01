@@ -264,6 +264,26 @@ LoopFlow 幾乎每支指令都會彈出模態視窗等待使用者。MCP 在主�
 
 它包含「已刪除但可復原」的記錄。要算實際物件請用列舉器（見 §7.1），不要用 `Count` 判斷增減。
 
+### 7.5 找不到已註冊的 Rhino 時，router 會自己開一個新的
+
+若使用者的 Rhino 沒有執行過 `MCPStart`，此時呼叫任何工具（未指定 `slot`），router **不會回報錯誤，而是自動啟動一個新的空白 Rhino** 來服務請求。回傳中會多一個欄位說明：
+
+```json
+"autoSpawnedSlot": {
+  "slotId": "aardvark", "version": "8",
+  "reason": "Auto-spawned Rhino 8 to serve 'run_python' (no `slot` argument
+             was passed and no matching Rhino was already running)."
+}
+```
+
+**後果**：使用者螢幕上會多出一個 Rhino 視窗，而 AI 操作的是那個**空白文件**，不是使用者眼前開著模型的那一個。若沒注意到 `autoSpawnedSlot` 欄位，會誤以為「模型裡怎麼什麼都沒有」。
+
+**應對**：
+
+1. 動手前先呼叫 `list_slots`。回傳空陣列就是使用者還沒跑 `MCPStart`——請他跑，不要直接下工具讓 router 自作主張
+2. 每次工具回傳都檢查有無 `autoSpawnedSlot`。出現就代表接錯對象，應請使用者在正確的 Rhino 跑 `MCPStart`，並關掉多開的那個
+3. `list_slots` 回傳的 `pid` 應與使用者那個 Rhino 的行程 PID 相符，可用來確認
+
 ---
 
 ## 8　移除方式
