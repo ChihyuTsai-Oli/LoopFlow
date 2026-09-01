@@ -3,10 +3,18 @@
 | 項目 | 內容 |
 |---|---|
 | 用途 | **給 AI 代理直接執行**的設定程序。適用於在新電腦上設定 Claude Code／Codex／Cursor，或在既有電腦上補設定其中一家 |
-| 建立 | 2026-09-01（家用電腦完成設定並實測後撰寫） |
+| 建立 | 2026-09-01（**公司電腦**完成設定並實測後撰寫） |
+| 補測 | 同日稍後、同一台公司電腦：以 Cursor 連上已安裝的 MCP、開啟測試 `.rws`、啟動 Grasshopper。新增 §7.6、§7.7 |
 | 實測依據 | [`實測報告.md`](./實測報告.md) |
 
-> **給讀到這份文件的 AI**：使用者是非技術背景，不自行操作指令列。請你直接執行以下步驟，不要把指令貼給使用者叫他自己跑。**只有 §3 標記「使用者操作」的部分**（在 Rhino 裡打指令）需要請使用者動手，因為那是 GUI 操作。
+> **給讀到這份文件的 AI**：使用者是非技術背景，不自行操作指令列。請你直接執行以下步驟，不要把指令貼給使用者叫他自己跑。
+>
+> **只有下列 Rhino 畫面操作需要請使用者動手**：
+>
+> 1. 若本次要用測試 worksession：請使用者用 Rhino「開啟檔案」打開 `LoopFlow_R_MCP.rws`（**不要**用 MCP 代開，見 §7.7）
+> 2. 在 Rhino 指令列輸入 `MCPStart`，看到 `Port <10500>`（或 `10501`）時按 **Enter**（見 §5.2、§7.6）
+>
+> 不要用 `Start-Process`／`/runscript` 代跑 `MCPStart`，也不要用 `run_python`、`run_command`、`open_doc` 開啟 `.rws`。
 >
 > 每一步都附了驗證方式，**請實際驗證再回報成功**，不要只憑指令沒報錯就宣稱完成。
 
@@ -71,7 +79,7 @@ Get-ChildItem "$env:APPDATA\McNeel\Rhinoceros\packages\8.0\Rhino-MCP-Platform" -
 
 > ARM 機器改用 `win-arm64`。以 `$env:PROCESSOR_ARCHITECTURE` 判斷（`AMD64` → x64）。
 
-家用電腦當時取得的結果（**僅供對照，新機請重新取得**）：
+公司電腦當時取得的結果（**僅供對照，新機請重新取得**）：
 
 ```
 C:\Users\chihyu\AppData\Roaming\McNeel\Rhinoceros\packages\8.0\Rhino-MCP-Platform\0.1.5\router\win-x64\rhino-mcp-router.exe
@@ -175,13 +183,22 @@ Get-Process rhino-mcp-router -ErrorAction SilentlyContinue
 
 ### 5.2 端到端連通
 
-**（使用者操作）** 請使用者開啟 Rhino 8，並在指令列輸入：
+**（使用者操作）** 請使用者開啟 Rhino 8。若本次要測 worksession，先請他用「開啟檔案」打開 `LoopFlow_R_MCP.rws`，再在指令列輸入：
 
 ```
 MCPStart
 ```
 
-成功時 Rhino 會顯示 `[Rhino MCP] MCP server currently running on http://localhost:10500/`。
+指令**不會立刻結束**。畫面會停在：
+
+```
+Command: MCPStart
+MCPStart Port <10500>
+```
+
+請使用者按 **Enter** 採用預設埠。成功時才會顯示 `[Rhino MCP] MCP server currently running on http://localhost:10500/`。
+
+若上次的監聽公告檔還在，提示可能是 `<10501>`，同樣按 Enter 即可。
 
 然後由 AI 呼叫 `list_slots`，應回傳類似：
 
@@ -190,15 +207,15 @@ MCPStart
              "endpoint":"http://localhost:10500"}]}
 ```
 
-`pid` 應與 Rhino 行程的 PID 一致。
+`pid` 應與 Rhino 行程的 PID 一致。埠號是 10500 或 10501 都可以，以這次回傳為準。
 
-若回傳空陣列 `[]`，代表 Rhino 端監聽器沒起來——確認 `MCPStart` 有執行成功。可查：
+若回傳空陣列 `[]`，代表 Rhino 端監聽器沒起來——多半是還沒按 Enter，或 MCP 在換文件時已掛掉（見 §7.7）。可查：
 
 ```powershell
 Get-ChildItem "$env:LOCALAPPDATA\McNeel\rhino-mcp\listeners"
 ```
 
-有公告檔＝監聽器已啟動；空的＝沒啟動。
+有公告檔＝監聽器已啟動；空的＝沒啟動。空陣列時**不要** `spawn_slot`，請使用者再跑一次 `MCPStart`。
 
 ---
 
@@ -206,15 +223,16 @@ Get-ChildItem "$env:LOCALAPPDATA\McNeel\rhino-mcp\listeners"
 
 | 事項 | 說明 |
 |---|---|
-| **每次重開 Rhino 都要跑 `MCPStart`** | 監聽器不會隨 Rhino 自動啟動。這是最常見的「怎麼連不上」原因 |
-| `g1_start` 只開視窗、不建立定義檔 | GH 會停在 `Grasshopper - No document…`，此時所有 `g1_*` 工具回 `Could not get GH document`。需先開啟或新建一份 definition |
+| **每次重開 Rhino 都要跑 `MCPStart`，並在 Port 提示按 Enter** | 監聽器不會隨 Rhino 自動啟動。打完指令後一定還會問埠號，少按 Enter 就等於沒啟動 |
+| **測試 `.rws` 由使用者手動開啟** | 開完再 `MCPStart`。不要用 MCP 代開 worksession（見 §7.7） |
+| `g1_start` 只開視窗、不建立定義檔 | GH 會停在 `Grasshopper - No document…`，此時所有 `g1_*` 工具回 `Could not get GH document`。需先開啟或新建一份 definition（測試檔是同層的 `LoopFlow_R_MCP.gh`） |
 | 一次只用一個 AI 操作 Rhino | 三家各自啟動 router，但 Rhino 只有一條主執行緒。本工作區 `AGENTS.md` 既有的「一次一個 agent」慣例正好避開此問題 |
 
 ---
 
 ## 7　已知陷阱（動手前必讀）
 
-完整證據見 [`實測報告.md`](./實測報告.md)，以下是操作時最容易踩到的四項。
+完整證據見 [`實測報告.md`](./實測報告.md)，以下是操作時最容易踩到的項目。
 
 ### 7.1 worksession 下 MCP 原生工具看不到 attach 的物件
 
@@ -284,6 +302,52 @@ LoopFlow 幾乎每支指令都會彈出模態視窗等待使用者。MCP 在主�
 2. 每次工具回傳都檢查有無 `autoSpawnedSlot`。出現就代表接錯對象，應請使用者在正確的 Rhino 跑 `MCPStart`，並關掉多開的那個
 3. `list_slots` 回傳的 `pid` 應與使用者那個 Rhino 的行程 PID 相符，可用來確認
 
+### 7.6 `MCPStart` 會停在 Port 提示，必須按 Enter
+
+公司電腦 2026-09-01 實測：`MCPStart` 不是打完就結束。指令列會停在：
+
+```
+Command: MCPStart
+MCPStart Port <10500>
+```
+
+必須按 **Enter** 採用預設埠，成功時才會出現 `[Rhino MCP] MCP server currently running on http://localhost:10500/`。
+
+若上一次的監聽公告檔還沒清掉，提示可能是 `<10501>`，同樣按 Enter 即可；`list_slots` 的 `pid` 對得上目前 Rhino 就好。
+
+**在 Enter 之前**，指令仍佔著主執行緒：
+
+- `run_python`：`error` 為 `null`、`stdout` 空白（與 §7.2 相同的靜默失效）
+- `run_command`：回 `Rhino is already running a command`
+
+**AI 禁止**用 `Start-Process` 搭配 `/runscript="MCPStart"`（或任何腳本）代跑。那會把 Port 提示留在指令列，使用者以為已經連上。請使用者在 Rhino 指令列親手輸入，看到 Port 就按 Enter。
+
+### 7.7 不要用 MCP 開啟 `.rws` worksession
+
+公司電腦 2026-09-01 實測：對已連上 MCP 的空白文件執行
+
+```
+-_Worksession _Open "<LOOPFLOW_QTY_MCP_WORKFILES_ROOT>\LoopFlow_R_MCP.rws"
+```
+
+實際發生：
+
+1. 檔案有讀進去（2D 成為作用中文件，3D 以 inactive model attach）
+2. 指令**沒結束**，停在 `Choose worksession option ( Attach  Detach  Current  Refresh  Open  Save  SaveAs )`，還要再按一次 Enter
+3. 換文件時 MCP 伺服器無法正常關閉，指令列出現 `[Rhino MCP] Failed to stop MCP server gracefully. Recommend restarting Rhino.`
+4. MCP 工具回 `rhino_closed`、slot 被剪除；Rhino 視窗其實還在
+5. `listeners\` 清空，`list_slots` 回 `[]`
+
+`open_doc` 也不適用：那是把檔案**匯入目前文件**，不是開 worksession。
+
+**正確順序**：
+
+1. 請使用者用 Rhino「開啟檔案」打開 `LoopFlow_R_MCP.rws`
+2. 若畫面上出現 MCP 建議重開 Rhino 的訊息，請他重開 Rhino 再開 `.rws`
+3. 開檔後執行 `MCPStart`，Port 提示按 Enter
+4. AI 呼叫 `list_slots` 確認 `pid` 相符，再用 `run_python`（含 `ReferenceObjects = True`）核對 §10 的已知數字
+5. **不要** `spawn_slot`
+
 ---
 
 ## 8　移除方式
@@ -300,7 +364,7 @@ LoopFlow 幾乎每支指令都會彈出模態視窗等待使用者。MCP 在主�
 
 ---
 
-## 9　家用電腦設定紀錄（供另一台對照）
+## 9　公司電腦設定紀錄（供家中電腦對照）
 
 | 項目 | 值 |
 |---|---|
@@ -314,6 +378,8 @@ LoopFlow 幾乎每支指令都會彈出模態視窗等待使用者。MCP 在主�
 | Claude Code | `~/.claude.json` → `mcpServers.rhino`，使用者層級 |
 | Codex | `~/.codex/config.toml` → `[mcp_servers.rhino]`（既有的 `node_repl` 未受影響） |
 | Cursor | `~/.cursor/mcp.json`（新建） |
+
+同日稍後以 Cursor 連線時，沿用上表同一套 0.1.5。新發現的操作陷阱見 §7.6、§7.7。測試 worksession 路徑走 `LOOPFLOW_QTY_MCP_WORKFILES_ROOT`，不要寫死磁碟機。家中電腦安裝時請重新取得 router 路徑並寫進該機的設定檔。
 
 ### 工具清單（供對照，確認新機工具數一致）
 
@@ -345,6 +411,8 @@ if (-not $root) { Write-Output "環境變數未設定，請依 工作檔路徑.m
 ```
 
 > 換機後若此變數未設定，**停止操作並回報**，不要自行猜測磁碟機——這是 `工作檔路徑.md` 的既定規則。
+
+**開啟方式**：請使用者在 Rhino 裡打開 `LoopFlow_R_MCP.rws`，再跑 `MCPStart`。AI 不要用 MCP 代開（見 §7.7）。開成功後用下面的已知數字驗證。
 
 該資料夾內構成一組**依實際作業方式配置**的完整測試環境：
 
