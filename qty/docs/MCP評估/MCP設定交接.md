@@ -4,7 +4,7 @@
 |---|---|
 | 用途 | **給 AI 代理直接執行**的設定程序。適用於在新電腦上設定 Claude Code／Codex／Cursor，或在既有電腦上補設定其中一家 |
 | 建立 | 2026-09-01（**公司電腦**完成設定並實測後撰寫） |
-| 補測 | 同日稍後、同一台公司電腦：以 Cursor 連上已安裝的 MCP、開啟測試 `.rws`、啟動 Grasshopper。新增 §7.6、§7.7 |
+| 補測 | 同日稍後、同一台公司電腦：以 Cursor 連上已安裝的 MCP、開啟測試 `.rws`、啟動 Grasshopper；下午補記 GH headless 載入後 Rhino 當機事件。新增 §7.6～§7.8 |
 | 實測依據 | [`實測報告.md`](./實測報告.md) |
 
 > **給讀到這份文件的 AI**：使用者是非技術背景，不自行操作指令列。請你直接執行以下步驟，不要把指令貼給使用者叫他自己跑。
@@ -13,8 +13,9 @@
 >
 > 1. 若本次要用測試 worksession：請使用者用 Rhino「開啟檔案」打開 `LoopFlow_R_MCP.rws`（**不要**用 MCP 代開，見 §7.7）
 > 2. 在 Rhino 指令列輸入 `MCPStart`，看到 `Port <10500>`（或 `10501`）時按 **Enter**（見 §5.2、§7.6）
+> 3. 若要檢查 GH definition：請使用者正常執行 `gh`，在 Grasshopper UI 開啟 `.gh`；**不要**以 `run_python`／`run_csharp` 搭配 `GH_DocumentIO` headless 載入（見 §7.8）
 >
-> 不要用 `Start-Process`／`/runscript` 代跑 `MCPStart`，也不要用 `run_python`、`run_command`、`open_doc` 開啟 `.rws`。
+> 不要用 `Start-Process`／`/runscript` 代跑 `MCPStart`，不要用 `run_python`、`run_command`、`open_doc` 開啟 `.rws`，也不要在目前工作的 Rhino 行程內 headless 載入 `.gh`。
 >
 > 每一步都附了驗證方式，**請實際驗證再回報成功**，不要只憑指令沒報錯就宣稱完成。
 
@@ -348,6 +349,28 @@ MCPStart Port <10500>
 4. AI 呼叫 `list_slots` 確認 `pid` 相符，再用 `run_python`（含 `ReferenceObjects = True`）核對 §10 的已知數字
 5. **不要** `spawn_slot`
 
+### 7.8 不要用 `GH_DocumentIO` 在使用中的 Rhino headless 載入 `.gh`
+
+公司電腦 2026-09-01 下午實測事故：在已開啟 `LoopFlow_R_MCP.rws`、已連 MCP 的 Rhino 中，透過 `run_python` 載入 Grasshopper assembly、建立 `Grasshopper.Kernel.GH_DocumentIO` 並呼叫 `Open()` 讀取 `LoopFlow_R_MCP.gh`。該工具呼叫逾時；AI 端取消等待後，MCP ping 與其他唯讀腳本一度仍能正常回應，但使用者稍後手動執行 `gh` 時 Rhino 凍結並退出。
+
+事後沒有找到 Windows Application event 或 crash dump，因此「headless 載入留下不完整 GH runtime」是**高度可疑但未證實**的原因。完整時間線見 [`實測報告.md`](./實測報告.md) §4.5、§12.3。
+
+**一律遵守**：
+
+1. 不要在承載 worksession／使用者工作檔的 Rhino 內，以 `run_python` 或 `run_csharp` 建立 `GH_DocumentIO`、headless 開啟 `.gh`
+2. AI 端取消工具、逾時返回或後續 ping 成功，**都不能**當成 Rhino runtime 已恢復乾淨
+3. 一旦這類 headless GH 呼叫逾時，立即停止所有 Rhino／GH 操作，請使用者重開 Rhino；不要在同一行程手動執行 `gh` 測試
+4. 正確檢查方式：使用者正常執行 `gh` → 在 Grasshopper UI 開啟 definition → AI 用 `g1_get_canvas_graph`／`g1_solve_graph` 等正式工具
+5. 若需要真正的離線 `.gh` 解析，必須使用與目前 worksession 完全隔離的犧牲環境；目前尚未設計、尚未驗證，不要自行嘗試
+
+**事故後安全恢復順序**：
+
+1. 確認舊 Rhino 行程已結束
+2. 開啟全新的 Rhino，手動開啟 `.rws`
+3. 若要使用 GH，先正常執行 `gh` 並確認 UI 完整開啟；必要時再開啟 `.gh`
+4. 再執行 `MCPStart`，Port 提示按 Enter
+5. AI 只先做 `list_slots` 與唯讀模型核對；確認 PID、文件名稱、3116 筆物件均正確後才繼續
+
 ---
 
 ## 8　移除方式
@@ -412,7 +435,7 @@ if (-not $root) { Write-Output "環境變數未設定，請依 工作檔路徑.m
 
 > 換機後若此變數未設定，**停止操作並回報**，不要自行猜測磁碟機——這是 `工作檔路徑.md` 的既定規則。
 
-**開啟方式**：請使用者在 Rhino 裡打開 `LoopFlow_R_MCP.rws`，再跑 `MCPStart`。AI 不要用 MCP 代開（見 §7.7）。開成功後用下面的已知數字驗證。
+**開啟方式**：請使用者在 Rhino 裡打開 `LoopFlow_R_MCP.rws`。若要使用 GH，先正常執行 `gh`、在 UI 開啟 `LoopFlow_R_MCP.gh`；禁止透過 MCP headless 載入（見 §7.8）。接著執行 `MCPStart`。AI 不要用 MCP 代開 `.rws`（見 §7.7）。開成功後用下面的已知數字驗證。
 
 該資料夾內構成一組**依實際作業方式配置**的完整測試環境：
 
