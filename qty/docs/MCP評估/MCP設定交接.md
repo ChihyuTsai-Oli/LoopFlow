@@ -5,6 +5,8 @@
 | 用途 | **給 AI 代理直接執行**的設定程序。適用於在新電腦上設定 Claude Code／Codex／Cursor，或在既有電腦上補設定其中一家 |
 | 建立 | 2026-09-01（**公司電腦**完成設定並實測後撰寫） |
 | 補測 | 同日稍後、同一台公司電腦：以 Cursor 連上已安裝的 MCP、開啟測試 `.rws`、啟動 Grasshopper；下午補記 GH headless 載入後 Rhino 當機事件。新增 §7.6～§7.8 |
+| 雙機完成 | 2026-09-01 18:26 **家中電腦**依本文件完成設定並端到端驗證通過。§9 改為雙機對照表 |
+| 補記 | 2026-09-01 18:40 家中電腦發現 `get_viewport_image` 會回傳全白空圖，且 metadata 毫無異常。新增 §7.9 |
 | 實測依據 | [`實測報告.md`](./實測報告.md) |
 
 > **給讀到這份文件的 AI**：使用者是非技術背景，不自行操作指令列。請你直接執行以下步驟，不要把指令貼給使用者叫他自己跑。
@@ -371,6 +373,55 @@ MCPStart Port <10500>
 4. 再執行 `MCPStart`，Port 提示按 Enter
 5. AI 只先做 `list_slots` 與唯讀模型核對；確認 PID、文件名稱、3116 筆物件均正確後才繼續
 
+### 7.9 `get_viewport_image` 可能回傳全白空圖，而且謊稱成功
+
+家中電腦 2026-09-01 18:40 實測。情境單純：由 LoopFlow 圖框範本開的新檔（未存檔，575 個物件），圖層 `//work` 上有一個 100×100 矩形與一個直徑 80 的圓，兩者都可見。
+
+呼叫 `get_viewport_image`（`view=top`，以 `boxMin`／`boxMax` 框住 85–215 的範圍）**兩次都回傳全白的空圖**：
+
+| 次數 | displayMode | 回傳影像 | metadata |
+|---|---|---|---|
+| 1 | 未指定（沿用範本的 `2D_Drawing`） | **全白** | `error: null`，相機 `[150,150,13.9]` → target `[150,150,0]`，`visibleObjectCount: 138` |
+| 2 | 強制 `Wireframe` | **全白** | `error: null`，相機 `[150,150,7.03]`，`visibleObjectCount: 29` |
+
+**metadata 完全看不出異常**——沒有錯誤、相機正確對準物件中心、螢幕上的物件數也不是 0。
+
+已排除的原因（都以 `run_python` 實際查證，不是推測）：
+
+| 懷疑 | 查證結果 |
+|---|---|
+| 圖層被關掉或鎖住 | `//work` `IsVisible=True`、`IsLocked=False`、無父圖層 |
+| 物件被隱藏 | 兩個物件 `IsHidden=False`、`Attributes.Visible=True` |
+| 取景沒框到 | `GetFrustumBoundingBox()` = 39.7–260.3 × 84–216，完整涵蓋 100–200 的幾何 |
+| 白線畫在白底 | 圖層色 `(117,203,244)` 淺藍，`DrawColor` 同值，不是白色 |
+
+**一項關鍵線索**：Rhino 該視圖的實際背景是**深色**，但 `get_viewport_image` 回傳的是**白底**。代表它並非照使用者所見的視圖直接擷取，而是走了另一條算繪路徑。根因未確認，**不宣稱已證實**。
+
+**替代做法（實測可用）**：以 `run_python` 呼叫 Rhino 原生的 `CaptureToBitmap()` 存成檔案，再由 AI 讀該檔。
+
+```python
+import Rhino, System, os
+doc = __rhino_doc__
+
+view = next(v for v in doc.Views if v.ActiveViewport.Name == "Top")
+vp = view.ActiveViewport
+vp.ZoomBoundingBox(Rhino.Geometry.BoundingBox(
+    Rhino.Geometry.Point3d(85, 85, -5),
+    Rhino.Geometry.Point3d(215, 215, 5)))
+view.Redraw()
+
+bmp = view.CaptureToBitmap(System.Drawing.Size(600, 600))
+bmp.Save(r"<暫存資料夾>\check.png")     # 再用 Read 讀這個檔
+```
+
+同一情境下這條路徑正確畫出矩形與圓，背景也與螢幕相符（深色）。
+
+**規則**：
+
+1. **不要把 `get_viewport_image` 的結果當作模型狀態的證據。** 空白影像**不代表**模型是空的——這與 §7.1、§7.2 屬同一類「不報錯、只給錯結果」的失敗
+2. 需要視覺確認時走 `CaptureToBitmap` 存檔再讀
+3. 視覺永遠只是輔助。**數字驗證以 `run_python` 的列舉與量測為準**，不要用截圖判斷物件有無或數量
+
 ---
 
 ## 8　移除方式
@@ -387,22 +438,45 @@ MCPStart Port <10500>
 
 ---
 
-## 9　公司電腦設定紀錄（供家中電腦對照）
+## 9　雙機設定紀錄
 
-| 項目 | 值 |
-|---|---|
-| 設定日期 | 2026-09-01 |
-| OS | Windows 11 Pro，`AMD64` |
-| Rhino | Rhino 8（`C:\Program Files\Rhino 8\`），未安裝 Rhino 9 |
-| 套件版本 | `Rhino-MCP-Platform 0.1.5` |
-| router | `%APPDATA%\McNeel\Rhinoceros\packages\8.0\Rhino-MCP-Platform\0.1.5\router\win-x64\rhino-mcp-router.exe` |
-| 監聽 port | 10500（預設） |
-| 工具數 | 29（Grasshopper 11 ＋ Rhino 18） |
-| Claude Code | `~/.claude.json` → `mcpServers.rhino`，使用者層級 |
-| Codex | `~/.codex/config.toml` → `[mcp_servers.rhino]`（既有的 `node_repl` 未受影響） |
-| Cursor | `~/.cursor/mcp.json`（新建） |
+兩台都已完成，**同版本、同組態**。差異只有家目錄與 Rhino 9 WIP 的有無。
 
-同日稍後以 Cursor 連線時，沿用上表同一套 0.1.5。新發現的操作陷阱見 §7.6、§7.7。測試 worksession 路徑走 `LOOPFLOW_QTY_MCP_WORKFILES_ROOT`，不要寫死磁碟機。家中電腦安裝時請重新取得 router 路徑並寫進該機的設定檔。
+| 項目 | 公司電腦 | 家中電腦 |
+|---|---|---|
+| 設定日期 | 2026-09-01 | 2026-09-01（同日 18:10–18:21） |
+| 主機名稱 | `TD-ZB-117` | `CHIHYU-202410` |
+| 家目錄 | `C:\Users\chihyu\` | `C:\Users\USER\` |
+| OS | Windows 11 Pro，`AMD64` | Windows 10 Home，`AMD64` |
+| Rhino | Rhino 8，**未裝** Rhino 9 | Rhino 8，**另有 Rhino 9 WIP**（見下方註） |
+| 套件版本 | `Rhino-MCP-Platform 0.1.5` | `Rhino-MCP-Platform 0.1.5` |
+| router | `%APPDATA%\McNeel\Rhinoceros\packages\8.0\Rhino-MCP-Platform\0.1.5\router\win-x64\rhino-mcp-router.exe` | 同一相對路徑（家目錄不同） |
+| 監聽 port | 10500（預設） | 10500（預設） |
+| 工具數 | 29（Grasshopper 11 ＋ Rhino 18） | 29，逐一比對與公司電腦**完全相同** |
+| Claude Code | `~/.claude.json` → `mcpServers.rhino`，使用者層級 | ✅ 同 |
+| Codex | `~/.codex/config.toml` → `[mcp_servers.rhino]`（既有 `node_repl` 未受影響） | ✅ 同（既有 `node_repl`、`cua_repl` 未受影響） |
+| Cursor | `~/.cursor/mcp.json`（新建） | ✅ 同 |
+
+> **家中電腦裝有 Rhino 9 WIP，但不影響本設定。** MCP 外掛裝在 `packages\8.0\`，`list_slots` 回傳的 `version` 為 `8`，工具清單仍是 29 個 `g1_*`／Rhino 工具——**沒有因此多出 `g2_` 系列**。若日後要測 Rhino 9 路徑，需另行設定並重新驗證，不可假設沿用。
+
+同日稍後以 Cursor 連線時，沿用上表同一套 0.1.5。新發現的操作陷阱見 §7.6、§7.7。測試 worksession 路徑走 `LOOPFLOW_QTY_MCP_WORKFILES_ROOT`，不要寫死磁碟機。
+
+### 9.1 家中電腦端到端驗證結果（2026-09-01 18:26）
+
+由使用者手動開啟 `LoopFlow_R_MCP.rws` → 執行 `MCPStart` → Port 提示按 Enter，然後由 AI 核對：
+
+| 檢查 | 預期（§10） | 家中電腦實測 |
+|---|---|---|
+| `list_slots` 的 `pid` | 與 Rhino 行程相符 | ✅ `18172`，且系統只有這一個 Rhino（無 §7.5 的自動多開） |
+| 作用中文件 | `LoopFlow_2D_R_MCP.3dm` | ✅ 相符 |
+| 模型單位 | Centimeters | ✅ 相符 |
+| 完整列舉物件數 | 3116（本機 2972 ＋ 參照 144） | ✅ 3116（2972 ＋ 144） |
+| Brep 總數 | 39，全在參照側 | ✅ 39，參照側 39 |
+| 帶 `_03_ID編號` 的物件 | 98（本機 61 ＋ 參照 37） | ✅ 98（本機 61 ＋ 參照 37） |
+| `doc.Modified` | false | ✅ false（AI 未寫入任何內容） |
+| **§7.1 worksession 盲點** | `list_objects` 應看不到參照物件 | ✅ **完全重現**：`geometryType=brep` 回傳 `count: 0`、`truncated: false`、`warning: null`，而 `run_python` 同時讀得到 39 個 |
+
+**結論**：家中電腦行為與公司電腦一致，包含盲點在內。§7 的所有禁令與 §11 的實作建議在兩台機器上同樣適用，不需要分機器版本。
 
 ### 工具清單（供對照，確認新機工具數一致）
 
