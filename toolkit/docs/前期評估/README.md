@@ -21,3 +21,5 @@
 三支 2D 工具可以放在同一個 Toolkit 安裝包，但不應再是三個彼此複製基礎設施的單檔腳本。它們共用單位、結果、preview、layer、group、undo 與錯誤復原；各自只保留幾何規則。
 
 `LF_Cabinet_Suite` 的風險層級不同：它會刪除輸入 box、寫入／清除 UserText、猜測零件種類與尺寸，且同檔混合 UI、3D 產生、層板、BOM。建議先拆成獨立 feature，再決定哪些功能值得保留。
+
+2026-09-02 已裁決櫃體與 QTY 的交界：完整櫃體不用 Block，改用帶唯一 `QTY_CB_` 真正 Group Name 的 Rhino Group，以保留零件 Tag；Toolkit 負責建立／同步／檢查，QTY 唯讀集合成員並輸出 Z-up OBB 原始長寬高。高矮深淺等分類不進群組名稱與量測核心，留到輸出後人工判斷。
