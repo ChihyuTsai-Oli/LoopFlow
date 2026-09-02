@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>前期評估總覽</title>
+<style>
+:root{
+  --bg:#0e1013; --bg2:#151920; --panel:#171b22; --line:#262c37; --line2:#333b49;
+  --tx:#dde2ea; --tx2:#a4aebf; --tx3:#767f92;
+  --accent:#6fbfa2; --accent-d:#173129; --warn:#e0a458;
+  --mono:"Cascadia Mono",Consolas,"SF Mono","Roboto Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei","PingFang TC","Noto Sans TC","Hiragino Sans",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);
+  font-size:15.5px;line-height:1.85;letter-spacing:.01em;-webkit-font-smoothing:antialiased}
+.wrap{display:grid;grid-template-columns:260px minmax(0,1fr);gap:0;max-width:1560px;margin:0 auto}
+
+nav{position:sticky;top:0;height:100vh;overflow-y:auto;padding:26px 14px 40px 22px;
+  border-right:1px solid var(--line);background:var(--bg)}
+nav .brand{font-size:12px;letter-spacing:.16em;color:var(--tx3);text-transform:uppercase;margin-bottom:6px}
+nav .bt{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:20px;line-height:1.4}
+nav .group{margin:0 0 16px}
+nav a.l1{display:block;font-weight:650;color:var(--tx);text-decoration:none;font-size:13.6px;
+  padding:6px 9px;border-radius:6px;border-left:2px solid var(--accent)}
+nav a.l1:hover{background:var(--bg2)}
+nav a.l2{display:block;color:var(--tx2);text-decoration:none;font-size:12.8px;
+  padding:3.5px 9px 3.5px 18px;border-radius:5px;border-left:2px solid transparent;line-height:1.5}
+nav a.l2:hover,nav a.l2.active{color:var(--tx);background:var(--bg2);border-left-color:var(--accent)}
+nav a.l1.active{background:var(--accent-d);color:var(--accent)}
+
+main{padding:44px 52px 120px;min-width:0}
+p{margin:0 0 15px}
+strong{color:#fff;font-weight:650}
+a{color:#8fd9c7}
+hr{border:0;border-top:1px solid var(--line);margin:38px 0}
+ul,ol{margin:0 0 16px;padding-left:22px}
+li{margin:5px 0}
+li>ul{margin:6px 0 2px}
+code{font-family:var(--mono);font-size:.875em;background:#1d2230;color:#e8c07d;
+  padding:1.5px 5px;border-radius:4px;border:1px solid #262d3d;word-break:break-word}
+pre.code{background:#12161f;border:1px solid var(--line);border-left:3px solid var(--line2);
+  border-radius:7px;padding:15px 17px;overflow-x:auto;margin:0 0 18px}
+pre.code code{background:none;border:0;padding:0;color:#b9c4d8;font-size:13px;line-height:1.72;white-space:pre}
+
+.chaptitle{font-size:27px;font-weight:700;margin:64px 0 22px;padding:20px 0 14px;
+  border-bottom:2px solid var(--accent);scroll-margin-top:20px}
+.wrap main>.chaptitle:first-of-type{margin-top:0}
+h2{font-size:19px;font-weight:660;margin:38px 0 14px;line-height:1.45;color:var(--tx);scroll-margin-top:20px}
+h3{font-size:16px;font-weight:640;margin:28px 0 11px;color:var(--tx2);scroll-margin-top:20px}
+h4{font-size:14.5px;font-weight:640;margin:22px 0 9px;color:var(--tx2)}
+
+blockquote{margin:0 0 20px;padding:13px 18px;background:#151a24;
+  border-left:3px solid var(--line2);border-radius:0 7px 7px 0;color:var(--tx2);font-size:14.6px}
+blockquote p{margin:0 0 5px}
+blockquote p:last-child{margin-bottom:0}
+blockquote p.qh{color:var(--tx);margin-top:2px}
+blockquote .tw{margin:10px 0}
+
+.tw{overflow-x:auto;margin:0 0 22px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:13.6px;font-variant-numeric:tabular-nums}
+table.wide{min-width:1700px}
+th{background:#1b2130;color:var(--tx);font-weight:660;text-align:left;position:sticky;top:0;z-index:2;
+  padding:11px 14px;border-bottom:1px solid var(--line2);font-size:13px}
+td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;
+  color:var(--tx2);line-height:1.72}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:rgba(255,255,255,.016)}
+tbody tr:hover{background:rgba(255,255,255,.038)}
+table:not(.wide) td:nth-child(2){color:var(--tx);font-weight:550}
+table.wide td:first-child{color:var(--tx);font-weight:650;white-space:nowrap}
+td.s-strong{color:#ffffff;font-weight:660}
+td.s-normal{color:#f5e04a;font-weight:600}
+td.s-light{color:#6fdc8c;font-weight:600}
+
+td.ckcell{width:34px;padding-left:16px;padding-right:0}
+input.ck{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+tr.ckrow.done td{color:var(--tx3);text-decoration:line-through;opacity:.62}
+tr.ckrow.done td.ckcell{text-decoration:none;opacity:1}
+
+.legend{margin:0 0 18px;font-size:13.5px;color:var(--tx2)}
+.legend span{display:inline-block;margin-right:16px;font-weight:650}
+
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr}
+  nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:20px 22px}
+  main{padding:30px 22px 80px}
+  .chaptitle{font-size:22px;margin-top:36px}
+  th{position:static}
+}
+@media print{
+  nav{display:none} body{background:#fff;color:#111}
+  .tw,table,td,th{border-color:#bbb} main{padding:0}
+  td.s-strong,td.s-normal,td.s-light{color:#111}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav><div class="brand">LoopFlow QTY</div>
+<div class="bt">前期評估總覽</div>
+<div class="group">
+<a class="l1" href="#LoopFlow-QTY-前期評估">LoopFlow QTY — 前期評估</a>
+<a class="l2" href="#LoopFlow-QTY-前期評估--與-MCP評估-的分工">與 `MCP評估/` 的分工</a>
+<a class="l2" href="#LoopFlow-QTY-前期評估--閱讀順序">閱讀順序</a>
+<a class="l2" href="#LoopFlow-QTY-前期評估--本階段的方法論">本階段的方法論</a>
+</div>
+<div class="group">
+<a class="l1" href="#LoopFlow-QTY-範圍與邊界">LoopFlow QTY — 範圍與邊界</a>
+<a class="l2" href="#LoopFlow-QTY-範圍與邊界--1-產品定位">1　產品定位</a>
+<a class="l2" href="#LoopFlow-QTY-範圍與邊界--2-做與不做">2　做與不做</a>
+<a class="l2" href="#LoopFlow-QTY-範圍與邊界--3-核心流程">3　核心流程</a>
+<a class="l2" href="#LoopFlow-QTY-範圍與邊界--4-人機分工">4　人機分工</a>
+<a class="l2" href="#LoopFlow-QTY-範圍與邊界--5-刻意排除在工具之外">5　刻意排除在工具之外</a>
+<a class="l2" href="#LoopFlow-QTY-範圍與邊界--6-一式-的處理">6　「一式」的處理</a>
+<a class="l2" href="#LoopFlow-QTY-範圍與邊界--7-執行環境">7　執行環境</a>
+<a class="l2" href="#LoopFlow-QTY-範圍與邊界--8-與-MCP-的關係">8　與 MCP 的關係</a>
+</div>
+<div class="group">
+<a class="l1" href="#LoopFlow-QTY-資料盤點">LoopFlow QTY — 資料盤點</a>
+<a class="l2" href="#LoopFlow-QTY-資料盤點--0-驗證模型">0　驗證模型</a>
+<a class="l2" href="#LoopFlow-QTY-資料盤點--1-物件總覽">1　物件總覽</a>
+<a class="l2" href="#LoopFlow-QTY-資料盤點--2-標記狀況">2　標記狀況</a>
+<a class="l2" href="#LoopFlow-QTY-資料盤點--3-為什麼-2D-不採用">3　為什麼 2D 不採用</a>
+<a class="l2" href="#LoopFlow-QTY-資料盤點--4-計算全集的定義">4　計算全集的定義</a>
+<a class="l2" href="#LoopFlow-QTY-資料盤點--5-字典-join-完整可用">5　字典 join：完整可用</a>
+<a class="l2" href="#LoopFlow-QTY-資料盤點--6-結構體-查詢鍵不同-機制現成">6　結構體：查詢鍵不同，機制現成</a>
+<a class="l2" href="#LoopFlow-QTY-資料盤點--7-幾何品質">7　幾何品質</a>
+<a class="l2" href="#LoopFlow-QTY-資料盤點--8-MCP-讀取限制-影響實作方式">8　MCP 讀取限制（影響實作方式）</a>
+<a class="l2" href="#LoopFlow-QTY-資料盤點--9-專案設定與-Registry-2026-09-02-補齊">9　專案設定與 Registry（2026-09-02 補齊）</a>
+<a class="l2" href="#LoopFlow-QTY-資料盤點--10-尚未完整驗證">10　尚未完整驗證</a>
+</div>
+<div class="group">
+<a class="l1" href="#LoopFlow-QTY-量測方法">LoopFlow QTY — 量測方法</a>
+<a class="l2" href="#LoopFlow-QTY-量測方法--1-核心原則">1　核心原則</a>
+<a class="l2" href="#LoopFlow-QTY-量測方法--2-共通設計原則">2　共通設計原則</a>
+<a class="l2" href="#LoopFlow-QTY-量測方法--3-面積">3　面積</a>
+<a class="l2" href="#LoopFlow-QTY-量測方法--4-長度">4　長度</a>
+<a class="l2" href="#LoopFlow-QTY-量測方法--5-數量與體積">5　數量與體積</a>
+<a class="l2" href="#LoopFlow-QTY-量測方法--6-開口扣除">6　開口扣除</a>
+<a class="l2" href="#LoopFlow-QTY-量測方法--7-方位偵測-備用">7　方位偵測（備用）</a>
+<a class="l2" href="#LoopFlow-QTY-量測方法--8-方法與規則的相容性">8　方法與規則的相容性</a>
+<a class="l2" href="#LoopFlow-QTY-量測方法--9-方法總表">9　方法總表</a>
+</div>
+<div class="group">
+<a class="l1" href="#LoopFlow-QTY-決策紀錄">LoopFlow QTY — 決策紀錄</a>
+<a class="l2" href="#LoopFlow-QTY-決策紀錄--0-三欄覆核說明-2026-09-02">0　三欄覆核說明（2026-09-02）</a>
+<a class="l2" href="#LoopFlow-QTY-決策紀錄--1-已定案">1　已定案</a>
+<a class="l2" href="#LoopFlow-QTY-決策紀錄--2-已推翻">2　已推翻</a>
+<a class="l2" href="#LoopFlow-QTY-決策紀錄--3-未定案">3　未定案</a>
+<a class="l2" href="#LoopFlow-QTY-決策紀錄--4-必須先修的既有缺陷">4　必須先修的既有缺陷</a>
+<a class="l2" href="#LoopFlow-QTY-決策紀錄--5-安全紀律-不可協商">5　安全紀律（不可協商）</a>
+</div>
+<div class="group">
+<a class="l1" href="#LoopFlow-QTY-決策紀錄-第二輪">LoopFlow QTY — 決策紀錄（第二輪）</a>
+<a class="l2" href="#LoopFlow-QTY-決策紀錄-第二輪--0-本輪規則">0　本輪規則</a>
+<a class="l2" href="#LoopFlow-QTY-決策紀錄-第二輪--1-本輪新增的實測發現">1　本輪新增的實測發現</a>
+<a class="l2" href="#LoopFlow-QTY-決策紀錄-第二輪--2-三項阻擋的處置提案">2　三項阻擋的處置提案</a>
+<a class="l2" href="#LoopFlow-QTY-決策紀錄-第二輪--3-其他待決的收斂提案">3　其他待決的收斂提案</a>
+<a class="l2" href="#LoopFlow-QTY-決策紀錄-第二輪--4-本輪不處理">4　本輪不處理</a>
+<a class="l2" href="#LoopFlow-QTY-決策紀錄-第二輪--5-待使用者裁決">5　待使用者裁決</a>
+</div>
+<div class="group">
+<a class="l1" href="#LoopFlow-QTY-測試模型補強項目">LoopFlow QTY — 測試模型補強項目</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--0-測試資產規則">0　測試資產規則</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--1-幾何形狀-優先">1　幾何形狀（優先）</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--2-規則涵蓋-優先">2　規則涵蓋（優先）</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--3-資料情境">3　資料情境</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--4-工作方式與規模">4　工作方式與規模</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--5-建議的補強順序">5　建議的補強順序</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--6-Cursor-覆核-2026-09-02-公司電腦">6　Cursor 覆核（2026-09-02，公司電腦）</a>
+</div>
+<div class="group">
+<a class="l1" href="#LoopFlow-QTY-開發順序計畫">LoopFlow QTY — 開發順序計畫</a>
+<a class="l2" href="#LoopFlow-QTY-開發順序計畫--1-執行規則">1　執行規則</a>
+<a class="l2" href="#LoopFlow-QTY-開發順序計畫--2-階段總覽">2　階段總覽</a>
+<a class="l2" href="#LoopFlow-QTY-開發順序計畫--3-P0-裁決與前置-進入實作前的硬性關卡">3　P0　裁決與前置（進入實作前的硬性關卡）</a>
+<a class="l2" href="#LoopFlow-QTY-開發順序計畫--4-P1-純-Python-核心-不需要-Rhino">4　P1　純 Python 核心（不需要 Rhino）</a>
+<a class="l2" href="#LoopFlow-QTY-開發順序計畫--5-P2-Rhino-adapter-需要-Rhino-不需要-GH">5　P2　Rhino adapter（需要 Rhino，不需要 GH）</a>
+<a class="l2" href="#LoopFlow-QTY-開發順序計畫--6-P3-選取與持久化">6　P3　選取與持久化</a>
+<a class="l2" href="#LoopFlow-QTY-開發順序計畫--7-P4-Coverage-與預覽">7　P4　Coverage 與預覽</a>
+<a class="l2" href="#LoopFlow-QTY-開發順序計畫--8-P5-Excel-輸出">8　P5　Excel 輸出</a>
+<a class="l2" href="#LoopFlow-QTY-開發順序計畫--9-P6-Rhino-入口與發布-最後">9　P6　Rhino 入口與發布（最後）</a>
+<a class="l2" href="#LoopFlow-QTY-開發順序計畫--10-不在本計畫內">10　不在本計畫內</a>
+<a class="l2" href="#LoopFlow-QTY-開發順序計畫--11-每階段的交接要求">11　每階段的交接要求</a>
+</div></nav>
+<main><p class="legend">決策表「你的決定」欄顏色（依三家建議強度自動判定）：<span style="color:#ffffff">白＝強烈建議×2+</span><span style="color:#f5e04a">黃＝一般建議×2+</span><span style="color:#6fdc8c">綠＝輕鬆建議×2+</span></p><h1 class="chaptitle" id="LoopFlow-QTY-前期評估">LoopFlow QTY — 前期評估</h1>
+<ul><li>建立日期：2026-09-01</li><li>階段：<strong>前期評估。尚未撰寫任何計算程式。</strong></li><li>產品邊界以 <a href="#LoopFlow-QTY-前期評估"><code>qty/README.md</code></a> 為準；契約語意以 <a href="../../../v2/docs/資料契約.md"><code>v2/docs/資料契約.md</code></a> 為準。</li></ul>
+<p>本資料夾是 QTY 進入實作前的<strong>評估與決策層</strong>：產品範圍、模型資料現況、量測方法驗證、以及已定案與未定案的清單。</p>
+<h2 id="LoopFlow-QTY-前期評估--與-MCP評估-的分工">與 <code>MCP評估/</code> 的分工</h2>
+<div class="tw"><table><thead><tr><th>資料夾</th><th>負責</th></tr></thead><tbody><tr><td><a href="../MCP評估/"><code>MCP評估/</code></a></td><td><strong>工具面</strong>——Rhino MCP 能不能用、怎麼裝、有哪些陷阱</td></tr><tr><td><strong><code>前期評估/</code>（本資料夾）</strong></td><td><strong>產品面</strong>——QTY 要做什麼、資料夠不夠、方法對不對、哪些已定案</td></tr></tbody></table></div>
+<p>兩邊互相引用，不重複展開對方的內容。</p>
+<h2 id="LoopFlow-QTY-前期評估--閱讀順序">閱讀順序</h2>
+<div class="tw"><table><thead><tr><th>#</th><th>文件</th><th>內容</th><th>是否為唯一來源</th></tr></thead><tbody><tr><td>1</td><td><a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a></td><td>QTY 做什麼、不做什麼、與 2.0 的分界</td><td>✅ 範圍</td></tr><tr><td>2</td><td><a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a></td><td>模型與字典<strong>實際</strong>提供什麼；本階段最重要的一份</td><td>✅ 資料現況</td></tr><tr><td>3</td><td><a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a></td><td>各規則的量測方式與驗證結果</td><td>✅ 量測方法</td></tr><tr><td>4</td><td><a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a></td><td>第一輪：已定案、已推翻、未定案 ＋ 三家覆核</td><td>✅ 決策狀態</td></tr><tr><td>5</td><td><a href="#LoopFlow-QTY-決策紀錄-第二輪"><code>決策紀錄_2.md</code></a></td><td>第二輪：阻擋項與收斂提案，採三種建議強度</td><td>✅ 第二輪提案</td></tr><tr><td>6</td><td><a href="#LoopFlow-QTY-測試模型補強項目"><code>測試模型.md</code></a></td><td>驗證模型缺少或可補充的項目</td><td>✅ 測試涵蓋率</td></tr><tr><td>7</td><td><a href="#LoopFlow-QTY-開發順序計畫"><code>開發順序計畫.md</code></a></td><td>任務切分、階段順序與雙機停點</td><td>✅ 開發順序</td></tr></tbody></table></div>
+<p>功能分類與元件構想另見 <a href="../MCP評估/初步功能分類.md"><code>MCP評估/初步功能分類.md</code></a>。</p>
+<h3 id="LoopFlow-QTY-前期評估--寬版閱讀檔-HTML">寬版閱讀檔（HTML）</h3>
+<p>本資料夾<strong>全部八份文件</strong>合併成單一離線 HTML：<strong><code>前期評估總覽.html</code></strong>。</p>
+<div class="tw"><table><thead><tr><th>特性</th><th>說明</th></tr></thead><tbody><tr><td>單檔離線</td><td>樣式與腳本內嵌，可直接跨裝置開啟，不需網路或伺服器</td></tr><tr><td>兩層側邊目錄</td><td>章節（各 <code>.md</code> 的 H1）＋ 小節（H2），捲動時自動高亮目前位置</td></tr><tr><td><strong>跨文件連結轉錨點</strong></td><td>文件間的相對連結（如 <code>[資料盤點.md](./資料盤點.md)</code>）自動變成頁內跳轉；指向 <code>v2/docs/</code>、<code>MCP評估/</code> 等外部路徑則保持原樣</td></tr><tr><td><strong>決策表自動上色</strong></td><td>六欄以上決策表的「你的決定」欄依三家建議強度上色：白＝強烈×2+、黃＝一般×2+、綠＝輕鬆×2+</td></tr><tr><td>響應式與列印</td><td>窄畫面側欄改為頂部；列印時隱藏側欄並轉為淺色</td></tr></tbody></table></div>
+<p><strong>HTML 是衍生檔，不應手動編輯。</strong> 改 Markdown 後重跑：</p>
+<pre class="code" data-lang="bash"><code>python qty/tools/build_html.py</code></pre>
+<p>其他用法：</p>
+<pre class="code" data-lang="bash"><code>python qty/tools/build_html.py --check                    # 只檢查是否過期，不寫檔
+python qty/tools/build_html.py --src 決策紀錄_2.md         # 只合併指定檔案
+python qty/tools/build_html.py --out 我的總覽.html</code></pre>
+<p>版面與行為沿用 <code>D:\Dropbox\戰備物資\tools\build_html.py</code>；純 stdlib，不需安裝任何套件。</p>
+<h3 id="LoopFlow-QTY-前期評估--覆核輪次">覆核輪次</h3>
+<div class="tw"><table><thead><tr><th>輪次</th><th>順序</th><th>狀態</th></tr></thead><tbody><tr><td>第一輪</td><td>Claude → Codex → Cursor</td><td>✅ 三家已填畢，見 <code>決策紀錄_1.md</code></td></tr><tr><td><strong>第二輪</strong></td><td><strong>Claude → Codex → Cursor</strong></td><td>✅ <strong>三家已填畢（QR-01～QR-15）</strong>，見 <code>決策紀錄_2.md</code>；待使用者裁決</td></tr><tr><td>第三輪</td><td>Claude → Codex → Cursor</td><td>⏳ 待依 <a href="#LoopFlow-QTY-測試模型補強項目"><code>測試模型.md</code></a> 建立新模型後開始</td></tr></tbody></table></div>
+<p>第二輪採 <a href="../../../v2/docs/前期規劃/資料生態決策表.md"><code>v2/docs/前期規劃/資料生態決策表.md</code></a> 的三種建議強度（強烈／一般／輕鬆）與裁決規則。<strong>各家只填自己的欄，不代填、不推測他家立場。</strong></p>
+<p><strong>第二輪待裁決的三題做法衝突</strong>：<code>QR-01</code> 主鍵形態（裸 GUID vs 版本化 locator）、<code>QR-13</code> 狀態模型（單軸 vs Coverage／measurement 雙軸）、<code>QR-15</code> token 語意（ND-28 軸向 vs QTY mapping）。其餘各項三家無做法衝突。</p>
+<h2 id="LoopFlow-QTY-前期評估--本階段的方法論">本階段的方法論</h2>
+<p>2.0 的前期規劃（<code>v2/docs/前期規劃/</code>）以文件盤點與雙 AI 討論為主。QTY 的前期評估不同：<strong>所有結論都在實際模型上量過</strong>。</p>
+<p>驗證模型：<code>LoopFlow_R_MCP.rws</code>（worksession，3D attach 進 2D），位於 <code>&lt;LOOPFLOW_QTY_MCP_WORKFILES_ROOT&gt;</code>，雙機路徑見工作區根目錄 <code>工作檔路徑.md</code>。同層已有 <code>_LoopFlow_Config/loopflow/</code>（含 Registry）與空的 <code>loopflow_QTY/</code>（2026-09-02 補齊）。</p>
+<p>因此本資料夾的敘述分兩種，文中一律標示：</p>
+<ul><li><strong>實測</strong>：在該模型上量過，附數字</li><li><strong>推論</strong>：由實測結果推導，但尚未直接驗證</li></ul>
+<blockquote><p><strong>界線</strong>：本資料夾不是實作規格。進入實作後應比照 2.0 建立 <code>實作總覽.md</code>／<code>資料契約.md</code>／<code>工作流程.md</code> 等正式文件，屆時本資料夾轉為封存，不再決定行為。</p></blockquote>
+<h1 class="chaptitle" id="LoopFlow-QTY-範圍與邊界">LoopFlow QTY — 範圍與邊界</h1>
+<blockquote><p>本文件是 QTY <strong>產品範圍</strong>的唯一來源。資料現況見 <a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a>，量測方式見 <a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a>，決策狀態見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a>。</p>
+<p>建立日期：2026-09-01　｜　階段：前期評估</p></blockquote>
+<h2 id="LoopFlow-QTY-範圍與邊界--1-產品定位">1　產品定位</h2>
+<p>QTY 與出圖 2.0 <strong>同 repo、不同產品</strong>。不是 2.0 的模組，不進 Package Manager <code>loopflow</code>，不共用 <code>.yak</code>。</p>
+<pre class="code" data-lang="text"><code>LoopFlow 2.0（出圖）          QTY（數量計算）
+      │                            │
+      ├─ 寫入物件 UserText          ├─ 只讀，不寫回
+      ├─ 發布 Registry             ├─ 讀 Registry／物件／字典
+      └─ 產出圖面                   └─ 產出獨立 Excel</code></pre>
+<p><strong>單向。</strong> QTY 讀 2.0 留下的資料，自己產出 xlsx，不回寫任何東西。</p>
+<h2 id="LoopFlow-QTY-範圍與邊界--2-做與不做">2　做與不做</h2>
+<div class="tw"><table><thead><tr><th>做</th><th>不做</th></tr></thead><tbody><tr><td>讀 3D 幾何量測數量</td><td>寫回物件 UserText、Registry、Nexus</td></tr><tr><td>讀 Dictionary 取得計量規則與單位</td><td>修改 Dictionary 的規則／單位詞彙表</td></tr><tr><td>輸出獨立 Excel（估價單＋明細）</td><td>打進 2.0 的 <code>.yak</code> 或工具列</td></tr><tr><td>在模型中以顏色與文字做視覺檢核</td><td>永久改變 Rhino 物件的顯示屬性</td></tr><tr><td>標記漏算、重複、衝突、失效參照</td><td>自動修復上述任何一項</td></tr><tr><td>結構體另以 <code>layer_path</code> 查規則</td><td>要求結構體具備 UUID／空間／高程</td></tr></tbody></table></div>
+<h3 id="LoopFlow-QTY-範圍與邊界--2-1-為什麼不能寫回物件">2.1 為什麼不能寫回物件</h3>
+<p><code>v2/src/loopflow/foundation/usertext.py</code> 有一份 <code>STALE_OBJECT_KEYS</code>，包含 <code>Q_01_寬度W</code>～<code>Q_06_實作數量</code>、<code>lf_quantity</code> 等。它有兩個消費者：</p>
+<ol><li><code>clear_stale_object_text()</code> — <code>LFNexus</code> 步驟 5 寫入時<strong>清空</strong>這些 key</li><li><code>features/model_data/verify.py</code> — 步驟 6 檢核時把這些 key 回報為 <code>stale_dimension</code> <strong>問題</strong></li></ol>
+<p>若 QTY 把數量寫回物件，會造成互鎖：</p>
+<pre class="code" data-lang="text"><code>檢核不通過 → LFPublishExchange 被擋 → 產不出新 Registry
+           → 而 Registry 正是 QTY 的輸入來源</code></pre>
+<p>且症狀出現在 LoopFlow 側（「檢核一直報 stale dimension」），不易聯想到 QTY。<strong>單向流程使此風險不存在</strong>；本節僅作為未來變更時的警告。</p>
+<h2 id="LoopFlow-QTY-範圍與邊界--3-核心流程">3　核心流程</h2>
+<pre class="code" data-lang="text"><code>Rhino 3D 物件
+    ↓
+使用者手動選取、分類          ← 人的判斷
+    ↓
+逐物件計算                    ← 系統
+    ↓
+模型中著色與標數字            ← 系統呈現
+    ↓
+使用者目視確認                ← 人的判斷
+    ↓
+分組、排序                    ← 系統
+    ↓
+Excel（估價單＋明細）</code></pre>
+<p><strong>核心不是「模型自動產生 Excel」</strong>，而是：</p>
+<blockquote><p>選取 → 計算 → 空間視覺化 → 人工確認 → 輸出</p></blockquote>
+<p>Excel 是結果，不是系統中心。視覺檢查是正式流程的一環，不是裝飾——空間中的顏色與數字能提供 Excel 給不了的直覺檢查能力。</p>
+<h2 id="LoopFlow-QTY-範圍與邊界--4-人機分工">4　人機分工</h2>
+<p>沿用 LoopFlow 2.0 的原則：<strong>保留人為判斷，系統負責檢查</strong>。</p>
+<div class="tw"><table><thead><tr><th>人決定</th><th>系統負責</th></tr></thead><tbody><tr><td>這次要算哪些物件</td><td>計算、加總</td></tr><tr><td>這批屬於哪個估價分類</td><td>顯示、著色</td></tr><tr><td>哪些是「一式」</td><td>檢核（漏算／重複／衝突／失效）</td></tr><tr><td>衝突與異常怎麼處理</td><td>整理、排序、輸出</td></tr></tbody></table></div>
+<p>系統<strong>只標記，不自動修</strong>。這與 <code>LFTagO</code> 一致。</p>
+<h2 id="LoopFlow-QTY-範圍與邊界--5-刻意排除在工具之外">5　刻意排除在工具之外</h2>
+<p>以下不進 QTY 的自動計算範圍，最後在 Excel 人工加入：</p>
+<ul><li><strong>非模型項目</strong>：假設工程、清運、保護工程、管理費、利潤、稅</li><li><strong>損耗率</strong>（磁磚 +5%、木作 +10% 等）：依廠商、專案、市況變動，是商業判斷不是幾何事實。工具輸出<strong>淨數量</strong>，損耗在 Excel 以係數欄處理，隨時可改、改了看得見</li><li><strong>單價</strong>：估價單留白供人工填寫；是否預填參考單價尚未決定</li></ul>
+<h2 id="LoopFlow-QTY-範圍與邊界--6-一式-的處理">6　「一式」的處理</h2>
+<p>「一式」<strong>不列入 Dictionary</strong>，不新增 <code>measurement_rule</code> 或 <code>estimation_unit</code> 的「式」token——避免動到 2.0 已發布的 schema，也避免舊版讀到新字典會 <code>block</code>。</p>
+<p>實際操作：在選取階段人工標記為「一式」類別，不進計算批次。</p>
+<p><strong>排除必須是主動的集合差集，以物件識別為唯一依據。</strong> 一式物件仍是正常的 LoopFlow 物件，身上照樣有 <code>type_id</code>，理論上仍可透過字典 join 到規則。若未來有任何元件是「依 <code>type_id</code> 自動抓取物件」，一式物件會因為有 <code>type_id</code> 而被撈進去算，<strong>且不會報錯，只是安靜地多算一筆</strong>。</p>
+<p>因此：<strong>不能倚賴「沒有接進計算電池」來避免計算</strong>。一式集合的角色是全域黑名單，不是電路沒接到的消極結果。</p>
+<h2 id="LoopFlow-QTY-範圍與邊界--7-執行環境">7　執行環境</h2>
+<div class="tw"><table><thead><tr><th>項目</th><th>決定</th></tr></thead><tbody><tr><td>主要工作場所</td><td><strong>Grasshopper</strong>。整條資料鏈可見是 GH 的價值</td></tr><tr><td>Rhino 工具列</td><td>刻意保持很薄，只處理啟動、工作環境、專案狀態</td></tr><tr><td>計算邏輯的位置</td><td><strong>外部 <code>.py</code></strong>，GH Python 電池只放薄殼</td></tr><tr><td>GH 版本</td><td>GH1（Rhino 8）。不採用需要 Rhino 9 的 GH2</td></tr></tbody></table></div>
+<p>計算邏輯住外部 <code>.py</code> 的理由：<code>.gh</code> 是二進位，程式碼埋在裡面則 git 看不到 diff、無法 headless 測試、多 AI 接手時交接鏈中斷。</p>
+<p><strong>薄殼必須含 <code>importlib.reload()</code></strong>，否則改了外部 <code>.py</code> 後 GH 重新求解仍吃到舊程式碼（實測確認，見 <a href="../MCP評估/實測報告.md"><code>MCP評估/實測報告.md</code></a> §4.2）。</p>
+<h2 id="LoopFlow-QTY-範圍與邊界--8-與-MCP-的關係">8　與 MCP 的關係</h2>
+<p>MCP <strong>不是產品的一部分</strong>，是開發期的工具。</p>
+<p>QTY 對 MCP 的用途限於：讀取模型與 canvas、建立／修改 GH canvas、執行無互動的 Python、驗證結果。</p>
+<p><strong>不得</strong>用 MCP 代替使用者操作 LoopFlow 產品指令，也不得 headless 載入 <code>.gh</code>（已造成一次 Rhino 當機）。細節見 <a href="../MCP評估/MCP設定交接.md"><code>MCP評估/MCP設定交接.md</code></a> §7。</p>
+<h1 class="chaptitle" id="LoopFlow-QTY-資料盤點">LoopFlow QTY — 資料盤點</h1>
+<blockquote><p>本文件是 QTY <strong>模型與字典資料現況</strong>的唯一來源。範圍見 <a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a>，量測方式見 <a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a>。</p>
+<p>建立日期：2026-09-01　｜　<strong>全部數字為實測</strong>，非推估</p></blockquote>
+<p>本文件回答一個問題：<strong>QTY 需要的資料，模型與字典到底有沒有給？</strong></p>
+<h2 id="LoopFlow-QTY-資料盤點--0-驗證模型">0　驗證模型</h2>
+<div class="tw"><table><thead><tr><th>項目</th><th>內容</th></tr></thead><tbody><tr><td>檔案</td><td><code>LoopFlow_R_MCP.rws</code>（worksession）</td></tr><tr><td>組成</td><td><code>LoopFlow_3D_R_MCP.3dm</code> <strong>attach 進</strong> <code>LoopFlow_2D_R_MCP.3dm</code></td></tr><tr><td>位置</td><td><code>&lt;LOOPFLOW_QTY_MCP_WORKFILES_ROOT&gt;</code>，雙機路徑見工作區 <code>工作檔路徑.md</code></td></tr><tr><td>字典</td><td><code>LoopFlow_Dictionary.xlsx</code>，與 <code>.3dm</code> 同層（Nexus 引用，LoopFlow 既定結構）</td></tr><tr><td>專案設定／Registry</td><td>2026-09-02 已補齊並遷到 2.0.7 路徑，見 §9</td></tr><tr><td>模型單位</td><td><strong>Centimeters</strong>，絕對公差 0.1</td></tr></tbody></table></div>
+<p><strong>這是依實際作業方式配置的環境</strong>，不是簡化的測試檔。</p>
+<h2 id="LoopFlow-QTY-資料盤點--1-物件總覽">1　物件總覽</h2>
+<div class="tw"><table><thead><tr><th>分類</th><th>數量</th></tr></thead><tbody><tr><td>完整列舉（含隱藏／鎖定／參照）</td><td><strong>3116</strong></td></tr><tr><td>本機側（2D 圖面，作用中文件）</td><td>2972</td></tr><tr><td><strong>參照側（3D 模型，attach 進來）</strong></td><td><strong>144</strong></td></tr></tbody></table></div>
+<h3 id="LoopFlow-QTY-資料盤點--1-1-幾何型別分布">1.1 幾何型別分布</h3>
+<div class="tw"><table><thead><tr><th>側</th><th>型別</th><th>數量</th></tr></thead><tbody><tr><td>本機 2D</td><td>Curve、Annotation、Hatch、Block、Detail</td><td>2972</td></tr><tr><td><strong>參照 3D</strong></td><td><strong>Brep</strong></td><td><strong>39</strong></td></tr><tr><td>參照 3D</td><td>InstanceReference（圖塊）</td><td>少數</td></tr><tr><td>參照 3D</td><td><strong>Point（放置點）</strong></td><td><strong>約 97</strong></td></tr><tr><td>參照 3D</td><td>Curve（空間框）</td><td>2</td></tr></tbody></table></div>
+<p><strong>所有可量測的 3D 實體都在參照側，本機 2D 側一個 Brep 都沒有。</strong></p>
+<h2 id="LoopFlow-QTY-資料盤點--2-標記狀況">2　標記狀況</h2>
+<h3 id="LoopFlow-QTY-資料盤點--2-1-帶-2-0-身分欄的物件">2.1 帶 2.0 身分欄的物件</h3>
+<div class="tw"><table><thead><tr><th>側</th><th>帶 <code>_03_ID編號</code></th><th>組成</th></tr></thead><tbody><tr><td>本機 2D</td><td>61</td><td>全部是 Curve</td></tr><tr><td><strong>參照 3D</strong></td><td><strong>37</strong></td><td>Brep 30 ＋ Block 7</td></tr><tr><td>合計</td><td>98</td><td></td></tr></tbody></table></div>
+<p>UserText 為真實資料，例如：</p>
+<pre class="code" data-lang="text"><code>_01_空間名稱   廊道
+_02_建構狀態*  New
+_03_ID編號     WL-04
+_05_高程基準   BH
+_07_UUID       ce16eeba-…
+_09_空間ID     8c6e6e16-…
+_11_類型類別   WL
+_12_類型序號   04
+_14_資料版次   4</code></pre>
+<h3 id="LoopFlow-QTY-資料盤點--2-2-_07_UUID-與-3D-物件是-1-1">2.2 <code>_07_UUID</code> 與 3D 物件是 1:1</h3>
+<div class="tw"><table><thead><tr><th>每個 UUID 的組成</th><th>UUID 數</th></tr></thead><tbody><tr><td>1 個物件</td><td>13</td></tr><tr><td>2 個物件</td><td>11</td></tr><tr><td>3 個物件</td><td>4</td></tr><tr><td>4 個物件</td><td>6</td></tr><tr><td>5／7／15 個物件</td><td>各 1</td></tr></tbody></table></div>
+<p>組成模式：</p>
+<pre class="code" data-lang="text"><code>LCurve + RBrep                        x11
+RInstanceReference                    x7      ← 無 2D
+LCurve×3 + RBrep                      x6
+RBrep                                 x6      ← 無 2D
+LCurve×2 + RBrep                      x4
+LCurve×14 + RBrep                     x1      ← 一項畫了 14 條線</code></pre>
+<p><strong>每個 UUID 恰好有一個 3D 代表</strong>（30 Brep ＋ 7 Block ＝ 37），2D 則是一對多、最多 14 條。</p>
+<p><strong>推論</strong>：只算 3D 時，<code>_07_UUID</code> 與 3D 物件為 1:1，<code>object_id</code> 與 UUID 在 QTY 內可互換，「一個物件」的粒度問題不存在。</p>
+<h3 id="LoopFlow-QTY-資料盤點--2-3-2D-與-3D-由-_07_UUID-綁定">2.3 2D 與 3D 由 <code>_07_UUID</code> 綁定</h3>
+<div class="tw"><table><thead><tr><th></th><th>相異 UUID</th></tr></thead><tbody><tr><td>本機 2D</td><td>24</td></tr><tr><td>參照 3D</td><td>37</td></tr><tr><td><strong>共用</strong></td><td><strong>24（本機全部在 3D 側找得到）</strong></td></tr></tbody></table></div>
+<p>3D 側另有 13 個 UUID 沒有 2D 對應（並非每個 3D 物件都需要平面符號）。</p>
+<p><strong>但 2D 不採用</strong>（見 §3）。此節僅記錄綁定關係存在，日後若需要回頭關聯 2D 與 3D 時可用。</p>
+<h2 id="LoopFlow-QTY-資料盤點--3-為什麼-2D-不採用">3　為什麼 2D 不採用</h2>
+<p><strong>計算標的一律是 3D 模型，所有 curve 直接略過。</strong></p>
+<p>理由：2D 線稿是<strong>出圖用</strong>，而且是<strong>從 3D 切出來的</strong>，切出後還會做後續修改。因此 2D 與 3D 之間隨時可能不同步，不能作為計算依據。</p>
+<p>實測也顯示 2D 覆蓋不完整——37 個項目裡只有 24 個有 2D 曲線，缺的 13 個包含全部 7 個 <code>COUNT</code> 類（電器、衛浴），那些本來就只要數不要量。</p>
+<blockquote><p>若開發過程中出現「一定得要有 curve 輔助計算」的情形，另議。</p></blockquote>
+<p><strong>2D 曲線的品質本身沒有問題</strong>：實測 61/61 全部封閉且共平面，面積都算得出來。不採用是資料同步的考量，不是品質問題。</p>
+<h2 id="LoopFlow-QTY-資料盤點--4-計算全集的定義">4　計算全集的定義</h2>
+<p>Coverage 檢核的「全部物件」<strong>不是</strong>文件中所有物件：</p>
+<div class="tw"><table><thead><tr><th>類別</th><th>數量</th><th>納入全集</th></tr></thead><tbody><tr><td>帶 <code>type_id</code> 的 Brep／Block</td><td>37</td><td>✅</td></tr><tr><td>結構體（<code>00_STR_*</code>）的 Brep</td><td>16</td><td>✅ 但另計（§6）</td></tr><tr><td><strong>Point（放置點）</strong></td><td>約 97</td><td>❌ <strong>排除</strong></td></tr><tr><td><strong>Curve</strong></td><td>—</td><td>❌ <strong>排除</strong></td></tr></tbody></table></div>
+<p><strong>若不排除 Point，那 97 個放置點會全部落入「未選取」，Coverage 一開跑就被雜訊淹沒。</strong></p>
+<p>全集定義：<strong>3D 側的 Brep 與 InstanceReference</strong>。</p>
+<h2 id="LoopFlow-QTY-資料盤點--5-字典-join-完整可用">5　字典 join：完整可用</h2>
+<p>以 <code>type_id</code> 查 <code>LoopFlow_Dictionary.xlsx</code>（92 筆 Type）：</p>
+<div class="tw"><table><thead><tr><th>檢查</th><th>結果</th></tr></thead><tbody><tr><td>相異 <code>type_id</code></td><td>26</td></tr><tr><td>查得到 <code>measurement_rule</code> 與 <code>estimation_unit</code></td><td><strong>26 / 26</strong></td></tr><tr><td><code>classify_measurement</code> 量綱一致性</td><td><strong>26 / 26 <code>pass</code></strong></td></tr><tr><td>以物件計</td><td><strong>98 / 98</strong></td></tr></tbody></table></div>
+<p>抽樣：</p>
+<div class="tw"><table><thead><tr><th>type_id</th><th>顯示名稱</th><th>rule</th><th>unit</th></tr></thead><tbody><tr><td><code>FL-02</code></td><td>地毯</td><td><code>AREA_WD</code></td><td>坪</td></tr><tr><td><code>WL-04</code></td><td>裱布皮革</td><td><code>AREA_WH</code></td><td>坪</td></tr><tr><td><code>CB-06</code></td><td>櫃體石材面</td><td><code>AREA_WH</code></td><td>才</td></tr><tr><td><code>CB-01</code></td><td>木作櫃體</td><td><code>LEN_W</code></td><td>mm</td></tr><tr><td><code>WL-16</code></td><td>鋁製收邊條</td><td><code>LEN_W</code></td><td>cm</td></tr><tr><td><code>EL-05</code></td><td>插座面板</td><td><code>COUNT</code></td><td>組</td></tr></tbody></table></div>
+<p><strong>結論</strong>：輸入合約完整，<code>初步評估報告.md</code> §7.1「輸入合約八月已寫定，不需重新設計」獲得證實。<strong>規則不需要在 GH 重新輸入。</strong></p>
+<h3 id="LoopFlow-QTY-資料盤點--5-1-規則分布與幾何對應">5.1 規則分布與幾何對應</h3>
+<div class="tw"><table><thead><tr><th>規則</th><th>項目數</th><th>幾何型態</th></tr></thead><tbody><tr><td><code>COUNT</code></td><td>7</td><td>全部是 Block（電器、衛浴、消防）</td></tr><tr><td><code>AREA_WD</code></td><td>4</td><td>地坪、裝飾板</td></tr><tr><td><code>AREA_WH</code></td><td>11</td><td>牆面、櫃體面材</td></tr><tr><td><code>LEN_W</code></td><td>15</td><td>收邊條、燈帶、窗簾盒、櫃體</td></tr></tbody></table></div>
+<p>該字典用到的單位是 <strong>mm、cm、坪、才、組——沒有 <code>m2</code></strong>。</p>
+<blockquote><p><strong>潛伏風險</strong>：舊 <code>quantity.py</code> 的 <code>_area()</code> 對「才」「坪」換算正確，但 <code>m2</code> 直接回傳 cm²（少除 10000）。因為目前字典沒用到 <code>m2</code>，此缺陷<strong>不會發作</strong>；一旦有人新增 <code>m2</code> 規則就會立刻出現，錯誤量級一萬倍。撈回該檔時務必先修。</p></blockquote>
+<h2 id="LoopFlow-QTY-資料盤點--6-結構體-查詢鍵不同-機制現成">6　結構體：查詢鍵不同，機制現成</h2>
+<p>結構體（<code>00_STR_*</code>）<strong>完全沒有 <code>type_id</code></strong>——實測 16 個全部無標記。</p>
+<p>但 <a href="#LoopFlow-QTY-前期評估"><code>qty/README.md</code></a> 早已指出正確路徑：結構體改讀<strong>圖層路徑</strong>查字典。<strong>實測全部命中</strong>：</p>
+<div class="tw"><table><thead><tr><th>圖層</th><th>type_id</th><th>規則</th><th>單位</th></tr></thead><tbody><tr><td><code>00_STR_結構::Beam.樑</code></td><td><code>EX-01</code></td><td><code>VOL_WDH</code></td><td>m3</td></tr><tr><td><code>00_STR_結構::Column.柱</code></td><td><code>EX-02</code></td><td><code>VOL_WDH</code></td><td>m3</td></tr><tr><td><code>00_STR_結構::Curb.墩座</code></td><td><code>EX-03</code></td><td><code>LEN_W</code></td><td>cm</td></tr><tr><td><code>00_STR_結構::Slab.樓板</code></td><td><code>EX-04</code></td><td><code>AREA_WD</code></td><td>坪</td></tr><tr><td><code>00_STR_結構::Stair.樓梯</code></td><td><code>EX-05</code></td><td><code>COUNT</code></td><td>座</td></tr><tr><td><code>00_STR_結構::Wall-Brick.牆-Brick</code></td><td><code>EX-06</code></td><td><code>LEN_W</code></td><td>cm</td></tr><tr><td><code>00_STR_結構::Wall-RC.牆-RC</code></td><td><code>EX-07</code></td><td><code>LEN_W</code></td><td>cm</td></tr></tbody></table></div>
+<p><strong>意義</strong>：結構體不是「計算方式待議」，而是<strong>查詢鍵是 <code>layer_path</code> 而非 <code>type_id</code></strong>。字典的 <code>EX</code> 類別（7 筆）就是為此準備的。</p>
+<p>差異僅在：</p>
+<ul><li>查詢鍵：<code>layer_path</code>（不是 <code>type_id</code>）</li><li>不要求 UUID、空間、高程</li><li>出現 <code>VOL_WDH</code>（裝修材完全沒用到體積規則）</li><li>加總依 Type，不依房間</li></ul>
+<h2 id="LoopFlow-QTY-資料盤點--7-幾何品質">7　幾何品質</h2>
+<div class="tw"><table><thead><tr><th>檢查</th><th>結果</th></tr></thead><tbody><tr><td>3D Brep 是封閉實體</td><td><strong>30 / 30</strong></td></tr><tr><td>體積可計算</td><td><strong>30 / 30</strong>（103 ～ 324,900 cm³）</td></tr><tr><td>2D 曲線封閉且共平面</td><td>61 / 61（雖不採用）</td></tr></tbody></table></div>
+<p><code>COUNT</code> 類的 7 個 Block：出口指示燈、開關面板、插座面板、瓦斯偵測器、冰箱、浴缸、馬桶——全部是<strong>數量類</strong>，與字典規則完全吻合。</p>
+<h3 id="LoopFlow-QTY-資料盤點--7-1-開口">7.1 開口</h3>
+<p>以「毛體積 ÷ 實體積」偵測：</p>
+<div class="tw"><table class="wide"><thead><tr><th>物件</th><th>毛面積</th><th>淨面積</th><th>扣除</th><th>研判</th></tr></thead><tbody><tr><td><code>WL-03</code> 藝術漆牆面</td><td>73,840</td><td>57,592</td><td><strong>22.4%</strong></td><td>缺 1.65 m²，尺寸符合一個門洞</td></tr><tr><td><code>WL-04</code> 裱布皮革</td><td>28,808</td><td>27,360</td><td>5.0%</td><td>缺 0.14 m²，較像插座開孔</td></tr><tr><td>其餘 24 個</td><td>—</td><td>—</td><td><strong>0.0%</strong></td><td>完美方塊，無開口</td></tr></tbody></table></div>
+<p><strong>扣除率分不出「開口」與「形狀本來就不是方塊」</strong>——<code>CB-04 鐵件框架</code> 扣除 95.6%、<code>CL-03 木作窗簾盒</code> 79.2%，那些是中空構件不是開口。只能標記後由人判斷。</p>
+<h3 id="LoopFlow-QTY-資料盤點--7-2-方位">7.2 方位</h3>
+<p>驗證模型整體繞 Z 軸旋轉 <strong>30°</strong>——這是<strong>刻意的測試設計</strong>，用來確保非 0/90 度的物件不會被算錯。</p>
+<p>實測 30 個 Brep 的最佳貼合角度<strong>全部落在 30°</strong>，其中 24 個貼合度正好 1.00（完美方塊，只是轉了角度）。若用 World bbox 量，<code>WL-14</code> 會錯到 <strong>127 倍</strong>。</p>
+<blockquote><p><strong>實務上牆的方位是各角度混和，而且同一道牆本身就可能有多個角度</strong>（L 型、弧形、包覆）。因此不能靠「整體方位」或「每批一個平面」解決。方法見 <a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a>。</p></blockquote>
+<h2 id="LoopFlow-QTY-資料盤點--8-MCP-讀取限制-影響實作方式">8　MCP 讀取限制（影響實作方式）</h2>
+<p>worksession 下，MCP 原生工具<strong>看不到 attach 進來的參照物件，且不報錯</strong>：</p>
+<div class="tw"><table><thead><tr><th>工具</th><th>對參照物件</th></tr></thead><tbody><tr><td><code>list_objects</code></td><td>❌ 看不到（回傳 2972 ＝ 本機數，<code>truncated: false</code>、<code>warning: null</code>）</td></tr><tr><td><code>get_selection</code></td><td>❌ 看不到（即使物件確實選取中）</td></tr><tr><td><code>set_selection</code></td><td>✅ 選得到</td></tr><tr><td><code>run_python</code></td><td>✅ 看得到（需正確設定列舉器）</td></tr></tbody></table></div>
+<p><strong>「選得進去、讀不出來」的不對稱最危險。</strong></p>
+<p>QTY 要量的 3D 實體全在參照側，因此<strong>所有模型掃描一律走 <code>run_python</code></strong>：</p>
+<pre class="code" data-lang="python"><code>s = Rhino.DocObjects.ObjectEnumeratorSettings()
+s.NormalObjects = True
+s.LockedObjects = True
+s.HiddenObjects = True
+s.ReferenceObjects = True      # ← 少了這行就看不到 attach 的物件
+s.DeletedObjects = False
+objs = doc.Objects.GetObjectList(s)</code></pre>
+<p>讀取選取狀態要逐一檢查 <code>o.IsSelected(False) &gt; 0</code>；<code>doc.Objects.GetSelectedObjects()</code> 同樣會漏。</p>
+<p><strong>LoopFlow 2.0 本身沒有這個問題</strong>——<code>v2/src/loopflow/platform/rhino/live.py:1032</code> 已明確設定 <code>ReferenceObjects</code>，需要排除時還會再檢查一次 <code>IsReference</code>。盲點只存在於 MCP 自己的原生工具。qty 應沿用 <code>live.py</code> 的既有寫法。</p>
+<h2 id="LoopFlow-QTY-資料盤點--9-專案設定與-Registry-2026-09-02-補齊">9　專案設定與 Registry（2026-09-02 補齊）</h2>
+<p>前期盤點時 MCP 讀不到 <code>_LoopFlow_Config</code>（當時檔案在 2.0.6 根層，或尚未出現在此測檔）。2026-09-02 公司電腦確認後，依 2.0.7 契約搬進 <code>loopflow/</code>，並預留 <code>loopflow_QTY/</code>。<strong>工作檔不進 Git。</strong></p>
+<pre class="code" data-lang="text"><code>&lt;_LOOPFLOW_QTY_MCP_WORKFILES_ROOT&gt;/
+  _LoopFlow_Config/
+    loopflow/
+      LoopFlow_Project.json          # schema loopflow.project／1；project_id＝layer_prefix＝M3D
+      M3D/
+        Project_Registry.json        # schema loopflow.registry／1；registry_revision＝4
+        Project_Registry.last-good.json
+    loopflow_QTY/                    # QTY 預留；選取 JSON 日後寫這裡，不要寫 AppData</code></pre>
+<div class="tw"><table><thead><tr><th>檢查</th><th>結果</th></tr></thead><tbody><tr><td>Registry <code>objects[]</code></td><td><strong>37</strong></td></tr><tr><td>與模型 <code>_07_UUID</code> 對得上</td><td><strong>37 / 37</strong>（只 live、只 Registry 皆 0）</td></tr><tr><td><code>spaces[]</code></td><td><strong>3</strong>（<code>EXT</code> ＋兩個空間 UUID，對應物件上的廊道／衛浴）</td></tr><tr><td><code>types[]</code></td><td><strong>92</strong>（與字典 Type 列數一致）</td></tr><tr><td>結構體</td><td>不在 <code>objects[]</code>（2.0 契約如此；仍用 <code>layer_path</code> 查字典）</td></tr></tbody></table></div>
+<p>QTY 選取／一式狀態應寫 <code>_LoopFlow_Config/loopflow_QTY/</code>，不得寫進 <code>loopflow/</code> 或 AppData。</p>
+<h2 id="LoopFlow-QTY-資料盤點--10-尚未完整驗證">10　尚未完整驗證</h2>
+<div class="tw"><table><thead><tr><th>項目</th><th>狀況</th></tr></thead><tbody><tr><td>Registry 與現況的<strong>漂移</strong></td><td>檔案已在，且目前與模型 UUID <strong>一致</strong>。尚未實測「改字典或改物件後未再發布」時 QTY 要停還是降級（見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a> QO-13）</td></tr><tr><td>空間資料的完整性</td><td>該模型只有「廊道」「衛浴」兩個空間加 <code>EXT</code>，不足以驗證分組與排序</td></tr><tr><td>大量物件的效能</td><td>掃描涵蓋 3116 筆但未計時</td></tr></tbody></table></div>
+<h1 class="chaptitle" id="LoopFlow-QTY-量測方法">LoopFlow QTY — 量測方法</h1>
+<blockquote><p>本文件是 QTY <strong>量測方式</strong>的唯一來源。資料現況見 <a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a>，決策狀態見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a>／<a href="#LoopFlow-QTY-決策紀錄-第二輪"><code>決策紀錄_2.md</code></a>。</p>
+<p>建立日期：2026-09-01　｜　本文數值均在驗證模型上實測；token 語意仍受 QR-15 阻擋，尚非實作契約</p></blockquote>
+<h2 id="LoopFlow-QTY-量測方法--1-核心原則">1　核心原則</h2>
+<blockquote><p><strong>不拆解 W／D／H。不需要平面輸入。不需要方位判斷。</strong></p></blockquote>
+<blockquote><p><strong>第二輪覆核警告</strong>：這個幾何策略與 2.0 ND-28 的既有契約有衝突。ND-28 將 <code>AREA_WD／WH／DH</code>、<code>LEN_W／D／H</code> 定義為不同軸向；本文 §9 暫時把它們各自合併成同一算法。QR-15 裁決前，本文只能作演算法探索證據，不能宣稱已按 Dictionary token 執行。</p></blockquote>
+<h3 id="LoopFlow-QTY-量測方法--1-1-為什麼放棄-W-D-H-模型">1.1 為什麼放棄 W/D/H 模型</h3>
+<p>LoopFlow 1.x 的 <code>features/dimension/frame.py</code> 用 local frame 拆出 W／D／H。QTY 早期構想沿用此模型，需要使用者指定平面。<strong>實測證明這條路走不通</strong>，三個層次的理由：</p>
+<p><strong>① World bbox 會安靜地錯到離譜</strong></p>
+<p>驗證模型整體轉 30°（刻意的測試設計）。<code>WL-14 磁磚牆面</code> 的 World bbox 是真實體積的 <strong>127 倍</strong>。全程無任何錯誤或警告。</p>
+<p><strong>② 使用者給錯平面一樣不報錯</strong></p>
+<p>實測同一物件：正確平面（30°）得到精確值；錯誤平面（45°）錯 60%，<strong>同樣不報錯</strong>。所以「讓使用者指定平面」只是把靜默失敗的責任轉移，沒有消除它。</p>
+<p><strong>③ 同一道牆本身就可能有多個角度</strong></p>
+<p>L 型牆、弧牆、轉角包覆面——這類物件<strong>根本不存在「一個平面」可套</strong>，W/D/H 模型直接失效。而實務上牆的方位本來就是各角度混和。</p>
+<h3 id="LoopFlow-QTY-量測方法--1-2-改為直接從幾何取值">1.2 改為直接從幾何取值</h3>
+<p>面的法向量與面積是<strong>每個面自帶的</strong>。轉幾度、彎幾次、混幾種角度，處理方式完全一樣。</p>
+<div class="tw"><table><thead><tr><th>規則</th><th>需要的東西</th><th>需要平面嗎</th></tr></thead><tbody><tr><td><code>COUNT</code></td><td>數量</td><td>不需要幾何</td></tr><tr><td><code>AREA_WD</code></td><td>水平面積</td><td>❌</td></tr><tr><td><code>AREA_WH</code></td><td>立面面積</td><td>❌</td></tr><tr><td><code>LEN_W</code></td><td>延伸長度</td><td>❌</td></tr><tr><td><code>VOL_WDH</code></td><td>體積</td><td>❌</td></tr></tbody></table></div>
+<p><strong>沒有一個需要平面輸入或軸向判斷。</strong></p>
+<h2 id="LoopFlow-QTY-量測方法--2-共通設計原則">2　共通設計原則</h2>
+<p>每種量測都採用：</p>
+<blockquote><p><strong>一個主要算法 ＋ 一個能抓出它失效情境的對照值</strong></p></blockquote>
+<p>不追求單一萬用演算法，而是確保<strong>失效時會出聲</strong>。</p>
+<p>實測結果：30 個物件只對 3 個發出標記，其餘完全不吵。</p>
+<p>這與 LoopFlow 一貫的「標記，不自動修」一致。</p>
+<h2 id="LoopFlow-QTY-量測方法--3-面積">3　面積</h2>
+<pre class="code" data-lang="text"><code>主要值：最大單一面面積
+對照值：體積 ÷ 厚度      （厚度 = 2 × 體積 ÷ 總表面積）
+差異 &gt; 10% → 標記「可能是多段包覆面，最大面會少算」</code></pre>
+<h3 id="LoopFlow-QTY-量測方法--3-1-實測">3.1 實測</h3>
+<div class="tw"><table class="wide"><thead><tr><th>物件</th><th>面數</th><th>最大面</th><th>體積÷厚</th><th>判定</th></tr></thead><tbody><tr><td><code>WL-13</code> 石材牆面</td><td>6</td><td><strong>73,800</strong></td><td>74,892</td><td>一致（＝300×246，精確）</td></tr><tr><td><code>WL-11</code> 裝飾壁板</td><td>6</td><td><strong>6,270</strong></td><td>6,604</td><td>一致（＝57×110，精確）</td></tr><tr><td><code>WL-15</code> 木紋牆面</td><td>6</td><td><strong>13,420</strong></td><td>13,884</td><td>一致（＝122×110，精確）</td></tr><tr><td><code>CB-06</code> 櫃體石材面</td><td>6</td><td><strong>3,675</strong></td><td>4,016</td><td>一致</td></tr><tr><td><code>FL-02</code> 地毯</td><td>6</td><td><strong>27,300</strong></td><td>29,490</td><td>一致</td></tr><tr><td><code>CL-07</code> 木紋</td><td>6</td><td><strong>52,440</strong></td><td>53,378</td><td>一致</td></tr><tr><td><strong><code>WL-14</code> 磁磚牆面</strong></td><td><strong>22</strong></td><td>57,871</td><td>110,054</td><td><strong>差 47%，標記</strong></td></tr></tbody></table></div>
+<h3 id="LoopFlow-QTY-量測方法--3-2-最大單一面-的三個好處">3.2 「最大單一面」的三個好處</h3>
+<p><strong>① 自動排除邊帶。</strong> 薄板側邊那一圈不會被算進去。比「垂直面總和 ÷ 2」準 1～4%。</p>
+<p><strong>② 自動處理立面／平面。</strong> 它不管面朝哪裡。<code>CB-06</code> 是<strong>水平檯面卻掛 <code>AREA_WH</code> 規則</strong>，最大面直接給出正確的 3,675 cm²（＝100×36.75）；若用「取垂直面」則只會得到那圈側邊的 342 cm²，完全錯誤。</p>
+<blockquote><p>這順帶解掉一個難題：<strong>同一材料可能既用於立面又用於平面</strong>（例如同款石材做牆面也做檯面），難以在字典預先定義。最大面法不需要區分，問題在計算層自動消失。剩下的只是報表要不要分開列。</p></blockquote>
+<p><strong>③ 自動扣除開口。</strong> 實際存在的面才會被算到。<code>WL-03</code> 的門洞自動不在面積內。</p>
+<h3 id="LoopFlow-QTY-量測方法--3-3-唯一失效情境">3.3 唯一失效情境</h3>
+<p><strong>多段包覆面</strong>——<code>WL-14</code> 有 22 個面（牆轉了彎），最大面只抓到其中一段，少算約 47%。這正是對照值要抓的。</p>
+<h2 id="LoopFlow-QTY-量測方法--4-長度">4　長度</h2>
+<pre class="code" data-lang="text"><code>主要值：體積 ÷ 端面截面積     （得到中心線長度）
+對照值：最長邊
+差異 &gt; 2% → 標記</code></pre>
+<h3 id="LoopFlow-QTY-量測方法--4-1-為什麼是-體積-截面積">4.1 為什麼是「體積 ÷ 截面積」</h3>
+<p>長度類物件（收邊條、燈帶、窗簾盒）大多是沿<strong>折線或曲線</strong>擠出的實體，不是直線。bbox 完全不適用——彎曲物件的 bbox 寬度與其長度無關。</p>
+<p>體積除以截面積得到的是<strong>中心線長度</strong>，不管路徑怎麼繞都成立。</p>
+<h3 id="LoopFlow-QTY-量測方法--4-2-實測">4.2 實測</h3>
+<p><strong>15 個長度類物件中 13 個一致</strong>，2 個被正確標記：</p>
+<div class="tw"><table><thead><tr><th>物件</th><th>體積÷端面</th><th>最長邊</th><th>判定</th></tr></thead><tbody><tr><td><code>LS-01</code> 天花燈帶</td><td>260.0</td><td>260.0</td><td>一致</td></tr><tr><td><code>WL-16</code> 鋁製收邊條</td><td>57.0</td><td>57.0</td><td>一致</td></tr><tr><td><code>CB-01</code> 木作櫃體</td><td>96.4</td><td>96.4</td><td>一致</td></tr><tr><td><strong><code>CL-03</code> 木作窗簾盒</strong></td><td>414.0</td><td>183.8</td><td><strong>標記</strong></td></tr><tr><td><strong><code>CB-04</code> 鐵件框架</strong></td><td>2.7</td><td>60.5</td><td><strong>標記</strong></td></tr></tbody></table></div>
+<p><code>CL-03</code> 有轉角——邊長分布是「內側 180.0 ×4、外側 183.8 ×2」，<strong>最長邊只會給外側</strong>，中心線才是估價要的。此物件的端面辨識挑錯了面（L 型側面），因此主要值也不對，被對照值抓到。</p>
+<p><code>CB-04</code> 是<strong>閉合環</strong>（框架），<strong>根本沒有端面</strong>，端面辨識必然失敗。</p>
+<h3 id="LoopFlow-QTY-量測方法--4-3-兩個失效模式">4.3 兩個失效模式</h3>
+<div class="tw"><table><thead><tr><th>失效</th><th>成因</th></tr></thead><tbody><tr><td>端面辨識挑錯面</td><td>非矩形斷面（L 型、U 型）可能有其他等面積反向平行面</td></tr><tr><td>閉合環無端面</td><td>框架類物件的長度應是環的周長，不是擠出長度</td></tr></tbody></table></div>
+<p>兩者都被對照值抓到，因此<strong>可標記、不會靜默出錯</strong>。</p>
+<h2 id="LoopFlow-QTY-量測方法--5-數量與體積">5　數量與體積</h2>
+<div class="tw"><table><thead><tr><th>規則</th><th>方法</th></tr></thead><tbody><tr><td><code>COUNT</code></td><td>直接計數。實測 7 個 <code>COUNT</code> 類全部是 Block，不需要任何幾何運算</td></tr><tr><td><code>VOL_WDH</code></td><td>直接取 <code>VolumeMassProperties</code>。實測 30/30 Brep 都是封閉實體、體積可算</td></tr></tbody></table></div>
+<p><code>VOL_WDH</code> 目前只出現在結構體（<code>EX-01</code> 樑、<code>EX-02</code> 柱），裝修材完全沒用到。</p>
+<h2 id="LoopFlow-QTY-量測方法--6-開口扣除">6　開口扣除</h2>
+<p><strong>原則上不扣除門窗開口。</strong> 但若出現很大的非門窗開口，需要判定。</p>
+<p>偵測方式：<strong>毛體積 ÷ 實體積</strong>。</p>
+<pre class="code" data-lang="text"><code>扣除率 = 1 − 實體積 / 毛體積</code></pre>
+<p>實測：24 個為 0.0%，<code>WL-03</code> 為 22.4%（≈一個門洞），<code>WL-04</code> 為 5.0%。</p>
+<p><strong>限制</strong>：此指標<strong>分不出「開口」與「形狀本來就不是方塊」</strong>。<code>CB-04 鐵件框架</code> 扣除 95.6%、<code>CL-03 木作窗簾盒</code> 79.2%，那些是中空構件。</p>
+<p>因此只能<strong>標記後由人判斷</strong>。<strong>閾值待定</strong>（見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a>）。</p>
+<h2 id="LoopFlow-QTY-量測方法--7-方位偵測-備用">7　方位偵測（備用）</h2>
+<p>雖然主要方法不需要方位，但若日後需要（例如做規則與幾何的相容性檢查），有兩種方式：</p>
+<div class="tw"><table><thead><tr><th>方法</th><th>成本</th><th>實測</th></tr></thead><tbody><tr><td>掃描 0～89° 找最小貼合度</td><td>90 次 bbox 運算</td><td>30/30 正確找出 30°</td></tr><tr><td><strong>最大平面面的法向量</strong></td><td><strong>O(1)</strong></td><td><strong>15/15 與掃描一致，0 不符</strong></td></tr></tbody></table></div>
+<p>法向量法快幾十倍。但最大面為水平時（地坪、檯面）法向朝上、給不出牆向，需改用該面最長邊的方向。</p>
+<p><strong>貼合度的正確判準不是「＝1」</strong>，而是「在候選角度中<strong>最小</strong>」。非方塊形狀就算平面正確、貼合度也不會是 1——實測 L 型物件在正確角度的貼合度是 1.724，但那仍是所有角度中的最小值。</p>
+<h2 id="LoopFlow-QTY-量測方法--8-方法與規則的相容性">8　方法與規則的相容性</h2>
+<p>實測發現一類<strong>規則配不上幾何</strong>的情形：</p>
+<p><code>CB-06 櫃體石材面</code> 字典規則是 <code>AREA_WH</code>（立面），但幾何是 100 × 36.7 × 2.5 的<strong>水平</strong>檯面石材。</p>
+<p>最大面法能算出正確數字（3,675 cm²），但「這個規則是否適合這個幾何」仍值得標記——它可能代表字典登錄有誤，或該 Type 在此專案被挪作他用。</p>
+<p>判準（<strong>推論，未實測</strong>）：<code>AREA_WH</code> 應有明顯厚度方向且高度為垂直向；<code>AREA_WD</code> 應為水平延展。不符即標記。</p>
+<h2 id="LoopFlow-QTY-量測方法--9-方法總表">9　方法總表</h2>
+<blockquote><p class=\"qh\"><strong>⚠️ 本節待 QR-15 裁決，不得據以實作</strong></p>
+<p>下表把 <code>AREA_WD</code>／<code>AREA_WH</code>／<code>AREA_DH</code> 三個 token 都映成「最大單一面」、<code>LEN_W</code>／<code>LEN_D</code>／<code>LEN_H</code> 都映成「中心線」，<strong>等於把不同 token 當成同義詞</strong>，與 2.0 <code>ND-28</code>「token 是選哪個軸」的定義衝突。Codex 於第二輪指認此問題，Claude 已承認錯誤。</p>
+<p>目前提案（<a href="#LoopFlow-QTY-決策紀錄-第二輪"><code>決策紀錄_2.md</code></a> QR-15）是把 token 改為<strong>方向約束</strong>：<code>AREA_WD</code> 要求最大面水平、<code>AREA_WH</code> 要求垂直、不符即 <code>不可自動量測</code>；<code>AREA_DH</code>／<code>LEN_D</code>／<code>LEN_H</code> 第一版不支援。實測 15 件中 14 符、1 不符（<code>CB-06</code>），零誤報。</p>
+<p><strong>裁決前，下表僅供理解算法本身，不代表 token 對應關係。</strong>（探索性 mapping，待 QR-15 裁決）</p></blockquote>
+<div class="tw"><table><thead><tr><th>規則</th><th>主要值</th><th>對照值</th><th>標記閾值</th></tr></thead><tbody><tr><td><code>COUNT</code></td><td>計數</td><td>—</td><td>—</td></tr><tr><td><code>AREA_WD</code> / <code>AREA_WH</code> / <code>AREA_DH</code></td><td>最大單一面</td><td>體積 ÷ 厚度</td><td>10%</td></tr><tr><td><code>LEN_W</code> / <code>LEN_D</code> / <code>LEN_H</code></td><td>體積 ÷ 端面截面積</td><td>最長邊</td><td>2%</td></tr><tr><td><code>VOL_WDH</code></td><td><code>VolumeMassProperties</code></td><td>—</td><td>—</td></tr><tr><td>（全部）</td><td>—</td><td>開口扣除率</td><td>待定</td></tr></tbody></table></div>
+<p>閾值 10% 與 2% 為依實測分布所定的初步值，實作時應可設定。</p>
+<h1 class="chaptitle" id="LoopFlow-QTY-決策紀錄">LoopFlow QTY — 決策紀錄</h1>
+<blockquote><p>本文件是 QTY <strong>決策狀態</strong>的唯一來源。範圍見 <a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a>，資料見 <a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a>，方法見 <a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a>。</p>
+<p>建立日期：2026-09-01　｜　階段：前期評估</p></blockquote>
+<p>決策編號 <code>QD-nn</code>。已定案項目在進入實作前仍可推翻，但<strong>推翻時必須在本文件留下紀錄與理由</strong>，不得直接改寫。</p>
+<h2 id="LoopFlow-QTY-決策紀錄--0-三欄覆核說明-2026-09-02">0　三欄覆核說明（2026-09-02）</h2>
+<ul><li><code>Claude 意見</code> 是對 Claude 第一版文件既有主張的摘要，不代表本輪重新詢問 Claude</li><li><code>Codex 意見</code> 是依 LoopFlow 2.0 的開發方式、現行六份權威文件與 repo 程式接縫所做的獨立覆核</li><li><code>Cursor 意見</code> 是 2026-09-02 在公司電腦對同一份 <code>LoopFlow_R_MCP.rws</code> 以 Rhino MCP 複核盤點數字，並對照 <code>v2/docs/資料契約.md</code> 與 <code>v2/src/loopflow</code> 接縫後的判斷</li><li>本輪只增加覆核意見，<strong>不直接改變原決策狀態</strong>；標為「建議改列暫定／未定」者，須由使用者裁決後再移表並留下理由</li></ul>
+<h3 id="LoopFlow-QTY-決策紀錄--覆核結論">覆核結論</h3>
+<p>整體方向正確：QTY 維持獨立產品、單向唯讀、GH1 可視流程、外部 Python 核心、先視覺檢核再輸出 Excel，均符合 2.0「人決定、系統檢查、可預覽、可重跑、不靜默修復」的原則。</p>
+<p>但目前仍有三個實作阻擋項（Claude／Codex／Cursor 一致）：</p>
+<ol><li><strong>輸入權威未定</strong>：<code>Project_Registry.json</code>、現況物件與現行 Dictionary 發生 revision 漂移時，誰優先尚未裁決（QO-13）</li><li><strong>持久身分未閉合</strong>：一般物件可用 <code>_07_UUID</code>，但結構體沒有 UUID；「一式」黑名單與外部選取 JSON 尚無全類型共同身分契約（QD-02／QD-08／QD-10）</li><li><strong>長度算法尚非可交付答案</strong>：15 件中已有 2 件失效，且轉角與閉合環是常見實務幾何；目前只能標異常，不能保證產出正確數量（QD-07）</li></ol>
+<p>Cursor 在模型上另確認、應一併寫進後續契約的三點：</p>
+<ul><li><code>_07_UUID</code> 與 3D 代表 <strong>37/37 為 1:1</strong>（Brep 30 ＋ Block 7）成立</li><li><strong>2026-09-02</strong>：驗證資料夾已有 <code>_LoopFlow_Config</code>（2.0.7：<code>loopflow/</code> ＋空的 <code>loopflow_QTY/</code>）。Registry revision 4，<code>objects[]</code> 37 個與模型 UUID <strong>全部對得上</strong>。QO-13 不再是「沒有檔」，而是「漂移時誰優先尚未裁決」</li><li>worksession 的圖層 <code>FullPath</code> 帶 <code>檔名.3dm::</code> 前綴；結構體用 <code>layer_path</code> join 時必須先正規化，不能拿 Rhino 原字串去對字典</li></ul>
+<h3 id="LoopFlow-QTY-決策紀錄--進入實作前關卡">進入實作前關卡</h3>
+<p>比照 2.0，不先做大型 <code>.gh</code>：</p>
+<ol><li>先裁決上述三項阻擋，定義 QTY 的 <code>schema_id</code>／<code>schema_version</code>、輸入優先序與物件身分</li><li>先建立合法／錯誤 fixtures 與 golden baseline，至少涵蓋直線、轉角、閉合環、包覆面、開口、Block、結構體、參照失效與直接開 3D 兩種工作方式</li><li>先做可在 Rhino 外測試的純 Python 核心，再做 Rhino adapter；GH Python 電池只負責轉交與顯示</li><li>實作以「掃描 → 分類／選取 → 量測 → Coverage → 預覽 → 明確確認 → Excel」分批，每批都要能取消、重跑並留下可驗證停點</li><li>Rhino MCP 只用於開發期唯讀觀察與安全的無互動驗證，不成為產品 runtime 相依</li></ol>
+<h2 id="LoopFlow-QTY-決策紀錄--1-已定案">1　已定案</h2>
+<div class="tw"><table class="wide"><thead><tr><th>#</th><th>決策</th><th>依據</th><th>日期</th><th>Claude 意見</th><th>Codex 意見</th><th>Cursor 意見</th></tr></thead><tbody><tr><td><strong>QD-01</strong></td><td><strong>只算 3D 模型，所有 curve 直接略過</strong></td><td>2D 由 3D 切出供出圖用、之後會再修改，隨時可能不同步</td><td>09-01</td><td>同意，2D 不作數量真相</td><td><strong>同意</strong>；但應寫成「只量 3D 幾何」，Curve 可留作診斷資訊，不進計算值</td><td><strong>同意 Codex 的寫法</strong>。不採用是同步風險，不是曲線品質（61/61 可算面積）。本模型 3D 側另有 4 條 Polyline，同樣不進計算值</td></tr><tr><td><strong>QD-02</strong></td><td><strong>物件粒度以 <code>_07_UUID</code> 為準</strong></td><td>只算 3D 後 UUID 與 3D 物件 <strong>1:1</strong>（實測 37/37），<code>object_id</code> 可互換</td><td>09-01</td><td>同意，以 UUID 去除 2D 一對多歧義</td><td><strong>有條件同意</strong>；只適用帶 UUID 的非結構物件。結構體沒有 UUID，外部 JSON 仍需另一個可持久化身分，否則選取與「一式」無法穩定保存</td><td><strong>有條件同意</strong>。MCP 複核：37 個 UUID 各恰好 1 個 3D 代表（Brep 30＋Block 7）。結構 16 個無 UUID，不能沿用此粒度。未補結構／linked Block 的穩定 key 前，選取 JSON 與一式黑名單不能定案</td></tr><tr><td><strong>QD-03</strong></td><td><strong>計算全集 ＝ 3D 側的 Brep ＋ InstanceReference，排除 Point 與 Curve</strong></td><td>實測該模型 3D 側約 97 個是放置點，不排除則 Coverage 一開跑就被雜訊淹沒</td><td>09-01</td><td>同意，依實測型別收斂全集</td><td><strong>建議改寫後再定案</strong>；全集應由「合法產品圖層範圍＋Brep／InstanceReference」決定，不能綁死「參照側」。產品也應支援直接開啟 3D 檔的情境</td><td><strong>同意 Codex，建議改寫</strong>。「參照側」只描述 worksession，直接開 3D 檔時同一批物件是本機物件。複核 Point 為 <strong>92</strong>（盤點寫約 97）；另有 2 個未標記 Block 在 <code>base</code> 層，不應進 Coverage。全集語意必須兩種開檔方式相同</td></tr><tr><td><strong>QD-04</strong></td><td><strong>計量規則與單位一律查 Dictionary，<code>QTY_Set</code> 不帶 Rule 輸入</strong></td><td>實測 26/26 相異 <code>type_id</code> 全部查得到，量綱檢查 26/26 通過。重新輸入只會製造靜默出錯的機會</td><td>09-01</td><td>同意，規則維持單一來源</td><td><strong>有條件同意</strong>；須先裁決 Registry 內 Type 快照與現行 Dictionary 不一致時的優先序，並把 revision mismatch 明確標記，不能安靜混用</td><td><strong>有條件同意</strong>。規則來源是 Dictionary（2.0 的 <code>Q_01</code>～<code>Q_06</code> 本來就不寫進物件）。與 QO-13 綁定：建議 <strong>規則／單位以現行 Dictionary 為準</strong>；Registry 只提供空間／類型顯示快照。找不到規則＝該件不算並標記；revision 不同＝警告，不整批停、不靜默混用</td></tr><tr><td><strong>QD-05</strong></td><td><strong>不拆解 W／D／H，不需要平面輸入，不需要方位判斷</strong></td><td>舊模型遇轉角牆直接失效；實務上牆的方位各角度混和，同一道牆本身也可能多角度</td><td>09-01</td><td>同意，改由幾何面與拓樸直接求值</td><td><strong>同意核心方向</strong>；精確說法應是「不要求使用者提供全域平面，也不把 W／D／H 當核心資料」。演算法內仍可能需要面法向、端面或拓樸判讀</td><td><strong>同意</strong>。World bbox 在本模型可錯到 127 倍，這條不能退回。使用者不提供平面；內部仍可讀法向／拓樸</td></tr><tr><td><strong>QD-06</strong></td><td><strong>面積用「最大單一面」，對照「體積÷厚度」，差 &gt; 10% 標記</strong></td><td>實測 15 個物件，14 個一致、1 個（22 面的包覆牆）被正確標記</td><td>09-01</td><td>同意，主要值簡單且對照能抓包覆面</td><td><strong>暫同意作 baseline</strong>；樣本仍小，且已知多段包覆會失效。實作前須補 L／U 型、曲面、多片組合、斜面與開口 fixtures；異常時不得把主要值當合格結果輸出</td><td><strong>暫同意作 baseline</strong>。對照抓到 <code>WL-14</code> 是對的。標記件不得把主要值當淨數量寫進 Excel。10% 是初步閾值，須可設定。開口「自動不在最大面內」與「原則不扣門窗」要在報告裡分得開</td></tr><tr><td><strong>QD-07</strong></td><td><strong>長度用「體積÷端面截面積」，對照「最長邊」，差 &gt; 2% 標記</strong></td><td>實測 15 個物件，13 個一致、2 個（轉角、閉合環）被正確標記</td><td>09-01</td><td>同意，對照能避免靜默錯誤</td><td><strong>建議改列暫定／未定</strong>；15 件已有 2 件無法產生可信主要值，而轉角、L／U 型與閉合框架是常見物件。標記只能避免誤信，尚未提供可交付數量；需 fallback 或明確人工量測路徑</td><td><strong>建議改列暫定</strong>，且比「有標記就夠」更嚴：失效時狀態應為「不可自動量測」，Excel <strong>不得</strong>輸出錯誤主要值當淨數量。轉角窗簾盒與閉合框架在裝修很常見。未補 fallback 或人工覆寫前，不應當已定案算法</td></tr><tr><td><strong>QD-08</strong></td><td><strong>選取狀態存外部 JSON，不存 <code>.gh</code></strong></td><td><code>.gh</code> 存選取會變成專案資料而非工具；JSON 可讀可 diff，多 AI 協作必要</td><td>09-01</td><td>同意，工具與專案狀態分離</td><td><strong>同意方向，契約未完成</strong>；應放 <code>&lt;3dm&gt;/_LoopFlow_Config/loopflow_QTY/</code>，具 <code>schema_id</code>、<code>schema_version</code>、project identity、atomic write、last-good，且不得存某台電腦的絕對路徑</td><td><strong>同意方向</strong>。2.0 契約已預留 <code>loopflow_QTY/</code>。2026-09-02 測檔已建空的 <code>loopflow_QTY/</code>；選取 JSON 寫這裡，不要寫 <code>loopflow/</code> 或 AppData。內容不得含絕對路徑；身分欄受 QD-02 擋住</td></tr><tr><td><strong>QD-09</strong></td><td><strong>結構體以 <code>layer_path</code> 查字典，不要求 <code>type_id</code></strong></td><td>實測 7 個結構圖層全部命中 <code>EX-01</code>～<code>EX-07</code>；<code>qty/README.md</code> 早已指出此路徑</td><td>09-01</td><td>同意，既有 EX 類別已完整命中</td><td><strong>同意</strong>；join 必須用契約中的完整 canonical path，保留大小寫與空白，不能只用 terminal layer name。若需去掉專案前綴，轉換規則也要固定並測試</td><td><strong>同意，並補一條必測正規化</strong>。本模型 FullPath 是 <code>LoopFlow_3D_R_MCP.3dm::M3D::00_STR_結構::Beam.樑</code>；字典應對 <code>M3D::00_STR_結構::Beam.樑</code> 這類 canonical path。必須剝 worksession 檔名前綴，禁止只比對末層名稱</td></tr><tr><td><strong>QD-10</strong></td><td><strong>「一式」不進字典，以物件識別為唯一依據的全域黑名單</strong></td><td>避免動到 2.0 已發布 schema；不能倚賴「沒接進電池」消極排除</td><td>08-24</td><td>同意，避免污染 2.0 schema</td><td><strong>有條件同意</strong>；全域排除集合正確，但受 QD-02 身分缺口阻擋。先定義一般物件、結構體與 linked Block 的穩定 key，再談黑名單持久化</td><td><strong>有條件同意</strong>。主動差集正確，否則依 <code>type_id</code> 自動抓取會安靜多算。持久化黑名單被 QD-02 擋住；未定 key 前只允許當次工作階段的選取排除</td></tr><tr><td><strong>QD-11</strong></td><td><strong>單向流程，不寫回物件 UserText／Registry</strong></td><td><code>STALE_OBJECT_KEYS</code> 互鎖風險（見 <code>範圍與邊界.md</code> §2.1）</td><td>08-24</td><td>同意，完全唯讀上游資料</td><td><strong>強烈同意，列為不可破壞 invariant</strong>；自動測試與 Rhino 實機都要比對 UserText、顯示屬性與 document modified state 已復原</td><td><strong>強烈同意，列 invariant</strong>。2.0 的 <code>STALE_OBJECT_KEYS</code> 含 <code>Q_01</code>～<code>Q_06</code>／<code>lf_quantity</code>；寫回會讓 Nexus 檢核報 stale、擋 Registry，QTY 自己也會沒輸入。測試必須證明 <code>doc.Modified</code> 復原</td></tr><tr><td><strong>QD-12</strong></td><td><strong>損耗率、非模型項目不進工具</strong></td><td>商業判斷不是幾何事實，留在 Excel 以係數欄處理</td><td>08-24</td><td>同意，工具只輸出模型淨量</td><td><strong>同意</strong>；Excel 必須明標「淨數量」，損耗／單價／稅等欄位和幾何結果分欄，不可反向改變模型量測值</td><td><strong>同意</strong>。工具輸出淨數量；係數欄只存在 Excel，不得回寫模型或改計算核心</td></tr><tr><td><strong>QD-13</strong></td><td><strong>採用 GH1（Rhino 8），不採 GH2</strong></td><td>使用者全在 Rhino 8。實測 MCP 也<strong>不存在 <code>g2_</code> 工具</strong></td><td>09-01</td><td>同意，符合現有環境</td><td><strong>同意</strong>；真正依據是產品 runtime 為 Rhino 8，MCP 沒有 <code>g2_</code> 只屬開發工具現況，不應成為產品契約理由</td><td><strong>同意 Codex</strong>。產品理由是 Rhino 8／GH1；MCP 無 <code>g2_</code> 只是旁證</td></tr><tr><td><strong>QD-14</strong></td><td><strong>計算邏輯住外部 <code>.py</code>，GH 電池只放薄殼，薄殼必須含 <code>importlib.reload()</code></strong></td><td>實測不加該行時修改外部檔案不會生效</td><td>09-01</td><td>同意，確保 AI 修改能立即反映</td><td><strong>部分同意</strong>；外部 <code>.py</code> 與薄殼是正確架構。<code>importlib.reload()</code> 應明確標為開發期行為；正式版需固定載入版本並有版本檢查，避免相依子模組只重載一半</td><td><strong>部分同意</strong>。架構對。reload 只留開發期；正式發布釘模組版本。計算不得進 <code>v2/src/loopflow</code></td></tr><tr><td><strong>QD-15</strong></td><td><strong>所有模型掃描走 <code>run_python</code> ＋ <code>ReferenceObjects = True</code></strong></td><td>MCP 原生工具在 worksession 下看不到 attach 物件且不報錯</td><td>09-01</td><td>同意，MCP 實測掃描須走此路徑</td><td><strong>必須改寫</strong>；<code>run_python</code> 是 MCP 開發／驗證工具，不是 QTY 產品 runtime。正式產品應由 Rhino adapter 直接用 <code>ObjectEnumeratorSettings</code>，並明確設定 <code>ReferenceObjects = True</code>；此列應移成「MCP 驗證紀律」或改寫為 adapter 契約</td><td><strong>必須改寫</strong>，同 Codex。產品沿用 <code>live.py</code> 的列舉器（含 <code>ReferenceObjects = True</code>）。MCP <code>run_python</code> 只是開發期紀律；寫成產品決策會讓人以為 QTY 要倚賴 MCP 才能跑</td></tr></tbody></table></div>
+<h2 id="LoopFlow-QTY-決策紀錄--2-已推翻">2　已推翻</h2>
+<p>實測推翻的先前敘述。原文件已就地標註修正，此處集中列出以便追溯。</p>
+<div class="tw"><table><thead><tr><th>原敘述</th><th>出處</th><th>實測結果</th></tr></thead><tbody><tr><td>「<code>features/</code> 不 import <code>platform/rhino/prompts.py</code>」</td><td><code>初步評估報告.md</code> §3.6</td><td><strong>有 38 處</strong>（17 個檔案）。但結論仍成立——全部在函式內部的 <code>_default_*</code> 後備函式中，真正的接縫是「UI 是預設 <code>None</code> 的關鍵字參數」</td></tr><tr><td>「改 <code>.py</code>，所有 <code>.gh</code> 自動吃到」「AI 迭代一輪秒級」</td><td><code>初步評估報告.md</code> §5.3</td><td><strong>照字面實作是錯的</strong>。Python 快取模組，需 <code>importlib.reload()</code></td></tr><tr><td>GH 工具前綴 <code>gh1_</code>／<code>gh2_</code></td><td><code>初步評估報告.md</code> §4</td><td>實際是 <strong><code>g1_</code></strong>，且<strong>不存在 <code>g2_</code></strong></td></tr><tr><td>套件 0.1.3、Python FastMCP、需 Python 環境</td><td><code>初步評估報告.md</code> §2</td><td><strong>0.1.5，純 .NET，不需 Python／uv</strong></td></tr><tr><td>「MCP 遇到模態視窗會卡住或逾時」</td><td><code>初步評估報告.md</code> §8</td><td><strong>靜默失效</strong>——腳本照常執行、<code>error</code> 為 <code>null</code>、<code>stdout</code> 空白、不逾時不報錯。比卡死更危險</td></tr><tr><td>「GH referenced 物件被刪會直接報錯甚至停止運算」</td><td><code>數量計算需求筆記.md</code> §8-4</td><td><strong>會優雅降級</strong>，但降級得太安靜——警告只出現在上游 param，下游元件無提示，<strong>筆數不變</strong>，<code>None</code> 一路傳到底</td></tr><tr><td>「現況掃描沒有 <code>type_id</code>」</td><td><code>數量計算需求筆記.md</code> §4.3</td><td><strong>有</strong>。<code>_03_ID編號</code> 就在 UserText 裡。拿不到的是規則，那只在字典</td></tr><tr><td>「結構體計算方式待議」</td><td><code>初步功能分類.md</code> §2.6</td><td><strong>機制現成</strong>。查詢鍵是 <code>layer_path</code> 而非 <code>type_id</code>，字典 <code>EX</code> 類別即為此準備</td></tr><tr><td><code>measure.py</code> 與現行 <code>RhinoSession</code> 有落差</td><td><code>初步評估報告.md</code> §8-5</td><td><strong>落差比預期小</strong>。13 項依賴中 10 項原封不動，僅 3 項需處理（2 個改名／搬家、1 個本來就不該用）</td></tr></tbody></table></div>
+<h2 id="LoopFlow-QTY-決策紀錄--3-未定案">3　未定案</h2>
+<h3 id="LoopFlow-QTY-決策紀錄--3-1-需要商業判斷">3.1 需要商業判斷</h3>
+<div class="tw"><table class="wide"><thead><tr><th>#</th><th>項目</th><th>狀況</th><th>Claude 意見</th><th>Codex 意見</th><th>Cursor 意見</th></tr></thead><tbody><tr><td><strong>QO-01</strong></td><td><strong>開口扣除的閾值</strong></td><td>原則上不扣門窗開口，但很大的非門窗開口需要判定。扣除率偵測得到（實測 <code>WL-03</code> 22.4%、<code>WL-04</code> 5.0%、其餘 24 個 0.0%），但<strong>分不出「開口」與「中空構件」</strong>。需要閾值與人工判斷流程</td><td>需使用者決定閾值與判斷流程</td><td>建議拆成「偵測」與「是否扣量」兩件事：系統只報比率與標記，預設不自動扣；累積更多開口／中空樣本後再定預設警告門檻</td><td><strong>同意拆成兩件事</strong>。MVP 只報扣除率、預設不扣。門窗原則不扣已是商業方向；中空構件（框架／窗簾盒）不能當開口。閾值未定前不要自動改數量</td></tr><tr><td><strong>QO-02</strong></td><td><strong>進位規則</strong></td><td>小數第幾位、不足一單位如何計。舊 <code>quantity.py</code> 回傳原始 float，無進位邏輯</td><td>需商業規則</td><td>應依估價單位分別裁決，並同時保存 raw value、converted value、display value；不要用一個全域小數位處理所有單位</td><td><strong>同意分單位保存三層值</strong>。核心只保留 raw；進位是輸出層。未裁決前 Excel 顯示 raw、標「未進位」</td></tr><tr><td><strong>QO-03</strong></td><td><strong>輸出服務誰</strong></td><td>內部抓預算（可能預填參考單價）或對外空白標單（單價留白），格式不同</td><td>需選內部預算或對外標單</td><td>先把資料模型與 Excel template 分離。MVP 建議輸出空白單價的中性資料＋明細；參考單價另做可選 template，避免商業資料混進量測核心</td><td><strong>同意先中性資料＋空白單價</strong>。估價單／明細兩張表可先做；參考單價不要進計算核心</td></tr><tr><td><strong>QO-04</strong></td><td><strong>排序對照表</strong></td><td>外層「空間優先／工種優先」可用全域開關；內層順序無法自動生成，需獨立對照表（<code>space_display → sort_key</code>、<code>type_display_name → sort_key</code>）</td><td>需獨立排序對照</td><td>同意；對照檔應有 schema／版本，缺 key 時採固定 fallback 並列入報告，不能因對照表不全而靜默換順序</td><td><strong>同意</strong>。對照表放 <code>loopflow_QTY/</code>，有 schema。缺 key 用固定 fallback 並在報告列出，禁止靜默重排</td></tr><tr><td><strong>QO-05</strong></td><td><strong>工種的來源</strong></td><td>估價單有「工種」欄，但物件上只有 <code>type_category</code>（<code>WL</code>、<code>CB</code>…）。「磁磚工程」這類工種名稱需要另一層對照</td><td>需新增工種 mapping</td><td>同意用 QTY 自己的外部 mapping，不推導、不改 2.0 Dictionary schema；一個 Type 若可落多個工種，須由使用者選擇並保存於 QTY 專案狀態</td><td><strong>同意用 QTY 自己的 mapping</strong>。不改 2.0 字典。一 Type 對多工種時必須人工選並寫進 QTY 狀態，不要猜</td></tr></tbody></table></div>
+<h3 id="LoopFlow-QTY-決策紀錄--3-2-需要開發階段設計">3.2 需要開發階段設計</h3>
+<div class="tw"><table class="wide"><thead><tr><th>#</th><th>項目</th><th>狀況</th><th>Claude 意見</th><th>Codex 意見</th><th>Cursor 意見</th></tr></thead><tbody><tr><td><strong>QO-06</strong></td><td><strong>同材料出現在立面與平面的報表呈現</strong></td><td>同款材料可能既做牆面又做檯面，難以在字典預先定義。<strong>計算層已解決</strong>（最大面法不區分方位，QD-06），剩下的是報表要不要分開列</td><td>計算可共用，報表呈現待決</td><td>MVP 建議同 Type、同規則、同單位先合併；若商業上要拆，應增加 QTY 的人工分類維度，不要從面向自動猜</td><td><strong>同意 MVP 先合併</strong>。不要用法向猜立面／平面；要拆就用人工分類維度。<code>CB-06</code> 水平面掛 <code>AREA_WH</code> 已證明自動猜會錯</td></tr><tr><td><strong>QO-07</strong></td><td><strong><code>QTY_Save</code> 的寫入時機</strong></td><td>每次變更即寫，或按確認才寫。<strong>不可用 Panel 的 Stream Contents</strong>——GH 每次 re-solve 都會執行，會反覆覆寫並撞檔案佔用</td><td>避免 re-solve 自動寫，時機待決</td><td>建議「預覽不寫；使用者明確確認才 atomic write」，並有 pending／last-good 或暫存檔替換；這與 2.0 Registry 發布模式一致</td><td><strong>同意預覽不寫、確認才 atomic write</strong>。對齊 2.0 Registry pending／last-good。禁止 Stream Contents</td></tr><tr><td><strong>QO-08</strong></td><td><strong>規則與幾何相容性的判準</strong></td><td><code>CB-06</code> 是水平檯面卻掛 <code>AREA_WH</code>。判準草案已有（見 <code>量測方法.md</code> §8）但<strong>未實測</strong></td><td>待實測後定</td><td>先作 warning，不作阻擋或自動換規則；用 fixtures 驗證誤報率。<code>AREA_WH</code>／<code>AREA_WD</code> 是估價語意，不一定等同幾何朝向</td><td><strong>同意先 warning、不換規則、不阻擋</strong>。估價語意 ≠ 幾何朝向。最大面仍給得出數；標記給人看字典是否登錯</td></tr><tr><td><strong>QO-09</strong></td><td><strong><code>QTY_Set</code> 是否需要自訂資料型別</strong></td><td>或一般 GH Data Tree 即可</td><td>待原型比較</td><td>MVP 不建自訂 GH type；核心用 Python dataclass／typed record，GH 邊界才轉 Data Tree。只有資料跨多個元件後仍易錯，才升級自訂型別</td><td><strong>同意 MVP 不用自訂 GH type</strong>。核心 dataclass；GH 只轉 Data Tree。過早自訂型別會讓多 AI 難接手</td></tr><tr><td><strong>QO-10</strong></td><td><strong><code>QTY_Label</code> 的定位策略</strong></td><td>文字放哪裡才好讀、重疊如何處理</td><td>待視覺原型</td><td>先用非持久化 display conduit／GH preview，位置以幾何代表點為基準；第一版允許重疊並標示，不能為了排版新增 Rhino 文件物件</td><td><strong>同意非持久化 preview</strong>。不新增文件物件，否則違反 QD-11。第一版允許重疊</td></tr><tr><td><strong>QO-11</strong></td><td><strong>Coverage 五態的視覺呈現</strong></td><td>已計算／一式／未選取／衝突／參照失效</td><td>待定顏色與畫面</td><td>先定 enum、互斥規則與優先序，再定顏色；顏色只是提示，面板與匯出報告須保留文字狀態與原因</td><td><strong>同意先 enum 再顏色</strong>。顏色不能當唯一狀態。參照失效在 worksession 特別重要，報告必須有文字原因</td></tr><tr><td><strong>QO-12</strong></td><td><strong>Excel 欄位與樣式</strong></td><td><code>v2/src/loopflow/platform/excel.py</code> 可沿用（實測純 stdlib、Python 3.13 headless 可跑、寫入讀回一致），但<strong>不支援公式</strong>（無 <code>&lt;f&gt;</code> 元素）。若要「單價 × 數量」自動算需新增能力</td><td>可沿用 writer，公式能力待補</td><td>先鎖欄位契約與 golden xlsx，再決定擴充既有 writer 或另建 qty adapter；若加公式，要測公式注入、Excel 開啟重算與不可信字串安全</td><td><strong>同意先鎖欄位契約與 golden xlsx</strong>。可沿用 writer 產靜態表。公式是可選後續，不要擋 MVP。QTY 程式不要進 <code>v2/src/loopflow</code>，adapter 可呼叫共用 writer</td></tr></tbody></table></div>
+<h3 id="LoopFlow-QTY-決策紀錄--3-3-需要更多資料才能決定">3.3 需要更多資料才能決定</h3>
+<div class="tw"><table class="wide"><thead><tr><th>#</th><th>項目</th><th>缺什麼</th><th>Claude 意見</th><th>Codex 意見</th><th>Cursor 意見</th></tr></thead><tbody><tr><td><strong>QO-13</strong></td><td><strong>是否採用 Registry 作為輸入</strong></td><td><strong>2026-09-02 檔案已在</strong>：<code>_LoopFlow_Config/loopflow/M3D/Project_Registry.json</code>（revision 4，37 物件與模型 UUID 全對）。仍未裁決快照與現況／現行 Dictionary 漂移時誰優先；漂移情境本身尚未實測</td><td>取得 Registry 後再定</td><td><strong>P0，進核心實作前必須裁決</strong>。建議 Registry 提供已發布 Type／Space 快照，live Rhino 提供幾何；兩者 revision 不一致時明確停或降級，不可把不同時點資料混成一份結果</td><td><strong>P0 仍須裁決優先序</strong>。檔案缺口已補（見 <a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a> §9）。建議規則／單位以現行 Dictionary 為準；空間／類型顯示名用 Registry 快照。不一致要標記，不要混成一份「看起來完整」的結果</td></tr><tr><td><strong>QO-14</strong></td><td><strong>分組與排序的實際效果</strong></td><td>驗證模型只有「廊道」「衛浴」兩個空間，不足以驗證</td><td>需更多空間樣本</td><td>同意；除真實專案外，先建至少 5 空間、同名跨樓層、EXT、缺 sort key 的 synthetic fixtures，避免等待完整專案才發現資料模型不足</td><td><strong>同意先建 synthetic fixtures</strong>。不要等完整專案才發現 EXT／跨樓層同名撐不住</td></tr><tr><td><strong>QO-15</strong></td><td><strong>SD／DD／CD 階段的選取狀態是否延續</strong></td><td>需要跨階段的真實專案</td><td>需真實跨階段資料</td><td>不預設跨階段沿用；JSON 應帶 project／stage／source revision。只有 identity 可證明延續且 Coverage 無衝突時才提供明確的「匯入上一階段」操作</td><td><strong>同意不預設沿用</strong>。匯入上一階段必須是明確操作，且 identity 對得上、Coverage 無衝突</td></tr><tr><td><strong>QO-16</strong></td><td><strong><code>.gh</code> 的保存與版本管理</strong></td><td>選取狀態改存 JSON（QD-08）後，<code>.gh</code> 回到純工具，此題的急迫性下降但仍未定</td><td><code>.gh</code> 為純工具，版本方式待定</td><td>建議 <code>.gh</code> 與外部 source 同版存 repo，附 tool version／checksum；canvas 保持最小且可由清單重建。二進位 diff 不佳，所以每次變更須搭配可讀 manifest 與實機驗收紀錄</td><td><strong>同意 <code>.gh</code> 進 repo 當工具、狀態在 JSON</strong>。canvas 保持最小。每次變更用可讀 manifest，不要靠 gh 二進位 diff</td></tr><tr><td><strong>QO-17</strong></td><td><strong>大量物件的效能</strong></td><td>掃描涵蓋 3116 筆但未計時</td><td>需計時</td><td>先定 benchmark：列舉總量、候選 3D 數、逐物件量測與 preview 分開計時；至少測 100／1,000／5,000 候選，ReferenceObjects 開關與取消路徑都要量</td><td><strong>同意分開計時</strong>。本模型列舉 3116、3D 實體約 48，連小案都還沒測。preview 很可能比量測慢，必須分開看</td></tr></tbody></table></div>
+<h2 id="LoopFlow-QTY-決策紀錄--4-必須先修的既有缺陷">4　必須先修的既有缺陷</h2>
+<div class="tw"><table><thead><tr><th>項目</th><th>狀況</th></tr></thead><tbody><tr><td><code>quantity.py</code> 的 <code>m2</code> 換算</td><td><code>_area()</code> 對「才」「坪」正確，但 <code>m2</code> 直接回傳 cm²（<strong>少除 10000</strong>）。目前字典沒用到 <code>m2</code> 所以<strong>不會發作</strong>，一旦有人新增 <code>m2</code> 規則就會出現，錯誤量級一萬倍。<strong>撈回該檔時務必先修</strong></td></tr><tr><td>撈回 <code>measure.py</code> 的三處調整</td><td><code>load_from_workfiles</code> → <code>load_dictionary(session)</code>；<code>TYPE_ID_KEY</code> 已搬到 <code>foundation.usertext</code>（值 <code>&quot;_03_ID編號&quot;</code>）；<code>QUANTITY_KEY</code> 已刪除且本來就不該用</td></tr><tr><td>文件路徑</td><td>舊報告寫的 <code>wip/src/loopflow/</code> 已過時，現在是 <strong><code>v2/src/loopflow/</code></strong></td></tr></tbody></table></div>
+<h2 id="LoopFlow-QTY-決策紀錄--5-安全紀律-不可協商">5　安全紀律（不可協商）</h2>
+<p>以下不是設計選擇，是實測付出代價換來的：</p>
+<div class="tw"><table><thead><tr><th>禁止</th><th>原因</th></tr></thead><tbody><tr><td>在承載使用者工作檔的 Rhino 內以 MCP headless 載入 <code>.gh</code></td><td>已造成一次 Rhino 凍結退出。工具逾時後 MCP ping 成功<strong>不代表</strong> runtime 已恢復</td></tr><tr><td>用 MCP 代開 <code>.rws</code></td><td>需由使用者手動開啟</td></tr><tr><td>用 <code>run_command</code> 執行 LoopFlow 產品指令</td><td>模態視窗導致靜默失效</td></tr><tr><td>把空 <code>stdout</code> 當作成功</td><td>那正是靜默失效的表徵</td></tr><tr><td>把 MCP 設定寫進任何 repo</td><td>本機專屬，路徑含使用者名稱與版本號</td></tr></tbody></table></div>
+<p>完整說明見 <a href="../MCP評估/MCP設定交接.md"><code>MCP評估/MCP設定交接.md</code></a> §7。</p>
+<h1 class="chaptitle" id="LoopFlow-QTY-決策紀錄-第二輪">LoopFlow QTY — 決策紀錄（第二輪）</h1>
+<blockquote><p>第一輪見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a>。本輪<strong>只處理第一輪列出的阻擋項與未定案</strong>，不重述已定案內容。</p>
+<p>建立日期：2026-09-02　｜　覆核順序：<strong>Claude → Codex → Cursor</strong>　｜　目前<strong>三家已填畢</strong>，待使用者裁決</p></blockquote>
+<h2 id="LoopFlow-QTY-決策紀錄-第二輪--0-本輪規則">0　本輪規則</h2>
+<p>決策編號 <code>QR-nn</code>（Round 2）。比照 <a href="../../../v2/docs/前期規劃/資料生態決策表.md"><code>v2/docs/前期規劃/資料生態決策表.md</code></a>，採三種建議強度：</p>
+<div class="tw"><table><thead><tr><th>強度</th><th>意義</th></tr></thead><tbody><tr><td><strong>強烈建議</strong></td><td>最好照做；關係到資料不斷鏈、可復原、避免靜默錯誤或能否長期擴充。若不採用，需先設計同等安全的替代方案</td></tr><tr><td><strong>一般建議</strong></td><td>可以改，但會增加相應的規則、操作或維護成本；決定時需明確接受代價</td></tr><tr><td><strong>輕鬆建議</strong></td><td>原則上不影響核心資料鏈，可依實際習慣、時程或介面偏好調整</td></tr></tbody></table></div>
+<p>裁決規則沿用 2.0：<strong>任一 AI 標為強烈建議且做法不衝突者直接採用</strong>；強烈建議只涵蓋部分、或做法衝突時，只採用無衝突的共同安全底線，其餘維持待決定。</p>
+<blockquote><p>各家只填自己的欄，不代填、不推測其他 AI 的立場。</p></blockquote>
+<h3 id="LoopFlow-QTY-決策紀錄-第二輪--0-1-Codex-第二輪覆核結論-2026-09-02">0.1 Codex 第二輪覆核結論（2026-09-02）</h3>
+<p>Claude 建立的第二輪骨架可沿用，但進入實作前要修正四點：</p>
+<ol><li><strong>裸 Rhino GUID 不能單獨作全類型持久主鍵</strong>。它只在單一來源模型內唯一；來源的絕對路徑與 worksession model index／serial 又不能跨電腦、開檔方式與 attach 順序持久化。應採版本化、可分流的 locator（QR-01）。</li><li><strong>Dictionary token 與目前算法有語意衝突</strong>。2.0 的 ND-28 明定 <code>AREA_WD／WH／DH</code>、<code>LEN_W／D／H</code> 各自選軸；現行量測方法卻把三種面積 token 都算最大面、三種長度 token 都算中心線。這不是單純 warning，須先裁決（QR-15）。</li><li><strong>測試資產必須與原始工作檔隔離</strong>。幾何、Dictionary、Registry 都在副本補強；每個案例要有期望值、容差與期望狀態，不能只加形狀。</li><li><strong>QTY 是獨立產品</strong>。可參考 2.0 的契約與 writer，但不能把 <code>v2/src/loopflow</code> 的私有模組變成未版本化的 runtime 相依；實作期也應仿照 2.0 使用獨立整合分支。</li></ol>
+<h3 id="LoopFlow-QTY-決策紀錄-第二輪--0-2-Cursor-第二輪覆核結論-2026-09-02">0.2 Cursor 第二輪覆核結論（2026-09-02）</h3>
+<p>在公司電腦對使用者已開啟的 <code>LoopFlow_R_MCP.rws</code>（Rhino 8 adopted slot <code>aardvark</code>，pid 28836）做唯讀 <code>run_python</code>。沒有開啟 GH、沒有執行產品指令、執行前後 <code>doc.Modified</code> 皆為 false。數字與 Claude／Codex 一致，另補三點：</p>
+<ol><li><strong>QR-01 採 Codex 的 locator，不採 Claude 的裸 GUID 單鍵。</strong> GUID 跨 Rhino 重啟穩定只證明「不是每次啟動重配」。本 session 3116 個 GUID 互不重複，仍不能當跨來源、跨電腦的持久主鍵。</li><li><strong>QR-15 是第四個實作阻擋，不能用最大面先做再改 token。</strong> QD-05「使用者不提供平面」可以保留；不能為了「尊重 ND-28」把 1.x 的 local W／D／H 或指定平面救回來。未裁決前 Excel 不得寫 <code>AREA_WH</code> 卻實際算最大面。</li><li><strong>原始模型現在測不到漂移、曲面、室外與一式。</strong> Config／Registry 已在且 37／37 對得上，因此 QR-02 的失敗路徑必須靠隔離副本，不能再改這份工作檔。</li></ol>
+<p>共同安全底線（三家無衝突的強烈部分）：選取 JSON 不能只存 GUID、也不能存絕對路徑／session serial；未知 <code>schema_id</code>／<code>schema_version</code> 整批停止；失效不得輸出淨數量；<code>DNA_REF_</code> 必須明寫排除；產品 runtime 不依 MCP；確認前零寫入；Label 不得新增文件物件。</p>
+<p>衝突仍待使用者裁決：QR-01 的主鍵形態（裸 GUID vs locator）、QR-13 的狀態模型（單一優先序 vs Coverage／measurement 雙軸）、QR-15 的 token 語意（ND-28 軸向 vs QTY 拓樸 mapping）。</p>
+<h2 id="LoopFlow-QTY-決策紀錄-第二輪--1-本輪新增的實測發現">1　本輪新增的實測發現</h2>
+<p>2026-09-02 於公司電腦，同一份 <code>LoopFlow_R_MCP.rws</code> 以 MCP 唯讀複核。</p>
+<h3 id="LoopFlow-QTY-決策紀錄-第二輪--1-1-GUID-跨-session-穩定-解掉阻擋項-2-的關鍵">1.1 GUID 跨 session 穩定（解掉阻擋項 2 的關鍵）</h3>
+<p>本 session 稍早在<strong>不同 Rhino 行程</strong>記錄的三個參照物件 GUID，於 Rhino 重啟後<strong>全部仍指向同一物件</strong>：</p>
+<pre class="code" data-lang="text"><code>ec5f23f1-4d2b-46ba-a136-3eb82ab5928e   ✅ 仍存在（結構 Stair.樓梯）
+9bc74080-4bd0-4e90-918b-8c485a999b34   ✅ 仍存在（結構 Curb.墩座）
+b4fae896-bf13-4b19-9ff3-6f5ed902ba1f   ✅ 仍存在（CL-06）</code></pre>
+<p><strong>意義</strong>：worksession 參照物件的 GUID 來自來源 <code>.3dm</code>，不是執行期配發。結構體雖無 <code>_07_UUID</code>，仍有可跨 session 持久化的身分。</p>
+<p><strong>未驗證的邊界</strong>：來源 <code>.3dm</code> 被編輯後是否仍保持；物件被刪除重畫必然換 ID（與 2.0 的 ECO-11 同源問題）。</p>
+<h3 id="LoopFlow-QTY-決策紀錄-第二輪--1-2-DNA_REF_-全部是-Point-不會污染全集">1.2 <code>DNA_REF_*</code> 全部是 Point，不會污染全集</h3>
+<p>3D 側 92 個 <code>DNA_REF_*</code>（2.0 的字典參考線，ED-11 保留用於防止空圖層被 Purge）<strong>全部是 Point</strong>。</p>
+<p>因此「Brep ＋ InstanceReference」的全集篩選<strong>誤收數為 0</strong>。但這是巧合而非保證——若日後 <code>DNA_REF_*</code> 改用其他幾何，全集就會靜默納入字典佔位物件。</p>
+<h3 id="LoopFlow-QTY-決策紀錄-第二輪--1-3-3D-側的實際可量測物件">1.3 3D 側的實際可量測物件</h3>
+<div class="tw"><table><thead><tr><th>類別</th><th>數量</th></tr></thead><tbody><tr><td>Brep（扣除 <code>DNA_REF_*</code>）</td><td><strong>39</strong> ＝ 帶標記 30 ＋ 結構 9</td></tr><tr><td>InstanceReference</td><td><strong>9</strong> ＝ 帶標記 7 ＋ 未標記 2</td></tr><tr><td>Curve</td><td>4（不進計算）</td></tr><tr><td><strong>可量測候選合計</strong></td><td><strong>48</strong></td></tr></tbody></table></div>
+<p>結構圖層的<strong>真實幾何只有 9 個 Brep</strong>：Beam 3、Slab 3、Curb 1、Stair 1、Wall-RC 1。<strong>Column.柱 與 Wall-Brick.磚牆只有 <code>DNA_REF_</code> 參考點，沒有實體</strong>。</p>
+<p>未標記的 2 個 Block 是 <code>3D_W1</code>、<code>3D_D1</code>（門窗），位於 <code>base</code> 圖層，idef 名稱帶 <code>LoopFlow_3D_R_MCP.3dm :</code> 前綴（linked block）。</p>
+<h3 id="LoopFlow-QTY-決策紀錄-第二輪--1-4-Codex-獨立重跑-2026-09-02-公司電腦">1.4 Codex 獨立重跑（2026-09-02，公司電腦）</h3>
+<p>Codex 對使用者已開啟的 Rhino 8 adopted slot 執行唯讀 <code>run_python</code>，沒有開啟 GH、沒有執行產品指令：</p>
+<ul><li>Active document：<code>LoopFlow_2D_R_MCP.3dm</code>，單位 <code>Centimeters</code></li><li>含 reference 的列舉總數：<strong>3116</strong>；Brep <strong>39</strong>；<code>DNA_REF_*</code> <strong>92 個且全為 Point</strong></li><li>§1.1 三個 GUID <strong>3/3 仍存在</strong>且皆為 reference Brep</li><li>三者的 <code>ReferenceModelSerialNumber</code>／<code>WorksessionReferenceSerialNumber</code> 都是 <strong>1001</strong>；目前 session 可由 worksession 對回 <code>LoopFlow_3D_R_MCP.3dm</code></li><li>執行前後 <code>doc.Modified</code> 都是 <strong>false</strong></li></ul>
+<p>這證明「GUID 來自來源模型、可跨 Rhino 重啟」成立；但也同時證明 <strong>1001 只是目前 worksession 的解析線索</strong>，不能寫進持久狀態。直接開 3D 時該模型是本機模型，來源 serial／index 的語意會改變；絕對路徑則違反雙機可攜性。因此 §1.1 只解掉「物件 GUID 是否會每次啟動重配」，尚未單獨解掉跨來源、跨開檔方式的完整身分契約。</p>
+<h3 id="LoopFlow-QTY-決策紀錄-第二輪--1-5-Cursor-獨立重跑-2026-09-02-公司電腦">1.5 Cursor 獨立重跑（2026-09-02，公司電腦）</h3>
+<p>Cursor 對同一 adopted slot <code>aardvark</code>（Rhino 8，port 10500，pid 28836）再跑一次唯讀掃描，與 §1.4 交叉驗證：</p>
+<div class="tw"><table><thead><tr><th>檢查</th><th>結果</th></tr></thead><tbody><tr><td>作用中文件／單位／<code>doc.Modified</code></td><td><code>LoopFlow_2D_R_MCP.3dm</code>、Centimeters、前後皆 <strong>false</strong></td></tr><tr><td>列舉總數</td><td><strong>3116</strong>（本機 2972 ＋ 參照 144）</td></tr><tr><td>參照幾何</td><td>Point <strong>92</strong>、Brep <strong>39</strong>、InstanceReference <strong>9</strong>、PolylineCurve <strong>4</strong></td></tr><tr><td><code>DNA_REF_*</code></td><td><strong>92／92 為 Point</strong></td></tr><tr><td>§1.1 三個 GUID</td><td><strong>3／3 仍在</strong>，皆為 reference Brep</td></tr><tr><td>標記 3D</td><td>Brep 30 ＋ Block 7 ＝ <strong>37</strong>；UUID <strong>37 不重複、無空值</strong></td></tr><tr><td>Registry</td><td><code>_LoopFlow_Config/loopflow/M3D/Project_Registry.json</code> 存在；<code>schema_id=loopflow.registry</code>／<code>schema_version=1</code>；revision <strong>4</strong>；<code>objects[]</code> <strong>37</strong>；與 live UUID <strong>37／37</strong>；<code>spaces[]</code> 3、<code>types[]</code> 92</td></tr><tr><td>空間名</td><td>標記物件只有「廊道」「衛浴」；<strong>EXT 樣本 0</strong>；37 件都有 <code>_01_空間名稱</code></td></tr><tr><td>曲面／open Brep</td><td><strong>0／0</strong></td></tr><tr><td>隱藏／鎖定的標記物件</td><td><strong>EL-07 隱藏</strong>（開關面板 Block）、<strong>SA-01 鎖定</strong>（浴缸 Block）</td></tr><tr><td>未標記 Block</td><td><code>base</code> 上 <code>3D_W1</code>、<code>3D_D1</code>；idef 名為 <code>LoopFlow_3D_R_MCP.3dm : 3D_W1／3D_D1</code>；transform <strong>不是 Identity</strong>（OrientationPreserving）</td></tr><tr><td>結構末層實名</td><td><code>Wall-Brick.牆-Brick</code>、<code>Wall-RC.牆-RC</code>（文件若寫「磚牆」會 join 失敗）</td></tr><tr><td>本 session GUID</td><td>3116 個全部不重複</td></tr></tbody></table></div>
+<p>結論與 Codex 相同：GUID 穩定不足以當跨來源主鍵。另外，這份原始模型已經<strong>對得太齊</strong>（Registry 無漂移、無曲面、無 EXT、無一式），QR-02／QR-03／QR-07 的失敗路徑必須在隔離副本裡建，不能改這份工作檔。</p>
+<h2 id="LoopFlow-QTY-決策紀錄-第二輪--2-三項阻擋的處置提案">2　三項阻擋的處置提案</h2>
+<div class="tw"><table class="wide"><thead><tr><th>#</th><th>阻擋項</th><th>Claude 提案（強度）</th><th>Codex 意見</th><th>Cursor 意見</th><th>你的決定／說明</th></tr></thead><tbody><tr><td><strong>QR-01</strong></td><td><strong>持久身分未閉合</strong>（QD-02／08／10）</td><td><strong>強烈建議</strong>：以 <strong>Rhino 物件 GUID 作為 QTY 的全類型統一身分</strong>，<code>_07_UUID</code> 僅作為顯示與對 Registry join 的次要鍵。依據：§1.1 已證明 GUID 跨 session 穩定，且它是唯一同時涵蓋一般物件、結構體與 linked Block 的欄位。選取 JSON 與一式黑名單一律以 GUID 為鍵，另存 <code>_07_UUID</code>（若有）供人閱讀與追溯。<strong>必須同時記錄</strong>：來源 <code>.3dm</code> 路徑或 worksession model index，因為 GUID 只在該來源檔內唯一</td><td><strong>強烈建議，與「裸 GUID 單鍵」衝突</strong>：採版本化 locator。有 <code>_07_UUID</code> 時以 project-global <code>object_id</code> 為 canonical；無 UUID 時才用「可攜的 <code>source_model_key</code> ＋ Rhino GUID」。<code>source_model_key</code> 必須是相對專案根目錄的正規化路徑或明確 alias，<strong>不得</strong>是絕對路徑、worksession index 或 runtime serial。另存 UUID／live GUID 供診斷；重複、找不到或多重命中都回 conflict，不猜。共同安全底線：不能只存 GUID，也不能存某台電腦或某次 session 的定位值</td><td><strong>強烈建議，同意 Codex；與 Claude「裸 GUID 單鍵」衝突。</strong> 本輪 MCP：GUID 3／3 仍在、3116 個 GUID 本 session 不重複、標記物件 UUID 37／37。跨重啟穩定 ≠ 可當跨來源、跨電腦主鍵。複製 <code>.3dm</code> 或雙 attach 會撞 GUID；絕對路徑與 serial 1001 不能寫進 JSON。共同安全底線同 Codex：有 <code>_07_UUID</code> 用 project-global <code>object_id</code>；無 UUID 才用可攜 <code>source_model_key</code>＋GUID</td><td class="s-strong">待決定</td></tr><tr><td><strong>QR-02</strong></td><td><strong>輸入權威未定</strong>（QO-13）</td><td><strong>強烈建議</strong>：<strong>規則與單位以現行 Dictionary 為準；空間與類型顯示名用 Registry 快照</strong>。理由：規則是「現在要怎麼算」，屬當下決定；空間歸屬是「發布當時的事實」，屬快照。兩者 revision 不一致時<strong>標記但不整批停</strong>，並在 Excel 明細與報告標明各自來源與 revision。找不到規則＝該件不算並標記，不猜測。此提案與第一輪 Codex／Cursor 的方向一致，本輪只是把它從「建議」升為可裁決條文</td><td><strong>強烈建議，條件同意</strong>：可採這個權責切分，但每筆結果都要保留 Dictionary／Registry 的 revision 或內容雜湊與欄位來源。revision 漂移可降級續跑；<strong>未知 <code>schema_id</code>／<code>schema_version</code> 必須整批停止</strong>。缺規則時只有該件為 <code>不可自動量測</code>；live 物件不在 Registry 時標 <code>unpublished／space unresolved</code>，不得假裝 <code>EXT</code> 或靜默丟掉。任何 last-good fallback 都要明示來源，不可冒充 current</td><td><strong>強烈建議，條件同意 Claude 的權責切分，並採 Codex 的停止條件。</strong> 本輪確認 Registry 已在：revision 4、37／37。規則／單位＝現行 Dictionary；空間／類型顯示＝Registry 快照。revision 漂移標記續跑；未知 schema <strong>整批停止</strong>。缺規則只該件不可量測。live 不在 Registry 不得假裝 EXT（本模型 tagged 的 EXT 樣本為 0，失敗路徑要另建副本）</td><td class="s-strong">待決定</td></tr><tr><td><strong>QR-03</strong></td><td><strong>長度算法非可交付答案</strong>（QD-07）</td><td><strong>強烈建議</strong>：失效時狀態為 <strong><code>不可自動量測</code></strong>，Excel <strong>不得</strong>輸出主要值當淨數量，必須留空並標記。這條比「有標記就夠」更嚴，理由是估價數字錯要花錢。<br><strong>一般建議</strong>：同時補兩條 fallback——閉合環（如 <code>CB-04</code> 框架）取<strong>環的中心線周長</strong>；轉角擠出（如 <code>CL-03</code> 窗簾盒）取<strong>內外側 rail 的平均</strong>（實測內側 180.0／外側 183.8，中心線應為 181.9）。兩者都能算，但<strong>尚未實作驗證</strong>，因此列一般建議而非強烈</td><td><strong>強烈建議同意安全處置</strong>：任何主算法／對照值不一致或拓樸無法辨識者，都不輸出淨數量。<br><strong>一般建議同意先做 fallback 原型</strong>，但在閉合環、轉角各至少三種不同 fixture 通過期望值與容差前，仍維持 <code>不可自動量測</code>，不能因公式看似合理就升格為交付算法</td><td><strong>強烈建議同意失效不輸出淨數量</strong>（與第一輪 Cursor 相同）。<strong>一般建議同意 fallback 先當 prototype</strong>：本模型仍只有 <code>CL-03</code>、<code>CB-04</code> 各一種，不夠升格。未通過三種不同 fixture 前，Excel 留空</td><td class="s-strong">待決定</td></tr></tbody></table></div>
+<h2 id="LoopFlow-QTY-決策紀錄-第二輪--3-其他待決的收斂提案">3　其他待決的收斂提案</h2>
+<p>以下針對第一輪 §3 的 QO 項目提出可裁決的收斂版本。編號沿用 QO，強度為本輪新增。</p>
+<div class="tw"><table class="wide"><thead><tr><th>#</th><th>項目</th><th>Claude 提案（強度）</th><th>Codex 意見</th><th>Cursor 意見</th><th>你的決定／說明</th></tr></thead><tbody><tr><td><strong>QR-04</strong></td><td>全集定義（QD-03 改寫）</td><td><strong>強烈建議</strong>：全集 ＝「<strong>合法產品圖層範圍內的 Brep 與 InstanceReference，排除名稱以 <code>DNA_REF_</code> 起始者</strong>」。不綁「參照側」，兩種開檔方式（worksession／直接開 3D）語意必須相同。排除 <code>DNA_REF_</code> 要<strong>明寫</strong>，不能倚賴「它剛好都是 Point」（§1.2）</td><td><strong>強烈建議同意</strong>；再補兩個驗收條件：合法產品圖層集合本身須有版本化來源，hidden／locked 不得因此被排除。<code>DNA_REF_</code> 名稱排除是防線，不是圖層合法性的替代；<code>base</code> 的未標記門窗在未裁決 mapping 前不應被靜默納入</td><td><strong>強烈建議同意。</strong> 本輪：<code>DNA_REF_</code> 92 全 Point；可量測 39 Brep＋9 Block＝48；Column／Wall-Brick 無實體。hidden／locked <strong>不得排除</strong>：目前 tagged 中 <strong>EL-07 隱藏、SA-01 鎖定</strong>。<code>base</code> 的 <code>3D_W1</code>／<code>3D_D1</code> 未標記，未裁決前不靜默納入</td><td class="s-strong">待決定</td></tr><tr><td><strong>QR-05</strong></td><td><code>QD-15</code> 改寫</td><td><strong>強烈建議</strong>：<code>QD-15</code> 從「已定案決策」移到<strong>「MCP 開發紀律」</strong>，並新增產品條文：Rhino adapter 直接使用 <code>ObjectEnumeratorSettings</code> 且 <code>ReferenceObjects = True</code>，沿用 <code>v2/src/loopflow/platform/rhino/live.py</code> 既有寫法。第一輪 Codex 與 Cursor 皆標「必須改寫」，無衝突</td><td><strong>強烈建議同意</strong>。可沿用 <code>live.py</code> 已驗證的列舉契約與測試思路；若 QTY 要獨立安裝，不能直接依賴未版本化的 <code>v2</code> 私有模組，應複用明確的 shared boundary 或在 QTY adapter 內實作同一契約</td><td><strong>強烈建議同意</strong>，與第一輪 QD-15 相同。產品 runtime 不依 MCP；獨立安裝時不可 import 未版本化的 <code>v2</code> 私有模組</td><td class="s-strong">待決定</td></tr><tr><td><strong>QR-06</strong></td><td><code>layer_path</code> 正規化</td><td><strong>強烈建議</strong>：join 前必須<strong>剝除 worksession 檔名前綴</strong>。本模型 <code>FullPath</code> 為 <code>LoopFlow_3D_R_MCP.3dm::M3D::00_STR_結構::Beam.樑</code>，字典對的是 <code>M3D::00_STR_結構::Beam.樑</code>。禁止只比對末層名稱。正規化規則須固定並納入 fixtures</td><td><strong>強烈建議同意</strong>；只能在物件確為 reference、且前綴能精確對到其來源模型時剝除。直接開 3D 不應亂切第一段；同 terminal name 多重命中時阻擋。大小寫、空白與完整 canonical path 均原樣保留</td><td><strong>強烈建議同意 Codex 的條件剝除。</strong> 本輪 FullPath 仍帶 <code>LoopFlow_3D_R_MCP.3dm::</code>。結構末層實名是 <code>Wall-Brick.牆-Brick</code>、<code>Wall-RC.牆-RC</code>，不能憑記憶寫「磚牆」。只比對末層名稱禁止</td><td class="s-strong">待決定</td></tr><tr><td><strong>QR-07</strong></td><td>開口扣除（QO-01）</td><td><strong>一般建議</strong>：MVP <strong>只報扣除率、不自動扣</strong>。門窗原則不扣；中空構件不是開口。閾值待累積樣本後再定，未定前不得自動改數量</td><td><strong>一般建議同意</strong>。扣除率只是幾何診斷，不能推論商業語意；報告需同時列主要量、扣除率與「未自動扣量」，避免使用者把比率誤認為已套用</td><td><strong>一般建議同意。</strong> 本模型開口仍只有 22.4% 與 5.0%，不夠定閾值。報告必須同時看到主要量、扣除率與「未自動扣」</td><td class="s-normal">待決定</td></tr><tr><td><strong>QR-08</strong></td><td>進位（QO-02）</td><td><strong>一般建議</strong>：核心只保留 <strong>raw</strong>；converted 與 display 屬輸出層，依單位分別裁決。未裁決前 Excel 顯示 raw 並標「未進位」</td><td><strong>一般建議，部分調整</strong>：核心應保留「模型單位正規化 raw」與「依估價單位換算後、尚未進位的 exact value」兩層，否則 GH 預覽與 Excel 可能各自換算而分歧；只有 display／rounding 屬輸出層。未裁決時輸出 exact value 並標「未進位」</td><td><strong>一般建議，同意 Codex 的兩層。</strong> 核心保存模型單位 raw 與估價單位尚未進位的 exact value；進位只在輸出層。未裁決前 Excel 寫 exact value 並標「未進位」，避免 GH 與 Excel 各換一次</td><td class="s-normal">待決定</td></tr><tr><td><strong>QR-09</strong></td><td>規則與幾何相容性（QO-08）</td><td><strong>一般建議</strong>：先作 <strong>warning，不阻擋、不自動換規則</strong>。<code>AREA_WH</code>／<code>AREA_WD</code> 是<strong>估價語意，不等同幾何朝向</strong>——<code>CB-06</code> 水平檯面掛 <code>AREA_WH</code> 可能是字典登錯，也可能是估價慣例，程式不該判斷</td><td><strong>一般建議同意 warning 原則</strong>，但它不能掩蓋 QR-15：相容性檢查可只警告，<strong>實際執行哪個 measurement token 的語意</strong>仍須先裁決；程式不得把 token 自動換掉或把不同 token 靜默當同義詞</td><td><strong>一般建議同意 warning，且不得掩蓋 QR-15。</strong> <code>CB-06</code> 證明「最大面能算出數」與「token 寫的是哪個軸」是兩件事。警告可以有；把 <code>AREA_WH</code> 靜默當成最大面不行</td><td class="s-normal">待決定</td></tr><tr><td><strong>QR-10</strong></td><td><code>QTY_Save</code> 寫入時機（QO-07）</td><td><strong>強烈建議</strong>：<strong>預覽不寫；明確確認才 atomic write</strong>，並有 pending／last-good，對齊 2.0 Registry 發布模式。<strong>禁止 Panel Stream Contents</strong>。這條屬強烈是因為它防的是「使用者以為只是看看、結果狀態被改掉」</td><td><strong>強烈建議同意</strong>。確認前檔案系統零寫入；確認後先寫 pending、完整驗證與讀回，再原子取代 current 並保留 last-good。寫入失敗不得破壞上一版，也不得讓 GH re-solve 自動重試覆寫</td><td><strong>強烈建議同意。</strong> 確認前零寫入；確認後 pending → 驗證讀回 → atomic replace → 保留 last-good。GH re-solve 不得重試覆寫</td><td class="s-strong">待決定</td></tr><tr><td><strong>QR-11</strong></td><td>自訂 GH 型別（QO-09）</td><td><strong>輕鬆建議</strong>：MVP 不建自訂 GH type，核心用 Python dataclass，GH 邊界才轉 Data Tree</td><td><strong>輕鬆建議同意</strong>。先以 typed record／dataclass 固定欄位；只有跨多個 GH 元件後仍無法可靠維持 schema，才另評估自訂型別</td><td><strong>輕鬆建議同意。</strong> MVP 用 dataclass；過早自訂 GH type 會讓多 AI 難接手</td><td class="s-light">待決定</td></tr><tr><td><strong>QR-12</strong></td><td>Label 定位（QO-10）</td><td><strong>一般建議</strong>：只用非持久化 preview／conduit，<strong>不得新增 Rhino 文件物件</strong>——新增物件會違反 QD-11 的唯讀 invariant。第一版允許重疊並標示</td><td><strong>強烈建議採非持久化預覽</strong>：這不是版面偏好，而是 QD-11 的唯讀安全線。驗收須比較 preview 前後物件、UserText、顯示屬性與 <code>doc.Modified</code>；第一版重疊可接受</td><td><strong>強烈建議同意 Codex</strong>：非持久化是 QD-11 invariant，不是版面偏好。驗收必須證明 preview 前後物件數、UserText、顯示屬性與 <code>doc.Modified</code> 不變。第一版重疊可接受</td><td class="s-strong">待決定</td></tr><tr><td><strong>QR-13</strong></td><td>Coverage 五態（QO-11）</td><td><strong>一般建議</strong>：先定 enum、互斥規則與優先序，再定顏色。顏色不得作為唯一狀態來源；報告必須保留文字狀態與原因</td><td><strong>強烈建議部分調整</strong>：Coverage 五態可互斥，但必須與 measurement status 分成兩個欄位；同一物件可以同時是「已選取」與「不可自動量測」。若硬塞成單一優先序，會遺失其中一個事實。顏色只顯示合成結果，文字報告保存兩軸狀態與原因</td><td><strong>強烈建議同意 Codex 的雙軸。</strong> 單一優先序會讓「已選取但不可量測」只剩一個標籤。顏色只是合成顯示；文字報告保存 Coverage 與 measurement 兩欄。EL-07 隱藏仍應能進 Coverage</td><td class="s-strong">待決定</td></tr><tr><td><strong>QR-14</strong></td><td>Excel（QO-12）</td><td><strong>一般建議</strong>：先鎖欄位契約與 golden xlsx，沿用既有 writer 產靜態表。公式屬可選後續，不擋 MVP。QTY 程式不進 <code>v2/src/loopflow</code>，以 adapter 呼叫共用 writer</td><td><strong>一般建議，條件同意</strong>：欄位契約、golden xlsx、靜態表優先都同意。但「共用 writer」須是版本化的公開 shared boundary；若仍是 <code>v2/src/loopflow</code> 私有模組，QTY 應有自己的薄 adapter／受測實作，不能形成隱性 runtime 耦合。公式不擋 MVP</td><td><strong>一般建議，同意 Codex 的條件。</strong> 先鎖欄位與 golden xlsx。不可直接 import <code>v2</code> 私有 writer；要嘛版本化 shared boundary，要嘛 QTY 自帶受測薄 adapter。公式不擋 MVP</td><td class="s-normal">待決定</td></tr></tbody></table></div>
+<h3 id="LoopFlow-QTY-決策紀錄-第二輪--3-1-Codex-新增的實作阻擋">3.1 Codex 新增的實作阻擋</h3>
+<div class="tw"><table class="wide"><thead><tr><th>#</th><th>項目</th><th>Claude 提案（強度）</th><th>Codex 意見</th><th>Cursor 意見</th><th>你的決定／說明</th></tr></thead><tbody><tr><td><strong>QR-15</strong></td><td><strong>Dictionary measurement token 的軸向語意與現行算法衝突</strong></td><td><strong>強烈建議：接受 Codex 的指認，且我原本的 §9 對照表確實錯了</strong>——把 8 個 token 映成 2 種算法等於宣稱查字典卻把 token 當同義詞。<br><strong>但補一項本輪實測，它讓這題有第三條路</strong>：字典 92 筆中 <strong>8 個 token 只用了 5 個</strong>——<code>COUNT</code> 41、<code>LEN_W</code> 20、<code>AREA_WD</code> 14、<code>AREA_WH</code> 15、<code>VOL_WDH</code> 2，而 <strong><code>AREA_DH</code>、<code>LEN_D</code>、<code>LEN_H</code> 全部 0 筆</strong>。也就是說字典實際做的唯一軸向區分是<strong>水平面積 vs 立面面積</strong>，而那正是面法向量給得出來的，不需要平面。真正無解的 W vs D 區分只存在於那三個 0 筆的 token。<br><strong>因此提案：token 當「方向約束」而非「軸選擇器」</strong>——<code>AREA_WD</code> 要求最大面為水平、<code>AREA_WH</code> 要求垂直、<code>LEN_W</code> 要求中心線為水平走向；不符即 <code>不可自動量測</code>，<strong>不靜默替代</strong>。<code>AREA_DH</code>／<code>LEN_D</code>／<code>LEN_H</code> <strong>第一版明確不支援</strong>，遇到即不可量測並註明原因是「QTY 不指定平面因此無法區分 W 與 D」。<br><strong>已實測</strong>：15 個面積類物件 <strong>14 符、1 不符</strong>，唯一不符的正是 <code>CB-06</code>（<code>AREA_WH</code> 但最大面水平）——零誤報，且正好標出 QR-09 要的那件。<br>同意 Cursor：<strong>不為了尊重 ND-28 而救回 1.x local frame 或使用者指定平面</strong>。</td><td><strong>強烈建議：P1 前必須裁決</strong>。2.0 ND-28 已明定 W／D／H token 是「選哪個軸」，且特別說明單位無法推導軸向；QTY 不能在宣稱查 Dictionary 的同時把 token 合併成同義詞。安全底線：未裁決前不得實作；若採最大面／中心線，須另定 QTY 方法契約並明示它與原 token 的 mapping，不能冒充已執行 <code>AREA_WH</code> 等原規則；若維持 ND-28，則算法必須真的尊重各軸組合</td><td><strong>強烈建議：P1 面積／長度實作前必須裁決。</strong> 同意 Codex 的安全底線。補充：這與 QD-05「使用者不提供平面」可以同時成立。若維持 ND-28 字面，L／U／弧會大量變成不可量測，必須誠實標出；若改採最大面／中心線，必須另立 QTY mapping，Excel 不得寫 <code>AREA_WH</code> 卻實際算最大面。<strong>不建議</strong>為了尊重 ND-28 而把 1.x local W／D／H 或使用者指定平面救回來（第一輪 World bbox 可錯 127 倍）</td><td class="s-strong">待決定</td></tr></tbody></table></div>
+<h2 id="LoopFlow-QTY-決策紀錄-第二輪--4-本輪不處理">4　本輪不處理</h2>
+<p>以下維持第一輪狀態，不在本輪收斂：</p>
+<ul><li><strong>QO-03 輸出服務誰</strong>、<strong>QO-04 排序對照表</strong>、<strong>QO-05 工種來源</strong>——需商業判斷，第一輪三家已一致建議先做中性資料，等使用者裁決</li><li><strong>QO-14～QO-17</strong>——缺資料或需效能實測，見 <a href="#LoopFlow-QTY-測試模型補強項目"><code>測試模型.md</code></a> 的補強項目</li></ul>
+<h2 id="LoopFlow-QTY-決策紀錄-第二輪--5-待使用者裁決">5　待使用者裁決</h2>
+<p>三家已填畢 QR-01～QR-15。請在上表「你的決定／說明」欄填寫採用／不採用／部分採用與理由，再將結果移入 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a> 的對應區塊或新增第三輪。</p>
+<p>依本輪規則，可先視為<strong>無衝突、可直接採用</strong>的共同安全底線：</p>
+<ul><li>選取 JSON 不能只存裸 GUID，也不能存絕對路徑、worksession index 或 runtime serial</li><li>未知 <code>schema_id</code>／<code>schema_version</code> 整批停止；缺規則只該件不可量測</li><li>主算法失效時 Excel 不得輸出淨數量</li><li>全集明寫排除 <code>DNA_REF_</code>；hidden／locked 不因此排除</li><li><code>QD-15</code> 改為 MCP 紀律；產品 adapter 自列舉且 <code>ReferenceObjects = True</code></li><li>預覽零寫入；確認後才 atomic write 並留 last-good</li><li>Label 不得新增 Rhino 文件物件</li></ul>
+<p><strong>做法衝突、必須你點頭的三題</strong>：QR-01 主鍵形態、QR-13 單軸或雙軸狀態、QR-15 token 語意。QR-12 的強度差異（一般 vs 強烈）不影響做法，安全底線相同。</p>
+<h1 class="chaptitle" id="LoopFlow-QTY-測試模型補強項目">LoopFlow QTY — 測試模型補強項目</h1>
+<blockquote><p>本文件列出目前驗證模型（<code>LoopFlow_R_MCP.rws</code>）<strong>缺少或可補充</strong>的項目，用來擴大量測方法的驗證範圍。</p>
+<p>建立日期：2026-09-02　｜　現況數字見 <a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a></p></blockquote>
+<h2 id="LoopFlow-QTY-測試模型補強項目--0-測試資產規則">0　測試資產規則</h2>
+<h3 id="LoopFlow-QTY-測試模型補強項目--0-1-為什麼需要補強">0.1 為什麼需要補強</h3>
+<p>目前模型的可量測候選只有 <strong>48 個</strong>（Brep 39 ＋ Block 9），而量測方法的兩個失效情境<strong>各只有 1～2 個樣本</strong>：</p>
+<div class="tw"><table><thead><tr><th>已知失效</th><th>目前樣本數</th></tr></thead><tbody><tr><td>多段包覆面（面積法失效）</td><td><strong>1</strong>（<code>WL-14</code>）</td></tr><tr><td>轉角擠出（長度法失效）</td><td><strong>1</strong>（<code>CL-03</code>）</td></tr><tr><td>閉合環（長度法無端面）</td><td><strong>1 種</strong>（<code>CB-04</code>，兩個實例相同）</td></tr><tr><td>開口</td><td><strong>2</strong>（22.4%、5.0%）</td></tr></tbody></table></div>
+<p><strong>單一樣本無法區分「方法有效」與「這一件剛好對」。</strong> 補強的目的不是讓模型更完整好看，而是讓每個已知失效情境<strong>至少有三個彼此不同的樣本</strong>，並補上目前完全沒有的規則與資料情境。</p>
+<h3 id="LoopFlow-QTY-測試模型補強項目--0-2-必須與原始工作檔隔離">0.2 必須與原始工作檔隔離</h3>
+<ul><li><strong>不得直接改目前的 <code>LoopFlow_3D_R_MCP.3dm</code>、<code>LoopFlow_2D_R_MCP.3dm</code>、正式 Dictionary 或 Registry</strong>。它們是 48 件候選的原始 baseline，也是使用者工作檔。</li><li>Rhino 幾何測試另建可丟棄的 <code>.3dm</code>／<code>.rws</code> 副本；測試 Type、Space 與 <code>m2</code> 規則使用測試 Dictionary／Registry。副本內才使用 <code>_QTY_TEST</code> 前綴圖層或命名。</li><li>效能放大模型與參照失效模型各自獨立，不能和正確性模型混在同一檔，否則盤點數字與 golden baseline 會一起漂移。</li><li>repo 只保存可合法提交的小型 fixtures、期望輸出與建立說明；大型或含專案資料的 Rhino 工作檔留在工作檔區，repo 內以 manifest 記錄檔名、版本與雜湊，不寫某台電腦的絕對路徑。</li></ul>
+<h3 id="LoopFlow-QTY-測試模型補強項目--0-3-每個樣本都要有-oracle">0.3 每個樣本都要有 oracle</h3>
+<p>只「加一個形狀」不足以形成測試。每個樣本至少記錄：</p>
+<ol><li>建構尺寸／方式與用途</li><li>預期 measurement token、估價單位與 exact value</li><li>可接受容差</li><li>預期 measurement status、Coverage status 與警告原因</li><li>身分來源（<code>object_id</code> 或 <code>source_model_key + Rhino GUID</code>）</li></ol>
+<p>若預期答案尚未能由人工或另一種可信方法確認，該物件只能標為探索樣本，不能列入 golden pass/fail。</p>
+<hr>
+<h2 id="LoopFlow-QTY-測試模型補強項目--1-幾何形狀-優先">1　幾何形狀（優先）</h2>
+<p><strong>1. 新增弧形牆面</strong> 目前所有 Brep 都是平面組成。弧牆的「最大單一面」是一個曲面，<code>AreaMassProperties</code> 給的是展開面積——這正是估價要的，但<strong>完全沒有驗證過</strong>。若曲面被切成多片，最大面法會像 <code>WL-14</code> 一樣少算，需要對照值抓。</p>
+<p><strong>2. 新增 L 型與 U 型牆面（各至少 2 個，轉角角度不同）</strong> <code>WL-14</code> 是目前唯一的多段包覆樣本。需要不同轉折數與不同夾角，才能確認「最大面 vs 體積÷厚度」的 10% 閾值是否合理，或該不該依轉折數調整。</p>
+<p><strong>3. 新增斜面物件（斜天花、斜屋頂或樓梯側牆）</strong> 目前所有面不是水平就是垂直。斜面會讓「最大面朝哪裡」的判讀進入灰區，也會影響 <code>AREA_WD</code>／<code>AREA_WH</code> 的相容性檢查（QR-09）。</p>
+<p><strong>4. 新增弧形收邊條或弧形燈帶</strong> 長度法的「體積 ÷ 端面截面積」理論上對曲線路徑成立，但目前<strong>只有直線與一個轉角</strong>驗證過。弧形是實務常見（弧牆的收邊），必須測。</p>
+<p><strong>5. 新增第二、第三種閉合環物件</strong> <code>CB-04 鐵件框架</code> 是唯一的閉合環，且兩個實例完全相同。需要不同尺寸與斷面的環（例如圓形燈帶、口字型框），才能驗證 fallback「取環的中心線周長」。</p>
+<p><strong>6. 新增更多開口樣本，並涵蓋不同開口比例</strong> 目前只有 22.4%（門洞）與 5.0%（小開孔）。建議補：兩個開口的牆、開口占比 40～60% 的牆、以及<strong>開口貫穿但形狀不規則</strong>的牆。用來定 QR-07 的閾值。</p>
+<p><strong>7. 新增「中空但不是開口」的對照物件</strong> <code>CB-04</code>（95.6%）與 <code>CL-03</code>（79.2%）目前是僅有的中空構件。多幾個（例如格柵、百葉、鏤空屏風）才能確認「扣除率分不出開口與中空」這個限制的實際嚴重程度。</p>
+<hr>
+<h2 id="LoopFlow-QTY-測試模型補強項目--2-規則涵蓋-優先">2　規則涵蓋（優先）</h2>
+<p><strong>8. 補上使用 <code>m2</code> 單位的 Type</strong> 目前字典用到的單位是 mm、cm、坪、才、組——<strong>沒有 <code>m2</code></strong>。而舊 <code>quantity.py</code> 的 <code>m2</code> 換算有缺陷（少除 10000，錯一萬倍）。<strong>沒有 <code>m2</code> 樣本就測不到這個已知缺陷</strong>，修完也無從驗證。</p>
+<p>這個 Type 只加在<strong>測試 Dictionary</strong>，不得為了測 QTY 修改現行 2.0 正式 Dictionary。</p>
+<p><strong>9. 補上 <code>VOL_WDH</code> 的裝修材樣本</strong> 目前 <code>VOL_WDH</code> 只出現在結構體（樑、柱），而結構體另有計算方式。裝修材若有體積類項目（例如填充、灌漿），需要樣本。</p>
+<p><strong>10. 補上 <code>AREA_DH</code>、<code>LEN_D</code>、<code>LEN_H</code> 的樣本</strong> 字典的規則詞彙有 8 個 token，但本模型只用到 4 個（<code>COUNT</code>、<code>AREA_WD</code>、<code>AREA_WH</code>、<code>LEN_W</code>）。另外 4 個從未執行過任何一次。即使實務上少用，也應各有一個樣本確認程式路徑會動。</p>
+<p><strong>11. 補齊結構體的實體幾何</strong> <code>Column.柱</code> 與 <code>Wall-Brick.磚牆</code> 目前<strong>只有 <code>DNA_REF_</code> 參考點，沒有真實 Brep</strong>。結構體走 <code>layer_path</code> 查字典這條路只在 5 個圖層上驗證過（Beam、Slab、Curb、Stair、Wall-RC），另外 2 個沒有實體可測。</p>
+<p>只在結構測試副本補上，保留原模型「沒有真實 Brep」的基準事實。</p>
+<hr>
+<h2 id="LoopFlow-QTY-測試模型補強項目--3-資料情境">3　資料情境</h2>
+<p><strong>12. 增加空間數量到至少 5 個，並包含同名跨樓層</strong> 目前只有「廊道」29 個與「衛浴」8 個。分組、排序、<code>space_display → sort_key</code> 對照都無法驗證。同名跨樓層（例如兩層都有「主臥」）是 QO-14 明確點名的風險。</p>
+<p><strong>13. 新增落在 <code>EXT</code>（空間外）的物件</strong> 2.0 的 <code>EXT</code> 同時代表「真的在室外」與「漏畫 boundary」（ED-07 已接受此代價）。QTY 的 Coverage 報告要能列出 <code>EXT</code> 物件，但目前<strong>一個樣本都沒有</strong>。</p>
+<p><strong>14. 新增刻意的「一式」候選物件</strong> 一式黑名單是主動差集（QD-10），但目前模型沒有任何標記為一式的物件，整條排除邏輯無從測試。</p>
+<p><strong>15. 建立一個刻意的參照失效情境</strong> Coverage 五態的「已選取但參照失效」需要可重現的樣本。建議另存一份測試 <code>.rws</code>，其中 3D 檔缺少某些物件，用來驗證失效偵測與報告文字。</p>
+<p><strong>16. 補上未標記門窗 Block 的處置樣本</strong> <code>base</code> 圖層有 <code>3D_W1</code>、<code>3D_D1</code> 兩個 linked block，<strong>沒有 <code>_03_ID編號</code></strong>。它們應該進計算、進 Coverage、還是排除？字典有 <code>DW-01</code>，但這兩個沒被標記。需要決定並建立對應樣本。</p>
+<hr>
+<h2 id="LoopFlow-QTY-測試模型補強項目--4-工作方式與規模">4　工作方式與規模</h2>
+<p><strong>17. 建立「直接開 3D 檔」的對照測試</strong> QR-04 要求兩種開檔方式語意一致，但目前只測過 worksession。直接開 <code>LoopFlow_3D_R_MCP.3dm</code> 時同一批物件會是本機物件而非參照物件，<code>layer_path</code> 也不帶檔名前綴——<strong>這兩點都會走到不同的程式分支</strong>。</p>
+<p><strong>18. 建立效能測試用的放大模型</strong> 目前可量測候選只有 48 個，列舉總量 3116。QO-17 要求測 100／1,000／5,000 候選。可用複製方式產生，但需注意 GUID 會改變（複製產生新 ID）。</p>
+<p><strong>19. 建立三層 fixture 集</strong></p>
+<p>不要把「不需 Rhino」與「能驗證 Rhino 幾何辨識」混為一談：</p>
+<ul><li><strong>純 Python domain fixtures</strong>：保存 adapter 已抽出的 typed records（面積、體積、候選端面／rail、身分、規則與來源 revision），驗證規則 join、狀態機、單位換算與報告；CI 可直接跑。</li><li><strong>Rhino integration fixtures</strong>：小型 <code>.3dm</code>／<code>.rws</code>，驗證 RhinoCommon 的面、端面、block transform、reference 與 layer 正規化；需在 Rhino 內跑。</li><li><strong>Golden outputs</strong>：兩層都對到同一份期望結果；若 integration 擷取結果改變但 domain 測試仍綠，差異必須可見，不能更新 golden 掩蓋。</li></ul>
+<p>合法／錯誤至少各一組，涵蓋直線、轉角、閉合環、包覆面、開口、Block、結構體與參照失效。</p>
+<p><strong>20. 補上身分生命週期與碰撞測試</strong></p>
+<ul><li>儲存／關閉／重開後，同一物件仍能解析</li><li>worksession 改變 attach 順序或多附加一個模型後，locator 仍指向原來源</li><li>同一 3D 檔直接開啟與作為 reference 時，得到相同 canonical locator</li><li>複製來源 <code>.3dm</code> 造成兩個模型具有相同 Rhino GUID 時，必須靠 <code>source_model_key</code> 分開</li><li>專案根目錄搬到另一台電腦後，相對來源鍵仍能解析</li><li>來源檔改名、物件刪除重畫、同一專案出現重複 <code>_07_UUID</code> 時，回傳 lost／conflict，不自動猜配</li></ul>
+<p><strong>21. 補上模型單位對照</strong></p>
+<p>以已知尺寸分別建立 cm、mm（必要時再加 m）的小型模型，確認幾何 raw、估價單位 exact value 與顯示值不會因文件單位相差 10／100 倍。不可直接改原始模型單位來測。</p>
+<p><strong>22. 補上 Block transform 與不支援幾何</strong></p>
+<p>至少包含旋轉、鏡射、非等比縮放、巢狀／linked block、多個 instance 共用 definition，以及 open／invalid Brep。Mesh、SubD 等範圍外型別也要有排除案例與明確原因，避免它們被無聲漏掉。</p>
+<hr>
+<h2 id="LoopFlow-QTY-測試模型補強項目--5-建議的補強順序">5　建議的補強順序</h2>
+<div class="tw"><table><thead><tr><th>順序</th><th>項目</th><th>理由</th></tr></thead><tbody><tr><td>1</td><td>19（fixture 三層）與 oracle 格式</td><td>先固定怎樣才算「測過」，否則後續只是在堆模型</td></tr><tr><td>2</td><td>8（<code>m2</code>）、11（結構實體）、20（身分）</td><td>補<strong>已知缺陷</strong>、未完整路徑與 QR-01 的安全契約</td></tr><tr><td>3</td><td>1～7（幾何形狀）</td><td>直接決定 QR-03 的長度 fallback 與 QR-07 的開口閾值能不能定案</td></tr><tr><td>4</td><td>12～17、21、22</td><td>解鎖分組、Coverage、直接開檔、單位、Block 與失效行為</td></tr><tr><td>5</td><td>9、10、18</td><td>補完整性與效能；效能模型獨立建立，可與實作並行</td></tr></tbody></table></div>
+<blockquote><p><strong>注意</strong>：原始工作檔不補強，因此 <a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a> 的 48 件 baseline 保持不變。各測試副本另有自己的 manifest 與盤點，不把數字混回原始模型。</p></blockquote>
+<hr>
+<h2 id="LoopFlow-QTY-測試模型補強項目--6-Cursor-覆核-2026-09-02-公司電腦">6　Cursor 覆核（2026-09-02，公司電腦）</h2>
+<p>同意 Codex 的隔離、oracle 與三層 fixture。本輪 MCP 對原始 <code>LoopFlow_R_MCP.rws</code> 的補充：</p>
+<div class="tw"><table><thead><tr><th>現況</th><th>對測試資產的意義</th></tr></thead><tbody><tr><td>曲面 Brep <strong>0</strong>、open Brep <strong>0</strong></td><td>項目 1、22 在原始模型完全空白，只能靠副本</td></tr><tr><td>Registry 37／37 對得上、revision 4</td><td>原始模型測不到 QR-02 漂移；見下方項目 23</td></tr><tr><td>標記物件 EXT <strong>0</strong>、空間名只有廊道／衛浴</td><td>項目 13、12 仍缺</td></tr><tr><td><code>EL-07</code> 隱藏、<code>SA-01</code> 鎖定</td><td>原始模型已有 hidden／locked 樣本，但仍應在副本做成可重跑的 oracle；見項目 24</td></tr><tr><td><code>3D_W1</code>／<code>3D_D1</code> transform 不是 Identity</td><td>項目 22 的「旋轉」有弱樣本；仍缺鏡射與非等比縮放</td></tr><tr><td>結構末層實名是 <code>Wall-Brick.牆-Brick</code>、<code>Wall-RC.牆-RC</code></td><td>測試副本的 <code>layer_path</code> 必須用這個字，不能寫「磚牆」</td></tr></tbody></table></div>
+<h3 id="LoopFlow-QTY-測試模型補強項目--建議新增">建議新增</h3>
+<p><strong>23. 建立 Registry 漂移副本（優先，對應 QR-02）</strong> 原始檔已經 37／37 對齊，測不到失敗路徑。隔離副本至少要有：live 有、Registry 無；Registry 有、live 無；revision／內容雜湊不同；未知 <code>schema_id</code>。每種都要有期望狀態，不能只改一個數字。</p>
+<p><strong>24. 將 hidden／locked 做成可重跑 oracle（對應 QR-04）</strong> 原始模型已有 <code>EL-07</code> 隱藏、<code>SA-01</code> 鎖定。副本應明確記錄「這兩件必須進全集、必須能量測或標不可量測，不得因隱藏／鎖定被漏掉」。</p>
+<p><strong>25. 重複 <code>_07_UUID</code> 與來源複本 GUID 碰撞（對應 QR-01）</strong> 本 session 3116 個 GUID 不重複、37 個 UUID 不重複，所以「conflict、不猜配」這條路目前是空的。</p>
+<p>補強順序建議把 <strong>23、25 插入第 2 批</strong>（與身分、<code>m2</code> 一起），<strong>24 可與第 4 批</strong>的 Coverage／開檔方式一起。</p>
+<h1 class="chaptitle" id="LoopFlow-QTY-開發順序計畫">LoopFlow QTY — 開發順序計畫</h1>
+<blockquote><p>本文件是 QTY <strong>任務切分與開發順序</strong>的唯一來源。範圍見 <a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a>，決策狀態見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a>／<a href="#LoopFlow-QTY-決策紀錄-第二輪"><code>決策紀錄_2.md</code></a>。</p>
+<p>建立日期：2026-09-02　｜　階段：<strong>尚未開工</strong></p></blockquote>
+<p>比照 2.0 的 <a href="../../../v2/docs/開發任務與路徑.md"><code>開發任務與路徑.md</code></a>：本表只安排工程工作，<strong>不另立資料或業務答案</strong>。任何需要裁決的問題一律回決策紀錄，不在此處自行決定。</p>
+<h3 id="LoopFlow-QTY-開發順序計畫--Cursor-覆核-2026-09-02">Cursor 覆核（2026-09-02）</h3>
+<p>同意 P0→P6 與「先 contracts／fixtures 再核心」。不改任務編號，只補驗收時要注意的三點：</p>
+<ol><li><strong>QT-002 就要定雙軸狀態欄位</strong>（Coverage vs measurement，QR-13）。不要拖到 P4 才發明 schema，否則 P1 的 <code>不可自動量測</code> 會沒地方放。</li><li><strong>QT-004／QT-005 必須含 Registry 漂移、重複 UUID、hidden／locked 的隔離副本</strong>（見 <a href="#LoopFlow-QTY-測試模型補強項目"><code>測試模型.md</code></a> §6）。原始 <code>LoopFlow_R_MCP.rws</code> 已經 37／37 對齊，用它測 QR-02 會永遠綠燈。</li><li><strong>QT-013 不得在 QR-15 未裁決前用最大面「先做再改」。</strong> 那會讓 golden xlsx 寫著 <code>AREA_WH</code>、實際卻是另一套算法。</li></ol>
+<h2 id="LoopFlow-QTY-開發順序計畫--1-執行規則">1　執行規則</h2>
+<ul><li>一次只修改一個 repo；同一 repo 同一時間只由一台電腦／一個 AI 作業</li><li>P0 裁決完成、準備進入程式實作時，先由 <code>main</code> 建立長期整合分支 <code>qty-development</code>；每項任務再由該分支建立 <code>codex/qty-&lt;scope&gt;</code> 短期分支。日常批次回整合分支，達成發布關卡後才合回 <code>main</code></li><li>任務開始前確認 upstream、乾淨工作樹與 <code>pull --ff-only</code>；結束前完成檢查、commit、push 與交接</li><li><strong>任務須小到能在單一工作時段完成並留下可驗證的完整狀態</strong>。超過一個時段就先拆，不以未提交檔案換機</li><li>程式一律放 <code>qty/src/</code>，<strong>不得寫進 <code>v2/src/loopflow</code></strong></li><li>每個階段結束都是<strong>雙機安全停點</strong>：可換機、可中斷、下次接手不需要口頭補充</li></ul>
+<h2 id="LoopFlow-QTY-開發順序計畫--2-階段總覽">2　階段總覽</h2>
+<pre class="code" data-lang="text"><code>P0  裁決與前置        ← 目前在這裡
+     ↓
+P1  純 Python 核心    ← 不需要 Rhino，可 headless 測
+     ↓
+P2  Rhino adapter     ← 需要 Rhino，但不需要 GH
+     ↓
+P3  選取與持久化
+     ↓
+P4  Coverage 與預覽
+     ↓
+P5  Excel 輸出
+     ↓
+P6  Rhino 入口與發布（最後，且刻意很薄）</code></pre>
+<p><strong>倒過來做會很貴</strong>：先做大型 <code>.gh</code> 會讓核心邏輯埋進二進位、無法 headless 測試，也無法在多 AI 之間交接。這是 2.0 已驗證的順序，不是偏好。</p>
+<h2 id="LoopFlow-QTY-開發順序計畫--3-P0-裁決與前置-進入實作前的硬性關卡">3　P0　裁決與前置（進入實作前的硬性關卡）</h2>
+<div class="tw"><table><thead><tr><th>ID</th><th>任務</th><th>前置</th><th>完成條件</th></tr></thead><tbody><tr><td><strong>QT-001</strong></td><td>裁決實作阻擋</td><td><code>決策紀錄_2.md</code> 三家填畢</td><td>QR-01 身分、QR-02 輸入權威、QR-03 長度失效處置、QR-15 token 語意皆有裁決並記錄理由</td></tr><tr><td><strong>QT-002</strong></td><td>定義 domain contracts</td><td>QT-001</td><td>source locator、input provenance、measurement result、Coverage status、measurement status、error／warning 皆有 typed schema；未知版本停止，不猜測</td></tr><tr><td><strong>QT-003</strong></td><td>定義外部檔案 schema</td><td>QT-002</td><td>選取／一式、排序對照、報告各有 <code>schema_id</code>／<code>schema_version</code>、project／stage identity 與相對來源鍵；不含絕對路徑</td></tr><tr><td><strong>QT-004</strong></td><td>建立隔離的 Rhino 測試副本</td><td>—</td><td>不修改原始工作檔、正式 Dictionary／Registry；每個副本有 manifest、雜湊與盤點</td></tr><tr><td><strong>QT-005</strong></td><td>建立三層 fixtures 與 golden baseline</td><td>QT-002、QT-004</td><td>純 domain records、Rhino integration fixtures、golden outputs 對齊；每件有期望值、容差與狀態，合法／錯誤情境皆可重跑</td></tr><tr><td><strong>QT-006</strong></td><td>建立 QTY package 與測試骨架</td><td>QT-002</td><td><code>qty/src/</code>、<code>qty/tests/</code>、版本資訊與測試入口可在無 Rhino 環境執行；純核心不 import <code>Rhino</code> 或 <code>v2</code> 私有模組</td></tr></tbody></table></div>
+<blockquote><p><strong>QT-005、QT-006 未完成前不進 P1。</strong> 沒有 contracts、golden baseline 與可執行骨架，就無法判斷後續修改是修好還是弄壞。</p></blockquote>
+<h2 id="LoopFlow-QTY-開發順序計畫--4-P1-純-Python-核心-不需要-Rhino">4　P1　純 Python 核心（不需要 Rhino）</h2>
+<p>以幾何抽象介面接收資料，不 import <code>Rhino</code>。可用 <code>python test_*.py</code> 直接跑。</p>
+<div class="tw"><table><thead><tr><th>ID</th><th>任務</th><th>前置</th><th>完成條件</th></tr></thead><tbody><tr><td><strong>QT-010</strong></td><td>Result／錯誤與來源模型</td><td>QT-005、QT-006</td><td>成功、warning、不可量測、schema error 都有明確 typed result；每筆保留 Dictionary／Registry provenance，不用例外或字串猜狀態</td></tr><tr><td><strong>QT-011</strong></td><td>單位換算與量綱驗證</td><td>QT-010</td><td>先為舊 <code>quantity.py</code> 建 characterization tests，再在 QTY 核心重寫最小換算；<strong>修正 <code>m2</code> 少除 10000</strong>。不得整檔搬回 1.x 架構；輸出 normalized raw 與 converted exact value</td></tr><tr><td><strong>QT-012</strong></td><td>字典載入與規則 join</td><td>QT-011</td><td><code>type_id</code> 與 <code>layer_path</code> 兩條查詢路徑；<code>layer_path</code> <strong>必須剝除 worksession 檔名前綴</strong>（QR-06）</td></tr><tr><td><strong>QT-013</strong></td><td>面積算法</td><td>QT-012、QR-15 已裁決</td><td>依裁決後的 measurement token 語意實作；最大單一面 ＋ 體積÷厚度只在適用策略使用。差異超閾值回傳 <code>不可自動量測</code>，不回傳淨數量</td></tr><tr><td><strong>QT-014</strong></td><td>長度算法</td><td>QT-012</td><td>體積÷端面截面積 ＋ 最長邊對照；<strong>失效時回傳 <code>不可自動量測</code>，不得回傳主要值</strong>（QR-03）</td></tr><tr><td><strong>QT-015</strong></td><td>長度 fallback 原型與升格</td><td>QT-014</td><td>閉合環中心線周長、轉角內外 rail 平均先作 prototype；各至少三種 fixture 通過期望值與容差後才升格，否則維持不可量測</td></tr><tr><td><strong>QT-016</strong></td><td>計數與體積</td><td>QT-012</td><td><code>COUNT</code> 與 <code>VOL_WDH</code></td></tr><tr><td><strong>QT-017</strong></td><td>開口偵測</td><td>QT-013</td><td>只回報扣除率與標記，<strong>不自動扣量</strong>（QR-07）</td></tr></tbody></table></div>
+<p><strong>P1 停點</strong>：核心可在無 Rhino 環境下對 fixtures 產出正確結果，golden baseline 全綠。</p>
+<h2 id="LoopFlow-QTY-開發順序計畫--5-P2-Rhino-adapter-需要-Rhino-不需要-GH">5　P2　Rhino adapter（需要 Rhino，不需要 GH）</h2>
+<div class="tw"><table><thead><tr><th>ID</th><th>任務</th><th>前置</th><th>完成條件</th></tr></thead><tbody><tr><td><strong>QT-021</strong></td><td>物件列舉 adapter</td><td>P1 完成</td><td>使用 <code>ObjectEnumeratorSettings</code> 且 <code>ReferenceObjects = True</code>，沿用 <code>live.py</code> 寫法（QR-05）</td></tr><tr><td><strong>QT-022</strong></td><td>全集篩選</td><td>QT-021</td><td>合法產品圖層範圍內的 Brep 與 Block，<strong>排除 <code>DNA_REF_</code> 前綴</strong>（QR-04）</td></tr><tr><td><strong>QT-023</strong></td><td>身分與來源解析</td><td>QT-021、QT-001</td><td>依 QR-01 產生版本化 locator；UUID 與 <code>source_model_key + Rhino GUID</code> 分流，絕對路徑、model index／runtime serial 不進持久資料；重複與多重命中回 conflict</td></tr><tr><td><strong>QT-024</strong></td><td>開檔方式與身分生命週期測試</td><td>QT-022、QT-023</td><td>worksession／直接開 3D 結果相同；另測 attach 順序、跨電腦根目錄、來源複本 GUID 碰撞、刪除重畫與重複 UUID（<code>測試模型.md</code> 第 17、20 項）</td></tr><tr><td><strong>QT-025</strong></td><td>唯讀 invariant 測試</td><td>QT-021</td><td>證明執行後 UserText、顯示屬性與 <code>doc.Modified</code> 皆復原（QD-11）</td></tr></tbody></table></div>
+<p><strong>P2 停點</strong>：能在真實模型上產出逐物件量測結果，且證明沒有寫入任何東西。</p>
+<h2 id="LoopFlow-QTY-開發順序計畫--6-P3-選取與持久化">6　P3　選取與持久化</h2>
+<div class="tw"><table><thead><tr><th>ID</th><th>任務</th><th>前置</th><th>完成條件</th></tr></thead><tbody><tr><td><strong>QT-031</strong></td><td>選取 JSON 讀寫</td><td>QT-023、QT-003</td><td>寫入 <code>_LoopFlow_Config/loopflow_QTY/</code>；預覽零寫入，明確確認後才以 pending → 驗證讀回 → atomic replace 更新 current 並保留 last-good；不得含絕對路徑</td></tr><tr><td><strong>QT-032</strong></td><td>一式黑名單</td><td>QT-031</td><td>主動差集，以 QR-01 locator 為鍵；任何物件入口都先扣除</td></tr><tr><td><strong>QT-033</strong></td><td>參照失效與衝突偵測</td><td>QT-031</td><td>locator 找不到、多重命中、來源鍵改名或 UUID 重複時分別明確回報，不靜默略過或猜配</td></tr></tbody></table></div>
+<p><strong>P3 停點</strong>：選取狀態可跨 session 保存與還原，失效可偵測。</p>
+<h2 id="LoopFlow-QTY-開發順序計畫--7-P4-Coverage-與預覽">7　P4　Coverage 與預覽</h2>
+<div class="tw"><table><thead><tr><th>ID</th><th>任務</th><th>前置</th><th>完成條件</th></tr></thead><tbody><tr><td><strong>QT-041</strong></td><td>Coverage 與 measurement 雙軸狀態</td><td>P3 完成</td><td>Coverage 五態維持互斥；measurement status 另欄保存 measured／warning／unmeasurable／missing rule 等結果。定義各自優先序與合成顯示，顏色後定（QR-13）</td></tr><tr><td><strong>QT-042</strong></td><td>GH 薄殼</td><td>P1、P2</td><td>只負責轉交與顯示；含 <code>importlib.reload()</code> 且標明為開發期行為</td></tr><tr><td><strong>QT-043</strong></td><td>顏色與 Label 預覽</td><td>QT-041、QT-042</td><td>非持久化 preview／conduit，<strong>不新增 Rhino 文件物件</strong>（QR-12）</td></tr></tbody></table></div>
+<p><strong>P4 停點</strong>：能在模型中看到分類顏色與數量文字，並列出五態。</p>
+<h2 id="LoopFlow-QTY-開發順序計畫--8-P5-Excel-輸出">8　P5　Excel 輸出</h2>
+<div class="tw"><table><thead><tr><th>ID</th><th>任務</th><th>前置</th><th>完成條件</th></tr></thead><tbody><tr><td><strong>QT-051</strong></td><td>欄位契約與 golden xlsx</td><td>QT-002</td><td>估價單與明細兩張表的欄位鎖定</td></tr><tr><td><strong>QT-052</strong></td><td>Excel writer adapter</td><td>QT-051</td><td>程式放 <code>qty/src/</code>；只透過版本化 shared boundary 共用 writer。若 <code>v2</code> writer 仍是私有模組，則在 QTY 建立受測薄 adapter，不直接形成 runtime import</td></tr><tr><td><strong>QT-053</strong></td><td>標記件的輸出規則</td><td>QT-014、QT-017</td><td><strong>不可自動量測</strong>者留空並標記，不得輸出主要值當淨數量</td></tr></tbody></table></div>
+<p><strong>P5 停點</strong>：完整閉環——選取 → 算 → 看 → 確認 → Excel。</p>
+<h2 id="LoopFlow-QTY-開發順序計畫--9-P6-Rhino-入口與發布-最後">9　P6　Rhino 入口與發布（最後）</h2>
+<p>刻意很薄，只做環境入口與狀態檢查。</p>
+<div class="tw"><table><thead><tr><th>ID</th><th>任務</th><th>前置</th><th>完成條件</th></tr></thead><tbody><tr><td><strong>QT-061</strong></td><td><code>QTY_Open</code></td><td>P5 完成</td><td>確認文件／worksession、專案資料、開啟 GH 並載入 definition。<strong>必須由 Rhino／GH 正常開啟，不得 headless 載入</strong></td></tr><tr><td><strong>QT-062</strong></td><td><code>QTY_Status</code></td><td>QT-061</td><td>顯示專案、3D 附加、字典、Registry revision、<code>.gh</code>、GH 狀態</td></tr><tr><td><strong>QT-063</strong></td><td>GH／source 版本 manifest</td><td>QT-061</td><td><code>.gh</code>、外部 source、schema 版本與 checksum 可互相核對；正式版停用 <code>importlib.reload()</code>，版本不符時阻擋並說明</td></tr><tr><td><strong>QT-064</strong></td><td>安裝包與實機 smoke test</td><td>QT-062、QT-063</td><td>在乾淨 Rhino 8 環境安裝，完成直接開 3D 與 worksession 的「開啟 → 預覽 → 確認 → Excel」；卸載／回復方式有紀錄</td></tr></tbody></table></div>
+<h2 id="LoopFlow-QTY-開發順序計畫--10-不在本計畫內">10　不在本計畫內</h2>
+<ul><li><strong>MCP 不是產品相依</strong>。它只用於開發期唯讀觀察與無互動驗證，不出現在任何交付路徑</li><li><strong>公式化 Excel</strong>、<strong>參考單價</strong>、<strong>損耗率</strong>：可選後續或永不進工具（見 <code>範圍與邊界.md</code> §5）</li><li><strong><code>QTY_View</code>／<code>QTY_ResetView</code></strong>：待實際工作一段時間後再決定是否需要</li></ul>
+<h2 id="LoopFlow-QTY-開發順序計畫--11-每階段的交接要求">11　每階段的交接要求</h2>
+<p>比照 2.0，每個停點必須留下：</p>
+<ol><li>該階段的完成條件逐項核對結果（實際跑過，不是宣稱）</li><li>未完成或繞過的項目與理由</li><li>commit ID 與推送狀態</li><li>下一階段的第一個任務 ID</li></ol>
+<p>換機時另依工作區 <code>AGENTS.md</code> 的交接規範辦理。</p></main>
+</div>
+<script>
+(function(){
+  document.querySelectorAll('input.ck').forEach(function(box){
+    var key='qty:'+box.getAttribute('data-key');
+    try{
+      var saved=localStorage.getItem(key);
+      if(saved!==null){ box.checked = saved==='1'; }
+    }catch(e){}
+    var row=box.closest('tr');
+    row.classList.toggle('done', box.checked);
+    box.addEventListener('change', function(){
+      try{ localStorage.setItem(key, box.checked?'1':'0'); }catch(e){}
+      row.classList.toggle('done', box.checked);
+    });
+  });
+
+  var links=[].slice.call(document.querySelectorAll('nav a'));
+  var targets=links.map(function(a){return document.getElementById(a.getAttribute('href').slice(1));});
+  function upd(){
+    var y=window.scrollY+140, best=-1;
+    for(var i=0;i<targets.length;i++){ if(targets[i]&&targets[i].offsetTop<=y) best=i; }
+    links.forEach(function(a,i){ a.classList.toggle('active', i===best); });
+  }
+  window.addEventListener('scroll',upd,{passive:true});
+  upd();
+})();
+</script>
+</body>
+</html>

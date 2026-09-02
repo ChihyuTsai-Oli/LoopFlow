@@ -1,228 +1,500 @@
 # -*- coding: utf-8 -*-
-"""把 qty 的前期評估 Markdown 轉成寬版 HTML 閱讀檔。
+"""把 QTY 前期評估的多份 Markdown 合併成單一離線 HTML，方便跨裝置檢視。
 
-格式參照 R2B 的 `wip/docs/前期規劃/資料生態決策表_三家建議.html`：
-深色主題、側欄導覽、sticky 表頭與首欄、寬表可橫向捲動。
+用途
+    `docs/前期評估/前期評估總覽.html` 是衍生檔，不應手動編輯。
+    修改對應的 .md 之後執行本腳本重新產生，才會跟來源一致。
 
-用法：
+執行
     python qty/tools/build_html.py
+    python qty/tools/build_html.py --src 決策紀錄_2.md 測試模型.md   # 只合併指定檔案
+    python qty/tools/build_html.py --out 我的總覽.html
+    python qty/tools/build_html.py --check    # 只檢查是否過期，不寫檔
 
-衍生的 .html 不應手動編輯；改 .md 後重跑本工具。
-純 stdlib，不需要任何套件。
+環境
+    僅需 Python 3.8+ 標準函式庫，不依賴任何套件。路徑一律相對於本檔位置解析。
+
+格式
+    沿用 `D:\\Dropbox\\戰備物資\\tools\\build_html.py` 的版面與行為（兩層側邊
+    目錄、捲動高亮、響應式、列印樣式、checkbox 保存、--check 過期檢查）。
+
+    QTY 專屬的追加：決策表（六欄以上）的最後一欄依三家建議強度自動上色，
+    白＝強烈建議×2+、黃＝一般建議×2+、綠＝輕鬆建議×2+。
+
+限制
+    只支援本專案文件實際使用的 Markdown 子集：標題（# ~ ####）、段落、清單、
+    表格、圍欄程式碼區塊、引言區塊、水平線、粗體、行內程式碼、連結、`<br>`。
+    文件間的相對連結若指向合併清單中的其他來源檔，會自動轉成頁內錨點。
 """
+
 from __future__ import annotations
 
+import argparse
 import html
-import io
 import re
 import sys
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-DOCS = HERE.parent / "docs" / "前期評估"
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
-# 要產生 HTML 的檔案；strength=True 表示依三家建議強度替「你的決定」欄上色
-TARGETS = [
-    ("決策紀錄_2.md", "LoopFlow QTY — 決策紀錄（第二輪）", True),
-    ("測試模型.md", "LoopFlow QTY — 測試模型補強項目", False),
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DOCS_DIR = PROJECT_ROOT / "docs" / "前期評估"
+DEFAULT_ORDER = [
+    "README.md",
+    "範圍與邊界.md",
+    "資料盤點.md",
+    "量測方法.md",
+    "決策紀錄_1.md",
+    "決策紀錄_2.md",
+    "測試模型.md",
+    "開發順序計畫.md",
 ]
+DEFAULT_OUT = DOCS_DIR / "前期評估總覽.html"
 
-CSS = """
-:root{color-scheme:dark;--bg:#101417;--panel:#171d21;--line:#39444a;--text:#edf2f3;--muted:#a9b4b8;--accent:#74c9b4}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.65 system-ui,"Noto Sans TC",sans-serif}
-.layout{display:grid;grid-template-columns:270px minmax(0,1fr);min-height:100vh}
-nav{position:sticky;top:0;height:100vh;overflow:auto;padding:28px 20px;border-right:1px solid var(--line);background:#0c1012}
-nav strong{display:block;margin-bottom:14px;color:var(--accent);font-size:17px;line-height:1.4}
-nav a{display:block;padding:5px 8px;color:var(--muted);text-decoration:none;border-radius:5px;font-size:14px}
-nav a.sub{padding-left:20px;font-size:13px}
-nav a:hover{color:var(--text);background:#20292d}
-main{min-width:0;padding:34px 36px 70px}
-h1{margin-top:0;font-size:28px}
-h2{margin-top:42px;padding-top:8px;border-top:1px solid var(--line)}
-h3{margin-top:28px;color:#cfe6df}
-.notice{margin:0 0 22px;padding:12px 16px;border-left:4px solid var(--accent);background:#182421;color:#cde3de}
-.tw{max-height:78vh;margin:18px 0 28px;overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
-table{width:100%;border-collapse:separate;border-spacing:0}
-table.wide{min-width:2200px}
-th,td{padding:10px 12px;vertical-align:top;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
-th{position:sticky;top:0;z-index:3;background:#243036;color:#f5faf9;text-align:left}
-th:first-child,td:first-child{position:sticky;left:0;z-index:2;background:#1b2428;font-weight:650}
-th:first-child{z-index:4;background:#243036}
-td.s-strong{color:#ffffff;font-weight:650}
-td.s-normal{color:#f5e04a}
-td.s-light{color:#6fdc8c}
-code{padding:.12em .35em;background:#252d31;border-radius:4px;font-size:.92em}
-pre{padding:14px 16px;background:#0c1012;border:1px solid var(--line);border-radius:8px;overflow:auto}
-pre code{padding:0;background:none}
-blockquote{margin:16px 0;padding:10px 16px;border-left:4px solid #4b5a60;background:#141a1d;color:#cbd6da}
-blockquote p:first-child{margin-top:0}blockquote p:last-child{margin-bottom:0}
-a{color:var(--accent)}
-.legend{margin:0 0 18px;font-size:14px}
-.legend span{display:inline-block;margin-right:16px;font-weight:650}
-"""
-
-INLINE_CODE = re.compile(r"`([^`]+)`")
-BOLD = re.compile(r"\*\*(.+?)\*\*")
-LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+SITE_BRAND = "LoopFlow QTY"
+SITE_TITLE = "前期評估總覽"
 
 
-def inline(text: str) -> str:
-    """行內語法。先抽出 <br> 佔位，避免被跳脫。"""
-    text = text.replace("<br>", "\x00BR\x00")
-    out, last = [], 0
-    for m in INLINE_CODE.finditer(text):
-        out.append(html.escape(text[last:m.start()]))
-        out.append("<code>%s</code>" % html.escape(m.group(1)))
-        last = m.end()
-    out.append(html.escape(text[last:]))
-    s = "".join(out)
-    s = BOLD.sub(lambda m: "<strong>%s</strong>" % m.group(1), s)
-    s = LINK.sub(lambda m: '<a href="%s">%s</a>' % (m.group(2), m.group(1)), s)
-    return s.replace("\x00BR\x00", "<br>")
+# ==================================================================
+# 行內格式
+# ==================================================================
+def make_inline(link_resolver):
+    """回傳 inline()；link_resolver 決定 .md 連結是否轉為頁內錨點。"""
+
+    def inline(text: str) -> str:
+        code_spans: list[str] = []
+        link_spans: list[tuple[str, str]] = []
+
+        def stash_code(m: re.Match) -> str:
+            code_spans.append(m.group(1))
+            return "\x00c%d\x00" % (len(code_spans) - 1)
+
+        def stash_link(m: re.Match) -> str:
+            link_spans.append((m.group(1), m.group(2)))
+            return "\x00l%d\x00" % (len(link_spans) - 1)
+
+        text = re.sub(r"`([^`]+)`", stash_code, text)
+        text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", stash_link, text)
+        text = text.replace("<br>", "\x00b\x00")
+        text = html.escape(text)
+        text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+        text = text.replace("\x00b\x00", "<br>")
+
+        def unstash_link(m: re.Match) -> str:
+            label, href = link_spans[int(m.group(1))]
+            label_html = html.escape(label)
+            anchor = link_resolver(href)
+            if anchor is None:
+                return '<a href="%s">%s</a>' % (html.escape(href), label_html)
+            return '<a href="#%s">%s</a>' % (anchor, label_html)
+
+        text = re.sub(r"\x00l(\d+)\x00", unstash_link, text)
+        text = re.sub(
+            r"\x00c(\d+)\x00",
+            lambda m: "<code>%s</code>" % html.escape(code_spans[int(m.group(1))]),
+            text,
+        )
+        return text
+
+    return inline
 
 
 def slug(text: str) -> str:
-    s = re.sub(r"[`*\[\]()]", "", text).strip()
-    return re.sub(r"\s+", "-", s)
+    return re.sub(r"[^\w一-鿿]+", "-", text).strip("-") or "sec"
+
+
+def first_h1(md: str) -> str:
+    m = re.search(r"^#\s+(.*)$", md, re.M)
+    return m.group(1).strip() if m else "未命名文件"
 
 
 def strength_class(cells: list[str]) -> str:
-    """依三家建議欄的強度多數決，決定最後一欄的顏色。"""
+    """依三家建議欄的強度多數決決定最後一欄顏色（QTY 專屬）。"""
     body = " ".join(cells)
-    n_strong = body.count("強烈建議")
-    n_normal = body.count("一般建議")
-    n_light = body.count("輕鬆建議")
-    if n_strong >= 2:
+    if body.count("強烈建議") >= 2:
         return "s-strong"
-    if n_normal >= 2:
+    if body.count("一般建議") >= 2:
         return "s-normal"
-    if n_light >= 2:
+    if body.count("輕鬆建議") >= 2:
         return "s-light"
     return ""
 
 
-def split_row(line: str) -> list[str]:
-    return [c.strip() for c in line.strip().strip("|").split("|")]
-
-
-def convert(md: str, colour: bool) -> tuple[str, list[tuple[int, str, str]]]:
+# ==================================================================
+# 單一來源檔轉換
+# ==================================================================
+def convert_file(md: str, chapter_id: str, inline) -> tuple[str, list[tuple[int, str, str]]]:
     lines = md.split("\n")
     out: list[str] = []
     toc: list[tuple[int, str, str]] = []
-    i = 0
-    while i < len(lines):
-        ln = lines[i]
+    i, n = 0, len(lines)
 
-        if ln.startswith("```"):
+    def cells(row: str) -> list[str]:
+        return [c.strip() for c in row.strip().strip("|").split("|")]
+
+    while i < n:
+        stripped = lines[i].strip()
+
+        if stripped.startswith("```"):
+            lang = stripped[3:].strip() or "text"
             i += 1
             buf = []
-            while i < len(lines) and not lines[i].startswith("```"):
-                buf.append(lines[i]); i += 1
+            while i < n and not lines[i].strip().startswith("```"):
+                buf.append(lines[i])
+                i += 1
             i += 1
-            out.append("<pre><code>%s</code></pre>" % html.escape("\n".join(buf)))
+            out.append(
+                '<pre class="code" data-lang="%s"><code>%s</code></pre>'
+                % (html.escape(lang), html.escape("\n".join(buf)))
+            )
             continue
 
-        m = re.match(r"^(#{1,4})\s+(.*)$", ln)
+        if re.fullmatch(r"-{3,}", stripped):
+            out.append("<hr>")
+            i += 1
+            continue
+
+        if (
+            stripped.startswith("|")
+            and i + 1 < n
+            and re.fullmatch(r"\|[\s:|-]+\|", lines[i + 1].strip())
+        ):
+            head = cells(stripped)
+            i += 2
+            body = []
+            while i < n and lines[i].strip().startswith("|"):
+                body.append(cells(lines[i]))
+                i += 1
+
+            wide = len(head) >= 5
+            parts = ['<div class="tw"><table%s>' % (' class="wide"' if wide else ""), "<thead><tr>"]
+            parts += ["<th>%s</th>" % inline(c) for c in head]
+            parts.append("</tr></thead><tbody>")
+            for ridx, row in enumerate(body):
+                row = (row + [""] * len(head))[: len(head)]
+                first = row[0].strip().lower()
+                if first in ("[ ]", "[x]"):
+                    checked = first == "[x]"
+                    key = slug("%s-chk-%d-%s" % (chapter_id, ridx, row[1] if len(row) > 1 else ""))
+                    box = ('<input type="checkbox" class="ck" data-key="%s"%s>'
+                           % (html.escape(key), " checked" if checked else ""))
+                    tds = ['<td class="ckcell">%s</td>' % box]
+                    tds += ["<td>%s</td>" % inline(c) for c in row[1:]]
+                    parts.append('<tr class="ckrow%s">%s</tr>'
+                                 % (" done" if checked else "", "".join(tds)))
+                else:
+                    cls = strength_class(row[:-1]) if wide else ""
+                    tds = []
+                    for k, c in enumerate(row):
+                        last = k == len(row) - 1
+                        tds.append("<td%s>%s</td>"
+                                   % ((' class="%s"' % cls) if (last and cls) else "", inline(c)))
+                    parts.append("<tr>%s</tr>" % "".join(tds))
+            parts.append("</tbody></table></div>")
+            out.append("".join(parts))
+            continue
+
+        m = re.match(r"^(#{1,4})\s+(.*)$", stripped)
         if m:
-            lv, txt = len(m.group(1)), m.group(2)
-            sid = slug(txt)
-            if lv in (2, 3):
-                toc.append((lv, sid, re.sub(r"[`*]", "", txt)))
-            out.append("<h%d id=\"%s\">%s</h%d>" % (lv, sid, inline(txt), lv))
+            level, title = len(m.group(1)), m.group(2).strip()
+            if level == 1:
+                sid = chapter_id
+                out.append('<h1 class="chaptitle" id="%s">%s</h1>' % (sid, inline(title)))
+            else:
+                sid = "%s--%s" % (chapter_id, slug(title))
+                out.append("<h%d id=\"%s\">%s</h%d>" % (level, sid, inline(title), level))
+            toc.append((level, title, sid))
             i += 1
             continue
 
-        if ln.startswith(">"):
+        if re.match(r"^\d+\.\s+", stripped):
+            items = []
+            while i < n and re.match(r"^\d+\.\s+", lines[i].strip()):
+                body = [inline(re.sub(r"^\d+\.\s+", "", lines[i].strip()))]
+                i += 1
+                sub = []
+                while i < n and re.match(r"^\s{2,}[-·]\s+", lines[i]):
+                    sub.append("<li>%s</li>" % inline(re.sub(r"^\s+[-·]\s+", "", lines[i])))
+                    i += 1
+                if sub:
+                    body.append("<ul>%s</ul>" % "".join(sub))
+                items.append("<li>%s</li>" % "".join(body))
+            out.append("<ol>%s</ol>" % "".join(items))
+            continue
+
+        if re.match(r"^-\s+", stripped):
+            items = []
+            while i < n and re.match(r"^-\s+", lines[i].strip()):
+                items.append("<li>%s</li>" % inline(re.sub(r"^-\s+", "", lines[i].strip())))
+                i += 1
+            out.append("<ul>%s</ul>" % "".join(items))
+            continue
+
+        if stripped.startswith(">"):
             buf = []
-            while i < len(lines) and (lines[i].startswith(">") or
-                                      (buf and lines[i].strip() == "" and
-                                       i + 1 < len(lines) and lines[i + 1].startswith(">"))):
-                buf.append(re.sub(r"^>\s?", "", lines[i])); i += 1
-            inner, _ = convert("\n".join(buf), False)
+            while i < n and lines[i].strip().startswith(">"):
+                buf.append(re.sub(r"^>\s?", "", lines[i].strip()))
+                i += 1
+            inner, _ = convert_file("\n".join(buf), chapter_id + "-q", inline)
+            inner = re.sub(r"<h([1-4]) id=\"[^\"]*\"[^>]*>", r"<p class=\"qh\"><strong>", inner)
+            inner = re.sub(r"</h[1-4]>", "</strong></p>", inner)
             out.append("<blockquote>%s</blockquote>" % inner)
             continue
 
-        if ln.strip().startswith("|") and i + 1 < len(lines) and re.match(r"^\s*\|[\s:|-]+\|\s*$", lines[i + 1]):
-            head = split_row(ln)
-            i += 2
-            rows = []
-            while i < len(lines) and lines[i].strip().startswith("|"):
-                rows.append(split_row(lines[i])); i += 1
-            wide = " wide" if len(head) >= 5 else ""
-            t = ["<div class=\"tw\"><table class=\"md%s\">" % wide, "<thead><tr>"]
-            t += ["<th>%s</th>" % inline(h) for h in head]
-            t.append("</tr></thead><tbody>")
-            for r in rows:
-                t.append("<tr>")
-                cls = strength_class(r[:-1]) if (colour and len(r) == len(head) and len(head) >= 5) else ""
-                for k, c in enumerate(r):
-                    last = (k == len(r) - 1)
-                    t.append("<td%s>%s</td>" % (
-                        (' class="%s"' % cls) if (last and cls) else "", inline(c)))
-                t.append("</tr>")
-            t.append("</tbody></table></div>")
-            out.append("".join(t))
-            continue
-
-        if re.match(r"^\s*[-*]\s+", ln) or re.match(r"^\s*\d+\.\s+", ln):
-            ordered = bool(re.match(r"^\s*\d+\.\s+", ln))
-            tag = "ol" if ordered else "ul"
-            items = []
-            while i < len(lines) and (re.match(r"^\s*[-*]\s+", lines[i]) or re.match(r"^\s*\d+\.\s+", lines[i])):
-                items.append(re.sub(r"^\s*(?:[-*]|\d+\.)\s+", "", lines[i])); i += 1
-            out.append("<%s>%s</%s>" % (tag, "".join("<li>%s</li>" % inline(x) for x in items), tag))
-            continue
-
-        if ln.strip() == "" or set(ln.strip()) == {"-"}:
+        if not stripped:
             i += 1
             continue
 
-        para = [ln]
-        i += 1
-        while i < len(lines) and lines[i].strip() and not re.match(
-                r"^(#{1,4}\s|\||>|```|\s*[-*]\s|\s*\d+\.\s)", lines[i]):
-            para.append(lines[i]); i += 1
-        out.append("<p>%s</p>" % inline(" ".join(para)))
+        buf = []
+        while (
+            i < n
+            and lines[i].strip()
+            and not re.match(r"^(#{1,4}\s|```|-{3,}$|\||-\s|\d+\.\s|>)", lines[i].strip())
+        ):
+            buf.append(lines[i].strip())
+            i += 1
+        out.append("<p>%s</p>" % inline(" ".join(buf)))
 
     return "\n".join(out), toc
 
 
-def build(md_path: Path, title: str, colour: bool) -> Path:
-    md = io.open(md_path, encoding="utf-8").read()
-    body, toc = convert(md, colour)
-    nav = "".join('<a class="%s" href="#%s">%s</a>' % ("sub" if lv == 3 else "", sid, html.escape(t))
-                  for lv, sid, t in toc)
-    legend = ""
-    if colour:
-        legend = ('<p class="legend">決定欄顏色（依三家建議強度）：'
-                  '<span style="color:#ffffff">白＝強烈建議×2+</span>'
-                  '<span style="color:#f5e04a">黃＝一般建議×2+</span>'
-                  '<span style="color:#6fdc8c">綠＝輕鬆建議×2+</span></p>')
-    doc = (
-        '<!doctype html>\n<html lang="zh-Hant">\n<head><meta charset="utf-8">'
-        '<meta name="viewport" content="width=device-width,initial-scale=1">'
-        "<title>%s</title><style>%s</style></head>\n" % (html.escape(title), CSS) +
-        '<body><div class="layout"><nav><strong>%s</strong>%s</nav>\n<main>' % (html.escape(title), nav) +
-        '<div class="notice">本檔由 <code>qty/tools/build_html.py</code> 依 '
-        '<code>%s</code> 產生，<strong>不應手動編輯</strong>。改 Markdown 後重跑工具。</div>\n' % md_path.name +
-        legend + body + "</main></div></body></html>\n"
-    )
-    out = md_path.with_suffix(".html")
-    io.open(out, "w", encoding="utf-8").write(doc)
-    return out
+# ==================================================================
+# 樣式與腳本
+# ==================================================================
+CSS = """
+:root{
+  --bg:#0e1013; --bg2:#151920; --panel:#171b22; --line:#262c37; --line2:#333b49;
+  --tx:#dde2ea; --tx2:#a4aebf; --tx3:#767f92;
+  --accent:#6fbfa2; --accent-d:#173129; --warn:#e0a458;
+  --mono:"Cascadia Mono",Consolas,"SF Mono","Roboto Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei","PingFang TC","Noto Sans TC","Hiragino Sans",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);
+  font-size:15.5px;line-height:1.85;letter-spacing:.01em;-webkit-font-smoothing:antialiased}
+.wrap{display:grid;grid-template-columns:260px minmax(0,1fr);gap:0;max-width:1560px;margin:0 auto}
+
+nav{position:sticky;top:0;height:100vh;overflow-y:auto;padding:26px 14px 40px 22px;
+  border-right:1px solid var(--line);background:var(--bg)}
+nav .brand{font-size:12px;letter-spacing:.16em;color:var(--tx3);text-transform:uppercase;margin-bottom:6px}
+nav .bt{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:20px;line-height:1.4}
+nav .group{margin:0 0 16px}
+nav a.l1{display:block;font-weight:650;color:var(--tx);text-decoration:none;font-size:13.6px;
+  padding:6px 9px;border-radius:6px;border-left:2px solid var(--accent)}
+nav a.l1:hover{background:var(--bg2)}
+nav a.l2{display:block;color:var(--tx2);text-decoration:none;font-size:12.8px;
+  padding:3.5px 9px 3.5px 18px;border-radius:5px;border-left:2px solid transparent;line-height:1.5}
+nav a.l2:hover,nav a.l2.active{color:var(--tx);background:var(--bg2);border-left-color:var(--accent)}
+nav a.l1.active{background:var(--accent-d);color:var(--accent)}
+
+main{padding:44px 52px 120px;min-width:0}
+p{margin:0 0 15px}
+strong{color:#fff;font-weight:650}
+a{color:#8fd9c7}
+hr{border:0;border-top:1px solid var(--line);margin:38px 0}
+ul,ol{margin:0 0 16px;padding-left:22px}
+li{margin:5px 0}
+li>ul{margin:6px 0 2px}
+code{font-family:var(--mono);font-size:.875em;background:#1d2230;color:#e8c07d;
+  padding:1.5px 5px;border-radius:4px;border:1px solid #262d3d;word-break:break-word}
+pre.code{background:#12161f;border:1px solid var(--line);border-left:3px solid var(--line2);
+  border-radius:7px;padding:15px 17px;overflow-x:auto;margin:0 0 18px}
+pre.code code{background:none;border:0;padding:0;color:#b9c4d8;font-size:13px;line-height:1.72;white-space:pre}
+
+.chaptitle{font-size:27px;font-weight:700;margin:64px 0 22px;padding:20px 0 14px;
+  border-bottom:2px solid var(--accent);scroll-margin-top:20px}
+.wrap main>.chaptitle:first-of-type{margin-top:0}
+h2{font-size:19px;font-weight:660;margin:38px 0 14px;line-height:1.45;color:var(--tx);scroll-margin-top:20px}
+h3{font-size:16px;font-weight:640;margin:28px 0 11px;color:var(--tx2);scroll-margin-top:20px}
+h4{font-size:14.5px;font-weight:640;margin:22px 0 9px;color:var(--tx2)}
+
+blockquote{margin:0 0 20px;padding:13px 18px;background:#151a24;
+  border-left:3px solid var(--line2);border-radius:0 7px 7px 0;color:var(--tx2);font-size:14.6px}
+blockquote p{margin:0 0 5px}
+blockquote p:last-child{margin-bottom:0}
+blockquote p.qh{color:var(--tx);margin-top:2px}
+blockquote .tw{margin:10px 0}
+
+.tw{overflow-x:auto;margin:0 0 22px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:13.6px;font-variant-numeric:tabular-nums}
+table.wide{min-width:1700px}
+th{background:#1b2130;color:var(--tx);font-weight:660;text-align:left;position:sticky;top:0;z-index:2;
+  padding:11px 14px;border-bottom:1px solid var(--line2);font-size:13px}
+td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;
+  color:var(--tx2);line-height:1.72}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:rgba(255,255,255,.016)}
+tbody tr:hover{background:rgba(255,255,255,.038)}
+table:not(.wide) td:nth-child(2){color:var(--tx);font-weight:550}
+table.wide td:first-child{color:var(--tx);font-weight:650;white-space:nowrap}
+td.s-strong{color:#ffffff;font-weight:660}
+td.s-normal{color:#f5e04a;font-weight:600}
+td.s-light{color:#6fdc8c;font-weight:600}
+
+td.ckcell{width:34px;padding-left:16px;padding-right:0}
+input.ck{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+tr.ckrow.done td{color:var(--tx3);text-decoration:line-through;opacity:.62}
+tr.ckrow.done td.ckcell{text-decoration:none;opacity:1}
+
+.legend{margin:0 0 18px;font-size:13.5px;color:var(--tx2)}
+.legend span{display:inline-block;margin-right:16px;font-weight:650}
+
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr}
+  nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:20px 22px}
+  main{padding:30px 22px 80px}
+  .chaptitle{font-size:22px;margin-top:36px}
+  th{position:static}
+}
+@media print{
+  nav{display:none} body{background:#fff;color:#111}
+  .tw,table,td,th{border-color:#bbb} main{padding:0}
+  td.s-strong,td.s-normal,td.s-light{color:#111}
+}
+"""
+
+JS = """
+(function(){
+  document.querySelectorAll('input.ck').forEach(function(box){
+    var key='qty:'+box.getAttribute('data-key');
+    try{
+      var saved=localStorage.getItem(key);
+      if(saved!==null){ box.checked = saved==='1'; }
+    }catch(e){}
+    var row=box.closest('tr');
+    row.classList.toggle('done', box.checked);
+    box.addEventListener('change', function(){
+      try{ localStorage.setItem(key, box.checked?'1':'0'); }catch(e){}
+      row.classList.toggle('done', box.checked);
+    });
+  });
+
+  var links=[].slice.call(document.querySelectorAll('nav a'));
+  var targets=links.map(function(a){return document.getElementById(a.getAttribute('href').slice(1));});
+  function upd(){
+    var y=window.scrollY+140, best=-1;
+    for(var i=0;i<targets.length;i++){ if(targets[i]&&targets[i].offsetTop<=y) best=i; }
+    links.forEach(function(a,i){ a.classList.toggle('active', i===best); });
+  }
+  window.addEventListener('scroll',upd,{passive:true});
+  upd();
+})();
+"""
+
+PAGE = """<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>%s</title>
+<style>%s</style>
+</head>
+<body>
+<div class="wrap">
+<nav>%s</nav>
+<main>%s</main>
+</div>
+<script>%s</script>
+</body>
+</html>
+"""
+
+LEGEND = ('<p class="legend">決策表「你的決定」欄顏色（依三家建議強度自動判定）：'
+          '<span style="color:#ffffff">白＝強烈建議×2+</span>'
+          '<span style="color:#f5e04a">黃＝一般建議×2+</span>'
+          '<span style="color:#6fdc8c">綠＝輕鬆建議×2+</span></p>')
 
 
-def main() -> int:
-    if not DOCS.is_dir():
-        print("找不到文件資料夾：%s" % DOCS, file=sys.stderr)
+# ==================================================================
+# 合併
+# ==================================================================
+def render(sources: list[Path]) -> str:
+    texts = [(p, p.read_text(encoding="utf-8")) for p in sources]
+
+    chapter_map: dict[str, str] = {}
+    chapter_ids: list[str] = []
+    for p, md in texts:
+        title = first_h1(md)
+        cid = base = slug(title)
+        k = 2
+        while cid in chapter_ids:
+            cid = "%s-%d" % (base, k)
+            k += 1
+        chapter_ids.append(cid)
+        chapter_map[p.name] = cid
+
+    def link_resolver(href: str):
+        return chapter_map.get(Path(href).name)
+
+    inline = make_inline(link_resolver)
+
+    body_parts: list[str] = []
+    toc: list[tuple[int, str, str]] = []
+    for (p, md), cid in zip(texts, chapter_ids):
+        body, file_toc = convert_file(md, cid, inline)
+        body_parts.append(body)
+        toc.extend(file_toc)
+
+    nav = ['<div class="brand">%s</div>' % html.escape(SITE_BRAND),
+           '<div class="bt">%s</div>' % html.escape(SITE_TITLE)]
+    open_group = False
+    for level, title, sid in toc:
+        if level == 1:
+            if open_group:
+                nav.append("</div>")
+            nav.append('<div class="group">')
+            nav.append('<a class="l1" href="#%s">%s</a>' % (sid, html.escape(title)))
+            open_group = True
+        elif level == 2:
+            nav.append('<a class="l2" href="#%s">%s</a>' % (sid, html.escape(title)))
+    if open_group:
+        nav.append("</div>")
+
+    body = LEGEND + "\n".join(body_parts)
+    return PAGE % (html.escape(SITE_TITLE), CSS, "\n".join(nav), body, JS)
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description="把 QTY 前期評估的多份 Markdown 合併成單一 HTML")
+    ap.add_argument("--src", type=Path, nargs="*", default=None,
+                    help="要合併的 Markdown（依指定順序）；預設依內建順序讀取 docs/前期評估/")
+    ap.add_argument("--out", type=Path, default=DEFAULT_OUT, help="輸出 HTML 路徑")
+    ap.add_argument("--check", action="store_true",
+                    help="只比對現有 HTML 是否為最新，不寫檔；過期時以離開碼 1 結束")
+    args = ap.parse_args(argv)
+
+    if args.src:
+        sources = [p if p.is_absolute() or p.exists() else DOCS_DIR / p for p in args.src]
+    else:
+        sources = [DOCS_DIR / name for name in DEFAULT_ORDER if (DOCS_DIR / name).exists()]
+
+    missing = [p for p in sources if not p.exists()]
+    if missing:
+        for p in missing:
+            print("找不到來源檔：%s" % p, file=sys.stderr)
+        return 2
+    if not sources:
+        print("沒有可合併的 Markdown 檔案", file=sys.stderr)
+        return 2
+
+    page = render(sources)
+
+    if args.check:
+        if args.out.exists() and args.out.read_text(encoding="utf-8") == page:
+            print("HTML 為最新：%s" % args.out.name)
+            return 0
+        print("HTML 已過期，請重新執行本腳本產生：%s" % args.out.name, file=sys.stderr)
         return 1
-    for name, title, colour in TARGETS:
-        p = DOCS / name
-        if not p.is_file():
-            print("略過（不存在）：%s" % name)
-            continue
-        out = build(p, title, colour)
-        print("%-22s -> %-22s %7d bytes" % (name, out.name, out.stat().st_size))
+
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(page, encoding="utf-8", newline="\n")
+    print("已合併 %d 份文件 → %s（%d bytes）"
+          % (len(sources), args.out.name, len(page.encode("utf-8"))))
     return 0
 
 
