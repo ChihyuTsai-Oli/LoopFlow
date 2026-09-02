@@ -31,13 +31,15 @@
 !docs/**/*.svg
 !docs/images/icon/*.png
 
-# 三個同層產品：v1＝1.x 唯讀、v2＝已發布出圖 2.0、qty＝數量計算（不同產品）
+# 四個同層產品：v1＝1.x 唯讀、v2＝已發布出圖 2.0、qty＝數量計算、toolkit＝獨立工具集
 !v1/
 !v1/**
 !v2/
 !v2/**
 !qty/
 !qty/**
+!toolkit/
+!toolkit/**
 
 # 本機 1.x ZIP 輸出夾（build.ps1 寫入 releases/）；不進 git。GitHub 上 1.x 安裝包在 v1.0.0 Release。
 

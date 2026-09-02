@@ -17,11 +17,12 @@ AI 必須依序完整讀取：
 
 公開的 `README.md`、`README_zh-TW.md`、`docs/USER_GUIDE*.md` 與 `docs/Dictionary_GUIDE*.md` 是使用者文件，不是重構指令的權威來源；改變使用行為時仍須同步更新。
 
-本 repo 頂層三個同層產品目錄：
+本 repo 頂層四個同層產品目錄：
 
 - `v1/`：1.x 唯讀參考
 - `v2/`：已發布的出圖 2.0（原始碼、測試、fixtures、實作文件）
 - `qty/`：數量計算，**不同產品**；不進 2.0 yak、不寫回物件 UserText
+- `toolkit/`：獨立建模／圖面工具集，**不同產品且仍在前期評估**；不進 2.0 yak，範圍與開發規則以 `toolkit/docs/前期評估/` 為準
 
 Dropbox 工作檔路徑依上一層 `工作檔路徑.md` 解析，不得寫死單一電腦的絕對路徑。
 
