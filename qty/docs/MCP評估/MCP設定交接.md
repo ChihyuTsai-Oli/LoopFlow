@@ -7,6 +7,7 @@
 | 補測 | 同日稍後、同一台公司電腦：以 Cursor 連上已安裝的 MCP、開啟測試 `.rws`、啟動 Grasshopper；下午補記 GH headless 載入後 Rhino 當機事件。新增 §7.6～§7.8 |
 | 雙機完成 | 2026-09-01 18:26 **家中電腦**依本文件完成設定並端到端驗證通過。§9 改為雙機對照表 |
 | 補記 | 2026-09-01 18:40 家中電腦發現 `get_viewport_image` 會回傳全白空圖，且 metadata 毫無異常。新增 §7.9 |
+| Config／Registry | 2026-09-02 公司電腦確認測檔已有 `_LoopFlow_Config`，並遷到 2.0.7 的 `loopflow/`；`loopflow_QTY/` 預留為空。見 §10 |
 | 實測依據 | [`實測報告.md`](./實測報告.md) |
 
 > **給讀到這份文件的 AI**：使用者是非技術背景，不自行操作指令列。請你直接執行以下步驟，不要把指令貼給使用者叫他自己跑。
@@ -537,6 +538,8 @@ if (-not $root) { Write-Output "環境變數未設定，請依 工作檔路徑.m
 | `LoopFlow_2D_R_MCP.3dm` | 2D 圖面（作用中文件） |
 | `LoopFlow_3D_R_MCP.3dm` | 3D 模型（attach，39 個 Brep 都在這裡） |
 | `LoopFlow_Dictionary.xlsx` | Nexus 引用的字典，與 `.3dm` 同層——這是 LoopFlow 的既定結構 |
+| `_LoopFlow_Config/loopflow/` | 2.0.7 專案設定與 Registry（`LoopFlow_Project.json`、`M3D/Project_Registry.json` revision 4） |
+| `_LoopFlow_Config/loopflow_QTY/` | QTY 預留；目前為空。選取 JSON 日後寫這裡 |
 | `LoopFlow_R_MCP.gh` | GH 預設檔 |
 
 **驗證用的已知數字**（開啟 `.rws` 後應相符）：
@@ -551,3 +554,6 @@ if (-not $root) { Write-Output "環境變數未設定，請依 工作檔路徑.m
 | 帶 `_03_ID編號` 的物件 | 98（本機 61 ＋ 參照 37） |
 | 相異 `type_id` | 26，全部在字典查得到規則 |
 | 模型單位 | Centimeters |
+| `_LoopFlow_Config/loopflow/` | 2.0.7：`LoopFlow_Project.json`＋`M3D/Project_Registry.json`（revision 4） |
+| Registry `objects[]` 與模型 `_07_UUID` | **37 / 37** |
+| `_LoopFlow_Config/loopflow_QTY/` | 存在且為空（選取 JSON 日後寫這裡，不寫 AppData） |

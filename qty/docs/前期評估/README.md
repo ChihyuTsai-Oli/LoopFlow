@@ -30,7 +30,7 @@
 
 2.0 的前期規劃（`v2/docs/前期規劃/`）以文件盤點與雙 AI 討論為主。QTY 的前期評估不同：**所有結論都在實際模型上量過**。
 
-驗證模型：`LoopFlow_R_MCP.rws`（worksession，3D attach 進 2D），位於 `<LOOPFLOW_QTY_MCP_WORKFILES_ROOT>`，雙機路徑見工作區根目錄 `工作檔路徑.md`。
+驗證模型：`LoopFlow_R_MCP.rws`（worksession，3D attach 進 2D），位於 `<LOOPFLOW_QTY_MCP_WORKFILES_ROOT>`，雙機路徑見工作區根目錄 `工作檔路徑.md`。同層已有 `_LoopFlow_Config/loopflow/`（含 Registry）與空的 `loopflow_QTY/`（2026-09-02 補齊）。
 
 因此本資料夾的敘述分兩種，文中一律標示：
 
