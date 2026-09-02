@@ -90,6 +90,24 @@ C:\Users\chihyu\AppData\Roaming\McNeel\Rhinoceros\packages\8.0\Rhino-MCP-Platfor
 
 以下步驟中的 `<ROUTER>` 一律代換為此路徑。
 
+> ### ⚠️ 已發生過的事故：把範例路徑抄進設定檔
+>
+> 2026-09-01 公司電腦上，`~/.cursor/mcp.json` 一度被寫成：
+>
+> ```
+> C:\Users\USER\AppData\Roaming\McNeel\...\rhino-mcp-router.exe
+> ```
+>
+> `USER` 是常見的佔位字串，該路徑在任何機器上都不存在。
+>
+> **後果是靜默的**——Cursor 不會跳錯誤，那些 `rhino` 工具就只是**不出現**。如果不特地去比對路徑，會誤以為是 MCP 沒裝好或 Rhino 沒開，往完全錯誤的方向查。這與 §7.2 的「空 stdout 當成功」屬同一類失敗模式。
+>
+> **因此**：
+>
+> 1. **路徑一律用上面的指令取得**，不要從任何文件、範例或另一台電腦複製
+> 2. 寫入後**立即驗證檔案存在**（例如 `Test-Path`），不要只確認 JSON／TOML 格式正確
+> 3. 三家設定完成後互相比對，**三者應指向同一支 exe**。相異就是有一份錯了
+
 > **不需要在 Rhino 裡執行 `MCPConnect`。** 那支指令的用途只是產生一段設定文字讓使用者貼給 AI，而以下步驟已經直接完成同一件事。
 
 ---
