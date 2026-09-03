@@ -263,6 +263,7 @@ Excel（估價單＋明細）</code></pre>
 <ul><li><strong>非模型項目</strong>：假設工程、清運、保護工程、管理費、利潤、稅</li><li><strong>損耗率</strong>（磁磚 +5%、木作 +10% 等）：依廠商、專案、市況變動，是商業判斷不是幾何事實。工具輸出<strong>淨數量</strong>，損耗在 Excel 以係數欄處理，隨時可改、改了看得見</li><li><strong>單價</strong>：估價單留白供人工填寫；是否預填參考單價尚未決定</li></ul>
 <h2 id="LoopFlow-QTY-範圍與邊界--6-一式-的處理">6　「一式」的處理</h2>
 <p>「一式」<strong>不列入 Dictionary</strong>，不新增 <code>measurement_rule</code> 或 <code>estimation_unit</code> 的「式」token——避免動到 2.0 已發布的 schema，也避免舊版讀到新字典會 <code>block</code>。</p>
+<blockquote><p><strong>這裡的 <code>block</code> 是字典驗證的判定值</strong>（<code>pass</code>／<code>warn_no_quantity</code>／<code>block</code>，意即「擋下」），<strong>不是 Rhino 圖塊</strong>。一式對象<strong>沒有「必須建成 Block」的要求</strong>；相反地，Block 會讓實例內部的零件不再是文件物件，各零件無法個別掛 Tag、也不會進 Registry 與圖面材料標示。載體應為命名群組（QD-23 待裁決），估價上整座算一式，圖面上材料仍各自存在。</p></blockquote>
 <p>實際操作：在選取階段人工標記為「一式」類別，不進計算批次。</p>
 <p><strong>排除必須是主動的集合差集，以物件識別為唯一依據。</strong> 一式物件仍是正常的 LoopFlow 物件，身上照樣有 <code>type_id</code>，理論上仍可透過字典 join 到規則。若未來有任何元件是「依 <code>type_id</code> 自動抓取物件」，一式物件會因為有 <code>type_id</code> 而被撈進去算，<strong>且不會報錯，只是安靜地多算一筆</strong>。</p>
 <p>因此：<strong>不能倚賴「沒有接進計算電池」來避免計算</strong>。一式集合的角色是全域黑名單，不是電路沒接到的消極結果。</p>
