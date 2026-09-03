@@ -34,6 +34,8 @@
 
 2026-09-03 以 `<LOOPFLOW_WORKFILES_ROOT>/LoopFlow_3D.3dm`（LoopFlow 主工作檔，非 QTY MCP 測試環境）的 0°／30° 櫃體再次驗證通過，並新增三項待裁決（QD-20～22）：未成群櫃體零件必須診斷、群組空間歸屬只讀成員既有值（框外為 `EXT`）、不可用 `_03_ID編號` 區分櫃體。群組命名的格式、類別與比對規則已獨立成 [`群組前綴名稱.md`](./群組前綴名稱.md)，Toolkit 與 QTY 共用該檔，不各自維護。
 
+同日另裁決兩項（已定案）：**QD-25** 群組內的 curve 與 point 一律當作不存在，量測採 Brep ＋ InstanceReference 的正向白名單；**QD-26** QTY 作業只有兩種合法檔案配置——直接開 3D 模型檔，或 2D attach 進 3D 的 worksession——因為 GH 選取與 Nexus 修改都需要物件可編輯。見 [`範圍與邊界.md`](./範圍與邊界.md) §7.1。
+
 ### 寬版閱讀檔（HTML）
 
 本資料夾**全部九份文件**合併成單一離線 HTML：**`前期評估總覽.html`**。
@@ -78,7 +80,7 @@ python qty/tools/build_html.py --out 我的總覽.html
 
 2.0 的前期規劃（`v2/docs/前期規劃/`）以文件盤點與雙 AI 討論為主。QTY 的前期評估不同：**所有結論都在實際模型上量過**。
 
-驗證模型：`LoopFlow_R_MCP.rws`（worksession，3D attach 進 2D），位於 `<LOOPFLOW_QTY_MCP_WORKFILES_ROOT>`，雙機路徑見工作區根目錄 `工作檔路徑.md`。同層已有 `_LoopFlow_Config/loopflow/`（含 Registry）與空的 `loopflow_QTY/`（2026-09-02 補齊）。
+驗證模型：`LoopFlow_R_MCP.rws`（worksession，3D attach 進 2D），位於 `<LOOPFLOW_QTY_MCP_WORKFILES_ROOT>`，雙機路徑見工作區根目錄 `工作檔路徑.md`。**注意：2026-09-03 的 QD-26 裁決 QTY 一律在 3D 檔作業，這份 rws 的方向相反，已不是實務配置的代表**；既有數字仍有效，但新 fixture 須依 QD-26 的 a／b 兩種配置建立，這份改作「開錯檔」的反例樣本。同層已有 `_LoopFlow_Config/loopflow/`（含 Registry）與空的 `loopflow_QTY/`（2026-09-02 補齊）。
 
 因此本資料夾的敘述分兩種，文中一律標示：
 

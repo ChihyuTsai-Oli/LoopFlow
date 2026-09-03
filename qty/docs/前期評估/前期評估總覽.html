@@ -208,6 +208,7 @@ tr.ckrow.done td.ckcell{text-decoration:none;opacity:1}
 <p>功能分類與元件構想另見 <a href="../MCP評估/初步功能分類.md"><code>MCP評估/初步功能分類.md</code></a>。</p>
 <p>2026-09-02 新增櫃體限定流程：QTY 讀取帶 <code>QTY_CB_</code> 前綴的真正 Rhino Group Name，集合完整成員後輸出 Z-up OBB 原始長寬高；不建立 Block、不改 Nexus，也不自動判斷高矮深淺。裁決與 MCP 數字見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a> QD-16～19、<a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a> §7.1。</p>
 <p>2026-09-03 以 <code>&lt;LOOPFLOW_WORKFILES_ROOT&gt;/LoopFlow_3D.3dm</code>（LoopFlow 主工作檔，非 QTY MCP 測試環境）的 0°／30° 櫃體再次驗證通過，並新增三項待裁決（QD-20～22）：未成群櫃體零件必須診斷、群組空間歸屬只讀成員既有值（框外為 <code>EXT</code>）、不可用 <code>_03_ID編號</code> 區分櫃體。群組命名的格式、類別與比對規則已獨立成 <a href="#LoopFlow-群組前綴名稱"><code>群組前綴名稱.md</code></a>，Toolkit 與 QTY 共用該檔，不各自維護。</p>
+<p>同日另裁決兩項（已定案）：<strong>QD-25</strong> 群組內的 curve 與 point 一律當作不存在，量測採 Brep ＋ InstanceReference 的正向白名單；<strong>QD-26</strong> QTY 作業只有兩種合法檔案配置——直接開 3D 模型檔，或 2D attach 進 3D 的 worksession——因為 GH 選取與 Nexus 修改都需要物件可編輯。見 <a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a> §7.1。</p>
 <h3 id="LoopFlow-QTY-前期評估--寬版閱讀檔-HTML">寬版閱讀檔（HTML）</h3>
 <p>本資料夾<strong>全部九份文件</strong>合併成單一離線 HTML：<strong><code>前期評估總覽.html</code></strong>。</p>
 <div class="tw"><table><thead><tr><th>特性</th><th>說明</th></tr></thead><tbody><tr><td>單檔離線</td><td>樣式與腳本內嵌，可直接跨裝置開啟，不需網路或伺服器</td></tr><tr><td>兩層側邊目錄</td><td>章節（各 <code>.md</code> 的 H1）＋ 小節（H2），捲動時自動高亮目前位置</td></tr><tr><td><strong>跨文件連結轉錨點</strong></td><td>文件間的相對連結（如 <code>[資料盤點.md](./資料盤點.md)</code>）自動變成頁內跳轉；指向 <code>v2/docs/</code>、<code>MCP評估/</code> 等外部路徑則保持原樣</td></tr><tr><td><strong>決策表自動上色</strong></td><td>六欄以上決策表的「你的決定」欄依三家建議強度上色：白＝強烈×2+、黃＝一般×2+、綠＝輕鬆×2+</td></tr><tr><td>響應式與列印</td><td>窄畫面側欄改為頂部；列印時隱藏側欄並轉為淺色</td></tr></tbody></table></div>
@@ -224,7 +225,7 @@ python qty/tools/build_html.py --out 我的總覽.html</code></pre>
 <p><strong>第二輪待裁決的三題做法衝突</strong>：<code>QR-01</code> 主鍵形態（裸 GUID vs 版本化 locator）、<code>QR-13</code> 狀態模型（單軸 vs Coverage／measurement 雙軸）、<code>QR-15</code> token 語意（ND-28 軸向 vs QTY mapping）。其餘各項三家無做法衝突。</p>
 <h2 id="LoopFlow-QTY-前期評估--本階段的方法論">本階段的方法論</h2>
 <p>2.0 的前期規劃（<code>v2/docs/前期規劃/</code>）以文件盤點與雙 AI 討論為主。QTY 的前期評估不同：<strong>所有結論都在實際模型上量過</strong>。</p>
-<p>驗證模型：<code>LoopFlow_R_MCP.rws</code>（worksession，3D attach 進 2D），位於 <code>&lt;LOOPFLOW_QTY_MCP_WORKFILES_ROOT&gt;</code>，雙機路徑見工作區根目錄 <code>工作檔路徑.md</code>。同層已有 <code>_LoopFlow_Config/loopflow/</code>（含 Registry）與空的 <code>loopflow_QTY/</code>（2026-09-02 補齊）。</p>
+<p>驗證模型：<code>LoopFlow_R_MCP.rws</code>（worksession，3D attach 進 2D），位於 <code>&lt;LOOPFLOW_QTY_MCP_WORKFILES_ROOT&gt;</code>，雙機路徑見工作區根目錄 <code>工作檔路徑.md</code>。<strong>注意：2026-09-03 的 QD-26 裁決 QTY 一律在 3D 檔作業，這份 rws 的方向相反，已不是實務配置的代表</strong>；既有數字仍有效，但新 fixture 須依 QD-26 的 a／b 兩種配置建立，這份改作「開錯檔」的反例樣本。同層已有 <code>_LoopFlow_Config/loopflow/</code>（含 Registry）與空的 <code>loopflow_QTY/</code>（2026-09-02 補齊）。</p>
 <p>因此本資料夾的敘述分兩種，文中一律標示：</p>
 <ul><li><strong>實測</strong>：在該模型上量過，附數字</li><li><strong>推論</strong>：由實測結果推導，但尚未直接驗證</li></ul>
 <blockquote><p><strong>界線</strong>：本資料夾不是實作規格。進入實作後應比照 2.0 建立 <code>實作總覽.md</code>／<code>資料契約.md</code>／<code>工作流程.md</code> 等正式文件，屆時本資料夾轉為封存，不再決定行為。</p></blockquote>
@@ -281,6 +282,13 @@ Excel（估價單＋明細）</code></pre>
 <h2 id="LoopFlow-QTY-範圍與邊界--7-執行環境">7　執行環境</h2>
 <div class="tw"><table><thead><tr><th>項目</th><th>決定</th></tr></thead><tbody><tr><td>主要工作場所</td><td><strong>Grasshopper</strong>。整條資料鏈可見是 GH 的價值</td></tr><tr><td>Rhino 工具列</td><td>刻意保持很薄，只處理啟動、工作環境、專案狀態</td></tr><tr><td>計算邏輯的位置</td><td><strong>外部 <code>.py</code></strong>，GH Python 電池只放薄殼</td></tr><tr><td>GH 版本</td><td>GH1（Rhino 8）。不採用需要 Rhino 9 的 GH2</td></tr></tbody></table></div>
 <p>計算邏輯住外部 <code>.py</code> 的理由：<code>.gh</code> 是二進位，程式碼埋在裡面則 git 看不到 diff、無法 headless 測試、多 AI 接手時交接鏈中斷。</p>
+<h3 id="LoopFlow-QTY-範圍與邊界--7-1-檔案配置-2026-09-03-裁決-QD-26">7.1 檔案配置（2026-09-03 裁決，QD-26）</h3>
+<p>QTY 作業<strong>一律在 3D 檔進行</strong>。只有兩種合法配置：</p>
+<div class="tw"><table><thead><tr><th></th><th>配置</th><th>說明</th></tr></thead><tbody><tr><td><strong>a</strong></td><td>直接開啟「需要計算數量」的 3D 模型檔</td><td>預設情形</td></tr><tr><td><strong>b</strong></td><td><code>.rws</code> worksession，<strong>2D attach 進 3D</strong></td><td>3D 是作用中模型，2D 只作參考</td></tr></tbody></table></div>
+<p>理由：計算過程需要從 GH 選取物件，也可能需要用 Nexus 補充或修改模型資料。<strong>參照物件不可編輯</strong>，所以要被計算與修改的 3D 模型必須是作用中模型，不能是被 attach 進來的那一份。</p>
+<p><strong>先前 MCP 驗證用的 <code>LoopFlow_R_MCP.rws</code> 是「3D attach 進 2D」，方向相反，不符合本規則。</strong> 它仍是既有數字的來源，但不再是實務配置的代表；新的 fixture 必須以 a／b 兩種配置建立（見 <a href="#LoopFlow-QTY-測試模型補強項目"><code>測試模型.md</code></a> 項目 17）。</p>
+<p>由此得到三個直接推論：</p>
+<ol><li><strong>要計算的物件一律是本機物件</strong>（<code>IsReference == False</code>）。列舉器不需要靠 <code>ReferenceObjects = True</code> 才看得到計算對象——那是舊配置的產物（QD-15）。配置 b 底下 attach 進來的 2D 內容是參照物件、而且是 Curve，被 QD-01 與本規則雙重排除。</li><li><strong>群組名稱不會帶來源檔前綴</strong>。<code>&lt;檔名&gt; : </code> 前綴只會出現在被 attach 的那一份；既然 3D 永遠是作用中模型，QTY 的群組名稱一律是原名。若真的讀到帶前綴的 <code>QTY_</code> 群組，代表開錯檔（3D 被 attach 了），應<strong>報設定錯誤</strong>而不是照樣量測（QD-24 改寫）。</li><li><strong><code>layer_path</code> 不帶檔名前綴</strong>，圖層正規化少一個分支。</li></ol>
 <p><strong>薄殼必須含 <code>importlib.reload()</code></strong>，否則改了外部 <code>.py</code> 後 GH 重新求解仍吃到舊程式碼（實測確認，見 <a href="../MCP評估/實測報告.md"><code>MCP評估/實測報告.md</code></a> §4.2）。</p>
 <h2 id="LoopFlow-QTY-範圍與邊界--8-與-MCP-的關係">8　與 MCP 的關係</h2>
 <p>MCP <strong>不是產品的一部分</strong>，是開發期的工具。</p>
@@ -463,7 +471,8 @@ objs = doc.Objects.GetObjectList(s)</code></pre>
 <h3 id="LoopFlow-QTY-量測方法--7-1-櫃體群組的-Z-up-OBB-2026-09-02-定案">7.1 櫃體群組的 Z-up OBB（2026-09-02 定案）</h3>
 <p>櫃體是本文件「不把 W／D／H 當一般物件核心資料」的<strong>限定例外</strong>：使用者先以 Rhino Group 明確圈定整組櫃體，QTY 不必從散落物件猜哪一些應合併，因此可以安全輸出整組的三個外包尺寸。</p>
 <pre class="code" data-lang="text"><code>輸入：具有唯一 `QTY_CB_` 真正 Group Name 的完整櫃體群組
-      （worksession 下名稱會是 `&lt;來源檔名&gt; : QTY_CB_...`，比對須容許此前綴）
+      （QD-26 之後 3D 永遠是作用中模型，名稱一律是原名；
+        若讀到 `&lt;檔名&gt; : QTY_...` 代表開錯檔，報設定錯誤）
 高度：世界 Z 範圍
 長度：XY 方向校正後較長的水平尺寸
 寬度：XY 方向校正後較短的水平尺寸
@@ -471,6 +480,7 @@ objs = doc.Objects.GetObjectList(s)</code></pre>
 <ul><li>固定世界 Z，只在 XY 平面推定主要方向，避免完整 3D OBB 因斜面翻轉軸向。</li><li>量測完整成員集合；門片、檯面、把手與突出物都不排除，也不修正成常見標準尺寸。</li><li>不依 Dictionary 的 <code>LEN_W</code> 等 token 宣稱這是一般長度規則；它是由命名 Cabinet Group 明確啟動的群組尺寸輸出。</li><li>不判斷高／矮、深／淺或特殊櫃。人工可在輸出後分類與指定單位，OBB 原始值仍保留。</li><li>弧形／不規則櫃仍照實輸出 OBB；方向不唯一時標示診斷資訊，但不另套估價算法。</li></ul>
 <h4 id="LoopFlow-QTY-量測方法--成員型別過濾-2026-09-03-裁決">成員型別過濾（2026-09-03 裁決）</h4>
 <p>群組沿用 QD-01／QD-03 的全集定義，<strong>不另立例外</strong>：只有 <strong>Brep 與 InstanceReference</strong> 進入量測，其餘型別一律<strong>當作不存在</strong>。</p>
+<p>前提：QTY 一律在 3D 檔作業（QD-26），計算對象一律是<strong>作用中模型的本機物件</strong>（<code>IsReference == False</code>）。配置 b 底下 attach 進來的 2D 內容是參照物件且是 Curve，被雙重排除。</p>
 <div class="tw"><table><thead><tr><th>成員型別</th><th>處理</th></tr></thead><tbody><tr><td>Brep（含 Extrusion）</td><td>納入</td></tr><tr><td>InstanceReference（Block）</td><td>納入；須套用實例 transform 取得實際幾何</td></tr><tr><td>Curve、Point</td><td><strong>當作不存在</strong>——不進 OBB 點集、不算成員數、不因其存在而改變任何結果</td></tr><tr><td>Mesh、SubD、註解、填充等其他型別</td><td>同上當作不存在（正向白名單的必然結果）</td></tr></tbody></table></div>
 <p>採<strong>正向白名單</strong>而非「排除 curve 與 point」的負面表列：否則 Mesh、SubD、文字等型別會落在未定義的灰區，被靜默納入或靜默漏掉都無從察覺。</p>
 <p>必然的推論：</p>
@@ -506,7 +516,7 @@ objs = doc.Objects.GetObjectList(s)</code></pre>
 <p>前綴只回答一個問題：<strong>這一組要用哪一套量測與計價方式</strong>。它不編入分類——高／矮、深／淺、工種、空間都不進名稱（TKO-16／QD-19）。</p>
 <h2 id="LoopFlow-群組前綴名稱--2-名稱格式">2　名稱格式</h2>
 <pre class="code" data-lang="text"><code>[&lt;來源檔名&gt; : ]QTY_&lt;類別&gt;_&lt;序號&gt;[_&lt;說明&gt;]</code></pre>
-<div class="tw"><table><thead><tr><th>欄位</th><th>規則</th><th>範例</th><th>說明</th></tr></thead><tbody><tr><td><code>&lt;來源檔名&gt; : </code></td><td><strong>不要自己寫</strong>；worksession attach 時 Rhino 自動加上</td><td><code>LoopFlow_3D.3dm : </code></td><td>比對必須容許此前綴，否則從 2D 側跑會一個群組都找不到（QD-24）</td></tr><tr><td><code>QTY_</code></td><td>固定保留字首，大寫</td><td><code>QTY_</code></td><td>標示「這是 QTY 要讀的群組」</td></tr><tr><td><code>&lt;類別&gt;</code></td><td>兩碼大寫英文，見 §3</td><td><code>CB</code></td><td>決定量測與計價方式</td></tr><tr><td><code>&lt;序號&gt;</code></td><td>三位數字，專案內同類唯一</td><td><code>001</code></td><td>工具負責擋重複，不靠人記</td></tr><tr><td><code>&lt;說明&gt;</code></td><td>自由文字，可中文，可省略</td><td><code>主臥櫃</code></td><td>只給人看，程式不解析</td></tr></tbody></table></div>
+<div class="tw"><table><thead><tr><th>欄位</th><th>規則</th><th>範例</th><th>說明</th></tr></thead><tbody><tr><td><code>&lt;來源檔名&gt; : </code></td><td><strong>不要自己寫</strong>；worksession attach 時 Rhino 自動加上</td><td><code>LoopFlow_3D.3dm : </code></td><td>正常作業<strong>不會出現</strong>：QTY 一律在 3D 檔作業，3D 永遠是作用中模型（QD-26）。解析器仍須認得它，但認出來代表<strong>開錯檔</strong>（3D 被 attach 了），應報設定錯誤（QD-24 改寫）</td></tr><tr><td><code>QTY_</code></td><td>固定保留字首，大寫</td><td><code>QTY_</code></td><td>標示「這是 QTY 要讀的群組」</td></tr><tr><td><code>&lt;類別&gt;</code></td><td>兩碼大寫英文，見 §3</td><td><code>CB</code></td><td>決定量測與計價方式</td></tr><tr><td><code>&lt;序號&gt;</code></td><td>三位數字，專案內同類唯一</td><td><code>001</code></td><td>工具負責擋重複，不靠人記</td></tr><tr><td><code>&lt;說明&gt;</code></td><td>自由文字，可中文，可省略</td><td><code>主臥櫃</code></td><td>只給人看，程式不解析</td></tr></tbody></table></div>
 <p>完整範例：</p>
 <div class="tw"><table><thead><tr><th>名稱</th><th>意義</th></tr></thead><tbody><tr><td><code>QTY_CB_001_主臥櫃</code></td><td>第 1 座櫃體</td></tr><tr><td><code>QTY_CB_002</code></td><td>第 2 座櫃體，未加說明</td></tr><tr><td><code>QTY_LS_001_玄關燈箱</code></td><td>第 1 項一式</td></tr><tr><td><code>LoopFlow_3D.3dm : QTY_CB_001_主臥櫃</code></td><td>同一座櫃體，從 worksession 2D 側看到的名稱</td></tr></tbody></table></div>
 <h2 id="LoopFlow-群組前綴名稱--3-類別表">3　類別表</h2>
@@ -525,11 +535,11 @@ objs = doc.Objects.GetObjectList(s)</code></pre>
 <ul><li>名稱<strong>只寫在最外層群組</strong>。子群組不得帶 <code>QTY_</code> 前綴——那會與外層互為子集合，造成重複計量。</li><li>同一物件<strong>不得同屬兩個 <code>QTY_</code> 群組</strong>（例如嵌在櫃體裡的燈箱），必須報衝突，不自行取捨。</li><li>最外層一律以「成員集合為子群組的超集」判定，不靠名稱、Group Index 或選取順序。</li></ul>
 <h2 id="LoopFlow-群組前綴名稱--5-比對規則-給實作">5　比對規則（給實作）</h2>
 <pre class="code" data-lang="text"><code>^(?:.+ : )?QTY_(CB|LS)_(\d{3})(?:_.+)?$</code></pre>
-<ul><li>前綴與類別碼<strong>區分大小寫</strong>，一律大寫。</li><li>來源檔前綴可有可無：比對時忽略，但<strong>必須把來源模型記進輸出</strong>，因為不同 attach 模型可能有同名群組。</li><li>類別碼採白名單列舉，不用萬用比對。遇到未知類別碼要報「不認得的類別」，不可當成一般群組默默略過。</li><li>整份模型找不到任何符合的群組時，要明確報「本模型沒有 QTY 群組」，不要回空集合了事——這正是前綴比對寫錯時的症狀。</li></ul>
+<ul><li>前綴與類別碼<strong>區分大小寫</strong>，一律大寫。</li><li>來源檔前綴在合法配置下<strong>不會出現</strong>（QD-26）。正規式仍保留該分支是為了<strong>認出開錯檔</strong>：一旦比對到 <code>&lt;檔名&gt; : </code> 前綴，表示 3D 模型是被 attach 進來的，物件不可編輯、Nexus 與 GH 選取都做不了，應報設定錯誤並停止，不要照樣量測。</li><li>類別碼採白名單列舉，不用萬用比對。遇到未知類別碼要報「不認得的類別」，不可當成一般群組默默略過。</li><li>整份模型找不到任何符合的群組時，要明確報「本模型沒有 QTY 群組」，不要回空集合了事——這正是前綴比對寫錯時的症狀。</li></ul>
 <h2 id="LoopFlow-群組前綴名稱--6-已知限制與待驗證">6　已知限制與待驗證</h2>
-<div class="tw"><table><thead><tr><th>項目</th><th>狀態</th></tr></thead><tbody><tr><td>類別體系是否擴充到 <code>CB</code> 以外</td><td>待裁決（TKO-22／QD-23）</td></tr><tr><td>沒有幾何的一式（清運、管理費、運費）</td><td>不適用群組，維持手動填寫</td></tr><tr><td>worksession 下能否對 reference 物件建立或改名群組</td><td><strong>待驗證</strong>。已驗證的是「群組會跟著 attach 進來且可讀」；寫入應在物件的本機檔進行，尚未實測確認</td></tr><tr><td>巢狀深度上限</td><td>未定。目前只驗過一層子群組（<code>Group01</code> 含 4 個子群組）</td></tr><tr><td>序號用完或需要重編時的處理</td><td>未定</td></tr></tbody></table></div>
+<div class="tw"><table><thead><tr><th>項目</th><th>狀態</th></tr></thead><tbody><tr><td>類別體系是否擴充到 <code>CB</code> 以外</td><td>待裁決（TKO-22／QD-23）</td></tr><tr><td>沒有幾何的一式（清運、管理費、運費）</td><td>不適用群組，維持手動填寫</td></tr><tr><td>worksession 下能否對 reference 物件建立或改名群組</td><td><strong>已無關</strong>（QD-26）。合法配置下 3D 永遠是作用中模型，命名一律寫在本機物件上；不會有「對參照物件寫入」的情境</td></tr><tr><td>巢狀深度上限</td><td>未定。目前只驗過一層子群組（<code>Group01</code> 含 4 個子群組）</td></tr><tr><td>序號用完或需要重編時的處理</td><td>未定</td></tr></tbody></table></div>
 <h2 id="LoopFlow-群組前綴名稱--7-變更紀錄">7　變更紀錄</h2>
-<div class="tw"><table><thead><tr><th>日期</th><th>變更</th></tr></thead><tbody><tr><td>2026-09-03</td><td>建檔。整理 <code>CB</code> 已裁決內容、提出 <code>LS</code>、記入 Rhino 命名與複製行為實測、worksession 來源檔前綴</td></tr></tbody></table></div>
+<div class="tw"><table><thead><tr><th>日期</th><th>變更</th></tr></thead><tbody><tr><td>2026-09-03</td><td>建檔。整理 <code>CB</code> 已裁決內容、提出 <code>LS</code>、記入 Rhino 命名與複製行為實測、worksession 來源檔前綴</td></tr><tr><td>2026-09-03</td><td>依 QD-26（QTY 一律在 3D 檔作業）改寫來源檔前綴的意義：合法配置下不會出現，出現即代表開錯檔</td></tr></tbody></table></div>
 <h1 class="chaptitle" id="LoopFlow-QTY-決策紀錄">LoopFlow QTY — 決策紀錄</h1>
 <blockquote><p>本文件是 QTY <strong>決策狀態</strong>的唯一來源。範圍見 <a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a>，資料見 <a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a>，方法見 <a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a>。</p>
 <p>建立日期：2026-09-01　｜　階段：前期評估</p></blockquote>
@@ -554,7 +564,9 @@ objs = doc.Objects.GetObjectList(s)</code></pre>
 <h3 id="LoopFlow-QTY-決策紀錄--1-2-櫃體群組的第二輪實測與待裁決-2026-09-03">1.2 櫃體群組的第二輪實測與待裁決（2026-09-03）</h3>
 <p><code>LoopFlow_3D.3dm</code>（cm，217 物件，12 群組）唯讀實測，未修改模型。0° 櫃在空間框內、30° 櫃在空間框外，兩者體積同為 <code>95035.7251 cm³</code>：World bbox 為 <code>100 × 36.746 × 75</code> 與 <code>104.976 × 81.823 × 75</code>，方向校正後 Z-up OBB 都是 <code>100 × 36.746 × 75</code>，QD-18 在 30° 同樣成立。量測以凸包＋旋轉卡尺求最小面積矩形實作。</p>
 <p>實測同時暴露三件既有裁決沒涵蓋的事，對應 Toolkit 的 TKO-19～21：</p>
-<div class="tw"><table><thead><tr><th>#</th><th>問題</th><th>提案</th><th>你的決定／說明</th></tr></thead><tbody><tr><td><strong>QD-20</strong></td><td>櫃體圖層上未成群的零件</td><td><strong>強烈建議</strong>：QTY 報表把「在櫃體圖層、卻不屬於任何 <code>QTY_CB_</code> 群組」列為明確診斷並列出物件，不得靜默漏量。實測該檔 04_CB 圖層 29 個物件中就有 7 個未成群</td><td>待決定</td></tr><tr><td><strong>QD-21</strong></td><td>櫃體群組的空間歸屬</td><td><strong>強烈建議</strong>：不自行判斷，改讀成員既有的 <code>_09_空間ID</code>／<code>_01_空間名稱</code>；一致才輸出該空間，不一致列為診斷並照實輸出多值；空間框外沿用 Nexus 的 <code>EXT</code>。實測 0° 櫃全部為「廊道」，30° 櫃為 <code>EXT</code></td><td>待決定</td></tr><tr><td><strong>QD-22</strong></td><td>櫃體識別不可用 <code>_03_ID編號</code></td><td><strong>強烈建議</strong>：<code>_03_ID編號</code> 是類型編號，兩個不同櫃體的零件用完全相同的 <code>CB-01</code>～<code>CB-07</code>；2.0 metadata 沒有櫃體層級身分，Group Name 是唯一識別</td><td>待決定</td></tr><tr><td><strong>QD-23</strong></td><td>「一式」改用命名群組當載體</td><td><strong>一般建議</strong>：QD-10 的一式黑名單目前卡在 QD-02／QR-01 的持久身分缺口，只能做當次工作階段的排除。改用保留前綴的命名群組（例如 <code>QTY_LS_001_燈箱</code>）當載體，排除集合就變成模型自帶、跨 session 穩定，不需要 GUID locator；群組直接對應估價單一列（數量 1），OBB 當尺寸附註，成員退出逐物件計算因此不會重複計算。仍必須是<strong>主動差集</strong>：任何依 <code>type_id</code> 自動撈取的路徑都要先扣掉所有 <code>QTY_LS_</code> 群組展開後的成員。限制：沒有實體的一式（清運、管理費）仍手動列</td><td>待決定</td></tr><tr><td><strong>QD-25</strong></td><td>群組成員的型別過濾</td><td><strong>已裁決（2026-09-03）</strong>：櫃體與一式群組沿用 QD-01／QD-03 的全集定義，不另立例外。只有 Brep 與 InstanceReference 進量測；群組內的 curve、point 一律<strong>當作不存在</strong>，不進 OBB 點集、不算成員數、不影響任何結果。實作採<strong>正向白名單</strong>，Mesh／SubD／註解等其他型別同樣排除，避免落在未定義灰區。三個推論：參考線與放置點不會撐大 OBB；Block 成員須套用實例 transform；全部成員被排除時回報「無可量測成員」而非零尺寸</td><td><strong>已裁決</strong></td></tr><tr><td><strong>QD-24</strong></td><td>群組前綴比對必須容許來源檔前綴</td><td><strong>強烈建議</strong>：worksession attach 的模型群組名稱會變成 <code>&lt;檔名&gt; : &lt;原名&gt;</code>（2026-09-03 實測）。用 <code>startswith(&quot;QTY_&quot;)</code> 直接比對，從 2D 側跑會一個都找不到且不報錯。比對規則須為「可選 <code>&lt;檔名&gt; : </code> ＋ 保留前綴」，輸出並記錄來源模型以區分同名群組</td><td>待決定</td></tr></tbody></table></div>
+<div class="tw"><table><thead><tr><th>#</th><th>問題</th><th>提案</th><th>你的決定／說明</th></tr></thead><tbody><tr><td><strong>QD-20</strong></td><td>櫃體圖層上未成群的零件</td><td><strong>強烈建議</strong>：QTY 報表把「在櫃體圖層、卻不屬於任何 <code>QTY_CB_</code> 群組」列為明確診斷並列出物件，不得靜默漏量。實測該檔 04_CB 圖層 29 個物件中就有 7 個未成群</td><td>待決定</td></tr><tr><td><strong>QD-21</strong></td><td>櫃體群組的空間歸屬</td><td><strong>強烈建議</strong>：不自行判斷，改讀成員既有的 <code>_09_空間ID</code>／<code>_01_空間名稱</code>；一致才輸出該空間，不一致列為診斷並照實輸出多值；空間框外沿用 Nexus 的 <code>EXT</code>。實測 0° 櫃全部為「廊道」，30° 櫃為 <code>EXT</code></td><td>待決定</td></tr><tr><td><strong>QD-22</strong></td><td>櫃體識別不可用 <code>_03_ID編號</code></td><td><strong>強烈建議</strong>：<code>_03_ID編號</code> 是類型編號，兩個不同櫃體的零件用完全相同的 <code>CB-01</code>～<code>CB-07</code>；2.0 metadata 沒有櫃體層級身分，Group Name 是唯一識別</td><td>待決定</td></tr><tr><td><strong>QD-23</strong></td><td>「一式」改用命名群組當載體</td><td><strong>一般建議</strong>：QD-10 的一式黑名單目前卡在 QD-02／QR-01 的持久身分缺口，只能做當次工作階段的排除。改用保留前綴的命名群組（例如 <code>QTY_LS_001_燈箱</code>）當載體，排除集合就變成模型自帶、跨 session 穩定，不需要 GUID locator；群組直接對應估價單一列（數量 1），OBB 當尺寸附註，成員退出逐物件計算因此不會重複計算。仍必須是<strong>主動差集</strong>：任何依 <code>type_id</code> 自動撈取的路徑都要先扣掉所有 <code>QTY_LS_</code> 群組展開後的成員。限制：沒有實體的一式（清運、管理費）仍手動列</td><td>待決定</td></tr><tr><td><strong>QD-25</strong></td><td>群組成員的型別過濾</td><td><strong>已裁決（2026-09-03）</strong>：櫃體與一式群組沿用 QD-01／QD-03 的全集定義，不另立例外。只有 Brep 與 InstanceReference 進量測；群組內的 curve、point 一律<strong>當作不存在</strong>，不進 OBB 點集、不算成員數、不影響任何結果。實作採<strong>正向白名單</strong>，Mesh／SubD／註解等其他型別同樣排除，避免落在未定義灰區。三個推論：參考線與放置點不會撐大 OBB；Block 成員須套用實例 transform；全部成員被排除時回報「無可量測成員」而非零尺寸</td><td><strong>已裁決</strong></td></tr><tr><td><strong>QD-24</strong></td><td>群組前綴比對必須容許來源檔前綴</td><td><strong>改寫（2026-09-03，因 QD-26）</strong>：原提案是「容許前綴照樣量測」。既然 QTY 一律在 3D 檔作業、3D 永遠是作用中模型，QTY 的群組名稱就一律是原名。解析器仍須<strong>認得</strong> <code>&lt;檔名&gt; : </code> 前綴，但認出來的意義變成「3D 被 attach 了、開錯檔」，應<strong>報設定錯誤並停止</strong>，不是靜默照算——因為那種配置下物件不可編輯，Nexus 與 GH 選取都做不了</td><td>待決定</td></tr><tr><td><strong>QD-26</strong></td><td>QTY 作業的檔案配置</td><td><strong>已裁決（2026-09-03）</strong>：只有兩種合法配置——<strong>a</strong> 直接開啟需要計算數量的 3D 模型檔；<strong>b</strong> <code>.rws</code> worksession 且為 <strong>2D attach 進 3D</strong>（3D 是作用中模型）。理由：計算需要從 GH 選取物件、也可能要用 Nexus 補充或修改模型資料，而參照物件不可編輯，所以被計算的 3D 模型必須是作用中模型。推論：計算對象一律是本機物件（<code>IsReference == False</code>）；群組名稱不帶來源檔前綴；<code>layer_path</code> 不帶檔名前綴。<strong>先前驗證用的 <code>LoopFlow_R_MCP.rws</code> 是 3D attach 進 2D，方向相反，不再是實務配置的代表</strong></td><td><strong>已裁決</strong></td></tr></tbody></table></div>
+<p><strong>QD-26 對前面兩項既有決策的影響</strong>（原文保留，此處記修正）：</p>
+<ul><li><strong>QD-03（計算全集）</strong>：三家都要求改掉「3D 側」這個綁 worksession 的措辭。QD-26 給出了正式寫法——全集 ＝ <strong>作用中模型的本機 Brep 與 InstanceReference</strong>，配置 a 與 b 得到同一批物件，不再需要「兩種開檔方式語意一致」這個但書。</li><li><strong>QD-15（<code>ReferenceObjects = True</code>）</strong>：該設定的原始理由是舊配置下計算對象是 attach 進來的參照物件。QD-26 之後計算對象一律是本機物件，adapter 的列舉器<strong>不應</strong>倚賴它撈計算集合；配置 b 的 2D 內容是參照物件且是 Curve，本來就要排除。列舉器若仍開啟該旗標，必須另外明確過濾 <code>IsReference == False</code>。</li></ul>
 <p>另有三項現況可直接作為 fixture 來源：該檔 12 個群組全是自動名稱且成員無物件名稱（沒有可同步的來源，必須直接命名）；櫃體最外層群組內含 4 個子群組，檯面只屬最外層，最外層只能以「成員集合為超集」判定；Group Table 內另有樓板、飾條等非櫃體群組，佐證 QD-17 的前綴白名單有必要。</p>
 <h2 id="LoopFlow-QTY-決策紀錄--2-已推翻">2　已推翻</h2>
 <p>實測推翻的先前敘述。原文件已就地標註修正，此處集中列出以便追溯。</p>
@@ -668,7 +680,11 @@ b4fae896-bf13-4b19-9ff3-6f5ed902ba1f   ✅ 仍存在（CL-06）</code></pre>
 <p><strong>16. 補上未標記門窗 Block 的處置樣本</strong> <code>base</code> 圖層有 <code>3D_W1</code>、<code>3D_D1</code> 兩個 linked block，<strong>沒有 <code>_03_ID編號</code></strong>。它們應該進計算、進 Coverage、還是排除？字典有 <code>DW-01</code>，但這兩個沒被標記。需要決定並建立對應樣本。</p>
 <hr>
 <h2 id="LoopFlow-QTY-測試模型補強項目--4-工作方式與規模">4　工作方式與規模</h2>
-<p><strong>17. 建立「直接開 3D 檔」的對照測試</strong> QR-04 要求兩種開檔方式語意一致，但目前只測過 worksession。直接開 <code>LoopFlow_3D_R_MCP.3dm</code> 時同一批物件會是本機物件而非參照物件，<code>layer_path</code> 也不帶檔名前綴——<strong>這兩點都會走到不同的程式分支</strong>。</p>
+<p><strong>17. 建立兩種合法配置的 fixture（2026-09-03 依 QD-26 改寫）</strong></p>
+<p>原本這一項是「補上直接開 3D 檔的對照」，因為當時只測過 worksession。QD-26 之後合法配置只有兩種，<strong>而且先前用來建立所有 baseline 數字的 <code>LoopFlow_R_MCP.rws</code>（3D attach 進 2D）兩種都不是</strong>：</p>
+<div class="tw"><table><thead><tr><th></th><th>配置</th><th>需要驗證</th></tr></thead><tbody><tr><td><strong>a</strong></td><td>直接開 3D 模型檔</td><td>物件為本機、<code>layer_path</code> 不帶檔名前綴、群組名稱為原名</td></tr><tr><td><strong>b</strong></td><td><code>.rws</code>，2D attach 進 3D</td><td>同上；另驗 attach 的 2D 內容（參照＋Curve）確實完全不進全集與 Coverage</td></tr><tr><td><strong>反例</strong></td><td>3D attach 進 2D（舊 rws）</td><td>應<strong>報設定錯誤並停止</strong>，不得照樣量測</td></tr></tbody></table></div>
+<p>a 與 b 必須得到<strong>完全相同</strong>的計算結果與 Coverage；反例則必須被擋下。三者共用同一份 3D 模型副本，只改開檔方式。</p>
+<p><code>LoopFlow_R_MCP.rws</code> 仍保留作為既有數字的來源與反例樣本，但不再是實務配置的代表。</p>
 <p><strong>18. 建立效能測試用的放大模型</strong> 目前可量測候選只有 48 個，列舉總量 3116。QO-17 要求測 100／1,000／5,000 候選。可用複製方式產生，但需注意 GUID 會改變（複製產生新 ID）。</p>
 <p><strong>19. 建立三層 fixture 集</strong></p>
 <p>不要把「不需 Rhino」與「能驗證 Rhino 幾何辨識」混為一談：</p>
@@ -708,12 +724,12 @@ b4fae896-bf13-4b19-9ff3-6f5ed902ba1f   ✅ 仍存在（CL-06）</code></pre>
 <ul><li>四個成員<strong>全部退出逐物件計算</strong>；估價單只出現一列「燈箱 一式 1」</li><li>若任何一個成員仍被逐物件算到（尤其燈條的長度規則），視為失敗——這正是 QD-10 警告的「安靜多算一筆」</li><li>群組輸出 Z-up OBB 的長寬高當尺寸附註，不當作計價數量</li><li>空間歸屬讀成員的 <code>_09_空間ID</code>，不自行判斷</li><li>Coverage 五態中，一式成員應落在「一式」而不是「未選取」</li></ul>
 <p>還需要的變化樣本：</p>
 <ul><li><strong>成員跨空間的一式群組</strong> → 應診斷並照實輸出多值，不取多數決（QD-21）</li><li><strong>一式群組與櫃體群組成員重疊</strong>（例如嵌在櫃體裡的燈箱）→ 同一物件同時屬於兩種 <code>QTY_</code> 前綴群組，一邊要算一邊要排除，必須報衝突</li><li><strong>已成群但未命名的一式候選</strong> → 應列為待命名，不得靜默不算</li><li>沒有實體的一式（清運、管理費）<strong>不在此列</strong>，維持手動填寫</li></ul>
-<p><strong>28. worksession 群組名稱前綴 fixture（對應 QD-24）</strong></p>
-<p>2026-09-03 隔離實測：worksession <code>_Attach</code> 進來的模型，群組會一起進群組表、reference 物件的 <code>GetGroupList()</code> 正常，但<strong>名稱變成 <code>&lt;來源檔名&gt; : &lt;原名&gt;</code></strong>（實測值 <code>ws_child.3dm : QTY_LS_TEST</code>）。用 <code>startswith(&quot;QTY_&quot;)</code> 直接比對，從 2D 側跑會一個群組都找不到而且不報錯。</p>
-<p>fixture 需要同一組櫃體與一式群組，分別以兩種方式開啟：</p>
-<ul><li>直接開 3D 檔 → 名稱為 <code>QTY_CB_001_...</code></li><li>worksession attach → 名稱為 <code>&lt;檔名&gt; : QTY_CB_001_...</code></li></ul>
-<p>兩種方式必須找到<strong>同一批群組</strong>、得到相同 OBB，且輸出能指出來源模型（兩個 attach 的模型可能有同名群組）。這項與項目 17「直接開 3D 檔的對照測試」共用同一組副本即可。</p>
-<p>補強順序：<strong>27 併入第 4 批</strong>（與 26 Cabinet Group 一起，兩者共用群組機制）；<strong>28 併入項目 17</strong>，因為它就是同一件事的群組版本。</p>
+<p><strong>28. 開錯檔的偵測 fixture（對應 QD-24 改寫版）</strong></p>
+<p>2026-09-03 隔離實測：worksession <code>_Attach</code> 進來的模型，群組會一起進群組表、reference 物件的 <code>GetGroupList()</code> 正常，但<strong>名稱變成 <code>&lt;來源檔名&gt; : &lt;原名&gt;</code></strong>（實測值 <code>ws_child.3dm : QTY_LS_TEST</code>）。</p>
+<p>QD-26 之後這不再是要相容的情境，而是要<strong>抓出來的錯誤配置</strong>：3D 被 attach 代表物件不可編輯，GH 選取與 Nexus 修改都做不了。fixture 需要一份「3D attach 進 2D」的 <code>.rws</code>，驗證 QTY：</p>
+<ul><li>認得 <code>&lt;檔名&gt; : QTY_...</code> 這種名稱，不是回空集合</li><li>報設定錯誤並停止，訊息要說得出「請直接開啟 3D 檔，或改成 2D attach 進 3D」</li><li><strong>不得</strong>照樣輸出數量或 OBB</li></ul>
+<p>順帶一提，前綴比對若寫成 <code>startswith(&quot;QTY_&quot;)</code>，這種配置會靜默回空集合、Coverage 全部落在「未選取」——那正是這個 fixture 要擋下的失敗模式。</p>
+<p>補強順序：<strong>27 併入第 4 批</strong>（與 26 Cabinet Group 一起，兩者共用群組機制）；<strong>28 併入項目 17</strong>，同一組副本改開檔方式即可。</p>
 <h1 class="chaptitle" id="LoopFlow-QTY-開發順序計畫">LoopFlow QTY — 開發順序計畫</h1>
 <blockquote><p>本文件是 QTY <strong>任務切分與開發順序</strong>的唯一來源。範圍見 <a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a>，決策狀態見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a>／<a href="#LoopFlow-QTY-決策紀錄-第二輪"><code>決策紀錄_2.md</code></a>。</p>
 <p>建立日期：2026-09-02　｜　階段：<strong>尚未開工</strong></p></blockquote>
