@@ -171,6 +171,7 @@ tr.ckrow.done td.ckcell{text-decoration:none;opacity:1}
 <a class="l2" href="#LoopFlow-QTY-測試模型補強項目--4-工作方式與規模">4　工作方式與規模</a>
 <a class="l2" href="#LoopFlow-QTY-測試模型補強項目--5-建議的補強順序">5　建議的補強順序</a>
 <a class="l2" href="#LoopFlow-QTY-測試模型補強項目--6-Cursor-覆核-2026-09-02-公司電腦">6　Cursor 覆核（2026-09-02，公司電腦）</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--7-2026-09-03-追加-一式群組與-worksession-前綴">7　2026-09-03 追加（一式群組與 worksession 前綴）</a>
 </div>
 <div class="group">
 <a class="l1" href="#LoopFlow-QTY-開發順序計畫">LoopFlow QTY — 開發順序計畫</a>
@@ -577,8 +578,9 @@ b4fae896-bf13-4b19-9ff3-6f5ed902ba1f   ✅ 仍存在（CL-06）</code></pre>
 <ul><li>選取 JSON 不能只存裸 GUID，也不能存絕對路徑、worksession index 或 runtime serial</li><li>未知 <code>schema_id</code>／<code>schema_version</code> 整批停止；缺規則只該件不可量測</li><li>主算法失效時 Excel 不得輸出淨數量</li><li>全集明寫排除 <code>DNA_REF_</code>；hidden／locked 不因此排除</li><li><code>QD-15</code> 改為 MCP 紀律；產品 adapter 自列舉且 <code>ReferenceObjects = True</code></li><li>預覽零寫入；確認後才 atomic write 並留 last-good</li><li>Label 不得新增 Rhino 文件物件</li></ul>
 <p><strong>做法衝突、必須你點頭的三題</strong>：QR-01 主鍵形態、QR-13 單軸或雙軸狀態、QR-15 token 語意。QR-12 的強度差異（一般 vs 強烈）不影響做法，安全底線相同。</p>
 <h1 class="chaptitle" id="LoopFlow-QTY-測試模型補強項目">LoopFlow QTY — 測試模型補強項目</h1>
-<blockquote><p>本文件列出目前驗證模型（<code>LoopFlow_R_MCP.rws</code>）<strong>缺少或可補充</strong>的項目，用來擴大量測方法的驗證範圍。</p>
-<p>建立日期：2026-09-02　｜　現況數字見 <a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a></p></blockquote>
+<blockquote><p>本文件列出目前驗證模型<strong>缺少或可補充</strong>的項目，用來擴大量測方法的驗證範圍。</p>
+<p>驗證模型有兩份：<code>LoopFlow_R_MCP.rws</code>（QTY MCP 測試環境，§1～§6 的基準）與 <code>LoopFlow_3D.3dm</code>（LoopFlow 主工作檔，2026-09-03 的櫃體群組實測來源）。兩者狀態不同，樣本引用時要標明來自哪一份。</p>
+<p>建立日期：2026-09-02　｜　最後更新：2026-09-03　｜　現況數字見 <a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a></p></blockquote>
 <h2 id="LoopFlow-QTY-測試模型補強項目--0-測試資產規則">0　測試資產規則</h2>
 <h3 id="LoopFlow-QTY-測試模型補強項目--0-1-為什麼需要補強">0.1 為什麼需要補強</h3>
 <p>目前模型的可量測候選只有 <strong>48 個</strong>（Brep 39 ＋ Block 9），而量測方法的兩個失效情境<strong>各只有 1～2 個樣本</strong>：</p>
@@ -611,7 +613,7 @@ b4fae896-bf13-4b19-9ff3-6f5ed902ba1f   ✅ 仍存在（CL-06）</code></pre>
 <h2 id="LoopFlow-QTY-測試模型補強項目--3-資料情境">3　資料情境</h2>
 <p><strong>12. 增加空間數量到至少 5 個，並包含同名跨樓層</strong> 目前只有「廊道」29 個與「衛浴」8 個。分組、排序、<code>space_display → sort_key</code> 對照都無法驗證。同名跨樓層（例如兩層都有「主臥」）是 QO-14 明確點名的風險。</p>
 <p><strong>13. 新增落在 <code>EXT</code>（空間外）的物件</strong> 2.0 的 <code>EXT</code> 同時代表「真的在室外」與「漏畫 boundary」（ED-07 已接受此代價）。QTY 的 Coverage 報告要能列出 <code>EXT</code> 物件，但目前<strong>一個樣本都沒有</strong>。</p>
-<p><strong>14. 新增刻意的「一式」候選物件</strong> 一式黑名單是主動差集（QD-10），但目前模型沒有任何標記為一式的物件，整條排除邏輯無從測試。</p>
+<p><strong>14. 新增刻意的「一式」候選物件</strong> 一式黑名單是主動差集（QD-10），但目前模型沒有任何標記為一式的物件，整條排除邏輯無從測試。 2026-09-03 追加：一式的載體改以命名群組提案（QD-23），代表樣本與完整驗收條件見 <strong>項目 27</strong>。</p>
 <p><strong>15. 建立一個刻意的參照失效情境</strong> Coverage 五態的「已選取但參照失效」需要可重現的樣本。建議另存一份測試 <code>.rws</code>，其中 3D 檔缺少某些物件，用來驗證失效偵測與報告文字。</p>
 <p><strong>16. 補上未標記門窗 Block 的處置樣本</strong> <code>base</code> 圖層有 <code>3D_W1</code>、<code>3D_D1</code> 兩個 linked block，<strong>沒有 <code>_03_ID編號</code></strong>。它們應該進計算、進 Coverage、還是排除？字典有 <code>DW-01</code>，但這兩個沒被標記。需要決定並建立對應樣本。</p>
 <hr>
@@ -630,7 +632,7 @@ b4fae896-bf13-4b19-9ff3-6f5ed902ba1f   ✅ 仍存在（CL-06）</code></pre>
 <p>至少包含旋轉、鏡射、非等比縮放、巢狀／linked block、多個 instance 共用 definition，以及 open／invalid Brep。Mesh、SubD 等範圍外型別也要有排除案例與明確原因，避免它們被無聲漏掉。</p>
 <hr>
 <h2 id="LoopFlow-QTY-測試模型補強項目--5-建議的補強順序">5　建議的補強順序</h2>
-<div class="tw"><table><thead><tr><th>順序</th><th>項目</th><th>理由</th></tr></thead><tbody><tr><td>1</td><td>19（fixture 三層）與 oracle 格式</td><td>先固定怎樣才算「測過」，否則後續只是在堆模型</td></tr><tr><td>2</td><td>8（<code>m2</code>）、11（結構實體）、20（身分）</td><td>補<strong>已知缺陷</strong>、未完整路徑與 QR-01 的安全契約</td></tr><tr><td>3</td><td>1～7（幾何形狀）</td><td>直接決定 QR-03 的長度 fallback 與 QR-07 的開口閾值能不能定案</td></tr><tr><td>4</td><td>12～17、21、22、26</td><td>解鎖分組、Coverage、直接開檔、單位、Block、Cabinet Group 與失效行為</td></tr><tr><td>5</td><td>9、10、18</td><td>補完整性與效能；效能模型獨立建立，可與實作並行</td></tr></tbody></table></div>
+<div class="tw"><table><thead><tr><th>順序</th><th>項目</th><th>理由</th></tr></thead><tbody><tr><td>1</td><td>19（fixture 三層）與 oracle 格式</td><td>先固定怎樣才算「測過」，否則後續只是在堆模型</td></tr><tr><td>2</td><td>8（<code>m2</code>）、11（結構實體）、20（身分）</td><td>補<strong>已知缺陷</strong>、未完整路徑與 QR-01 的安全契約</td></tr><tr><td>3</td><td>1～7（幾何形狀）</td><td>直接決定 QR-03 的長度 fallback 與 QR-07 的開口閾值能不能定案</td></tr><tr><td>4</td><td>12～17、21、22、26、27、28</td><td>解鎖分組、Coverage、直接開檔、單位、Block、Cabinet Group／一式群組與失效行為</td></tr><tr><td>5</td><td>9、10、18</td><td>補完整性與效能；效能模型獨立建立，可與實作並行</td></tr></tbody></table></div>
 <blockquote><p><strong>注意</strong>：原始工作檔不補強，因此 <a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a> 的 48 件 baseline 保持不變。各測試副本另有自己的 manifest 與盤點，不把數字混回原始模型。</p></blockquote>
 <hr>
 <h2 id="LoopFlow-QTY-測試模型補強項目--6-Cursor-覆核-2026-09-02-公司電腦">6　Cursor 覆核（2026-09-02，公司電腦）</h2>
@@ -642,9 +644,26 @@ b4fae896-bf13-4b19-9ff3-6f5ed902ba1f   ✅ 仍存在（CL-06）</code></pre>
 <p><strong>25. 重複 <code>_07_UUID</code> 與來源複本 GUID 碰撞（對應 QR-01）</strong> 本 session 3116 個 GUID 不重複、37 個 UUID 不重複，所以「conflict、不猜配」這條路目前是空的。</p>
 <p><strong>26. 將 Cabinet Group／Z-up OBB 做成正式 fixture（對應 QD-16～19）</strong></p>
 <p>已有兩組探索性樣本，每組相同櫃體各含 11 個 Brep：<code>LoopFlow_R_MCP.rws</code>（09-02）的 0°／45°，World bbox <code>100 × 36.746 × 75</code>、<code>96.694 × 96.694 × 75</code> cm；<code>LoopFlow_3D.3dm</code>（09-03）的 0°／30°，World bbox <code>100 × 36.746 × 75</code>、<code>104.976 × 81.823 × 75</code> cm。四組方向校正後的 Z-up OBB 都是 <code>100 × 36.746 × 75</code> cm，09-03 兩組體積同為 <code>95035.7251 cm³</code>。正式 fixture 還須補：</p>
-<ul><li>真正 Group Name 與成員物件名稱不同，QTY 只採前者</li><li>巢狀子群組、部分重疊與交叉群組，避免同一零件重複計量</li><li>90°、任意角、鏡射，以及把手／檯面突出造成外包尺寸改變</li><li>弧形與不規則櫃；仍輸出 OBB，並驗證方向診斷不會靜默宣稱高信心</li><li>cm／mm 文件單位換算後得到相同物理尺寸</li><li>Group 改名、解散、增減成員後的 lost／changed 報告</li><li>櫃體圖層上未成群的零件必須被報告（QD-20）；同類零件需同時有已成群與未成群兩種</li><li>成員空間一致、不一致與 <code>EXT</code> 三種情形各一（QD-21）</li><li>Group Table 內混有非櫃體群組（樓板、飾條）時不得被當成櫃體</li></ul>
+<ul><li>真正 Group Name 與成員物件名稱不同，QTY 只採前者</li><li>巢狀子群組、部分重疊與交叉群組，避免同一零件重複計量</li><li>90°、任意角、鏡射，以及把手／檯面突出造成外包尺寸改變</li><li>弧形與不規則櫃；仍輸出 OBB，並驗證方向診斷不會靜默宣稱高信心</li><li>cm／mm 文件單位換算後得到相同物理尺寸</li><li>Group 改名、解散、增減成員後的 lost／changed 報告</li><li><code>_Copy</code> 複製整組櫃體：複本自成新群組但<strong>不帶名稱</strong>，必須被列為待命名，不得靜默從數量表消失</li><li>解散最外層後子群組仍在、重新成群取得新 index 與自動名稱；重新命名一次即可恢復可量測</li><li>重新成群時漏選一個零件：名稱照樣寫得上去但 OBB 變小，必須由檢查抓出</li><li>櫃體圖層上未成群的零件必須被報告（QD-20）；同類零件需同時有已成群與未成群兩種</li><li>成員空間一致、不一致與 <code>EXT</code> 三種情形各一（QD-21）</li><li>Group Table 內混有非櫃體群組（樓板、飾條）時不得被當成櫃體</li></ul>
 <p>兩份工作檔的命名狀態不同，fixture 要分別對待：<code>LoopFlow_R_MCP.rws</code> 的 <code>櫃體群組測試0</code>／<code>櫃體群組測試45</code> 是成員物件名稱，真正外層 Group Name 仍為 <code>Group03</code>／<code>Group04</code>；<code>LoopFlow_3D.3dm</code> 則是 12 個群組全為自動名稱、成員完全沒有物件名稱（Toolkit 的同步指令已因此取消，一律直接命名）。正式 fixture 應先用 <code>SetGroupName</code> 建立可辨識的真正名稱，再保存 manifest 與 oracle，不要直接拿正式工作檔當 fixture。</p>
 <p>補強順序建議把 <strong>23、25 插入第 2 批</strong>（與身分、<code>m2</code> 一起），<strong>24、26 可與第 4 批</strong>的 Coverage／開檔方式一起。</p>
+<hr>
+<h2 id="LoopFlow-QTY-測試模型補強項目--7-2026-09-03-追加-一式群組與-worksession-前綴">7　2026-09-03 追加（一式群組與 worksession 前綴）</h2>
+<p>本節對應 QD-23（一式改用命名群組當載體）與 QD-24（前綴比對容許來源檔前綴）。兩者都還是待裁決，但模型要先建，否則定案後無從驗證。</p>
+<p><strong>27. 一式群組（<code>QTY_LS_</code>）fixture——以燈箱為代表樣本</strong></p>
+<p>一式目前完全沒有樣本（項目 14），而載體從「外部 <code>object_id</code> 清單」改成命名群組後，要驗的東西也不同了。建議直接照實務做一座<strong>燈箱</strong>：</p>
+<div class="tw"><table><thead><tr><th>成員</th><th>建議圖層</th><th>用途</th></tr></thead><tbody><tr><td>鋼板骨架</td><td><code>02_Wall_牆面::Metal.金屬</code></td><td>有字典規則，用來驗證「主動差集有沒有真的把它扣掉」</td></tr><tr><td>烤漆</td><td><code>02_Wall_牆面::Paint.油漆</code></td><td>面積規則，同上</td></tr><tr><td>沖孔板</td><td><code>02_Wall_牆面::Metal.金屬</code></td><td>中空件，順便當項目 7 的對照</td></tr><tr><td>燈條</td><td><code>05_LT_燈帶::Strip_Light_WL.牆面</code></td><td><strong>長度規則</strong>，最容易被重複計</td></tr></tbody></table></div>
+<p>整組建立最外層群組，命名 <code>QTY_LS_001_燈箱</code>。每個成員維持各自的 Tag 與 <code>_01</code>～<code>_14</code>（一式不影響身分，也不影響圖面材料標示）。</p>
+<p>必須驗證的行為：</p>
+<ul><li>四個成員<strong>全部退出逐物件計算</strong>；估價單只出現一列「燈箱 一式 1」</li><li>若任何一個成員仍被逐物件算到（尤其燈條的長度規則），視為失敗——這正是 QD-10 警告的「安靜多算一筆」</li><li>群組輸出 Z-up OBB 的長寬高當尺寸附註，不當作計價數量</li><li>空間歸屬讀成員的 <code>_09_空間ID</code>，不自行判斷</li><li>Coverage 五態中，一式成員應落在「一式」而不是「未選取」</li></ul>
+<p>還需要的變化樣本：</p>
+<ul><li><strong>成員跨空間的一式群組</strong> → 應診斷並照實輸出多值，不取多數決（QD-21）</li><li><strong>一式群組與櫃體群組成員重疊</strong>（例如嵌在櫃體裡的燈箱）→ 同一物件同時屬於兩種 <code>QTY_</code> 前綴群組，一邊要算一邊要排除，必須報衝突</li><li><strong>已成群但未命名的一式候選</strong> → 應列為待命名，不得靜默不算</li><li>沒有實體的一式（清運、管理費）<strong>不在此列</strong>，維持手動填寫</li></ul>
+<p><strong>28. worksession 群組名稱前綴 fixture（對應 QD-24）</strong></p>
+<p>2026-09-03 隔離實測：worksession <code>_Attach</code> 進來的模型，群組會一起進群組表、reference 物件的 <code>GetGroupList()</code> 正常，但<strong>名稱變成 <code>&lt;來源檔名&gt; : &lt;原名&gt;</code></strong>（實測值 <code>ws_child.3dm : QTY_LS_TEST</code>）。用 <code>startswith(&quot;QTY_&quot;)</code> 直接比對，從 2D 側跑會一個群組都找不到而且不報錯。</p>
+<p>fixture 需要同一組櫃體與一式群組，分別以兩種方式開啟：</p>
+<ul><li>直接開 3D 檔 → 名稱為 <code>QTY_CB_001_...</code></li><li>worksession attach → 名稱為 <code>&lt;檔名&gt; : QTY_CB_001_...</code></li></ul>
+<p>兩種方式必須找到<strong>同一批群組</strong>、得到相同 OBB，且輸出能指出來源模型（兩個 attach 的模型可能有同名群組）。這項與項目 17「直接開 3D 檔的對照測試」共用同一組副本即可。</p>
+<p>補強順序：<strong>27 併入第 4 批</strong>（與 26 Cabinet Group 一起，兩者共用群組機制）；<strong>28 併入項目 17</strong>，因為它就是同一件事的群組版本。</p>
 <h1 class="chaptitle" id="LoopFlow-QTY-開發順序計畫">LoopFlow QTY — 開發順序計畫</h1>
 <blockquote><p>本文件是 QTY <strong>任務切分與開發順序</strong>的唯一來源。範圍見 <a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a>，決策狀態見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a>／<a href="#LoopFlow-QTY-決策紀錄-第二輪"><code>決策紀錄_2.md</code></a>。</p>
 <p>建立日期：2026-09-02　｜　階段：<strong>尚未開工</strong></p></blockquote>
