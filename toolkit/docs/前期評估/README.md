@@ -22,6 +22,6 @@
 
 `LF_Cabinet_Suite` 的風險層級不同：它會刪除輸入 box、寫入／清除 UserText、猜測零件種類與尺寸，且同檔混合 UI、3D 產生、層板、BOM。建議先拆成獨立 feature，再決定哪些功能值得保留。
 
-2026-09-02 已裁決櫃體與 QTY 的交界：完整櫃體不用 Block，改用帶唯一 `QTY_CB_` 真正 Group Name 的 Rhino Group，以保留零件 Tag；Toolkit 負責建立／同步／檢查，QTY 唯讀集合成員並輸出 Z-up OBB 原始長寬高。高矮深淺等分類不進群組名稱與量測核心，留到輸出後人工判斷。
+2026-09-02 已裁決櫃體與 QTY 的交界：完整櫃體不用 Block，改用帶唯一 `QTY_CB_` 真正 Group Name 的 Rhino Group，以保留零件 Tag；Toolkit 負責建立與檢查，QTY 唯讀集合成員並輸出 Z-up OBB 原始長寬高。高矮深淺等分類不進群組名稱與量測核心，留到輸出後人工判斷。
 
-2026-09-03 追加：產品位置定案為本 repo `toolkit/`（TKO-02）；指令改採 2.0 的無底線正式名稱（TKO-12）；以 `LoopFlow_3D.3dm` 的 0°／30° 櫃體再次驗證 Z-up OBB，同時發現三個文件缺口並已補入——櫃體圖層上未成群的零件必須被報告（TKO-19）、櫃體群組的空間歸屬只讀成員既有值且需檢查一致性（TKO-20）、`_LoopFlow_Config` 子資料夾應登錄為 `loopflow_TOOLKIT`（TKO-21）。
+2026-09-03 追加：產品位置定案為本 repo `toolkit/`（TKO-02）；指令改採 2.0 的無底線正式名稱（TKO-12）；Cabinet Group 由三支收斂為兩支——同步指令取消，只留建立／命名／改名與唯讀檢查（TKO-15 修正）；以 `LoopFlow_3D.3dm` 的 0°／30° 櫃體再次驗證 Z-up OBB，同時發現三個文件缺口並已補入——櫃體圖層上未成群的零件必須被報告（TKO-19）、櫃體群組的空間歸屬只讀成員既有值且需檢查一致性（TKO-20）、`_LoopFlow_Config` 子資料夾應登錄為 `loopflow_TOOLKIT`（TKO-21）。

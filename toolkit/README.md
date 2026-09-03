@@ -26,7 +26,7 @@
 - 每個功能都有 fixtures、golden geometry 與取消／失敗復原測試
 - 1.x 只作行為證據，不整檔搬回
 - `LF_Cabinet_Suite` 先拆責任與資料契約，**不阻擋三支 2D 工具先發布**
-- Cabinet Group（建立／同步／檢查）已裁決，排在 Cabinet Suite 之前，**不受其未定案項目阻擋**
+- Cabinet Group 兩支指令（建立／命名／改名、唯讀檢查）已裁決，排在 Cabinet Suite 之前，**不受其未定案項目阻擋**
 
 ## 文件
 
