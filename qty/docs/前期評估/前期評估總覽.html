@@ -459,7 +459,7 @@ objs = doc.Objects.GetObjectList(s)</code></pre>
 <h4 id="LoopFlow-QTY-量測方法--空間歸屬-2026-09-03-補">空間歸屬（2026-09-03 補）</h4>
 <p>群組本身不判斷空間，改讀成員既有的 <code>_09_空間ID</code>／<code>_01_空間名稱</code>（Nexus 已逐物件寫入）：</p>
 <ul><li>全體成員一致 → 輸出該空間</li><li>不一致 → 列為診斷並照實輸出多個值，不取多數決、不自行重算包含關係</li><li>落在所有空間框外 → 沿用 Nexus 既有的 <code>EXT</code>；量測值不受影響</li></ul>
-<p>同時必須診斷「位於櫃體圖層、卻不屬於任何 <code>QTY_CB_</code> 群組」的零件，否則只掃群組會靜默漏量。<strong>不可用 <code>_03_ID編號</code> 區分櫃體</strong>：它是類型編號，不同櫃體的同類零件值完全相同。</p>
+<p>同時必須診斷兩種會靜默漏量的情形：一是「位於櫃體圖層、卻不屬於任何群組」的零件；二是「已成群但沒有 <code>QTY_CB_</code> 名稱」的群組——實測顯示用 <code>_Copy</code> 複製整組櫃體時，複本會自成新群組但<strong>不帶名稱</strong>，解散重組後也一樣，這是實務上最容易漏掉一個櫃的路徑。<strong>不可用 <code>_03_ID編號</code> 區分櫃體</strong>：它是類型編號，不同櫃體的同類零件值完全相同。</p>
 <h4 id="LoopFlow-QTY-量測方法--MCP-實測">MCP 實測</h4>
 <p>模型單位皆為 cm；每組相同櫃體各有 11 個 Brep，只差旋轉角度：</p>
 <div class="tw"><table class="wide"><thead><tr><th>來源檔</th><th>群組</th><th>World bbox</th><th>自動推定方向</th><th>Z-up OBB</th></tr></thead><tbody><tr><td><code>LoopFlow_R_MCP.rws</code>（09-02）</td><td>測試 0°</td><td><code>100 × 36.746 × 75</code></td><td><code>0°</code></td><td><code>100 × 36.746 × 75</code></td></tr><tr><td><code>LoopFlow_R_MCP.rws</code>（09-02）</td><td>測試 45°</td><td><code>96.694 × 96.694 × 75</code></td><td><code>45°</code></td><td><code>100 × 36.746 × 75</code></td></tr><tr><td><code>LoopFlow_3D.3dm</code>（09-03）</td><td><code>Group01</code> 0°</td><td><code>100 × 36.746 × 75</code></td><td><code>0°</code></td><td><code>100 × 36.746 × 75</code></td></tr><tr><td><code>LoopFlow_3D.3dm</code>（09-03）</td><td><code>Group03</code> 30°</td><td><code>104.976 × 81.823 × 75</code></td><td><code>30°</code></td><td><code>100 × 36.746 × 75</code></td></tr></tbody></table></div>
