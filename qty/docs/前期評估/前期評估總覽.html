@@ -131,6 +131,7 @@ tr.ckrow.done td.ckcell{text-decoration:none;opacity:1}
 <a class="l2" href="#LoopFlow-QTY-資料盤點--8-MCP-讀取限制-影響實作方式">8　MCP 讀取限制（影響實作方式）</a>
 <a class="l2" href="#LoopFlow-QTY-資料盤點--9-專案設定與-Registry-2026-09-02-補齊">9　專案設定與 Registry（2026-09-02 補齊）</a>
 <a class="l2" href="#LoopFlow-QTY-資料盤點--10-尚未完整驗證">10　尚未完整驗證</a>
+<a class="l2" href="#LoopFlow-QTY-資料盤點--11-配置變更的影響-2026-09-03-掃描">11　配置變更的影響（2026-09-03 掃描）</a>
 </div>
 <div class="group">
 <a class="l1" href="#LoopFlow-QTY-量測方法">LoopFlow QTY — 量測方法</a>
@@ -296,11 +297,11 @@ Excel（估價單＋明細）</code></pre>
 <p><strong>不得</strong>用 MCP 代替使用者操作 LoopFlow 產品指令，也不得 headless 載入 <code>.gh</code>（已造成一次 Rhino 當機）。細節見 <a href="../MCP評估/MCP設定交接.md"><code>MCP評估/MCP設定交接.md</code></a> §7。</p>
 <h1 class="chaptitle" id="LoopFlow-QTY-資料盤點">LoopFlow QTY — 資料盤點</h1>
 <blockquote><p>本文件是 QTY <strong>模型與字典資料現況</strong>的唯一來源。範圍見 <a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a>，量測方式見 <a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a>。</p>
-<p>建立日期：2026-09-01　｜　<strong>全部數字為實測</strong>，非推估</p></blockquote>
+<p>建立日期：2026-09-01　｜　最後掃描：2026-09-03（QD-26 配置變更，見 §11）　｜　<strong>全部數字為實測</strong>，非推估</p></blockquote>
 <p>本文件回答一個問題：<strong>QTY 需要的資料，模型與字典到底有沒有給？</strong></p>
 <h2 id="LoopFlow-QTY-資料盤點--0-驗證模型">0　驗證模型</h2>
 <div class="tw"><table><thead><tr><th>項目</th><th>內容</th></tr></thead><tbody><tr><td>檔案</td><td><code>LoopFlow_R_MCP.rws</code>（worksession）</td></tr><tr><td>組成</td><td><code>LoopFlow_3D_R_MCP.3dm</code> <strong>attach 進</strong> <code>LoopFlow_2D_R_MCP.3dm</code></td></tr><tr><td>位置</td><td><code>&lt;LOOPFLOW_QTY_MCP_WORKFILES_ROOT&gt;</code>，雙機路徑見工作區 <code>工作檔路徑.md</code></td></tr><tr><td>字典</td><td><code>LoopFlow_Dictionary.xlsx</code>，與 <code>.3dm</code> 同層（Nexus 引用，LoopFlow 既定結構）</td></tr><tr><td>專案設定／Registry</td><td>2026-09-02 已補齊並遷到 2.0.7 路徑，見 §9</td></tr><tr><td>模型單位</td><td><strong>Centimeters</strong>，絕對公差 0.1</td></tr></tbody></table></div>
-<p><strong>這是依實際作業方式配置的環境</strong>，不是簡化的測試檔。</p>
+<blockquote><p><strong>2026-09-03 更正</strong>：本節原寫「這是依實際作業方式配置的環境」。<strong>該敘述已不成立。</strong> QD-26 裁決 QTY 一律在 3D 檔作業（直接開 3D，或 2D attach 進 3D），本模型方向相反，是不合法配置。文中的數字仍是該檔的實測事實，但凡涉及「本機／參照」分側的結論都綁在舊配置上——逐項見 <a href="#11配置變更的影響2026-09-03-掃描">§11</a>。</p></blockquote>
 <h2 id="LoopFlow-QTY-資料盤點--1-物件總覽">1　物件總覽</h2>
 <div class="tw"><table><thead><tr><th>分類</th><th>數量</th></tr></thead><tbody><tr><td>完整列舉（含隱藏／鎖定／參照）</td><td><strong>3116</strong></td></tr><tr><td>本機側（2D 圖面，作用中文件）</td><td>2972</td></tr><tr><td><strong>參照側（3D 模型，attach 進來）</strong></td><td><strong>144</strong></td></tr></tbody></table></div>
 <h3 id="LoopFlow-QTY-資料盤點--1-1-幾何型別分布">1.1 幾何型別分布</h3>
@@ -344,7 +345,7 @@ LCurve×14 + RBrep                     x1      ← 一項畫了 14 條線</code>
 <p>Coverage 檢核的「全部物件」<strong>不是</strong>文件中所有物件：</p>
 <div class="tw"><table><thead><tr><th>類別</th><th>數量</th><th>納入全集</th></tr></thead><tbody><tr><td>帶 <code>type_id</code> 的 Brep／Block</td><td>37</td><td>✅</td></tr><tr><td>結構體（<code>00_STR_*</code>）的 Brep</td><td>16</td><td>✅ 但另計（§6）</td></tr><tr><td><strong>Point（放置點）</strong></td><td>約 97</td><td>❌ <strong>排除</strong></td></tr><tr><td><strong>Curve</strong></td><td>—</td><td>❌ <strong>排除</strong></td></tr></tbody></table></div>
 <p><strong>若不排除 Point，那 97 個放置點會全部落入「未選取」，Coverage 一開跑就被雜訊淹沒。</strong></p>
-<p>全集定義：<strong>3D 側的 Brep 與 InstanceReference</strong>。</p>
+<p>全集定義（2026-09-03 依 QD-26 改寫）：<strong>作用中模型的本機 Brep 與 InstanceReference</strong>（<code>IsReference == False</code>）。原文寫「3D 側」，那是舊配置下「3D 是被 attach 那一份」的描述；三家覆核都要求改掉這個綁 worksession 的措辭（QD-03），QD-26 給出了正式寫法。排除 Point 與 Curve 的結論不變。</p>
 <h2 id="LoopFlow-QTY-資料盤點--5-字典-join-完整可用">5　字典 join：完整可用</h2>
 <p>以 <code>type_id</code> 查 <code>LoopFlow_Dictionary.xlsx</code>（92 筆 Type）：</p>
 <div class="tw"><table><thead><tr><th>檢查</th><th>結果</th></tr></thead><tbody><tr><td>相異 <code>type_id</code></td><td>26</td></tr><tr><td>查得到 <code>measurement_rule</code> 與 <code>estimation_unit</code></td><td><strong>26 / 26</strong></td></tr><tr><td><code>classify_measurement</code> 量綱一致性</td><td><strong>26 / 26 <code>pass</code></strong></td></tr><tr><td>以物件計</td><td><strong>98 / 98</strong></td></tr></tbody></table></div>
@@ -360,6 +361,8 @@ LCurve×14 + RBrep                     x1      ← 一項畫了 14 條線</code>
 <p>但 <a href="#LoopFlow-QTY-前期評估"><code>qty/README.md</code></a> 早已指出正確路徑：結構體改讀<strong>圖層路徑</strong>查字典。<strong>實測全部命中</strong>：</p>
 <div class="tw"><table><thead><tr><th>圖層</th><th>type_id</th><th>規則</th><th>單位</th></tr></thead><tbody><tr><td><code>00_STR_結構::Beam.樑</code></td><td><code>EX-01</code></td><td><code>VOL_WDH</code></td><td>m3</td></tr><tr><td><code>00_STR_結構::Column.柱</code></td><td><code>EX-02</code></td><td><code>VOL_WDH</code></td><td>m3</td></tr><tr><td><code>00_STR_結構::Curb.墩座</code></td><td><code>EX-03</code></td><td><code>LEN_W</code></td><td>cm</td></tr><tr><td><code>00_STR_結構::Slab.樓板</code></td><td><code>EX-04</code></td><td><code>AREA_WD</code></td><td>坪</td></tr><tr><td><code>00_STR_結構::Stair.樓梯</code></td><td><code>EX-05</code></td><td><code>COUNT</code></td><td>座</td></tr><tr><td><code>00_STR_結構::Wall-Brick.牆-Brick</code></td><td><code>EX-06</code></td><td><code>LEN_W</code></td><td>cm</td></tr><tr><td><code>00_STR_結構::Wall-RC.牆-RC</code></td><td><code>EX-07</code></td><td><code>LEN_W</code></td><td>cm</td></tr></tbody></table></div>
 <p><strong>意義</strong>：結構體不是「計算方式待議」，而是<strong>查詢鍵是 <code>layer_path</code> 而非 <code>type_id</code></strong>。字典的 <code>EX</code> 類別（7 筆）就是為此準備的。</p>
+<blockquote><p><strong>2026-09-03 補：查詢前必須先去掉專案 layer_prefix。</strong> 上表列的是字典／Registry 側的值，不是模型裡的圖層全名。實測 <code>WIP_loopflow</code> 的 <code>Project_Registry.json</code>：<code>types[].layer_path</code> 為 <code>00_STR_結構::Beam.樑</code>，而模型的圖層全名是 <code>M3D::00_STR_結構::Beam.樑</code>。<code>M3D</code> 就是 <code>LoopFlow_Project.json</code> 的 <code>layer_prefix</code>（＝<code>project_id</code>）。</p>
+<p>因此查詢鍵 ＝ <strong>圖層全名去掉 <code>&lt;layer_prefix&gt;::</code></strong>。這一步原本沒寫進文件，實作若直接拿 <code>FullPath</code> 去比對會全部查不到。QD-26 之後只需要去掉這一層前綴；舊配置下還要多去掉一層檔名前綴（<code>&lt;檔名&gt; : </code>），現在不會再出現。</p></blockquote>
 <p>差異僅在：</p>
 <ul><li>查詢鍵：<code>layer_path</code>（不是 <code>type_id</code>）</li><li>不要求 UUID、空間、高程</li><li>出現 <code>VOL_WDH</code>（裝修材完全沒用到體積規則）</li><li>加總依 Type，不依房間</li></ul>
 <h2 id="LoopFlow-QTY-資料盤點--7-幾何品質">7　幾何品質</h2>
@@ -374,6 +377,7 @@ LCurve×14 + RBrep                     x1      ← 一項畫了 14 條線</code>
 <p>實測 30 個 Brep 的最佳貼合角度<strong>全部落在 30°</strong>，其中 24 個貼合度正好 1.00（完美方塊，只是轉了角度）。若用 World bbox 量，<code>WL-14</code> 會錯到 <strong>127 倍</strong>。</p>
 <blockquote><p><strong>實務上牆的方位是各角度混和，而且同一道牆本身就可能有多個角度</strong>（L 型、弧形、包覆）。因此不能靠「整體方位」或「每批一個平面」解決。方法見 <a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a>。</p></blockquote>
 <h2 id="LoopFlow-QTY-資料盤點--8-MCP-讀取限制-影響實作方式">8　MCP 讀取限制（影響實作方式）</h2>
+<blockquote><p><strong>2026-09-03 範圍限縮</strong>：本節的結論成立於「要量的東西在參照側」，也就是舊配置。QD-26 之後計算對象一律是本機物件，MCP 原生工具<strong>看得到</strong>，本節描述的盲點不再擋住主路徑。仍保留的價值有二：一是 MCP 開發期若去讀配置 b 的 attach 2D 內容，盲點依然存在；二是最後一段的 adapter 寫法仍有效，但需補 <code>IsReference</code> 過濾（見 §11）。</p></blockquote>
 <p>worksession 下，MCP 原生工具<strong>看不到 attach 進來的參照物件，且不報錯</strong>：</p>
 <div class="tw"><table><thead><tr><th>工具</th><th>對參照物件</th></tr></thead><tbody><tr><td><code>list_objects</code></td><td>❌ 看不到（回傳 2972 ＝ 本機數，<code>truncated: false</code>、<code>warning: null</code>）</td></tr><tr><td><code>get_selection</code></td><td>❌ 看不到（即使物件確實選取中）</td></tr><tr><td><code>set_selection</code></td><td>✅ 選得到</td></tr><tr><td><code>run_python</code></td><td>✅ 看得到（需正確設定列舉器）</td></tr></tbody></table></div>
 <p><strong>「選得進去、讀不出來」的不對稱最危險。</strong></p>
@@ -400,7 +404,13 @@ objs = doc.Objects.GetObjectList(s)</code></pre>
 <div class="tw"><table><thead><tr><th>檢查</th><th>結果</th></tr></thead><tbody><tr><td>Registry <code>objects[]</code></td><td><strong>37</strong></td></tr><tr><td>與模型 <code>_07_UUID</code> 對得上</td><td><strong>37 / 37</strong>（只 live、只 Registry 皆 0）</td></tr><tr><td><code>spaces[]</code></td><td><strong>3</strong>（<code>EXT</code> ＋兩個空間 UUID，對應物件上的廊道／衛浴）</td></tr><tr><td><code>types[]</code></td><td><strong>92</strong>（與字典 Type 列數一致）</td></tr><tr><td>結構體</td><td>不在 <code>objects[]</code>（2.0 契約如此；仍用 <code>layer_path</code> 查字典）</td></tr></tbody></table></div>
 <p>QTY 選取／一式狀態應寫 <code>_LoopFlow_Config/loopflow_QTY/</code>，不得寫進 <code>loopflow/</code> 或 AppData。</p>
 <h2 id="LoopFlow-QTY-資料盤點--10-尚未完整驗證">10　尚未完整驗證</h2>
-<div class="tw"><table><thead><tr><th>項目</th><th>狀況</th></tr></thead><tbody><tr><td>Registry 與現況的<strong>漂移</strong></td><td>檔案已在，且目前與模型 UUID <strong>一致</strong>。尚未實測「改字典或改物件後未再發布」時 QTY 要停還是降級（見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a> QO-13）</td></tr><tr><td>空間資料的完整性</td><td>該模型只有「廊道」「衛浴」兩個空間加 <code>EXT</code>，不足以驗證分組與排序</td></tr><tr><td>大量物件的效能</td><td>掃描涵蓋 3116 筆但未計時</td></tr></tbody></table></div>
+<div class="tw"><table><thead><tr><th>項目</th><th>狀況</th></tr></thead><tbody><tr><td>Registry 與現況的<strong>漂移</strong></td><td>檔案已在，且目前與模型 UUID <strong>一致</strong>。尚未實測「改字典或改物件後未再發布」時 QTY 要停還是降級（見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a> QO-13）</td></tr><tr><td>空間資料的完整性</td><td>該模型只有「廊道」「衛浴」兩個空間加 <code>EXT</code>，不足以驗證分組與排序</td></tr><tr><td>大量物件的效能</td><td>掃描涵蓋 3116 筆但未計時</td></tr><tr><td><strong>合法配置下的重驗</strong></td><td>全部數字量自不合法配置（3D attach 進 2D）。涉及分側的結論須在 QD-26 的 a／b 配置重跑一次，見 §11</td></tr></tbody></table></div>
+<hr>
+<h2 id="LoopFlow-QTY-資料盤點--11-配置變更的影響-2026-09-03-掃描">11　配置變更的影響（2026-09-03 掃描）</h2>
+<p>QD-26 裁決 QTY 一律在 3D 檔作業後，本文件逐節掃描的結果。<strong>原文一律保留</strong>，因為那些數字是該檔的真實測量；這裡只標出哪些結論綁在配置上。</p>
+<div class="tw"><table><thead><tr><th>節</th><th>內容</th><th>是否受影響</th><th>處置</th></tr></thead><tbody><tr><td>§0</td><td>「依實際作業方式配置的環境」</td><td><strong>已不成立</strong></td><td>已就地更正；該檔改作反例樣本</td></tr><tr><td>§1</td><td>本機 2972／參照 144 的分側</td><td><strong>標籤會顛倒</strong></td><td>數字是事實；合法配置下 3D 是本機、2D 才是參照（配置 a 則沒有 2D）</td></tr><tr><td>§1.1</td><td>「所有可量測的 3D 實體都在參照側」</td><td><strong>會顛倒</strong></td><td>合法配置下可量測實體一律在本機側</td></tr><tr><td>§2.2</td><td>組成模式的 <code>L</code>／<code>R</code> 標記</td><td><strong>會顛倒</strong></td><td><code>LCurve + RBrep</code> 在合法配置下是 <code>RCurve + LBrep</code>；<strong>1 UUID ↔ 1 個 3D 代表的結論不變</strong></td></tr><tr><td>§2.3</td><td>2D 與 3D 由 UUID 綁定</td><td>不受影響</td><td>綁定關係與哪一側是本機無關</td></tr><tr><td>§3</td><td>2D 不採用</td><td>不受影響、反而更強</td><td>配置 a 根本沒有 2D；配置 b 的 2D 是參照＋Curve，雙重排除</td></tr><tr><td>§4</td><td>全集定義</td><td><strong>措辭已改</strong></td><td>「3D 側」→「作用中模型的本機 Brep 與 InstanceReference」</td></tr><tr><td>§5</td><td>字典 join 26／26、98／98</td><td>數字需重新理解</td><td>98 ＝ 61 條 2D Curve ＋ 37 個 3D。合法配置下實際參與計算的是 <strong>37</strong>；join 成功率的結論不變</td></tr><tr><td>§6</td><td>結構體查 <code>layer_path</code></td><td>不受影響，但<strong>補一步正規化</strong></td><td>查詢鍵須去掉 <code>&lt;layer_prefix&gt;::</code>（實測 <code>M3D::</code>）。舊配置還要多去一層檔名前綴</td></tr><tr><td>§7</td><td>幾何品質、開口、方位</td><td>不受影響</td><td>純幾何事實</td></tr><tr><td>§8</td><td>MCP 看不到參照物件</td><td><strong>範圍限縮</strong></td><td>主路徑不再受此擋；配置 b 讀 2D 時仍存在</td></tr><tr><td>§9</td><td>專案設定與 Registry</td><td>不受影響</td><td>路徑契約與配置無關</td></tr></tbody></table></div>
+<h3 id="LoopFlow-QTY-資料盤點--11-1-需要重做的事">11.1 需要重做的事</h3>
+<ol><li><strong>在合法配置下重跑一次盤點</strong>，確認分側相關的數字（§1、§1.1、§2.2）。這不是懷疑舊數字，而是新配置下標籤相反，直接引用會誤導。</li><li><strong>adapter 列舉器補 <code>IsReference == False</code> 過濾</strong>（QD-15 的連帶修正）。配置 b 若只靠 <code>ReferenceObjects = True</code> 而不過濾，會把 attach 的 2D 內容一起撈進來。</li><li><strong><code>layer_path</code> 正規化寫進實作契約</strong>：<code>FullPath</code> 去掉 <code>&lt;layer_prefix&gt;::</code> 才是查詢鍵。這是本輪掃描新發現的缺口，原文件從未寫出這一步。</li><li><strong><code>LoopFlow_3D.3dm</code> 可作為配置 a 的現成樣本</strong>：2026-09-03 實測 156 個全部是本機物件、0 個參照物件、worksession 模型數 1。</li></ol>
 <h1 class="chaptitle" id="LoopFlow-QTY-量測方法">LoopFlow QTY — 量測方法</h1>
 <blockquote><p>本文件是 QTY <strong>量測方式</strong>的唯一來源。資料現況見 <a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a>，決策狀態見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a>／<a href="#LoopFlow-QTY-決策紀錄-第二輪"><code>決策紀錄_2.md</code></a>。</p>
 <p>建立日期：2026-09-01　｜　本文數值均在驗證模型上實測；token 語意仍受 QR-15 阻擋，尚非實作契約</p></blockquote>
@@ -671,6 +681,7 @@ b4fae896-bf13-4b19-9ff3-6f5ed902ba1f   ✅ 仍存在（CL-06）</code></pre>
 <p><strong>10. 補上 <code>AREA_DH</code>、<code>LEN_D</code>、<code>LEN_H</code> 的樣本</strong> 字典的規則詞彙有 8 個 token，但本模型只用到 4 個（<code>COUNT</code>、<code>AREA_WD</code>、<code>AREA_WH</code>、<code>LEN_W</code>）。另外 4 個從未執行過任何一次。即使實務上少用，也應各有一個樣本確認程式路徑會動。</p>
 <p><strong>11. 補齊結構體的實體幾何</strong> <code>Column.柱</code> 與 <code>Wall-Brick.磚牆</code> 目前<strong>只有 <code>DNA_REF_</code> 參考點，沒有真實 Brep</strong>。結構體走 <code>layer_path</code> 查字典這條路只在 5 個圖層上驗證過（Beam、Slab、Curb、Stair、Wall-RC），另外 2 個沒有實體可測。</p>
 <p>只在結構測試副本補上，保留原模型「沒有真實 Brep」的基準事實。</p>
+<p>同一組樣本要順便驗 <strong><code>layer_path</code> 正規化</strong>：模型的圖層全名帶專案 <code>layer_prefix</code>（實測 <code>M3D::00_STR_結構::Beam.樑</code>），Registry／字典側則沒有（<code>00_STR_結構::Beam.樑</code>）。直接拿 <code>FullPath</code> 比對會全部查不到。詳見 <a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a> §6。</p>
 <hr>
 <h2 id="LoopFlow-QTY-測試模型補強項目--3-資料情境">3　資料情境</h2>
 <p><strong>12. 增加空間數量到至少 5 個，並包含同名跨樓層</strong> 目前只有「廊道」29 個與「衛浴」8 個。分組、排序、<code>space_display → sort_key</code> 對照都無法驗證。同名跨樓層（例如兩層都有「主臥」）是 QO-14 明確點名的風險。</p>
