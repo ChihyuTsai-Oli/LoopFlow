@@ -145,6 +145,16 @@ tr.ckrow.done td.ckcell{text-decoration:none;opacity:1}
 <a class="l2" href="#LoopFlow-QTY-量測方法--9-方法總表">9　方法總表</a>
 </div>
 <div class="group">
+<a class="l1" href="#LoopFlow-群組前綴名稱">LoopFlow — 群組前綴名稱</a>
+<a class="l2" href="#LoopFlow-群組前綴名稱--1-為什麼需要前綴">1　為什麼需要前綴</a>
+<a class="l2" href="#LoopFlow-群組前綴名稱--2-名稱格式">2　名稱格式</a>
+<a class="l2" href="#LoopFlow-群組前綴名稱--3-類別表">3　類別表</a>
+<a class="l2" href="#LoopFlow-群組前綴名稱--4-寫入與唯一性規則">4　寫入與唯一性規則</a>
+<a class="l2" href="#LoopFlow-群組前綴名稱--5-比對規則-給實作">5　比對規則（給實作）</a>
+<a class="l2" href="#LoopFlow-群組前綴名稱--6-已知限制與待驗證">6　已知限制與待驗證</a>
+<a class="l2" href="#LoopFlow-群組前綴名稱--7-變更紀錄">7　變更紀錄</a>
+</div>
+<div class="group">
 <a class="l1" href="#LoopFlow-QTY-決策紀錄">LoopFlow QTY — 決策紀錄</a>
 <a class="l2" href="#LoopFlow-QTY-決策紀錄--0-三欄覆核說明-2026-09-02">0　三欄覆核說明（2026-09-02）</a>
 <a class="l2" href="#LoopFlow-QTY-決策紀錄--1-已定案">1　已定案</a>
@@ -194,12 +204,12 @@ tr.ckrow.done td.ckcell{text-decoration:none;opacity:1}
 <div class="tw"><table><thead><tr><th>資料夾</th><th>負責</th></tr></thead><tbody><tr><td><a href="../MCP評估/"><code>MCP評估/</code></a></td><td><strong>工具面</strong>——Rhino MCP 能不能用、怎麼裝、有哪些陷阱</td></tr><tr><td><strong><code>前期評估/</code>（本資料夾）</strong></td><td><strong>產品面</strong>——QTY 要做什麼、資料夠不夠、方法對不對、哪些已定案</td></tr></tbody></table></div>
 <p>兩邊互相引用，不重複展開對方的內容。</p>
 <h2 id="LoopFlow-QTY-前期評估--閱讀順序">閱讀順序</h2>
-<div class="tw"><table><thead><tr><th>#</th><th>文件</th><th>內容</th><th>是否為唯一來源</th></tr></thead><tbody><tr><td>1</td><td><a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a></td><td>QTY 做什麼、不做什麼、與 2.0 的分界</td><td>✅ 範圍</td></tr><tr><td>2</td><td><a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a></td><td>模型與字典<strong>實際</strong>提供什麼；本階段最重要的一份</td><td>✅ 資料現況</td></tr><tr><td>3</td><td><a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a></td><td>各規則的量測方式與驗證結果</td><td>✅ 量測方法</td></tr><tr><td>4</td><td><a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a></td><td>第一輪：已定案、已推翻、未定案 ＋ 三家覆核</td><td>✅ 決策狀態</td></tr><tr><td>5</td><td><a href="#LoopFlow-QTY-決策紀錄-第二輪"><code>決策紀錄_2.md</code></a></td><td>第二輪：阻擋項與收斂提案，採三種建議強度</td><td>✅ 第二輪提案</td></tr><tr><td>6</td><td><a href="#LoopFlow-QTY-測試模型補強項目"><code>測試模型.md</code></a></td><td>驗證模型缺少或可補充的項目</td><td>✅ 測試涵蓋率</td></tr><tr><td>7</td><td><a href="#LoopFlow-QTY-開發順序計畫"><code>開發順序計畫.md</code></a></td><td>任務切分、階段順序與雙機停點</td><td>✅ 開發順序</td></tr></tbody></table></div>
+<div class="tw"><table><thead><tr><th>#</th><th>文件</th><th>內容</th><th>是否為唯一來源</th></tr></thead><tbody><tr><td>1</td><td><a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a></td><td>QTY 做什麼、不做什麼、與 2.0 的分界</td><td>✅ 範圍</td></tr><tr><td>2</td><td><a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a></td><td>模型與字典<strong>實際</strong>提供什麼；本階段最重要的一份</td><td>✅ 資料現況</td></tr><tr><td>3</td><td><a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a></td><td>各規則的量測方式與驗證結果</td><td>✅ 量測方法</td></tr><tr><td>4</td><td><a href="#LoopFlow-群組前綴名稱"><code>群組前綴名稱.md</code></a></td><td>櫃體、一式等整組量測的群組命名契約與類別表</td><td>✅ 群組命名</td></tr><tr><td>5</td><td><a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a></td><td>第一輪：已定案、已推翻、未定案 ＋ 三家覆核</td><td>✅ 決策狀態</td></tr><tr><td>6</td><td><a href="#LoopFlow-QTY-決策紀錄-第二輪"><code>決策紀錄_2.md</code></a></td><td>第二輪：阻擋項與收斂提案，採三種建議強度</td><td>✅ 第二輪提案</td></tr><tr><td>7</td><td><a href="#LoopFlow-QTY-測試模型補強項目"><code>測試模型.md</code></a></td><td>驗證模型缺少或可補充的項目</td><td>✅ 測試涵蓋率</td></tr><tr><td>8</td><td><a href="#LoopFlow-QTY-開發順序計畫"><code>開發順序計畫.md</code></a></td><td>任務切分、階段順序與雙機停點</td><td>✅ 開發順序</td></tr></tbody></table></div>
 <p>功能分類與元件構想另見 <a href="../MCP評估/初步功能分類.md"><code>MCP評估/初步功能分類.md</code></a>。</p>
 <p>2026-09-02 新增櫃體限定流程：QTY 讀取帶 <code>QTY_CB_</code> 前綴的真正 Rhino Group Name，集合完整成員後輸出 Z-up OBB 原始長寬高；不建立 Block、不改 Nexus，也不自動判斷高矮深淺。裁決與 MCP 數字見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a> QD-16～19、<a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a> §7.1。</p>
-<p>2026-09-03 以 <code>&lt;LOOPFLOW_WORKFILES_ROOT&gt;/LoopFlow_3D.3dm</code>（LoopFlow 主工作檔，非 QTY MCP 測試環境）的 0°／30° 櫃體再次驗證通過，並新增三項待裁決（QD-20～22）：未成群櫃體零件必須診斷、群組空間歸屬只讀成員既有值（框外為 <code>EXT</code>）、不可用 <code>_03_ID編號</code> 區分櫃體。</p>
+<p>2026-09-03 以 <code>&lt;LOOPFLOW_WORKFILES_ROOT&gt;/LoopFlow_3D.3dm</code>（LoopFlow 主工作檔，非 QTY MCP 測試環境）的 0°／30° 櫃體再次驗證通過，並新增三項待裁決（QD-20～22）：未成群櫃體零件必須診斷、群組空間歸屬只讀成員既有值（框外為 <code>EXT</code>）、不可用 <code>_03_ID編號</code> 區分櫃體。群組命名的格式、類別與比對規則已獨立成 <a href="#LoopFlow-群組前綴名稱"><code>群組前綴名稱.md</code></a>，Toolkit 與 QTY 共用該檔，不各自維護。</p>
 <h3 id="LoopFlow-QTY-前期評估--寬版閱讀檔-HTML">寬版閱讀檔（HTML）</h3>
-<p>本資料夾<strong>全部八份文件</strong>合併成單一離線 HTML：<strong><code>前期評估總覽.html</code></strong>。</p>
+<p>本資料夾<strong>全部九份文件</strong>合併成單一離線 HTML：<strong><code>前期評估總覽.html</code></strong>。</p>
 <div class="tw"><table><thead><tr><th>特性</th><th>說明</th></tr></thead><tbody><tr><td>單檔離線</td><td>樣式與腳本內嵌，可直接跨裝置開啟，不需網路或伺服器</td></tr><tr><td>兩層側邊目錄</td><td>章節（各 <code>.md</code> 的 H1）＋ 小節（H2），捲動時自動高亮目前位置</td></tr><tr><td><strong>跨文件連結轉錨點</strong></td><td>文件間的相對連結（如 <code>[資料盤點.md](./資料盤點.md)</code>）自動變成頁內跳轉；指向 <code>v2/docs/</code>、<code>MCP評估/</code> 等外部路徑則保持原樣</td></tr><tr><td><strong>決策表自動上色</strong></td><td>六欄以上決策表的「你的決定」欄依三家建議強度上色：白＝強烈×2+、黃＝一般×2+、綠＝輕鬆×2+</td></tr><tr><td>響應式與列印</td><td>窄畫面側欄改為頂部；列印時隱藏側欄並轉為淺色</td></tr></tbody></table></div>
 <p><strong>HTML 是衍生檔，不應手動編輯。</strong> 改 Markdown 後重跑：</p>
 <pre class="code" data-lang="bash"><code>python qty/tools/build_html.py</code></pre>
@@ -480,6 +490,40 @@ objs = doc.Objects.GetObjectList(s)</code></pre>
 <p><strong>裁決前，下表僅供理解算法本身，不代表 token 對應關係。</strong>（探索性 mapping，待 QR-15 裁決）</p></blockquote>
 <div class="tw"><table><thead><tr><th>規則</th><th>主要值</th><th>對照值</th><th>標記閾值</th></tr></thead><tbody><tr><td><code>COUNT</code></td><td>計數</td><td>—</td><td>—</td></tr><tr><td><code>AREA_WD</code> / <code>AREA_WH</code> / <code>AREA_DH</code></td><td>最大單一面</td><td>體積 ÷ 厚度</td><td>10%</td></tr><tr><td><code>LEN_W</code> / <code>LEN_D</code> / <code>LEN_H</code></td><td>體積 ÷ 端面截面積</td><td>最長邊</td><td>2%</td></tr><tr><td><code>VOL_WDH</code></td><td><code>VolumeMassProperties</code></td><td>—</td><td>—</td></tr><tr><td>（全部）</td><td>—</td><td>開口扣除率</td><td>待定</td></tr></tbody></table></div>
 <p>閾值 10% 與 2% 為依實測分布所定的初步值，實作時應可設定。</p>
+<h1 class="chaptitle" id="LoopFlow-群組前綴名稱">LoopFlow — 群組前綴名稱</h1>
+<blockquote><p>櫃體、一式等「整組量測」的群組命名契約。Toolkit 負責寫入與檢查，QTY 負責讀取，兩邊都以本檔為準。</p>
+<p>建立日期：2026-09-03　｜　狀態：<strong>基礎資料，可持續修改</strong>。<code>CB</code> 類別已裁決（TKO-13～18／QD-16～19）；類別體系是否擴充仍待裁決（TKO-22／QD-23）。</p></blockquote>
+<h2 id="LoopFlow-群組前綴名稱--1-為什麼需要前綴">1　為什麼需要前綴</h2>
+<p>Rhino 的 Group Table 裡什麼都有。2026-09-03 實測 <code>LoopFlow_3D.3dm</code> 的 12 個群組：</p>
+<div class="tw"><table><thead><tr><th>群組性質</th><th>數量</th></tr></thead><tbody><tr><td>櫃體最外層</td><td>2</td></tr><tr><td>櫃體子群組</td><td>8</td></tr><tr><td>非櫃體（樓板、飾條）</td><td>2</td></tr></tbody></table></div>
+<p>而且<strong>全部都是自動名稱</strong>（<code>Group01</code>、<code>Group20</code>…）。沒有白名單就分不出哪些群組該量測；掃全部群組會把樓板和子群組一起算進來。</p>
+<p>前綴只回答一個問題：<strong>這一組要用哪一套量測與計價方式</strong>。它不編入分類——高／矮、深／淺、工種、空間都不進名稱（TKO-16／QD-19）。</p>
+<h2 id="LoopFlow-群組前綴名稱--2-名稱格式">2　名稱格式</h2>
+<pre class="code" data-lang="text"><code>[&lt;來源檔名&gt; : ]QTY_&lt;類別&gt;_&lt;序號&gt;[_&lt;說明&gt;]</code></pre>
+<div class="tw"><table><thead><tr><th>欄位</th><th>規則</th><th>範例</th><th>說明</th></tr></thead><tbody><tr><td><code>&lt;來源檔名&gt; : </code></td><td><strong>不要自己寫</strong>；worksession attach 時 Rhino 自動加上</td><td><code>LoopFlow_3D.3dm : </code></td><td>比對必須容許此前綴，否則從 2D 側跑會一個群組都找不到（QD-24）</td></tr><tr><td><code>QTY_</code></td><td>固定保留字首，大寫</td><td><code>QTY_</code></td><td>標示「這是 QTY 要讀的群組」</td></tr><tr><td><code>&lt;類別&gt;</code></td><td>兩碼大寫英文，見 §3</td><td><code>CB</code></td><td>決定量測與計價方式</td></tr><tr><td><code>&lt;序號&gt;</code></td><td>三位數字，專案內同類唯一</td><td><code>001</code></td><td>工具負責擋重複，不靠人記</td></tr><tr><td><code>&lt;說明&gt;</code></td><td>自由文字，可中文，可省略</td><td><code>主臥櫃</code></td><td>只給人看，程式不解析</td></tr></tbody></table></div>
+<p>完整範例：</p>
+<div class="tw"><table><thead><tr><th>名稱</th><th>意義</th></tr></thead><tbody><tr><td><code>QTY_CB_001_主臥櫃</code></td><td>第 1 座櫃體</td></tr><tr><td><code>QTY_CB_002</code></td><td>第 2 座櫃體，未加說明</td></tr><tr><td><code>QTY_LS_001_玄關燈箱</code></td><td>第 1 項一式</td></tr><tr><td><code>LoopFlow_3D.3dm : QTY_CB_001_主臥櫃</code></td><td>同一座櫃體，從 worksession 2D 側看到的名稱</td></tr></tbody></table></div>
+<h2 id="LoopFlow-群組前綴名稱--3-類別表">3　類別表</h2>
+<div class="tw"><table class="wide"><thead><tr><th>類別</th><th>代碼</th><th>對象</th><th>成員進逐物件計算？</th><th>估價單呈現</th><th>尺寸輸出</th><th>狀態</th></tr></thead><tbody><tr><td>櫃體</td><td><code>CB</code></td><td>完整櫃體，含門片、檯面、把手與突出物</td><td><strong>照算</strong>（板件各有字典規則）</td><td>逐物件明細；群組另計一份參考</td><td>Z-up OBB 長寬高原始值</td><td><strong>已裁決</strong> TKO-13～18／QD-16～19</td></tr><tr><td>一式</td><td><code>LS</code></td><td>不拆開報價的整座物件，例如燈箱</td><td><strong>排除</strong>（主動差集）</td><td>一列，數量 1</td><td>Z-up OBB 當尺寸附註，不是計價數量</td><td><strong>待裁決</strong> QD-23／TKO-22</td></tr></tbody></table></div>
+<p>兩類唯一的結構差異就是「成員要不要進逐物件計算」。量測機制完全共用：白名單 → 最外層群組 → 完整成員 → Z-up OBB。</p>
+<h3 id="LoopFlow-群組前綴名稱--3-1-候選類別-未啟用">3.1 候選類別（未啟用）</h3>
+<p>先不開，需要時再依 §3.2 逐一裁決。不要先佔名。</p>
+<div class="tw"><table><thead><tr><th>候選</th><th>可能對象</th><th>未啟用的原因</th></tr></thead><tbody><tr><td><code>OB</code></td><td>一般量體、造型物</td><td>與 <code>LS</code> 的差別只在「要不要拆開算」，多數情況 <code>LS</code> 已足夠</td></tr><tr><td><code>EQ</code></td><td>設備、機具</td><td>多半已是單一物件且有 <code>COUNT</code> 規則，不需要群組</td></tr></tbody></table></div>
+<h3 id="LoopFlow-群組前綴名稱--3-2-新增一個類別前必須回答">3.2 新增一個類別前必須回答</h3>
+<ol><li>成員要不要進逐物件計算？（決定它像 <code>CB</code> 還是像 <code>LS</code>）</li><li>估價單上這一列的工種與單位從哪裡來？</li><li>與既有類別重疊時怎麼判？</li><li>有沒有至少一個真實案子的樣本？</li></ol>
+<p>答不出第 1、2 題就不要開類別——那通常表示它應該用既有類別，或根本不該群組化。</p>
+<h2 id="LoopFlow-群組前綴名稱--4-寫入與唯一性規則">4　寫入與唯一性規則</h2>
+<p>以下依 2026-09-03 實測的 Rhino 行為訂定，不是偏好而是必要防護：</p>
+<div class="tw"><table><thead><tr><th>情形</th><th>Rhino 實際行為</th><th>工具必須怎麼做</th></tr></thead><tbody><tr><td><code>Groups.Add</code> 指定已存在的名稱</td><td><strong>靜默加流水號</strong>（<code>QTY_CB_001</code> → <code>QTY_CB01</code>、<code>QTY_LS_TEST</code> → <code>QTY_LS_TEST01</code>），不報錯</td><td>寫入後<strong>讀回實際名稱核對</strong>，與請求不符要當場告知</td></tr><tr><td><code>ChangeGroupName</code> 改成已存在的名稱</td><td>回傳 <code>false</code>，名稱不變</td><td>檢查回傳值，失敗要明確提示</td></tr><tr><td>解散最外層群組</td><td>名稱消失、成員歸零，子群組不受影響，index 不回收</td><td>不追蹤舊 index；使用者重新命名一次即可</td></tr><tr><td><code>_Copy</code> 複製整組</td><td>複本自成新群組但<strong>不帶名稱</strong>，不會併入原群組</td><td>列為待命名，否則該座會靜默不進數量表</td></tr></tbody></table></div>
+<p>其他規則：</p>
+<ul><li>名稱<strong>只寫在最外層群組</strong>。子群組不得帶 <code>QTY_</code> 前綴——那會與外層互為子集合，造成重複計量。</li><li>同一物件<strong>不得同屬兩個 <code>QTY_</code> 群組</strong>（例如嵌在櫃體裡的燈箱），必須報衝突，不自行取捨。</li><li>最外層一律以「成員集合為子群組的超集」判定，不靠名稱、Group Index 或選取順序。</li></ul>
+<h2 id="LoopFlow-群組前綴名稱--5-比對規則-給實作">5　比對規則（給實作）</h2>
+<pre class="code" data-lang="text"><code>^(?:.+ : )?QTY_(CB|LS)_(\d{3})(?:_.+)?$</code></pre>
+<ul><li>前綴與類別碼<strong>區分大小寫</strong>，一律大寫。</li><li>來源檔前綴可有可無：比對時忽略，但<strong>必須把來源模型記進輸出</strong>，因為不同 attach 模型可能有同名群組。</li><li>類別碼採白名單列舉，不用萬用比對。遇到未知類別碼要報「不認得的類別」，不可當成一般群組默默略過。</li><li>整份模型找不到任何符合的群組時，要明確報「本模型沒有 QTY 群組」，不要回空集合了事——這正是前綴比對寫錯時的症狀。</li></ul>
+<h2 id="LoopFlow-群組前綴名稱--6-已知限制與待驗證">6　已知限制與待驗證</h2>
+<div class="tw"><table><thead><tr><th>項目</th><th>狀態</th></tr></thead><tbody><tr><td>類別體系是否擴充到 <code>CB</code> 以外</td><td>待裁決（TKO-22／QD-23）</td></tr><tr><td>沒有幾何的一式（清運、管理費、運費）</td><td>不適用群組，維持手動填寫</td></tr><tr><td>worksession 下能否對 reference 物件建立或改名群組</td><td><strong>待驗證</strong>。已驗證的是「群組會跟著 attach 進來且可讀」；寫入應在物件的本機檔進行，尚未實測確認</td></tr><tr><td>巢狀深度上限</td><td>未定。目前只驗過一層子群組（<code>Group01</code> 含 4 個子群組）</td></tr><tr><td>序號用完或需要重編時的處理</td><td>未定</td></tr></tbody></table></div>
+<h2 id="LoopFlow-群組前綴名稱--7-變更紀錄">7　變更紀錄</h2>
+<div class="tw"><table><thead><tr><th>日期</th><th>變更</th></tr></thead><tbody><tr><td>2026-09-03</td><td>建檔。整理 <code>CB</code> 已裁決內容、提出 <code>LS</code>、記入 Rhino 命名與複製行為實測、worksession 來源檔前綴</td></tr></tbody></table></div>
 <h1 class="chaptitle" id="LoopFlow-QTY-決策紀錄">LoopFlow QTY — 決策紀錄</h1>
 <blockquote><p>本文件是 QTY <strong>決策狀態</strong>的唯一來源。範圍見 <a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a>，資料見 <a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a>，方法見 <a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a>。</p>
 <p>建立日期：2026-09-01　｜　階段：前期評估</p></blockquote>
