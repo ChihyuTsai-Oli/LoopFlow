@@ -202,7 +202,7 @@ tr.ckrow.done td.ckcell{text-decoration:none;opacity:1}
 <ul><li>建立日期：2026-09-01</li><li>階段：<strong>前期評估。尚未撰寫任何計算程式。</strong></li><li>產品邊界以 <a href="#LoopFlow-QTY-前期評估"><code>qty/README.md</code></a> 為準；契約語意以 <a href="../../../v2/docs/資料契約.md"><code>v2/docs/資料契約.md</code></a> 為準。</li></ul>
 <p>本資料夾是 QTY 進入實作前的<strong>評估與決策層</strong>：產品範圍、模型資料現況、量測方法驗證、以及已定案與未定案的清單。</p>
 <h2 id="LoopFlow-QTY-前期評估--與-MCP評估-的分工">與 <code>MCP評估/</code> 的分工</h2>
-<div class="tw"><table><thead><tr><th>資料夾</th><th>負責</th></tr></thead><tbody><tr><td><a href="../MCP評估/"><code>MCP評估/</code></a></td><td><strong>工具面</strong>——Rhino MCP 能不能用、怎麼裝、有哪些陷阱</td></tr><tr><td><strong><code>前期評估/</code>（本資料夾）</strong></td><td><strong>產品面</strong>——QTY 要做什麼、資料夠不夠、方法對不對、哪些已定案</td></tr></tbody></table></div>
+<div class="tw"><table><thead><tr><th>資料夾</th><th>負責</th></tr></thead><tbody><tr><td><a href="../MCP評估/"><code>MCP評估/</code></a></td><td><strong>QTY 產品筆記</strong>（功能分類、估價需求）仍在此。安裝／實測見該夾 <a href="#LoopFlow-QTY-前期評估"><code>README.md</code></a>，正文在工作區 <a href="../../../../mcp/rhino/"><code>mcp/rhino/</code></a></td></tr><tr><td><strong><code>前期評估/</code>（本資料夾）</strong></td><td><strong>產品面</strong>——QTY 要做什麼、資料夠不夠、方法對不對、哪些已定案</td></tr></tbody></table></div>
 <p>兩邊互相引用，不重複展開對方的內容。</p>
 <h2 id="LoopFlow-QTY-前期評估--閱讀順序">閱讀順序</h2>
 <div class="tw"><table><thead><tr><th>#</th><th>文件</th><th>內容</th><th>是否為唯一來源</th></tr></thead><tbody><tr><td>1</td><td><a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a></td><td>QTY 做什麼、不做什麼、與 2.0 的分界</td><td>✅ 範圍</td></tr><tr><td>2</td><td><a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a></td><td>模型與字典<strong>實際</strong>提供什麼；本階段最重要的一份</td><td>✅ 資料現況</td></tr><tr><td>3</td><td><a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a></td><td>各規則的量測方式與驗證結果</td><td>✅ 量測方法</td></tr><tr><td>4</td><td><a href="#LoopFlow-群組前綴名稱"><code>群組前綴名稱.md</code></a></td><td>櫃體、一式等整組量測的群組命名契約與類別表</td><td>✅ 群組命名</td></tr><tr><td>5</td><td><a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a></td><td>第一輪：已定案、已推翻、未定案 ＋ 三家覆核</td><td>✅ 決策狀態</td></tr><tr><td>6</td><td><a href="#LoopFlow-QTY-決策紀錄-第二輪"><code>決策紀錄_2.md</code></a></td><td>第二輪：阻擋項與收斂提案，採三種建議強度</td><td>✅ 第二輪提案</td></tr><tr><td>7</td><td><a href="#LoopFlow-QTY-測試模型補強項目"><code>測試模型.md</code></a></td><td>驗證模型缺少或可補充的項目</td><td>✅ 測試涵蓋率</td></tr><tr><td>8</td><td><a href="#LoopFlow-QTY-開發順序計畫"><code>開發順序計畫.md</code></a></td><td>任務切分、階段順序與雙機停點</td><td>✅ 開發順序</td></tr></tbody></table></div>
@@ -290,11 +290,11 @@ Excel（估價單＋明細）</code></pre>
 <p><strong>先前 MCP 驗證用的 <code>LoopFlow_R_MCP.rws</code> 是「3D attach 進 2D」，方向相反，不符合本規則。</strong> 它仍是既有數字的來源，但不再是實務配置的代表；新的 fixture 必須以 a／b 兩種配置建立（見 <a href="#LoopFlow-QTY-測試模型補強項目"><code>測試模型.md</code></a> 項目 17）。</p>
 <p>由此得到三個直接推論：</p>
 <ol><li><strong>要計算的物件一律是本機物件</strong>（<code>IsReference == False</code>）。列舉器不需要靠 <code>ReferenceObjects = True</code> 才看得到計算對象——那是舊配置的產物（QD-15）。配置 b 底下 attach 進來的 2D 內容是參照物件、而且是 Curve，被 QD-01 與本規則雙重排除。</li><li><strong>群組名稱不會帶來源檔前綴</strong>。<code>&lt;檔名&gt; : </code> 前綴只會出現在被 attach 的那一份；既然 3D 永遠是作用中模型，QTY 的群組名稱一律是原名。若真的讀到帶前綴的 <code>QTY_</code> 群組，代表開錯檔（3D 被 attach 了），應<strong>報設定錯誤</strong>而不是照樣量測（QD-24 改寫）。</li><li><strong><code>layer_path</code> 不帶檔名前綴</strong>，圖層正規化少一個分支。</li></ol>
-<p><strong>薄殼必須含 <code>importlib.reload()</code></strong>，否則改了外部 <code>.py</code> 後 GH 重新求解仍吃到舊程式碼（實測確認，見 <a href="../MCP評估/實測報告.md"><code>MCP評估/實測報告.md</code></a> §4.2）。</p>
+<p><strong>薄殼必須含 <code>importlib.reload()</code></strong>，否則改了外部 <code>.py</code> 後 GH 重新求解仍吃到舊程式碼（實測確認，見 <a href="../../../../mcp/rhino/實測報告.md"><code>實測報告.md</code></a> §4.2）。</p>
 <h2 id="LoopFlow-QTY-範圍與邊界--8-與-MCP-的關係">8　與 MCP 的關係</h2>
 <p>MCP <strong>不是產品的一部分</strong>，是開發期的工具。</p>
 <p>QTY 對 MCP 的用途限於：讀取模型與 canvas、建立／修改 GH canvas、執行無互動的 Python、驗證結果。</p>
-<p><strong>不得</strong>用 MCP 代替使用者操作 LoopFlow 產品指令，也不得 headless 載入 <code>.gh</code>（已造成一次 Rhino 當機）。細節見 <a href="../MCP評估/MCP設定交接.md"><code>MCP評估/MCP設定交接.md</code></a> §7。</p>
+<p><strong>不得</strong>用 MCP 代替使用者操作 LoopFlow 產品指令，也不得 headless 載入 <code>.gh</code>（已造成一次 Rhino 當機）。細節見 <a href="../../../../mcp/rhino/MCP設定交接.md"><code>MCP設定交接.md</code></a> §7。</p>
 <h1 class="chaptitle" id="LoopFlow-QTY-資料盤點">LoopFlow QTY — 資料盤點</h1>
 <blockquote><p>本文件是 QTY <strong>模型與字典資料現況</strong>的唯一來源。範圍見 <a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a>，量測方式見 <a href="#LoopFlow-QTY-量測方法"><code>量測方法.md</code></a>。</p>
 <p>建立日期：2026-09-01　｜　最後掃描：2026-09-03（QD-26 配置變更，見 §11）　｜　<strong>全部數字為實測</strong>，非推估</p></blockquote>
@@ -593,7 +593,7 @@ objs = doc.Objects.GetObjectList(s)</code></pre>
 <h2 id="LoopFlow-QTY-決策紀錄--5-安全紀律-不可協商">5　安全紀律（不可協商）</h2>
 <p>以下不是設計選擇，是實測付出代價換來的：</p>
 <div class="tw"><table><thead><tr><th>禁止</th><th>原因</th></tr></thead><tbody><tr><td>在承載使用者工作檔的 Rhino 內以 MCP headless 載入 <code>.gh</code></td><td>已造成一次 Rhino 凍結退出。工具逾時後 MCP ping 成功<strong>不代表</strong> runtime 已恢復</td></tr><tr><td>用 MCP 代開 <code>.rws</code></td><td>需由使用者手動開啟</td></tr><tr><td>用 <code>run_command</code> 執行 LoopFlow 產品指令</td><td>模態視窗導致靜默失效</td></tr><tr><td>把空 <code>stdout</code> 當作成功</td><td>那正是靜默失效的表徵</td></tr><tr><td>把 MCP 設定寫進任何 repo</td><td>本機專屬，路徑含使用者名稱與版本號</td></tr></tbody></table></div>
-<p>完整說明見 <a href="../MCP評估/MCP設定交接.md"><code>MCP評估/MCP設定交接.md</code></a> §7。</p>
+<p>完整說明見 <a href="../../../../mcp/rhino/MCP設定交接.md"><code>MCP設定交接.md</code></a> §7。</p>
 <h1 class="chaptitle" id="LoopFlow-QTY-決策紀錄-第二輪">LoopFlow QTY — 決策紀錄（第二輪）</h1>
 <blockquote><p>第一輪見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a>。本輪<strong>只處理第一輪列出的阻擋項與未定案</strong>，不重述已定案內容。</p>
 <p>建立日期：2026-09-02　｜　覆核順序：<strong>Claude → Codex → Cursor</strong>　｜　目前<strong>三家已填畢</strong>，待使用者裁決</p></blockquote>

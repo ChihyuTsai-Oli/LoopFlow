@@ -29,17 +29,15 @@
 | [`測試模型.md`](./docs/前期評估/測試模型.md) | 驗證模型缺少或可補充的項目 |
 | [`開發順序計畫.md`](./docs/前期評估/開發順序計畫.md) | 任務切分、階段順序與雙機停點 |
 
-### `docs/MCP評估/` — 工具面與產品筆記
+### `docs/MCP評估/` — 產品筆記
 
-Rhino MCP **安裝／實測正文**已搬到工作區 `mcp/rhino/`（Workspace repo，不是 Overview）。本資料夾三份同名檔只留短連結。
+Rhino MCP **安裝／實測正文**在工作區 `mcp/rhino/`（Workspace repo，不是 Overview）。本資料夾用一份 [`README.md`](./docs/MCP評估/README.md) 指向那三份。
 
 | 文件 | 內容 |
 |---|---|
-| `MCP設定交接.md` | 短連結 → 工作區 `mcp/rhino/MCP設定交接.md` |
-| `實測報告.md` | 短連結 → 工作區 `mcp/rhino/實測報告.md` |
-| `初步評估報告.md` | 短連結 → 工作區 `mcp/rhino/初步評估報告.md` |
-| `初步功能分類.md` | GH 元件與 Rhino 工具列的功能分類（**留在 qty**） |
-| `數量計算需求筆記.md` | 估價領域需求（**留在 qty**） |
+| [`README.md`](./docs/MCP評估/README.md) | 指向工作區 `mcp/rhino/` 的安裝、實測、初步評估 |
+| [`初步功能分類.md`](./docs/MCP評估/初步功能分類.md) | GH 元件與 Rhino 工具列的功能分類 |
+| [`數量計算需求筆記.md`](./docs/MCP評估/數量計算需求筆記.md) | 估價領域需求 |
 
 上方「邊界」表中結構體那條**已實測確認**：7 個 `00_STR_*` 圖層全部能以 `layer_path` 查到字典的 `EX-01`～`EX-07`，取得規則與單位。
 
