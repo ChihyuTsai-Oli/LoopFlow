@@ -53,6 +53,8 @@ DEFAULT_ORDER = [
     "決策紀錄_2.md",
     "測試模型.md",
     "開發順序計畫.md",
+    "功能分類.md",
+    "估價需求.md",
 ]
 DEFAULT_OUT = DOCS_DIR / "前期評估總覽.html"
 
