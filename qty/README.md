@@ -35,4 +35,4 @@
 
 Rhino／Blender MCP 的安裝與實測在工作區 `mcp/`，不在本產品。
 
-下一步才寫程式；不要把計算邏輯塞進 `v2/src/loopflow`。
+下一步先建立 **QTY 專用 3dm** 作為開發測試基準，再由該檔派生各種 fixtures 與 golden baseline；完成後才寫程式。不要直接拿正式工作檔當測試檔，也不要把計算邏輯塞進 `v2/src/loopflow`。
