@@ -60,12 +60,12 @@ python qty/tools/build_html.py --out 我的總覽.html
 | 輪次 | 順序 | 狀態 |
 |---|---|---|
 | 第一輪 | Claude → Codex → Cursor | ✅ 三家已填畢，見 `決策紀錄_1.md` |
-| **第二輪** | **Claude → Codex → Cursor** | ✅ **三家已填畢（QR-01～QR-15）**，見 `決策紀錄_2.md`；待使用者裁決 |
+| **第二輪** | **Claude → Codex → Cursor** | ✅ **三家已填畢（QR-01～QR-15）並依二票多數決收斂**，見 `決策紀錄_2.md`；QR-15 只剩 token 具體算法未形成多數 |
 | 第三輪 | Claude → Codex → Cursor | ⏳ 待依 [`測試模型.md`](./測試模型.md) 建立新模型後開始 |
 
 第二輪採 [`v2/docs/前期規劃/資料生態決策表.md`](../../../v2/docs/前期規劃/資料生態決策表.md) 的三種建議強度（強烈／一般／輕鬆）與裁決規則。**各家只填自己的欄，不代填、不推測他家立場。**
 
-**第二輪待裁決的三題做法衝突**：`QR-01` 主鍵形態（裸 GUID vs 版本化 locator）、`QR-13` 狀態模型（單軸 vs Coverage／measurement 雙軸）、`QR-15` token 語意（ND-28 軸向 vs QTY mapping）。其餘各項三家無做法衝突。
+第二輪依 2026-09-23 使用者裁定採**二票多數決**：`QR-01` 採 Codex／Cursor 的版本化 locator，`QR-13` 採 Codex／Cursor 的 Coverage／measurement 雙軸。`QR-15` 只有「不可把不同 token 靜默當同義詞、未定前不得實作」形成兩票以上共識，具體 token 算法仍未形成兩家相同方案。
 
 ## 本階段的方法論
 
