@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>前期評估總覽</title>
+<title>LoopFlow QTY — 估價需求</title>
 <style>
 :root{
   --bg:#0e1013; --bg2:#151920; --panel:#171b22; --line:#262c37; --line2:#333b49;
@@ -100,7 +100,7 @@ tr.ckrow.done td.ckcell{text-decoration:none;opacity:1}
 <body>
 <div class="wrap">
 <nav><div class="brand">LoopFlow QTY</div>
-<div class="bt">前期評估總覽</div>
+<div class="bt">LoopFlow QTY — 估價需求</div>
 <div class="group">
 <a class="l1" href="#LoopFlow-QTY-前期評估">LoopFlow QTY — 前期評估</a>
 <a class="l2" href="#LoopFlow-QTY-前期評估--閱讀順序">閱讀順序</a>
@@ -264,12 +264,13 @@ tr.ckrow.done td.ckcell{text-decoration:none;opacity:1}
 <p>2026-09-03 以 <code>&lt;LOOPFLOW_WORKFILES_ROOT&gt;/LoopFlow_3D.3dm</code>（LoopFlow 主工作檔，非 QTY MCP 測試環境）的 0°／30° 櫃體再次驗證通過。QD-20～24 已於 2026-09-23 由使用者授權 Codex 裁決：未成群櫃體零件必須診斷、群組空間歸屬只讀成員既有值（框外為 <code>EXT</code>）、不可用 <code>_03_ID編號</code> 區分櫃體、一式使用 <code>QTY_LS_</code> 命名群組、讀到來源檔前綴時視為開錯檔並停止。群組命名的格式、類別與比對規則已獨立成 <a href="#LoopFlow-群組前綴名稱"><code>群組前綴名稱.md</code></a>，Toolkit 與 QTY 共用該檔，不各自維護。</p>
 <p>同日另裁決兩項（已定案）：<strong>QD-25</strong> 群組內的 curve 與 point 一律當作不存在，量測採 Brep ＋ InstanceReference 的正向白名單；<strong>QD-26</strong> QTY 作業只有兩種合法檔案配置——直接開 3D 模型檔，或 2D attach 進 3D 的 worksession——因為 GH 選取與 Nexus 修改都需要物件可編輯。見 <a href="#LoopFlow-QTY-範圍與邊界"><code>範圍與邊界.md</code></a> §7.1。</p>
 <h3 id="LoopFlow-QTY-前期評估--寬版閱讀檔-HTML">寬版閱讀檔（HTML）</h3>
-<p>本資料夾<strong>全部十一份文件</strong>合併成單一離線 HTML：<strong><code>前期評估總覽.html</code></strong>。</p>
+<p>本資料夾<strong>全部十一份文件</strong>合併成單一離線 HTML：<strong><code>前期評估總覽.html</code></strong>。單看測試模型清單用 <strong><code>測試模型.html</code></strong>。</p>
 <div class="tw"><table><thead><tr><th>特性</th><th>說明</th></tr></thead><tbody><tr><td>單檔離線</td><td>樣式與腳本內嵌，可直接跨裝置開啟，不需網路或伺服器</td></tr><tr><td>兩層側邊目錄</td><td>章節（各 <code>.md</code> 的 H1）＋ 小節（H2），捲動時自動高亮目前位置</td></tr><tr><td><strong>跨文件連結轉錨點</strong></td><td>文件間的相對連結（如 <code>[資料盤點.md](./資料盤點.md)</code>）自動變成頁內跳轉；指向 <code>v2/docs/</code>、<code>mcp/</code> 等外部路徑則保持原樣</td></tr><tr><td><strong>決策表自動上色</strong></td><td>六欄以上決策表的「你的決定」欄依三家建議強度上色：白＝強烈×2+、黃＝一般×2+、綠＝輕鬆×2+</td></tr><tr><td>響應式與列印</td><td>窄畫面側欄改為頂部；列印時隱藏側欄並轉為淺色</td></tr></tbody></table></div>
 <p><strong>HTML 是衍生檔，不應手動編輯。</strong> 改 Markdown 後重跑：</p>
 <pre class="code" data-lang="bash"><code>python qty/tools/build_html.py</code></pre>
 <p>其他用法：</p>
 <pre class="code" data-lang="bash"><code>python qty/tools/build_html.py --check                    # 只檢查是否過期，不寫檔
+python qty/tools/build_html.py --src 測試模型.md --out 測試模型.html
 python qty/tools/build_html.py --src 決策紀錄_2.md         # 只合併指定檔案
 python qty/tools/build_html.py --out 我的總覽.html</code></pre>
 <p>版面與行為沿用 <code>D:\Dropbox\戰備物資\tools\build_html.py</code>；純 stdlib，不需安裝任何套件。</p>
@@ -703,7 +704,8 @@ b4fae896-bf13-4b19-9ff3-6f5ed902ba1f   ✅ 仍存在（CL-06）</code></pre>
 <h2 id="LoopFlow-QTY-決策紀錄-第二輪--5-多數決後仍未閉合">5　多數決後仍未閉合</h2>
 <ul><li><strong>QR-15 token 具體算法</strong>：已定安全底線，但沒有兩家選出同一套算法；在形成多數前不得實作面積／長度核心。</li><li><strong>QD-20～24</strong>：已於 2026-09-23 由使用者<strong>授權 Codex 裁決</strong>並全部採用，詳見 <a href="#LoopFlow-QTY-決策紀錄"><code>決策紀錄_1.md</code></a> §1.2。</li><li>開口閾值、長度 fallback 升格與效能數字屬<strong>待專用 3dm 驗證</strong>，不是待選方向。</li></ul>
 <h1 class="chaptitle" id="LoopFlow-QTY-測試模型補強項目">LoopFlow QTY — 測試模型補強項目</h1>
-<blockquote><p>本文件列出目前驗證模型<strong>缺少或可補充</strong>的項目，用來擴大量測方法的驗證範圍。</p>
+<blockquote><p>寬版閱讀檔：<a href="測試模型.html">測試模型.html</a>。HTML 由 <code>qty/tools/build_html.py</code> 產生，<strong>不要手動編輯</strong>。</p>
+<p>本文件列出目前驗證模型<strong>缺少或可補充</strong>的項目，用來擴大量測方法的驗證範圍。</p>
 <p>驗證模型有兩份：<code>LoopFlow_R_MCP.rws</code>（QTY MCP 測試環境，§1～§6 的基準）與 <code>LoopFlow_3D.3dm</code>（LoopFlow 主工作檔，2026-09-03 的櫃體群組實測來源）。兩者狀態不同，樣本引用時要標明來自哪一份。</p>
 <p>建立日期：2026-09-02　｜　最後更新：2026-09-03　｜　現況數字見 <a href="#LoopFlow-QTY-資料盤點"><code>資料盤點.md</code></a></p></blockquote>
 <h2 id="LoopFlow-QTY-測試模型補強項目--0-測試資產規則">0　測試資產規則</h2>

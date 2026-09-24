@@ -29,7 +29,7 @@
 
 ### 寬版閱讀檔（HTML）
 
-本資料夾**全部十一份文件**合併成單一離線 HTML：**`前期評估總覽.html`**。
+本資料夾**全部十一份文件**合併成單一離線 HTML：**`前期評估總覽.html`**。單看測試模型清單用 **`測試模型.html`**。
 
 | 特性 | 說明 |
 |---|---|
@@ -49,6 +49,7 @@ python qty/tools/build_html.py
 
 ```bash
 python qty/tools/build_html.py --check                    # 只檢查是否過期，不寫檔
+python qty/tools/build_html.py --src 測試模型.md --out 測試模型.html
 python qty/tools/build_html.py --src 決策紀錄_2.md         # 只合併指定檔案
 python qty/tools/build_html.py --out 我的總覽.html
 ```

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LoopFlow QTY — 測試模型補強項目</title>
+<style>
+:root{
+  --bg:#0e1013; --bg2:#151920; --panel:#171b22; --line:#262c37; --line2:#333b49;
+  --tx:#dde2ea; --tx2:#a4aebf; --tx3:#767f92;
+  --accent:#6fbfa2; --accent-d:#173129; --warn:#e0a458;
+  --mono:"Cascadia Mono",Consolas,"SF Mono","Roboto Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei","PingFang TC","Noto Sans TC","Hiragino Sans",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);
+  font-size:15.5px;line-height:1.85;letter-spacing:.01em;-webkit-font-smoothing:antialiased}
+.wrap{display:grid;grid-template-columns:260px minmax(0,1fr);gap:0;max-width:1560px;margin:0 auto}
+
+nav{position:sticky;top:0;height:100vh;overflow-y:auto;padding:26px 14px 40px 22px;
+  border-right:1px solid var(--line);background:var(--bg)}
+nav .brand{font-size:12px;letter-spacing:.16em;color:var(--tx3);text-transform:uppercase;margin-bottom:6px}
+nav .bt{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:20px;line-height:1.4}
+nav .group{margin:0 0 16px}
+nav a.l1{display:block;font-weight:650;color:var(--tx);text-decoration:none;font-size:13.6px;
+  padding:6px 9px;border-radius:6px;border-left:2px solid var(--accent)}
+nav a.l1:hover{background:var(--bg2)}
+nav a.l2{display:block;color:var(--tx2);text-decoration:none;font-size:12.8px;
+  padding:3.5px 9px 3.5px 18px;border-radius:5px;border-left:2px solid transparent;line-height:1.5}
+nav a.l2:hover,nav a.l2.active{color:var(--tx);background:var(--bg2);border-left-color:var(--accent)}
+nav a.l1.active{background:var(--accent-d);color:var(--accent)}
+
+main{padding:44px 52px 120px;min-width:0}
+p{margin:0 0 15px}
+strong{color:#fff;font-weight:650}
+a{color:#8fd9c7}
+hr{border:0;border-top:1px solid var(--line);margin:38px 0}
+ul,ol{margin:0 0 16px;padding-left:22px}
+li{margin:5px 0}
+li>ul{margin:6px 0 2px}
+code{font-family:var(--mono);font-size:.875em;background:#1d2230;color:#e8c07d;
+  padding:1.5px 5px;border-radius:4px;border:1px solid #262d3d;word-break:break-word}
+pre.code{background:#12161f;border:1px solid var(--line);border-left:3px solid var(--line2);
+  border-radius:7px;padding:15px 17px;overflow-x:auto;margin:0 0 18px}
+pre.code code{background:none;border:0;padding:0;color:#b9c4d8;font-size:13px;line-height:1.72;white-space:pre}
+
+.chaptitle{font-size:27px;font-weight:700;margin:64px 0 22px;padding:20px 0 14px;
+  border-bottom:2px solid var(--accent);scroll-margin-top:20px}
+.wrap main>.chaptitle:first-of-type{margin-top:0}
+h2{font-size:19px;font-weight:660;margin:38px 0 14px;line-height:1.45;color:var(--tx);scroll-margin-top:20px}
+h3{font-size:16px;font-weight:640;margin:28px 0 11px;color:var(--tx2);scroll-margin-top:20px}
+h4{font-size:14.5px;font-weight:640;margin:22px 0 9px;color:var(--tx2)}
+
+blockquote{margin:0 0 20px;padding:13px 18px;background:#151a24;
+  border-left:3px solid var(--line2);border-radius:0 7px 7px 0;color:var(--tx2);font-size:14.6px}
+blockquote p{margin:0 0 5px}
+blockquote p:last-child{margin-bottom:0}
+blockquote p.qh{color:var(--tx);margin-top:2px}
+blockquote .tw{margin:10px 0}
+
+.tw{overflow-x:auto;margin:0 0 22px;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:13.6px;font-variant-numeric:tabular-nums}
+table.wide{min-width:1700px}
+th{background:#1b2130;color:var(--tx);font-weight:660;text-align:left;position:sticky;top:0;z-index:2;
+  padding:11px 14px;border-bottom:1px solid var(--line2);font-size:13px}
+td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;
+  color:var(--tx2);line-height:1.72}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:rgba(255,255,255,.016)}
+tbody tr:hover{background:rgba(255,255,255,.038)}
+table:not(.wide) td:nth-child(2){color:var(--tx);font-weight:550}
+table.wide td:first-child{color:var(--tx);font-weight:650;white-space:nowrap}
+td.s-strong{color:#ffffff;font-weight:660}
+td.s-normal{color:#f5e04a;font-weight:600}
+td.s-light{color:#6fdc8c;font-weight:600}
+
+td.ckcell{width:34px;padding-left:16px;padding-right:0}
+input.ck{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+tr.ckrow.done td{color:var(--tx3);text-decoration:line-through;opacity:.62}
+tr.ckrow.done td.ckcell{text-decoration:none;opacity:1}
+
+.legend{margin:0 0 18px;font-size:13.5px;color:var(--tx2)}
+.legend span{display:inline-block;margin-right:16px;font-weight:650}
+
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr}
+  nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:20px 22px}
+  main{padding:30px 22px 80px}
+  .chaptitle{font-size:22px;margin-top:36px}
+  th{position:static}
+}
+@media print{
+  nav{display:none} body{background:#fff;color:#111}
+  .tw,table,td,th{border-color:#bbb} main{padding:0}
+  td.s-strong,td.s-normal,td.s-light{color:#111}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav><div class="brand">LoopFlow QTY</div>
+<div class="bt">LoopFlow QTY — 測試模型補強項目</div>
+<div class="group">
+<a class="l1" href="#LoopFlow-QTY-測試模型補強項目">LoopFlow QTY — 測試模型補強項目</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--0-測試資產規則">0　測試資產規則</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--1-幾何形狀-優先">1　幾何形狀（優先）</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--2-規則涵蓋-優先">2　規則涵蓋（優先）</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--3-資料情境">3　資料情境</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--4-工作方式與規模">4　工作方式與規模</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--5-建議的補強順序">5　建議的補強順序</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--6-Cursor-覆核-2026-09-02-公司電腦">6　Cursor 覆核（2026-09-02，公司電腦）</a>
+<a class="l2" href="#LoopFlow-QTY-測試模型補強項目--7-2026-09-03-追加-一式群組與-worksession-前綴">7　2026-09-03 追加（一式群組與 worksession 前綴）</a>
+</div></nav>
+<main><h1 class="chaptitle" id="LoopFlow-QTY-測試模型補強項目">LoopFlow QTY — 測試模型補強項目</h1>
+<blockquote><p>寬版閱讀檔：<a href="測試模型.html">測試模型.html</a>。HTML 由 <code>qty/tools/build_html.py</code> 產生，<strong>不要手動編輯</strong>。</p>
+<p>本文件列出目前驗證模型<strong>缺少或可補充</strong>的項目，用來擴大量測方法的驗證範圍。</p>
+<p>驗證模型有兩份：<code>LoopFlow_R_MCP.rws</code>（QTY MCP 測試環境，§1～§6 的基準）與 <code>LoopFlow_3D.3dm</code>（LoopFlow 主工作檔，2026-09-03 的櫃體群組實測來源）。兩者狀態不同，樣本引用時要標明來自哪一份。</p>
+<p>建立日期：2026-09-02　｜　最後更新：2026-09-03　｜　現況數字見 <a href="./資料盤點.md"><code>資料盤點.md</code></a></p></blockquote>
+<h2 id="LoopFlow-QTY-測試模型補強項目--0-測試資產規則">0　測試資產規則</h2>
+<h3 id="LoopFlow-QTY-測試模型補強項目--0-0-先建立-QTY-專用-3dm">0.0 先建立 QTY 專用 3dm</h3>
+<p>進入程式實作前，<strong>先建立一份 QTY 專用 <code>.3dm</code>，作為 QTY 開發與正確性測試的共同基準模型</strong>。它不是正式專案工作檔，也不是既有 MCP 驗證檔的改名副本；內容須依本文件的測試需求刻意建構，並附 manifest、版本、雜湊、物件盤點與人工可確認的期望答案。</p>
+<p>後續的直接開 3D、2D attach 進 3D、Registry 漂移、參照失效、身分碰撞等 fixtures，均由這份專用 3dm 派生或與它配套。效能放大模型仍須另檔，不得污染正確性基準模型。</p>
+<h3 id="LoopFlow-QTY-測試模型補強項目--0-1-為什麼需要補強">0.1 為什麼需要補強</h3>
+<p>目前模型的可量測候選只有 <strong>48 個</strong>（Brep 39 ＋ Block 9），而量測方法的兩個失效情境<strong>各只有 1～2 個樣本</strong>：</p>
+<div class="tw"><table><thead><tr><th>已知失效</th><th>目前樣本數</th></tr></thead><tbody><tr><td>多段包覆面（面積法失效）</td><td><strong>1</strong>（<code>WL-14</code>）</td></tr><tr><td>轉角擠出（長度法失效）</td><td><strong>1</strong>（<code>CL-03</code>）</td></tr><tr><td>閉合環（長度法無端面）</td><td><strong>1 種</strong>（<code>CB-04</code>，兩個實例相同）</td></tr><tr><td>開口</td><td><strong>2</strong>（22.4%、5.0%）</td></tr></tbody></table></div>
+<p><strong>單一樣本無法區分「方法有效」與「這一件剛好對」。</strong> 補強的目的不是讓模型更完整好看，而是讓每個已知失效情境<strong>至少有三個彼此不同的樣本</strong>，並補上目前完全沒有的規則與資料情境。</p>
+<h3 id="LoopFlow-QTY-測試模型補強項目--0-2-必須與原始工作檔隔離">0.2 必須與原始工作檔隔離</h3>
+<ul><li><strong>不得直接改目前的 <code>LoopFlow_3D_R_MCP.3dm</code>、<code>LoopFlow_2D_R_MCP.3dm</code>、正式 Dictionary 或 Registry</strong>。它們是 48 件候選的原始 baseline，也是使用者工作檔。</li><li>Rhino 幾何測試以 0.0 的 <strong>QTY 專用 3dm</strong> 為基準，再建立可重建的 <code>.3dm</code>／<code>.rws</code> 派生 fixtures；測試 Type、Space 與 <code>m2</code> 規則使用測試 Dictionary／Registry。測試資產內才使用 <code>_QTY_TEST</code> 前綴圖層或命名。</li><li>效能放大模型與參照失效模型各自獨立，不能和正確性模型混在同一檔，否則盤點數字與 golden baseline 會一起漂移。</li><li>repo 只保存可合法提交的小型 fixtures、期望輸出與建立說明；大型或含專案資料的 Rhino 工作檔留在工作檔區，repo 內以 manifest 記錄檔名、版本與雜湊，不寫某台電腦的絕對路徑。</li></ul>
+<h3 id="LoopFlow-QTY-測試模型補強項目--0-3-每個樣本都要有-oracle">0.3 每個樣本都要有 oracle</h3>
+<p>只「加一個形狀」不足以形成測試。每個樣本至少記錄：</p>
+<ol><li>建構尺寸／方式與用途</li><li>預期 measurement token、估價單位與 exact value</li><li>可接受容差</li><li>預期 measurement status、Coverage status 與警告原因</li><li>身分來源（<code>object_id</code> 或 <code>source_model_key + Rhino GUID</code>）</li></ol>
+<p>若預期答案尚未能由人工或另一種可信方法確認，該物件只能標為探索樣本，不能列入 golden pass/fail。</p>
+<h3 id="LoopFlow-QTY-測試模型補強項目--0-4-模型完成後的三道開工關卡">0.4 模型完成後的三道開工關卡</h3>
+<p>QTY 專用 3dm 建立完成後，依下列順序執行；<strong>前一關未完成，不得進下一關</strong>：</p>
+<ol><li><strong>三家 AI 各自透過 Rhino MCP 驗收模型完整性</strong>：Claude、Codex、Cursor 依本文件逐項檢查物件、Type、measurement token、空間、群組、錯誤情境、manifest 與 oracle 是否齊全。各家須留下自己的實測結果與缺口，不得由一家代填另一家結論。</li><li><strong>模型確認完備後，三家 AI 各自透過 Rhino MCP 重新評估決策資料</strong>：以專用模型的實測結果重讀 <a href="./決策紀錄_1.md"><code>決策紀錄_1.md</code></a>／<a href="./決策紀錄_2.md"><code>決策紀錄_2.md</code></a>，特別重評 QR-15、量測 fallback、開口閾值、群組與錯誤處置。仍採「三家中兩家意見相同即採用」。</li><li><strong>完成決策收斂後才進入實作</strong>：三份模型完整性覆核、三份決策重評與多數決結果都已記錄，才可建立實作 contracts、package、測試骨架與計算程式。</li></ol>
+<p>MCP 在這兩輪只用於開發驗證，不是產品相依；遵守工作區 MCP 安全規則，不 headless 載入 <code>.gh</code>、不在使用者工作檔上執行破壞性操作。</p>
+<hr>
+<h2 id="LoopFlow-QTY-測試模型補強項目--1-幾何形狀-優先">1　幾何形狀（優先）</h2>
+<p><strong>1. 新增弧形牆面</strong> 目前所有 Brep 都是平面組成。弧牆的「最大單一面」是一個曲面，<code>AreaMassProperties</code> 給的是展開面積——這正是估價要的，但<strong>完全沒有驗證過</strong>。若曲面被切成多片，最大面法會像 <code>WL-14</code> 一樣少算，需要對照值抓。</p>
+<p><strong>2. 新增 L 型與 U 型牆面（各至少 2 個，轉角角度不同）</strong> <code>WL-14</code> 是目前唯一的多段包覆樣本。需要不同轉折數與不同夾角，才能確認「最大面 vs 體積÷厚度」的 10% 閾值是否合理，或該不該依轉折數調整。</p>
+<p><strong>3. 新增斜面物件（斜天花、斜屋頂或樓梯側牆）</strong> 目前所有面不是水平就是垂直。斜面會讓「最大面朝哪裡」的判讀進入灰區，也會影響 <code>AREA_WD</code>／<code>AREA_WH</code> 的相容性檢查（QR-09）。</p>
+<p><strong>4. 新增弧形收邊條或弧形燈帶</strong> 長度法的「體積 ÷ 端面截面積」理論上對曲線路徑成立，但目前<strong>只有直線與一個轉角</strong>驗證過。弧形是實務常見（弧牆的收邊），必須測。</p>
+<p><strong>5. 新增第二、第三種閉合環物件</strong> <code>CB-04 鐵件框架</code> 是唯一的閉合環，且兩個實例完全相同。需要不同尺寸與斷面的環（例如圓形燈帶、口字型框），才能驗證 fallback「取環的中心線周長」。</p>
+<p><strong>6. 新增更多開口樣本，並涵蓋不同開口比例</strong> 目前只有 22.4%（門洞）與 5.0%（小開孔）。建議補：兩個開口的牆、開口占比 40～60% 的牆、以及<strong>開口貫穿但形狀不規則</strong>的牆。用來定 QR-07 的閾值。</p>
+<p><strong>7. 新增「中空但不是開口」的對照物件</strong> <code>CB-04</code>（95.6%）與 <code>CL-03</code>（79.2%）目前是僅有的中空構件。多幾個（例如格柵、百葉、鏤空屏風）才能確認「扣除率分不出開口與中空」這個限制的實際嚴重程度。</p>
+<hr>
+<h2 id="LoopFlow-QTY-測試模型補強項目--2-規則涵蓋-優先">2　規則涵蓋（優先）</h2>
+<p><strong>8. 補上使用 <code>m2</code> 單位的 Type</strong> 目前字典用到的單位是 mm、cm、坪、才、組——<strong>沒有 <code>m2</code></strong>。而舊 <code>quantity.py</code> 的 <code>m2</code> 換算有缺陷（少除 10000，錯一萬倍）。<strong>沒有 <code>m2</code> 樣本就測不到這個已知缺陷</strong>，修完也無從驗證。</p>
+<p>這個 Type 只加在<strong>測試 Dictionary</strong>，不得為了測 QTY 修改現行 2.0 正式 Dictionary。</p>
+<p><strong>9. 補上 <code>VOL_WDH</code> 的裝修材樣本</strong> 目前 <code>VOL_WDH</code> 只出現在結構體（樑、柱），而結構體另有計算方式。裝修材若有體積類項目（例如填充、灌漿），需要樣本。</p>
+<p><strong>10. 補上 <code>AREA_DH</code>、<code>LEN_D</code>、<code>LEN_H</code> 的樣本</strong> 字典的規則詞彙有 8 個 token，但本模型只用到 4 個（<code>COUNT</code>、<code>AREA_WD</code>、<code>AREA_WH</code>、<code>LEN_W</code>）。另外 4 個從未執行過任何一次。即使實務上少用，也應各有一個樣本確認程式路徑會動。</p>
+<p><strong>11. 補齊結構體的實體幾何</strong> <code>Column.柱</code> 與 <code>Wall-Brick.磚牆</code> 目前<strong>只有 <code>DNA_REF_</code> 參考點，沒有真實 Brep</strong>。結構體走 <code>layer_path</code> 查字典這條路只在 5 個圖層上驗證過（Beam、Slab、Curb、Stair、Wall-RC），另外 2 個沒有實體可測。</p>
+<p>只在結構測試副本補上，保留原模型「沒有真實 Brep」的基準事實。</p>
+<p>同一組樣本要順便驗 <strong><code>layer_path</code> 正規化</strong>：模型的圖層全名帶專案 <code>layer_prefix</code>（實測 <code>M3D::00_STR_結構::Beam.樑</code>），Registry／字典側則沒有（<code>00_STR_結構::Beam.樑</code>）。直接拿 <code>FullPath</code> 比對會全部查不到。詳見 <a href="./資料盤點.md"><code>資料盤點.md</code></a> §6。</p>
+<hr>
+<h2 id="LoopFlow-QTY-測試模型補強項目--3-資料情境">3　資料情境</h2>
+<p><strong>12. 增加空間數量到至少 5 個，並包含同名跨樓層</strong> 目前只有「廊道」29 個與「衛浴」8 個。分組、排序、<code>space_display → sort_key</code> 對照都無法驗證。同名跨樓層（例如兩層都有「主臥」）是 QO-14 明確點名的風險。</p>
+<p><strong>13. 新增落在 <code>EXT</code>（空間外）的物件</strong> 2.0 的 <code>EXT</code> 同時代表「真的在室外」與「漏畫 boundary」（ED-07 已接受此代價）。QTY 的 Coverage 報告要能列出 <code>EXT</code> 物件，但目前<strong>一個樣本都沒有</strong>。</p>
+<p><strong>14. 新增刻意的「一式」候選物件</strong> 一式黑名單是主動差集（QD-10），但目前模型沒有任何標記為一式的物件，整條排除邏輯無從測試。 2026-09-03 追加、2026-09-23 裁決：一式的載體採 <code>QTY_LS_</code> 命名群組（QD-23），代表樣本與完整驗收條件見 <strong>項目 27</strong>。</p>
+<p><strong>15. 建立一個刻意的參照失效情境</strong> Coverage 五態的「已選取但參照失效」需要可重現的樣本。建議另存一份測試 <code>.rws</code>，其中 3D 檔缺少某些物件，用來驗證失效偵測與報告文字。</p>
+<p><strong>16. 補上未標記門窗 Block 的處置樣本</strong> <code>base</code> 圖層有 <code>3D_W1</code>、<code>3D_D1</code> 兩個 linked block，<strong>沒有 <code>_03_ID編號</code></strong>。它們應該進計算、進 Coverage、還是排除？字典有 <code>DW-01</code>，但這兩個沒被標記。需要決定並建立對應樣本。</p>
+<hr>
+<h2 id="LoopFlow-QTY-測試模型補強項目--4-工作方式與規模">4　工作方式與規模</h2>
+<p><strong>17. 建立兩種合法配置的 fixture（2026-09-03 依 QD-26 改寫）</strong></p>
+<p>原本這一項是「補上直接開 3D 檔的對照」，因為當時只測過 worksession。QD-26 之後合法配置只有兩種，<strong>而且先前用來建立所有 baseline 數字的 <code>LoopFlow_R_MCP.rws</code>（3D attach 進 2D）兩種都不是</strong>：</p>
+<div class="tw"><table><thead><tr><th></th><th>配置</th><th>需要驗證</th></tr></thead><tbody><tr><td><strong>a</strong></td><td>直接開 3D 模型檔</td><td>物件為本機、<code>layer_path</code> 不帶檔名前綴、群組名稱為原名</td></tr><tr><td><strong>b</strong></td><td><code>.rws</code>，2D attach 進 3D</td><td>同上；另驗 attach 的 2D 內容（參照＋Curve）確實完全不進全集與 Coverage</td></tr><tr><td><strong>反例</strong></td><td>3D attach 進 2D（舊 rws）</td><td>應<strong>報設定錯誤並停止</strong>，不得照樣量測</td></tr></tbody></table></div>
+<p>a 與 b 必須得到<strong>完全相同</strong>的計算結果與 Coverage；反例則必須被擋下。三者共用同一份 3D 模型副本，只改開檔方式。</p>
+<p><code>LoopFlow_R_MCP.rws</code> 仍保留作為既有數字的來源與反例樣本，但不再是實務配置的代表。</p>
+<p><strong>18. 建立效能測試用的放大模型</strong> 目前可量測候選只有 48 個，列舉總量 3116。QO-17 要求測 100／1,000／5,000 候選。可用複製方式產生，但需注意 GUID 會改變（複製產生新 ID）。</p>
+<p><strong>19. 建立三層 fixture 集</strong></p>
+<p>不要把「不需 Rhino」與「能驗證 Rhino 幾何辨識」混為一談：</p>
+<ul><li><strong>純 Python domain fixtures</strong>：保存 adapter 已抽出的 typed records（面積、體積、候選端面／rail、身分、規則與來源 revision），驗證規則 join、狀態機、單位換算與報告；CI 可直接跑。</li><li><strong>Rhino integration fixtures</strong>：小型 <code>.3dm</code>／<code>.rws</code>，驗證 RhinoCommon 的面、端面、block transform、reference 與 layer 正規化；需在 Rhino 內跑。</li><li><strong>Golden outputs</strong>：兩層都對到同一份期望結果；若 integration 擷取結果改變但 domain 測試仍綠，差異必須可見，不能更新 golden 掩蓋。</li></ul>
+<p>合法／錯誤至少各一組，涵蓋直線、轉角、閉合環、包覆面、開口、Block、結構體與參照失效。</p>
+<p><strong>20. 補上身分生命週期與碰撞測試</strong></p>
+<ul><li>儲存／關閉／重開後，同一物件仍能解析</li><li>worksession 改變 attach 順序或多附加一個模型後，locator 仍指向原來源</li><li>同一 3D 檔直接開啟與作為 reference 時，得到相同 canonical locator</li><li>複製來源 <code>.3dm</code> 造成兩個模型具有相同 Rhino GUID 時，必須靠 <code>source_model_key</code> 分開</li><li>專案根目錄搬到另一台電腦後，相對來源鍵仍能解析</li><li>來源檔改名、物件刪除重畫、同一專案出現重複 <code>_07_UUID</code> 時，回傳 lost／conflict，不自動猜配</li></ul>
+<p><strong>21. 補上模型單位對照</strong></p>
+<p>以已知尺寸分別建立 cm、mm（必要時再加 m）的小型模型，確認幾何 raw、估價單位 exact value 與顯示值不會因文件單位相差 10／100 倍。不可直接改原始模型單位來測。</p>
+<p><strong>22. 補上 Block transform 與不支援幾何</strong></p>
+<p>至少包含旋轉、鏡射、非等比縮放、巢狀／linked block、多個 instance 共用 definition，以及 open／invalid Brep。Mesh、SubD 等範圍外型別也要有排除案例與明確原因，避免它們被無聲漏掉。</p>
+<hr>
+<h2 id="LoopFlow-QTY-測試模型補強項目--5-建議的補強順序">5　建議的補強順序</h2>
+<div class="tw"><table><thead><tr><th>順序</th><th>項目</th><th>理由</th></tr></thead><tbody><tr><td>1</td><td>19（fixture 三層）與 oracle 格式</td><td>先固定怎樣才算「測過」，否則後續只是在堆模型</td></tr><tr><td>2</td><td>8（<code>m2</code>）、11（結構實體）、20（身分）</td><td>補<strong>已知缺陷</strong>、未完整路徑與 QR-01 的安全契約</td></tr><tr><td>3</td><td>1～7（幾何形狀）</td><td>直接決定 QR-03 的長度 fallback 與 QR-07 的開口閾值能不能定案</td></tr><tr><td>4</td><td>12～17、21、22、26、27、28</td><td>解鎖分組、Coverage、直接開檔、單位、Block、Cabinet Group／一式群組與失效行為</td></tr><tr><td>5</td><td>9、10、18</td><td>補完整性與效能；效能模型獨立建立，可與實作並行</td></tr></tbody></table></div>
+<blockquote><p><strong>注意</strong>：原始工作檔不補強，因此 <a href="./資料盤點.md"><code>資料盤點.md</code></a> 的 48 件 baseline 保持不變。各測試副本另有自己的 manifest 與盤點，不把數字混回原始模型。</p></blockquote>
+<hr>
+<h2 id="LoopFlow-QTY-測試模型補強項目--6-Cursor-覆核-2026-09-02-公司電腦">6　Cursor 覆核（2026-09-02，公司電腦）</h2>
+<p>同意 Codex 的隔離、oracle 與三層 fixture。本輪 MCP 對原始 <code>LoopFlow_R_MCP.rws</code> 的補充：</p>
+<div class="tw"><table><thead><tr><th>現況</th><th>對測試資產的意義</th></tr></thead><tbody><tr><td>曲面 Brep <strong>0</strong>、open Brep <strong>0</strong></td><td>項目 1、22 在原始模型完全空白，只能靠副本</td></tr><tr><td>Registry 37／37 對得上、revision 4</td><td>原始模型測不到 QR-02 漂移；見下方項目 23</td></tr><tr><td>標記物件 EXT <strong>0</strong>、空間名只有廊道／衛浴</td><td>項目 13、12 仍缺</td></tr><tr><td><code>EL-07</code> 隱藏、<code>SA-01</code> 鎖定</td><td>原始模型已有 hidden／locked 樣本，但仍應在副本做成可重跑的 oracle；見項目 24</td></tr><tr><td><code>3D_W1</code>／<code>3D_D1</code> transform 不是 Identity</td><td>項目 22 的「旋轉」有弱樣本；仍缺鏡射與非等比縮放</td></tr><tr><td>結構末層實名是 <code>Wall-Brick.牆-Brick</code>、<code>Wall-RC.牆-RC</code></td><td>測試副本的 <code>layer_path</code> 必須用這個字，不能寫「磚牆」</td></tr></tbody></table></div>
+<h3 id="LoopFlow-QTY-測試模型補強項目--建議新增">建議新增</h3>
+<p><strong>23. 建立 Registry 漂移副本（優先，對應 QR-02）</strong> 原始檔已經 37／37 對齊，測不到失敗路徑。隔離副本至少要有：live 有、Registry 無；Registry 有、live 無；revision／內容雜湊不同；未知 <code>schema_id</code>。每種都要有期望狀態，不能只改一個數字。</p>
+<p><strong>24. 將 hidden／locked 做成可重跑 oracle（對應 QR-04）</strong> 原始模型已有 <code>EL-07</code> 隱藏、<code>SA-01</code> 鎖定。副本應明確記錄「這兩件必須進全集、必須能量測或標不可量測，不得因隱藏／鎖定被漏掉」。</p>
+<p><strong>25. 重複 <code>_07_UUID</code> 與來源複本 GUID 碰撞（對應 QR-01）</strong> 本 session 3116 個 GUID 不重複、37 個 UUID 不重複，所以「conflict、不猜配」這條路目前是空的。</p>
+<p><strong>26. 將 Cabinet Group／Z-up OBB 做成正式 fixture（對應 QD-16～19）</strong></p>
+<p>已有兩組探索性樣本，每組相同櫃體各含 11 個 Brep：<code>LoopFlow_R_MCP.rws</code>（09-02）的 0°／45°，World bbox <code>100 × 36.746 × 75</code>、<code>96.694 × 96.694 × 75</code> cm；<code>LoopFlow_3D.3dm</code>（09-03）的 0°／30°，World bbox <code>100 × 36.746 × 75</code>、<code>104.976 × 81.823 × 75</code> cm。四組方向校正後的 Z-up OBB 都是 <code>100 × 36.746 × 75</code> cm，09-03 兩組體積同為 <code>95035.7251 cm³</code>。正式 fixture 還須補：</p>
+<ul><li>真正 Group Name 與成員物件名稱不同，QTY 只採前者</li><li>巢狀子群組、部分重疊與交叉群組，避免同一零件重複計量</li><li>90°、任意角、鏡射，以及把手／檯面突出造成外包尺寸改變</li><li>弧形與不規則櫃；仍輸出 OBB，並驗證方向診斷不會靜默宣稱高信心</li><li>cm／mm 文件單位換算後得到相同物理尺寸</li><li>Group 改名、解散、增減成員後的 lost／changed 報告</li><li><code>_Copy</code> 複製整組櫃體：複本自成新群組但<strong>不帶名稱</strong>，必須被列為待命名，不得靜默從數量表消失</li><li>解散最外層後子群組仍在、重新成群取得新 index 與自動名稱；重新命名一次即可恢復可量測</li><li>重新成群時漏選一個零件：名稱照樣寫得上去但 OBB 變小，必須由檢查抓出</li><li>櫃體圖層上未成群的零件必須被報告（QD-20）；同類零件需同時有已成群與未成群兩種</li><li>成員空間一致、不一致與 <code>EXT</code> 三種情形各一（QD-21）</li><li>Group Table 內混有非櫃體群組（樓板、飾條）時不得被當成櫃體</li><li><strong>群組內混入 curve／point（QD-25）</strong>：目前兩份工作檔的所有群組都只有 Brep，這條完全沒有樣本。fixture 需刻意放一條<strong>超出櫃體範圍的參考線</strong>與一個放置點，驗證 OBB 與沒有它們時完全相同；另建一個「只有線」的群組，驗證回報「無可量測成員」而不是零尺寸</li><li>Block 成員（例如把手圖塊）須套用實例 transform；旋轉與鏡射的 Block 各一個樣本</li></ul>
+<p>兩份工作檔的命名狀態不同，fixture 要分別對待：<code>LoopFlow_R_MCP.rws</code> 的 <code>櫃體群組測試0</code>／<code>櫃體群組測試45</code> 是成員物件名稱，真正外層 Group Name 仍為 <code>Group03</code>／<code>Group04</code>；<code>LoopFlow_3D.3dm</code> 則是 12 個群組全為自動名稱、成員完全沒有物件名稱（Toolkit 的同步指令已因此取消，一律直接命名）。正式 fixture 應先用 <code>SetGroupName</code> 建立可辨識的真正名稱，再保存 manifest 與 oracle，不要直接拿正式工作檔當 fixture。</p>
+<p>補強順序建議把 <strong>23、25 插入第 2 批</strong>（與身分、<code>m2</code> 一起），<strong>24、26 可與第 4 批</strong>的 Coverage／開檔方式一起。</p>
+<hr>
+<h2 id="LoopFlow-QTY-測試模型補強項目--7-2026-09-03-追加-一式群組與-worksession-前綴">7　2026-09-03 追加（一式群組與 worksession 前綴）</h2>
+<p>本節對應已裁決的 QD-23（一式改用命名群組當載體）與 QD-24（讀到來源檔前綴即視為開錯檔並停止）。兩者均由使用者於 2026-09-23 授權 Codex 裁決，專用 3dm 必須提供對應 fixtures 驗證。</p>
+<p><strong>27. 一式群組（<code>QTY_LS_</code>）fixture——以燈箱為代表樣本</strong></p>
+<p>一式目前完全沒有樣本（項目 14），而載體從「外部 <code>object_id</code> 清單」改成命名群組後，要驗的東西也不同了。建議直接照實務做一座<strong>燈箱</strong>：</p>
+<div class="tw"><table><thead><tr><th>成員</th><th>建議圖層</th><th>用途</th></tr></thead><tbody><tr><td>鋼板骨架</td><td><code>02_Wall_牆面::Metal.金屬</code></td><td>有字典規則，用來驗證「主動差集有沒有真的把它扣掉」</td></tr><tr><td>烤漆</td><td><code>02_Wall_牆面::Paint.油漆</code></td><td>面積規則，同上</td></tr><tr><td>沖孔板</td><td><code>02_Wall_牆面::Metal.金屬</code></td><td>中空件，順便當項目 7 的對照</td></tr><tr><td>燈條</td><td><code>05_LT_燈帶::Strip_Light_WL.牆面</code></td><td><strong>長度規則</strong>，最容易被重複計</td></tr></tbody></table></div>
+<p>整組建立最外層群組，命名 <code>QTY_LS_001_燈箱</code>。每個成員維持各自的 Tag 與 <code>_01</code>～<code>_14</code>（一式不影響身分，也不影響圖面材料標示）。</p>
+<p>必須驗證的行為：</p>
+<ul><li>四個成員<strong>全部退出逐物件計算</strong>；估價單只出現一列「燈箱 一式 1」</li><li>若任何一個成員仍被逐物件算到（尤其燈條的長度規則），視為失敗——這正是 QD-10 警告的「安靜多算一筆」</li><li>群組輸出 Z-up OBB 的長寬高當尺寸附註，不當作計價數量</li><li>空間歸屬讀成員的 <code>_09_空間ID</code>，不自行判斷</li><li>Coverage 五態中，一式成員應落在「一式」而不是「未選取」</li></ul>
+<p>還需要的變化樣本：</p>
+<ul><li><strong>成員跨空間的一式群組</strong> → 應診斷並照實輸出多值，不取多數決（QD-21）</li><li><strong>一式群組與櫃體群組成員重疊</strong>（例如嵌在櫃體裡的燈箱）→ 同一物件同時屬於兩種 <code>QTY_</code> 前綴群組，一邊要算一邊要排除，必須報衝突</li><li><strong>已成群但未命名的一式候選</strong> → 應列為待命名，不得靜默不算</li><li>沒有實體的一式（清運、管理費）<strong>不在此列</strong>，維持手動填寫</li></ul>
+<p><strong>28. 開錯檔的偵測 fixture（對應 QD-24 改寫版）</strong></p>
+<p>2026-09-03 隔離實測：worksession <code>_Attach</code> 進來的模型，群組會一起進群組表、reference 物件的 <code>GetGroupList()</code> 正常，但<strong>名稱變成 <code>&lt;來源檔名&gt; : &lt;原名&gt;</code></strong>（實測值 <code>ws_child.3dm : QTY_LS_TEST</code>）。</p>
+<p>QD-26 之後這不再是要相容的情境，而是要<strong>抓出來的錯誤配置</strong>：3D 被 attach 代表物件不可編輯，GH 選取與 Nexus 修改都做不了。fixture 需要一份「3D attach 進 2D」的 <code>.rws</code>，驗證 QTY：</p>
+<ul><li>認得 <code>&lt;檔名&gt; : QTY_...</code> 這種名稱，不是回空集合</li><li>報設定錯誤並停止，訊息要說得出「請直接開啟 3D 檔，或改成 2D attach 進 3D」</li><li><strong>不得</strong>照樣輸出數量或 OBB</li></ul>
+<p>順帶一提，前綴比對若寫成 <code>startswith(&quot;QTY_&quot;)</code>，這種配置會靜默回空集合、Coverage 全部落在「未選取」——那正是這個 fixture 要擋下的失敗模式。</p>
+<p>補強順序：<strong>27 併入第 4 批</strong>（與 26 Cabinet Group 一起，兩者共用群組機制）；<strong>28 併入項目 17</strong>，同一組副本改開檔方式即可。</p></main>
+</div>
+<script>
+(function(){
+  document.querySelectorAll('input.ck').forEach(function(box){
+    var key='qty:'+box.getAttribute('data-key');
+    try{
+      var saved=localStorage.getItem(key);
+      if(saved!==null){ box.checked = saved==='1'; }
+    }catch(e){}
+    var row=box.closest('tr');
+    row.classList.toggle('done', box.checked);
+    box.addEventListener('change', function(){
+      try{ localStorage.setItem(key, box.checked?'1':'0'); }catch(e){}
+      row.classList.toggle('done', box.checked);
+    });
+  });
+
+  var links=[].slice.call(document.querySelectorAll('nav a'));
+  var targets=links.map(function(a){return document.getElementById(a.getAttribute('href').slice(1));});
+  function upd(){
+    var y=window.scrollY+140, best=-1;
+    for(var i=0;i<targets.length;i++){ if(targets[i]&&targets[i].offsetTop<=y) best=i; }
+    links.forEach(function(a,i){ a.classList.toggle('active', i===best); });
+  }
+  window.addEventListener('scroll',upd,{passive:true});
+  upd();
+})();
+</script>
+</body>
+</html>

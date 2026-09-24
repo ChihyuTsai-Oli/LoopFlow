@@ -7,6 +7,7 @@
 
 執行
     python qty/tools/build_html.py
+    python qty/tools/build_html.py --src 測試模型.md --out 測試模型.html
     python qty/tools/build_html.py --src 決策紀錄_2.md 測試模型.md   # 只合併指定檔案
     python qty/tools/build_html.py --out 我的總覽.html
     python qty/tools/build_html.py --check    # 只檢查是否過期，不寫檔
@@ -111,7 +112,7 @@ def slug(text: str) -> str:
 
 
 def first_h1(md: str) -> str:
-    m = re.search(r"^#\s+(.*)$", md, re.M)
+    m = re.search(r"^#(?!#)\s+(.*)$", md, re.M)
     return m.group(1).strip() if m else "未命名文件"
 
 
@@ -416,7 +417,7 @@ LEGEND = ('<p class="legend">決策表「你的決定」欄顏色（依三家建
 # ==================================================================
 # 合併
 # ==================================================================
-def render(sources: list[Path]) -> str:
+def render(sources: list[Path], title: str = SITE_TITLE) -> str:
     texts = [(p, p.read_text(encoding="utf-8")) for p in sources]
 
     chapter_map: dict[str, str] = {}
@@ -444,22 +445,23 @@ def render(sources: list[Path]) -> str:
         toc.extend(file_toc)
 
     nav = ['<div class="brand">%s</div>' % html.escape(SITE_BRAND),
-           '<div class="bt">%s</div>' % html.escape(SITE_TITLE)]
+           '<div class="bt">%s</div>' % html.escape(title)]
     open_group = False
-    for level, title, sid in toc:
+    for level, heading, sid in toc:
         if level == 1:
             if open_group:
                 nav.append("</div>")
             nav.append('<div class="group">')
-            nav.append('<a class="l1" href="#%s">%s</a>' % (sid, html.escape(title)))
+            nav.append('<a class="l1" href="#%s">%s</a>' % (sid, html.escape(heading)))
             open_group = True
         elif level == 2:
-            nav.append('<a class="l2" href="#%s">%s</a>' % (sid, html.escape(title)))
+            nav.append('<a class="l2" href="#%s">%s</a>' % (sid, html.escape(heading)))
     if open_group:
         nav.append("</div>")
 
-    body = LEGEND + "\n".join(body_parts)
-    return PAGE % (html.escape(SITE_TITLE), CSS, "\n".join(nav), body, JS)
+    need_legend = any(p.name.startswith("決策紀錄") for p in sources)
+    body = (LEGEND if need_legend else "") + "\n".join(body_parts)
+    return PAGE % (html.escape(title), CSS, "\n".join(nav), body, JS)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -467,6 +469,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--src", type=Path, nargs="*", default=None,
                     help="要合併的 Markdown（依指定順序）；預設依內建順序讀取 docs/前期評估/")
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT, help="輸出 HTML 路徑")
+    ap.add_argument("--title", default=None, help="頁面標題；單檔未指定時用該檔第一個標題")
     ap.add_argument("--check", action="store_true",
                     help="只比對現有 HTML 是否為最新，不寫檔；過期時以離開碼 1 結束")
     args = ap.parse_args(argv)
@@ -485,7 +488,17 @@ def main(argv: list[str] | None = None) -> int:
         print("沒有可合併的 Markdown 檔案", file=sys.stderr)
         return 2
 
-    page = render(sources)
+    if args.out != DEFAULT_OUT and not args.out.is_absolute() and len(args.out.parts) == 1:
+        args.out = DOCS_DIR / args.out
+
+    title = args.title
+    if not title:
+        if len(sources) == 1:
+            title = first_h1(sources[0].read_text(encoding="utf-8"))
+        else:
+            title = SITE_TITLE
+
+    page = render(sources, title=title)
 
     if args.check:
         if args.out.exists() and args.out.read_text(encoding="utf-8") == page:
