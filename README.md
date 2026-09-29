@@ -86,3 +86,8 @@ External rendering synchronization is provided by separate projects and is not i
 ## License and credits
 
 LoopFlow is released under the [MIT License](./LICENSE). See [CREDITS](./CREDITS.md) for the project background and acknowledgments.
+
+## Author
+
+蔡智聿, Chihyu Tsai
+https://chihyu-tsai.com/
