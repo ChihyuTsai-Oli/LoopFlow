@@ -1,10 +1,10 @@
-# LoopFlow
+[English Version](./README.md)
 
-[English](./README.md)
-
-> An open-source workflow automation tool developed by **蔡智聿 (Chihyu Tsai)**. [https://chihyu-tsai.com](https://chihyu-tsai.com)
+An open-source workflow automation tool developed by **蔡智聿 (Chihyu Tsai)**. [https://chihyu-tsai.com](https://chihyu-tsai.com)
 
 ---
+
+# LoopFlow
 
 > **Embrace the loop. Let it flow.**
 
