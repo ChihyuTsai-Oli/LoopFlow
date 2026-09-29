@@ -2,6 +2,10 @@
 
 [繁體中文](./README_zh-TW.md)
 
+> An open-source workflow automation tool developed by **蔡智聿 (Chihyu Tsai)**. [https://chihyu-tsai.com](https://chihyu-tsai.com)
+
+---
+
 > **Embrace the loop. Let it flow.**
 
 LoopFlow 2.0 is a Rhino 8-based, semi-automated design and documentation workflow built to carry a project from schematic design (SD), through design development (DD), to construction documentation (CD). It is not another BIM system, and it does not require fixed templates or a parametric workflow. You remain in control of every step while LoopFlow handles data updates, drawing synchronization, and other repetitive work.
@@ -86,8 +90,3 @@ External rendering synchronization is provided by separate projects and is not i
 ## License and credits
 
 LoopFlow is released under the [MIT License](./LICENSE). See [CREDITS](./CREDITS.md) for the project background and acknowledgments.
-
-## Author
-
-蔡智聿, Chihyu Tsai
-https://chihyu-tsai.com/
