@@ -24,7 +24,7 @@ from loopflow.features.tagger.keys import (
     is_legacy_lock_x,
     is_lock_true,
 )
-from loopflow.features.tagger.templates import DEFAULT_PATH
+from loopflow.features.tagger.templates import resolve_tag_templates_path
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 from loopflow.foundation.i18n import t
@@ -51,7 +51,9 @@ def load_template_migrations(
     path: Optional[Path] = None,
 ) -> Tuple[Dict[str, Tuple[Tuple[str, str], ...]], frozenset]:
     """回傳 (block 名小寫 → 舊→新 key, 允許鎖定的 block 名小寫)。"""
-    source = path or DEFAULT_PATH
+    source = path or resolve_tag_templates_path()
+    if source is None:
+        raise FileNotFoundError("tag_templates.json")
     payload = json.loads(source.read_text(encoding="utf-8"))
     lock = str(payload.get("lock_legacy_key") or LOCK_LEGACY_KEY)
     mapping = {}
