@@ -29,7 +29,7 @@ Dropbox 工作檔路徑依上一層 `工作檔路徑.md` 解析，不得寫死�
 ## 分支與版本
 
 - `main` 是已發布的 LoopFlow 2.0。
-- `v2-development` 是整合分支，目前與 `main` 對齊；不直接承接未分批的大型修改。
+- `v2-development` 是整合分支；不直接承接未分批的大型修改。它可能落後 `main`（2026-10-04 落後 41 個 commit、無超前），開新工作前先 fast-forward 到 `main`。
 - 每項工作從 `v2-development` 建立 `codex/v2-<scope>` 短期分支，完成後合入整合分支，再依授權合入 `main`。
 - `qty/` 與 `toolkit/` 是不同產品，**不走 `v2-development`**。Toolkit 開始寫程式時由 `main` 建立 `toolkit-development`，每批再開 `codex/toolkit-<scope>`；不要把這兩個產品的工作合進 2.0 的整合分支。目前兩者都只有文件，前期文件可留在 `main`。
 - `v1.0.0` 是 1.x 歷史 tag。2.0 重構期間曾凍結以免誤傷；現已解凍。可改該 tag 的 README／Release 說明，讓 1.x 下載連到 `LoopFlow_v1.0.0.zip` 或 `/releases/tag/v1.0.0`，**不得**用 `/releases/latest`（會連到現行 2.0）。1.x 程式 hotfix 仍僅在使用者明確要求時才做。

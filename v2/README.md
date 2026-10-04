@@ -34,6 +34,7 @@ AI 或開發者依序閱讀：
 | `docs/系統設定.md` | repo、runtime、路徑、entrypoint、build／`.yak` 安裝等技術設定 |
 | `docs/重構進度.md` | 已完成工作、驗證、限制與唯一下一步 |
 | `docs/rhino指令.md` | 開發按鈕（ScriptEditor）與正式無底線指令對照、左右鍵配置；使用者裝的是 yak 工具列；要改指令名稱先改這份 |
+| `docs/Architecture.md` | 整體邏輯架構 ASCII 圖；輔助閱讀，不是規格，與六份文件不同時以六份為準 |
 | `docs/指令名稱.txt` | 正式指令名稱（無底線）；不是開發期入口清單，入口檔名不要改成這些名字 |
 | `docs/介面語系.md` | 畫面句子中英檢視稿；程式不即時讀。Dictionary 顯示欄名另節 |
 | `docs/toolbar/LoopFlow.rui` | 正式工具列來源；建置時複製進 `.yak`；不要改 `mori LoopFlow` |
