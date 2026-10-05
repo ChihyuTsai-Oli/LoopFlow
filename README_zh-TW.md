@@ -1,6 +1,6 @@
 [English Version](./README.md)
 
-An open-source workflow automation tool developed by **蔡智聿 (Chihyu Tsai)**. [https://chihyu-tsai.com](https://chihyu-tsai.com)
+An open-source workflow automation tool developed by **蔡智聿 (Chihyu Tsai)**. [https://intro.chihyu-tsai.com](https://intro.chihyu-tsai.com)
 
 ---
 
