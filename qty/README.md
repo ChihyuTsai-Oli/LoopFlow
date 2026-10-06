@@ -35,4 +35,4 @@
 
 Rhino／Blender MCP 的安裝與實測在工作區 `mcp/`，不在本產品。
 
-下一步先依 [`docs/前期評估/測試模型.md`](./docs/前期評估/測試模型.md) 建立 **QTY 專用 3dm**。模型完成後，Claude、Codex、Cursor 先各自透過 MCP 驗收模型完整性；確認完備後，三家再各自透過 MCP 重評決策並依二票多數決收斂；上述全部完成後才寫程式。不要直接拿正式工作檔當測試檔，也不要把計算邏輯塞進 `v2/src/loopflow`。
+下一步先依 [`docs/前期評估/測試模型.md`](./docs/前期評估/測試模型.md) 建立 **QTY 專用 3dm**。工作檔在 `<LOOPFLOW_QTY_WORKFILES_ROOT>`（雙機路徑見工作區 `工作檔路徑.md`），與 `<LOOPFLOW_QTY_MCP_WORKFILES_ROOT>` 的原始 MCP baseline 分開。模型完成後，Claude、Codex、Cursor 先各自透過 MCP 驗收模型完整性；確認完備後，三家再各自透過 MCP 重評決策並依二票多數決收斂；上述全部完成後才寫程式。不要直接拿正式工作檔當測試檔，也不要把計算邏輯塞進 `v2/src/loopflow`。

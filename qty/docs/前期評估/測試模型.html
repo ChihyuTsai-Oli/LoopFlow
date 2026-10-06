@@ -116,10 +116,11 @@ tr.ckrow.done td.ckcell{text-decoration:none;opacity:1}
 <blockquote><p>寬版閱讀檔：<a href="測試模型.html">測試模型.html</a>。HTML 由 <code>qty/tools/build_html.py</code> 產生，<strong>不要手動編輯</strong>。</p>
 <p>本文件列出目前驗證模型<strong>缺少或可補充</strong>的項目，用來擴大量測方法的驗證範圍。</p>
 <p>驗證模型有兩份：<code>LoopFlow_R_MCP.rws</code>（QTY MCP 測試環境，§1～§6 的基準）與 <code>LoopFlow_3D.3dm</code>（LoopFlow 主工作檔，2026-09-03 的櫃體群組實測來源）。兩者狀態不同，樣本引用時要標明來自哪一份。</p>
-<p>建立日期：2026-09-02　｜　最後更新：2026-09-03　｜　現況數字見 <a href="./資料盤點.md"><code>資料盤點.md</code></a></p></blockquote>
+<p>建立日期：2026-09-02　｜　最後更新：2026-10-06　｜　現況數字見 <a href="./資料盤點.md"><code>資料盤點.md</code></a></p></blockquote>
 <h2 id="LoopFlow-QTY-測試模型補強項目--0-測試資產規則">0　測試資產規則</h2>
 <h3 id="LoopFlow-QTY-測試模型補強項目--0-0-先建立-QTY-專用-3dm">0.0 先建立 QTY 專用 3dm</h3>
 <p>進入程式實作前，<strong>先建立一份 QTY 專用 <code>.3dm</code>，作為 QTY 開發與正確性測試的共同基準模型</strong>。它不是正式專案工作檔，也不是既有 MCP 驗證檔的改名副本；內容須依本文件的測試需求刻意建構，並附 manifest、版本、雜湊、物件盤點與人工可確認的期望答案。</p>
+<p>工作檔放在 <code>&lt;LOOPFLOW_QTY_WORKFILES_ROOT&gt;</code>（雙機路徑見工作區根目錄 <code>工作檔路徑.md</code>）。目前檔名為 <code>loopflow_qty_3D.3dm</code>（另有配套 2D 與 rws）。原始 MCP baseline 仍在 <code>&lt;LOOPFLOW_QTY_MCP_WORKFILES_ROOT&gt;</code>，兩者不要混用、也不要改後者。</p>
 <p>後續的直接開 3D、2D attach 進 3D、Registry 漂移、參照失效、身分碰撞等 fixtures，均由這份專用 3dm 派生或與它配套。效能放大模型仍須另檔，不得污染正確性基準模型。</p>
 <h3 id="LoopFlow-QTY-測試模型補強項目--0-1-為什麼需要補強">0.1 為什麼需要補強</h3>
 <p>目前模型的可量測候選只有 <strong>48 個</strong>（Brep 39 ＋ Block 9），而量測方法的兩個失效情境<strong>各只有 1～2 個樣本</strong>：</p>
