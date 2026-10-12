@@ -4,6 +4,16 @@ All notable changes to LoopFlow will be documented here.
 
 ---
 
+## [2.1.0] - 2026-10-12
+
+Install this version. Same workflow as 2.0.7, plus:
+
+- Stacked plan drawings: when a Laser click hits more than one Anchor Frame, choose the frame by its Text Dot name, then continue to the existing material choice
+- Run Anchor Frame again on an older frame to store that name. Until then, the list shows the frame's object name. Index still stops when more than one frame matches
+- Do not overwrite `v2.0.0`–`v2.0.7`. Quit Rhino completely after install
+
+---
+
 ## [2.0.7] - 2026-08-26
 
 Install this version. Same workflow as 2.0.6, plus:
