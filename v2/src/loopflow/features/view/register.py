@@ -19,6 +19,7 @@ from loopflow.features.view.keys import (
     SCHEMA_ID_KEY,
     SCHEMA_VERSION_KEY,
     VIEW_ID_KEY,
+    VIEW_NAME_KEY,
     VIEW_SCHEMA_ID,
     VIEW_SCHEMA_VERSION,
     VIEW_TRANSFORM_KEY,
@@ -132,6 +133,7 @@ def _write_view_usertext(
     session.set_object_user_text(frame_id, SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
     session.set_object_user_text(frame_id, SCHEMA_VERSION_KEY, VIEW_SCHEMA_VERSION)
     session.set_object_user_text(frame_id, CLIPPING_PLANE_ID_KEY, clipping_plane_id)
+    session.set_object_user_text(frame_id, VIEW_NAME_KEY, hint)
     session.set_object_user_text(frame_id, VIEW_TRANSFORM_KEY, encode_transform(transform_payload))
     if detail_id:
         session.set_object_user_text(frame_id, DETAIL_ID_KEY, detail_id)

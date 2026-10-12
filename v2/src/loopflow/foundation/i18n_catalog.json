@@ -1939,6 +1939,14 @@
     "zh-TW": "結構體不綁定 Tag，Laser 不寫入。",
     "en": "Structural objects are not bound to Tags. Laser made no changes."
   },
+  "laser.018": {
+    "zh-TW": "多張平面圖重疊，請選要用的 Anchor Frame",
+    "en": "Several plan views overlap. Choose the Anchor Frame to use."
+  },
+  "laser.019": {
+    "zh-TW": "（未命名）",
+    "en": "(unnamed)"
+  },
   "layout_id.001": {
     "zh-TW": "圖框已就緒，但尚未設定系列起點，因此未執行。 / 請將每個系列的第一頁按照下列規則命名： / **圖類別__圖號__圖名 / **IN__101.01__一樓平面圖 / **A__101__一樓平面圖 /  / --- / 1. ** 作為自動編號起點，勿刪 / 2. ** 之間的頁面為同一系列 / 3. ** 頁面之外的Layout名稱，只需要填寫圖名 / 4. // 頁面不參與自動編號，但仍需使用相同命名格式規範 / 5. 圖號、圖名 的編號與命名可以從Layout列表手動調整 / 　經由自動編號寫入圖框中，不可直接修改圖框內容 / --- /  / Sample / **IN__101.01__一樓平面圖 / 二樓平面圖 / 三樓平面圖 / **IN__201.01__立面圖1 / 立面圖2 / //S__901__結構平面圖 /  / （Layout自動編號如下） / **IN__101.01__一樓平面圖 / IN__101.02__二樓平面圖 / IN__101.03__三樓平面圖 / **IN__201.01__立面圖1 / IN__201.02__立面圖2 / //S__901__結構平面圖",
     "en": "Title blocks are ready, but no series start has been set, so nothing was processed. / Name the first page of each series as follows: / **DrawingType__DrawingNumber__DrawingName / **IN__101.01__First Floor Plan / **A__101__First Floor Plan /  / --- / 1. ** marks the start of an auto-numbered series; do not remove it / 2. Pages between two ** markers belong to the same series / 3. For Layouts outside a ** series, enter only the drawing name / 4. Pages beginning with // are not auto-numbered, but must use the same naming format / 5. Drawing numbers and names can be edited in the Layout list / 　Auto-numbering writes them to the title block; do not edit the title block directly / --- /  / Example / **IN__101.01__First Floor Plan / Second Floor Plan / Third Floor Plan / **IN__201.01__Elevation 1 / Elevation 2 / //S__901__Structural Plan /  / Result after automatic numbering / **IN__101.01__First Floor Plan / IN__101.02__Second Floor Plan / IN__101.03__Third Floor Plan / **IN__201.01__Elevation 1 / IN__201.02__Elevation 2 / //S__901__Structural Plan"

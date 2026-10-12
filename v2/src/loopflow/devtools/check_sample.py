@@ -77,6 +77,7 @@ ALLOWED_LF_PREFIXES = (
     "lf_sheet_code",
     "lf_view_id",
     "lf_clipping_plane_id",
+    "lf_view_name",
     "lf_view_transform",
     "lf_drawing_id",
     "lf_provenance_state",

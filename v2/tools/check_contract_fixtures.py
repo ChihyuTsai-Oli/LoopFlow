@@ -436,6 +436,7 @@ def check_view() -> None:
         "schema_id": "lf_schema_id",
         "schema_version": "lf_schema_version",
         "clipping_plane_id": "lf_clipping_plane_id",
+        "view_name": "lf_view_name",
         "view_transform": "lf_view_transform",
     }
     for key, usertext in required.items():

@@ -29,9 +29,11 @@ from loopflow.features.tagger.laser import (
     apply_live_view_origins,
     bind_laser_hit,
     choice_labels,
+    choose_view_frame,
     cluster_hits,
     debug_ray_enabled,
     debug_ray_end,
+    frame_choice_label,
     hit_choice_label,
     origin_behind_plane,
     run_tagger_laser,
@@ -44,6 +46,7 @@ from loopflow.features.tagger.templates import load_tag_templates
 from loopflow.features.view.keys import (
     CLIPPING_PLANE_ID_KEY,
     SCHEMA_ID_KEY,
+    VIEW_NAME_KEY,
     VIEW_SCHEMA_ID,
     VIEW_TRANSFORM_KEY,
 )
@@ -491,15 +494,59 @@ class CommandTests(unittest.TestCase):
         self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
         self.assertEqual(view_frames_containing(session, (100.0, 100.0, 0.0)), ())
 
-    def test_overlapping_views_zero_write(self):
+    def test_overlapping_views_cancel_zero_write(self):
         session = _session()
         session.add_object("frame2", name="ViewFrame2", layer="M2D::Anchor_Frame")
         session.set_bbox("frame2", (0, 0, 0), (20, 10, 0))
         session.set_object_user_text("frame2", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
         session.set_object_user_text("frame2", VIEW_TRANSFORM_KEY, encode_transform(_transform()))
-        result = _run(session)
-        self.assertEqual(result.blocking, ("ambiguous_view",))
+        result = _run(session, choose_frame=lambda _s, _frames: None)
+        self.assertEqual(result.status, "cancelled")
         self.assertIsNone(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY))
+
+    def test_overlapping_views_chosen_frame_writes(self):
+        session = _session()
+        session.set_object_user_text("frame", VIEW_NAME_KEY, "LF_天花")
+        session.add_object("frame2", name="LF_平面", layer="LoopFlow::Anchor_Frame")
+        session.set_bbox("frame2", (0, 0, 0), (20, 10, 0))
+        session.set_object_user_text("frame2", SCHEMA_ID_KEY, VIEW_SCHEMA_ID)
+        session.set_object_user_text("frame2", VIEW_TRANSFORM_KEY, encode_transform(_transform()))
+        result = _run(session, choose_frame=lambda _s, frames: frames[-1])
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(result.details["frame_id"], "frame2")
+        self.assertEqual(session.get_object_user_text("tag", SOURCE_OBJECT_ID_KEY), OBJECT_ID)
+
+    def test_frame_choice_label_prefers_dot_name(self):
+        session = _session()
+        session.set_object_name("frame", "舊名稱")
+        session.set_object_user_text("frame", VIEW_NAME_KEY, "LF_天花")
+        self.assertEqual(frame_choice_label(session, "frame"), "LF_天花")
+        session.set_object_user_text("frame", VIEW_NAME_KEY, "")
+        self.assertEqual(frame_choice_label(session, "frame"), "舊名稱")
+
+    def test_choose_view_frame_pops_named_list(self):
+        session = _session()
+        session.set_object_user_text("frame", VIEW_NAME_KEY, "LF_天花")
+        session.add_object("frame2", name="LF_天花", layer="LoopFlow::Anchor_Frame")
+        session.set_object_user_text("frame2", VIEW_NAME_KEY, "LF_天花")
+        captured = {}
+
+        def fake_popup(message, items, title="LoopFlow"):
+            captured["message"] = message
+            captured["items"] = list(items)
+            return items[1]
+
+        import loopflow.platform.rhino.prompts as prompts
+
+        original = prompts.ask_popup_choice
+        prompts.ask_popup_choice = fake_popup
+        try:
+            chosen = choose_view_frame(session, ("frame", "frame2"))
+        finally:
+            prompts.ask_popup_choice = original
+        self.assertEqual(chosen, "frame2")
+        self.assertIn("Anchor Frame", captured["message"])
+        self.assertEqual(captured["items"], ["LF_天花（1）", "LF_天花（2）"])
 
     def test_no_hit_zero_write(self):
         session = _session()

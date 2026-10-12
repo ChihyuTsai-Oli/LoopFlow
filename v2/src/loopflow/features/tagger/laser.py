@@ -14,6 +14,7 @@ from loopflow.features.tagger.keys import (
 from loopflow.features.tagger.templates import TagTemplate, TagTemplateSet, load_tag_templates
 from loopflow.features.view.keys import (
     SCHEMA_ID_KEY,
+    VIEW_NAME_KEY,
     VIEW_SCHEMA_ID,
     VIEW_TRANSFORM_KEY,
 )
@@ -40,6 +41,7 @@ PickTag = Callable[[RhinoSession], Optional[str]]
 PickPoint = Callable[[RhinoSession], Optional[Sequence[float]]]
 Probe = Callable[[RhinoSession, Sequence[float], Sequence[float]], Sequence[dict]]
 ChooseHit = Callable[[Sequence[dict]], Optional[dict]]
+ChooseFrame = Callable[[RhinoSession, Sequence[str]], Optional[str]]
 
 
 def _refuse_reason(template: TagTemplate) -> str:
@@ -186,9 +188,8 @@ def hit_choice_label(item: dict) -> str:
     return layer
 
 
-def choice_labels(hits: Sequence[dict]):
-    """同名列加上（2）（3），避免 ListBox 回傳值對不到第二筆。"""
-    base = [hit_choice_label(item) for item in hits]
+def numbered_labels(base: Sequence[str]) -> tuple:
+    """同名列加上（1）（2），避免 ListBox 回傳值對不到第二筆。"""
     counts = {}
     for label in base:
         counts[label] = counts.get(label, 0) + 1
@@ -201,6 +202,37 @@ def choice_labels(hits: Sequence[dict]):
         seen[label] = seen.get(label, 0) + 1
         labels.append("%s（%s）" % (label, seen[label]))
     return tuple(labels)
+
+
+def choice_labels(hits: Sequence[dict]):
+    """同名列加上（2）（3），避免 ListBox 回傳值對不到第二筆。"""
+    return numbered_labels([hit_choice_label(item) for item in hits])
+
+
+def frame_choice_label(session: RhinoSession, frame_id: str) -> str:
+    """框的顯示名：先讀登記時寫下的 Text Dot，沒有再看物件名稱。"""
+    named = session.get_object_user_text(frame_id, VIEW_NAME_KEY)
+    text = str(named or "").strip()
+    if not text:
+        text = str(session.object_name(frame_id) or "").strip()
+    return text or t("laser.019")
+
+
+def choose_view_frame(session: RhinoSession, frame_ids: Sequence[str]):
+    """多張框重疊時用名稱選一張。取消回傳 None。"""
+    frames = tuple(frame_ids)
+    if len(frames) <= 1:
+        return frames[0] if frames else None
+    from loopflow.platform.rhino.prompts import ask_popup_choice
+
+    labels = list(numbered_labels([frame_choice_label(session, fid) for fid in frames]))
+    chosen = ask_popup_choice(t("laser.018"), labels)
+    if chosen is None:
+        return None
+    try:
+        return frames[labels.index(chosen)]
+    except ValueError:
+        return None
 
 
 def _default_choose(hits: Sequence[dict]):
@@ -292,6 +324,7 @@ def run_tagger_laser(
     pick_point: Optional[PickPoint] = None,
     probe: Optional[Probe] = None,
     choose_hit: Optional[ChooseHit] = None,
+    choose_frame: Optional[ChooseFrame] = None,
     catalog: Optional[TagTemplateSet] = None,
 ) -> results.Result:
     """選 Laser Tag，在 Detail 內點一下射線。Esc 取消不寫入。"""
@@ -383,24 +416,26 @@ def run_tagger_laser(
                 ("missing_view",),
                 command_id=COMMAND_ID,
             )
+        frame_id = frames[0]
         if len(frames) > 1:
-            return results.blocked(
-                "probe_view",
-                t("laser.015") % len(frames),
-                ("ambiguous_view",),
-                command_id=COMMAND_ID,
-                details={"frame_ids": list(frames)},
-            )
-        payload = decode_transform(current.get_object_user_text(frames[0], VIEW_TRANSFORM_KEY))
+            picker = choose_frame or choose_view_frame
+            frame_id = picker(current, frames)
+            if not frame_id:
+                return results.cancelled(
+                    "probe_view",
+                    t("laser.010"),
+                    command_id=COMMAND_ID,
+                )
+        payload = decode_transform(current.get_object_user_text(frame_id, VIEW_TRANSFORM_KEY))
         if payload is None:
             return results.blocked(
                 "probe_view",
                 t("laser.012"),
                 ("invalid_transform",),
                 command_id=COMMAND_ID,
-                details={"frame_id": frames[0]},
+                details={"frame_id": frame_id},
             )
-        payload = apply_live_view_origins(current, frames[0], payload)
+        payload = apply_live_view_origins(current, frame_id, payload)
         origin, direction = ray_from_transform(payload, point_2d)
         probe_origin = origin_behind_plane(origin, direction)
         draw_debug_ray(current, origin, probe_origin, direction)
@@ -442,7 +477,7 @@ def run_tagger_laser(
         bound = bind_laser_hit(current, tag_id, source_id, loaded)
         if bound.ok:
             details = dict(bound.details)
-            details["frame_id"] = frames[0]
+            details["frame_id"] = frame_id
             details["hit_count"] = len(hits)
             return results.ok(bound.stage, bound.message, command_id=COMMAND_ID, details=details)
         return bound

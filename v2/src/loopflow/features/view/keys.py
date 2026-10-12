@@ -11,6 +11,7 @@ VIEW_ID_KEY = "lf_view_id"
 SCHEMA_ID_KEY = "lf_schema_id"
 SCHEMA_VERSION_KEY = "lf_schema_version"
 CLIPPING_PLANE_ID_KEY = "lf_clipping_plane_id"
+VIEW_NAME_KEY = "lf_view_name"
 VIEW_TRANSFORM_KEY = "lf_view_transform"
 DETAIL_ID_KEY = "lf_detail_id"
 

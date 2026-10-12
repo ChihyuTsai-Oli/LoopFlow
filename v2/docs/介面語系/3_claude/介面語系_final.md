@@ -589,6 +589,8 @@ English 欄是定稿，可直接改這份檔。`%s` 是程式填入的數字或�
 | `laser.015` | 這一點落在 %s 個重疊的 View 框內，已停止，不猜測。 | This point is inside %s overlapping View frames. Operation stopped; no View was guessed. |
 | `laser.016` | 已畫出射線。沒打到帶 UUID 的 3D 物件。請到 3D 視窗查看。 | Ray drawn. It did not hit a 3D object with a UUID. Check the 3D viewport. |
 | `laser.017` | 結構體不綁定 Tag，Laser 不寫入。 | Structural objects are not bound to Tags. Laser made no changes. |
+| `laser.018` | 多張平面圖重疊，請選要用的 Anchor Frame | Several plan views overlap. Choose the Anchor Frame to use. |
+| `laser.019` | （未命名） | (unnamed) |
 
 ## Layout ID
 

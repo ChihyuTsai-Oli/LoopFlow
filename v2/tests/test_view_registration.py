@@ -25,6 +25,7 @@ from loopflow.features.view.keys import (
     SCHEMA_ID_KEY,
     SCHEMA_VERSION_KEY,
     VIEW_ID_KEY,
+    VIEW_NAME_KEY,
     VIEW_SCHEMA_ID,
     VIEW_TRANSFORM_KEY,
 )
@@ -95,6 +96,7 @@ class RegisterTests(unittest.TestCase):
         self.assertFalse(session.layer_printable("LoopFlow"))
         self.assertFalse(session.layer_printable(ANCHOR_LAYER))
         self.assertEqual(session.object_name(frame_id), "A-A")
+        self.assertEqual(session.get_object_user_text(frame_id, VIEW_NAME_KEY), "A-A")
         self.assertEqual(session.get_object_user_text(frame_id, SCHEMA_ID_KEY), VIEW_SCHEMA_ID)
         self.assertEqual(session.get_object_user_text(frame_id, SCHEMA_VERSION_KEY), "1")
         self.assertEqual(session.get_object_user_text(frame_id, CLIPPING_PLANE_ID_KEY), "cp")
