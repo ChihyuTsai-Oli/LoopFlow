@@ -1,6 +1,6 @@
-# LoopFlow 2.0 command reference
+# LoopFlow 2.1 command reference
 
-> Each LoopFlow 2.0 Rhino command. Overall flow: [overview](./USER_GUIDE.md). Excel columns: [Dictionary guide](./Dictionary_GUIDE.md). On-drawing Tag fields: [Tag Block reference](./TAG_BLOCKS.md).
+> Each LoopFlow 2.1 Rhino command. Overall flow: [overview](./USER_GUIDE.md). Excel columns: [Dictionary guide](./Dictionary_GUIDE.md). On-drawing Tag fields: [Tag Block reference](./TAG_BLOCKS.md).
 >
 > Command names are the packaged names typed in the Rhino command line (no underscores).
 
@@ -10,7 +10,7 @@ Save the `.3dm` first. **The folder of that file is the project folder**: the of
 
 ## Quick index
 
-![LoopFlow 2.0 command reference](./images/guide/LoopFlow_v2_command_reference.svg)
+![LoopFlow 2.1 command reference](./images/guide/LoopFlow_v2_command_reference.svg)
 
 | Stage | Command | One line |
 |---|---|---|
@@ -20,12 +20,12 @@ Save the `.3dm` first. **The folder of that file is the project folder**: the of
 | Project / model | `LFNexus` | Project console: write Dictionary data into the model (6-step menu) |
 | Registry | `LFPublishExchange` | Publish model data as a 2D-readable Registry |
 | Section | Rhino Section (native) | Build drawings with Rhino’s built-in section tools |
-| View | `LFAnchorFrame` | Register a section as a fixed 2D↔3D map (anchor frame) |
+| View | `LFAnchorFrame` | Register a section as a fixed 2D↔3D map and store the Text Dot name |
 | Drawing | `LFExtractCP` | Copy section linework into an independently editable drawing |
 | Sheet | `LFDuplicateLayout` | Duplicate whole Layouts, usually before numbering |
 | Sheet | `LFTaggerLayoutID` | Number and name sheets by rule |
 | Catalog | `LFCatalog` | Build a drawing list (read-only Sheet data) |
-| Tag bind | `LFTaggerLaser` | Find a source object from a click plus a fixed projection |
+| Tag bind | `LFTaggerLaser` | Find a source from a click; if frames overlap, choose the frame name first |
 | Tag bind | `LFTaggerGrab` | Pick the source object or furniture block directly |
 | Tag bind | `LFTaggerIndex` | Bind an index tag to a registered Detail |
 | Infuse | `LFInfuserPart` | Infuse display fields on tags **on this page** |
@@ -183,7 +183,7 @@ Registers a section as a fixed 2D↔3D map for [09 Laser](#09-laser-projection).
 1. Window-select that section’s linework / blocks / hatches, plus **exactly one** Text Dot (the text must match a Clipping Plane name).
 2. A popup asks for frame offset (default 50).
 3. LoopFlow first looks for a Clipping Plane whose full name matches the Text Dot (case-insensitive). If none, it allows a longer unique name that contains that text. If candidates are not unique, it stops and does not guess.
-4. The new frame is drawn on `LoopFlow::Anchor_Frame`. If you selected a 1.x registered frame, that frame is upgraded in place; a second frame is not added.
+4. The new frame is drawn on `LoopFlow::Anchor_Frame`. Its name is the Text Dot text. If you selected a 1.x frame or one already registered, that frame is updated and the name is filled in; a second frame is not added.
 
 Register each section once. Later, if you **move the frame with the drawing** (no re-cut, rotate, or mirror), you do not rerun this command. Reflected ceiling plans should be mirrored left-right before you register.
 
@@ -257,10 +257,10 @@ Points remember which Sheet a cell belongs to and that cell’s text look. They 
 Click on the drawing; LoopFlow shoots along a fixed direction to find the model object on the section and writes the source bind.
 
 1. On **Layout**, pick a Height or Finish Laser tag.
-2. Click a location on the section inside the target Detail. **That point must fall inside an [06 Register View](#06-register-view-anchor-frame) frame**, or you are told to run 06 first.
-3. The 2D origin is the current section linework centre inside the frame. The ray uses the direction frozen at register time. Each object is counted once. If several objects are hit, a candidate list appears (layer names only, no object IDs) for you to pick.
+2. Click a location on the section inside the target Detail. **That point must fall inside an [06 Register View](#06-register-view-anchor-frame) frame**, or you are told to run 06 first. If the point is inside more than one frame, a popup lists the Text Dot names; pick one. A single frame does not add this popup. Cancelling the list writes nothing.
+3. Using the chosen frame, the 2D origin is the current section linework centre. The ray uses the direction frozen at register time. Each object is counted once. If several objects are hit, a candidate list appears (layer names only, no object IDs) for you to pick.
 
-**No write if**: Esc, click outside the Detail, the tag is locked, the wrong block type (Grab / Index / `TAG_DW` / title frame), 0 or 2+ registered frames at the click, the ray hits nothing (including hits only on structure objects), or the source has no usable ID.
+**No write if**: Esc, click outside the Detail, the tag is locked, the wrong block type (Grab / Index / `TAG_DW` / title frame), the click is inside no registered frame, you cancel the frame list, the ray hits nothing (including hits only on structure objects), or the source has no usable ID. Index still stops when two frames match; it does not offer this list.
 
 Everyday use does not draw a test ray. To check direction, the command line shows `DebugRay` while you pick the tag; set it to `Yes` to draw a magenta debug line (not plotted).
 
@@ -335,7 +335,7 @@ After 12 / 13, checks every bound tag and opens a scrollable dark panel, listed 
 - Click a row to highlight it, jump to that Layout, and zoom (leaving space around the title frame).
 - Locked tags still list and are labelled locked, but their text and colour are not changed.
 - `TAG_DW` and `TAG_ELEV_0` are out of scope.
-- **Check and colour only. Nothing is auto-repaired.** 2.0 has no auto-repair; you decide what to change.
+- **Check and colour only. Nothing is auto-repaired.** 2.1 has no auto-repair; you decide what to change.
 
 A normal round: **Infuser → TAG-O to see live or disconnected → rebind or just re-infuse.**
 

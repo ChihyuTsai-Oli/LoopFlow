@@ -1,8 +1,8 @@
-# LoopFlow 2.0 overview
+# LoopFlow 2.1 overview
 
 > A one-minute picture of how LoopFlow works. Command details: [command reference](./COMMANDS.md). Excel Dictionary: [Dictionary guide](./Dictionary_GUIDE.md). On-drawing Tag fields: [Tag Block reference](./TAG_BLOCKS.md).
 
-![LoopFlow 2.0 overview](./images/guide/LoopFlow_v2_overview.svg)
+![LoopFlow 2.1 overview](./images/guide/LoopFlow_v2_overview.svg)
 
 ## Core logic: three stages
 
@@ -52,7 +52,7 @@ This is a design premise, not an extra rule:
 - **Every node is a safe stop.** After Dictionary sync, after writing to the model, after registering a section — save and stop. You do not have to finish the chain in one sitting. A later person or computer can continue without losing completed work.
 - **Nothing runs itself.** Each step is user-started. Actions with a wide effect (publish, write) show what will change before they change it.
 - **A mistake stays local.** If a source is edited or deleted, LoopFlow marks that node. It does not auto-repair, and it does not break unrelated finished work. Go back to that node and redo it.
-- **1.x and 2.0 are different architectures.** Do not mix their files or toolbar buttons.
+- **1.x and 2.1 are different architectures.** Do not mix their files or toolbar buttons.
 
 ## Five names to learn first
 
