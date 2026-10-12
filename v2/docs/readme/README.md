@@ -86,6 +86,7 @@ These are separate projects and are not included with LoopFlow itself:
 - [LoopFlow | Rhino to Blender Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Blender-Sync)
 - [LoopFlow | Rhino to Octane Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-Octane-Sync)
 - [LoopFlow | Rhino to MEP Sync](https://github.com/ChihyuTsai-Oli/LoopFlow_Rhino-to-MEP-Sync)
+- [LoopFlow | R2X Toolbar](https://github.com/ChihyuTsai-Oli/LoopFlow_R2X)
 
 ## License and credits
 
