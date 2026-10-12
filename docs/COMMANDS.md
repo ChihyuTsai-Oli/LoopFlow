@@ -1,6 +1,6 @@
-# LoopFlow 2.1 command reference
+# LoopFlow 2 command reference
 
-> Each LoopFlow 2.1 Rhino command. Overall flow: [overview](./USER_GUIDE.md). Excel columns: [Dictionary guide](./Dictionary_GUIDE.md). On-drawing Tag fields: [Tag Block reference](./TAG_BLOCKS.md).
+> Each LoopFlow 2 Rhino command. Overall flow: [overview](./USER_GUIDE.md). Excel columns: [Dictionary guide](./Dictionary_GUIDE.md). On-drawing Tag fields: [Tag Block reference](./TAG_BLOCKS.md).
 >
 > Command names are the packaged names typed in the Rhino command line (no underscores).
 
@@ -10,7 +10,7 @@ Save the `.3dm` first. **The folder of that file is the project folder**: the of
 
 ## Quick index
 
-![LoopFlow 2.1 command reference](./images/guide/LoopFlow_v2_command_reference.svg)
+![LoopFlow 2 command reference](./images/guide/LoopFlow_v2_command_reference.svg)
 
 | Stage | Command | One line |
 |---|---|---|
@@ -335,7 +335,7 @@ After 12 / 13, checks every bound tag and opens a scrollable dark panel, listed 
 - Click a row to highlight it, jump to that Layout, and zoom (leaving space around the title frame).
 - Locked tags still list and are labelled locked, but their text and colour are not changed.
 - `TAG_DW` and `TAG_ELEV_0` are out of scope.
-- **Check and colour only. Nothing is auto-repaired.** 2.1 has no auto-repair; you decide what to change.
+- **Check and colour only. Nothing is auto-repaired.** LoopFlow 2 has no auto-repair; you decide what to change.
 
 A normal round: **Infuser → TAG-O to see live or disconnected → rebind or just re-infuse.**
 

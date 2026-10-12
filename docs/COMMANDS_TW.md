@@ -1,6 +1,6 @@
-# LoopFlow 2.1 指令逐項說明
+# LoopFlow 2 指令逐項說明
 
-> 本文件逐一說明 LoopFlow 2.1 的 Rhino 指令。整體流程與各步驟的關係見 [使用說明總覽](./USER_GUIDE_TW.md)；Excel 字典欄位見 [字典使用說明](./Dictionary_GUIDE_TW.md)；Tag 圖塊的畫面欄位見 [Tag Block 說明](./TAG_BLOCKS_TW.md)。
+> 本文件逐一說明 LoopFlow 2 的 Rhino 指令。整體流程與各步驟的關係見 [使用說明總覽](./USER_GUIDE_TW.md)；Excel 字典欄位見 [字典使用說明](./Dictionary_GUIDE_TW.md)；Tag 圖塊的畫面欄位見 [Tag Block 說明](./TAG_BLOCKS_TW.md)。
 >
 > 指令名稱使用封裝後在 Rhino 命令列輸入的正式名稱（無底線）。
 
@@ -10,7 +10,7 @@
 
 ## 快速索引
 
-![LoopFlow 2.1 指令對照](./images/guide/LoopFlow_v2_command_reference.svg)
+![LoopFlow 2 指令對照](./images/guide/LoopFlow_v2_command_reference.svg)
 
 | 階段 | 指令 | 一句話 |
 |---|---|---|
@@ -335,7 +335,7 @@ LoopFlow 的資料中樞。第一次執行會先做「開案檢查」，通過�
 - 點選清單裡的一列，畫面會反白該列、切到對應的 Layout 頁並拉近（留出圖框周圍空間）。
 - 鎖定的 Tag 仍然會列出並標註「鎖定」，但文字與顏色都不會被改。
 - `TAG_DW` 與 `TAG_ELEV_0` 不列入檢查範圍。
-- **只檢查與上色，不會自動修好任何東西**——LoopFlow 2.1 沒有自動修復功能，怎麼改由使用者自己判斷。
+- **只檢查與上色，不會自動修好任何東西**——LoopFlow 2 沒有自動修復功能，怎麼改由使用者自己判斷。
 
 一輪正常的操作順序：**Infuser 注入 → TAG-O 確認活著或斷連 → 依照結果決定下一輪要重新綁定還是只要重新注入**。
 
