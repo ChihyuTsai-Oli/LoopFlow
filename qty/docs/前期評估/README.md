@@ -54,7 +54,7 @@ python qty/tools/build_html.py --src 決策紀錄_2.md         # 只合併指定
 python qty/tools/build_html.py --out 我的總覽.html
 ```
 
-版面與行為沿用 `D:\Dropbox\戰備物資\tools\build_html.py`；純 stdlib，不需安裝任何套件。
+版面與行為沿用 Dropbox 的 `MD_WIKI\_Setting\build_supplies_html.py`（公司／家中 Dropbox 根目錄不同，見工作區 `工作檔路徑.md`）；純 stdlib，不需安裝任何套件。
 
 ### 覆核輪次
 
