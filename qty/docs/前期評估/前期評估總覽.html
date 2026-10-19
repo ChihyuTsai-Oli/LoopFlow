@@ -273,7 +273,7 @@ tr.ckrow.done td.ckcell{text-decoration:none;opacity:1}
 python qty/tools/build_html.py --src 測試模型.md --out 測試模型.html
 python qty/tools/build_html.py --src 決策紀錄_2.md         # 只合併指定檔案
 python qty/tools/build_html.py --out 我的總覽.html</code></pre>
-<p>版面與行為沿用 <code>D:\Dropbox\戰備物資\tools\build_html.py</code>；純 stdlib，不需安裝任何套件。</p>
+<p>產生器是本 repo 的 <code>qty/tools/build_html.py</code>，只服務前期評估文件，不讀取 MD_WIKI。純 stdlib，不需安裝任何套件。</p>
 <h3 id="LoopFlow-QTY-前期評估--覆核輪次">覆核輪次</h3>
 <div class="tw"><table><thead><tr><th>輪次</th><th>順序</th><th>狀態</th></tr></thead><tbody><tr><td>第一輪</td><td>Claude → Codex → Cursor</td><td>✅ 三家已填畢，見 <code>決策紀錄_1.md</code></td></tr><tr><td><strong>第二輪</strong></td><td><strong>Claude → Codex → Cursor</strong></td><td>✅ <strong>三家已填畢（QR-01～QR-15）並依二票多數決收斂</strong>，見 <code>決策紀錄_2.md</code>；QR-15 只剩 token 具體算法未形成多數</td></tr><tr><td>第三輪 A</td><td>Claude → Codex → Cursor</td><td>⏳ 專用 3dm 完成後，三家各自透過 MCP 驗收模型完整性</td></tr><tr><td>第三輪 B</td><td>Claude → Codex → Cursor</td><td>⏳ 模型完備後，三家各自透過 MCP 重新評估決策；完成多數決收斂後才進實作</td></tr></tbody></table></div>
 <p>第二輪採 <a href="../../../v2/docs/前期規劃/資料生態決策表.md"><code>v2/docs/前期規劃/資料生態決策表.md</code></a> 的三種建議強度（強烈／一般／輕鬆）與裁決規則。<strong>各家只填自己的欄，不代填、不推測他家立場。</strong></p>
