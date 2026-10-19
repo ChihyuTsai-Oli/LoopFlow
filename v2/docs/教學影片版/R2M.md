@@ -6,14 +6,15 @@
 
 建議先以可穩定錄製的一端拍完整循環；另一端另拍短片，避免在一支片中交錯兩套 BIM 軟體的收檔方式。鏡頭上固定標示目前軟體與檔名。
 
-| 章節 | 連續操作與必須看到的結果 | 對應圖文 |
-|---|---|---|
-| 00 成果與三份檔 | Rhino 原模型、`R2M.ifc`、回程外參 `.3dm`；外參與原模型重疊 | 01 |
-| 01 樓層 | 畫比建築大一圈的高程框，跑 `RMStorey`；顯示框 Z 與 FL | 02 |
-| 02 出建築殼 | `RMModels` 選圖層、IFC 類型及類別 → Publish → `R2M.ifc` 與件數摘要 | 03 |
-| 03 BIM 收檔與畫牆 | Archicad 開 IFC 當新檔，或 Revit Link IFC、建 Level／Floor Plan；新增一面可定位的牆 | 04 或 05 |
-| 04 BIM 回程 | 選牆匯出 IFC4；空白 Rhino 跑 `RMInbound`、選對應 `config.json`，展示高度校正後重疊 | 06 |
-| 05 外參與再發布 | 手動另存回程 `.3dm`、Worksession Attach；對照牆修改 Rhino 建築模型，再跑 Models | 07 |
+| 章節 | 連續操作與必須看到的結果 | 對應圖文 | 初估 |
+|---|---|---|---|
+| 00 成果與三份檔 | Rhino 原模型、`R2M.ifc`、回程外參 `.3dm`；外參與原模型重疊 | 01 | 1 分 |
+| 01 樓層 | 畫比建築大一圈的高程框，跑 `RMStorey`；顯示框 Z 與 FL | 02 | 3 分 |
+| 02 出建築殼 | `RMModels` 選圖層、IFC 類型及類別 → Publish → `R2M.ifc` 與件數摘要 | 03 | 4 分 |
+| 03 BIM 收檔與畫牆 | Archicad 開 IFC 當新檔，或 Revit Link IFC、建 Level／Floor Plan；新增一面可定位的牆 | 04 或 05 | 6 分 |
+| 04 BIM 回程 | 選牆匯出 IFC4；空白 Rhino 跑 `RMInbound`、選對應 `config.json`，展示高度校正後重疊 | 06 | 4 分 |
+| 05 外參與再發布 | 手動另存回程 `.3dm`、Worksession Attach；對照牆修改 Rhino 建築模型，再跑 Models | 07 | 3 分 |
+| | **合計** | | **約 21 分** |
 
 ## 配片與驗收鏡頭
 

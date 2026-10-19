@@ -4,16 +4,17 @@
 
 ## 主片章節
 
-| 章節 | 連續操作與必須看到的結果 | 對應圖文 |
-|---|---|---|
-| 00 成果與手動交接 | Rhino 模型與 Octane 最終場景對照；指出模型、相機、點位是三條可分別更新的通道 | 01 |
-| 01 開案與 Script directory | 存 `.3dm`、`ROOpen`、Lua 所在資料夾、Octane Script 列表 | 01 |
-| 02 主模型初次載入 | `ROModels` 選圖層／類別 → `R2O.usdz` → Octane 載入並接材質接口 | 02 |
-| 03 模型變更 | Rhino 改一塊幾何重跑 `ROModels`；Octane 關掉再開，同一場景看到新幾何且接線仍在 | 03 |
-| 04 獨立組件 | Rhino 預選 Block 跑 `ROObjects`，Octane 自行載入時戳 USDZ | 04 |
-| 05 相機 | Rhino 透視視角 Push，Octane 已 Expand 的 Thin Lens 跑 `R2O_Camera.lua`；換視角再套用一次 | 05 |
-| 06 點位 | Rhino `R2O::` 子層 Point／Block → `ROPoint` → `R2O_Point.lua` → 場景根 Scatter 接 Proxy | 06 |
-| 07 Authoring 與第二輪 | 只選一個材質示範 PBR 或 UV 輔助；再改一個點位重新發布並套用 | 07 |
+| 章節 | 連續操作與必須看到的結果 | 對應圖文 | 初估 |
+|---|---|---|---|
+| 00 成果與手動交接 | Rhino 模型與 Octane 最終場景對照；指出模型、相機、點位是三條可分別更新的通道 | 01 | 1 分 |
+| 01 開案與 Script directory | 存 `.3dm`、`ROOpen`、Lua 所在資料夾、Octane Script 列表 | 01 | 3 分 |
+| 02 主模型初次載入 | `ROModels` 選圖層／類別 → `R2O.usdz` → Octane 載入並接材質接口 | 02 | 4 分 |
+| 03 模型變更 | Rhino 改一塊幾何重跑 `ROModels`；Octane 關掉再開，同一場景看到新幾何且接線仍在 | 03 | 3 分 |
+| 04 獨立組件 | Rhino 預選 Block 跑 `ROObjects`，Octane 自行載入時戳 USDZ | 04 | 2 分 |
+| 05 相機 | Rhino 透視視角 Push，Octane 已 Expand 的 Thin Lens 跑 `R2O_Camera.lua`；換視角再套用一次 | 05 | 3 分 |
+| 06 點位 | Rhino `R2O::` 子層 Point／Block → `ROPoint` → `R2O_Point.lua` → 場景根 Scatter 接 Proxy | 06 | 4 分 |
+| 07 Authoring 與第二輪 | 只選一個材質示範 PBR 或 UV 輔助；再改一個點位重新發布並套用 | 07 | 3 分 |
+| | **合計** | | **約 23 分** |
 
 ## 畫面與口白要求
 
