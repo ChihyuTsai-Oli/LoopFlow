@@ -10,7 +10,7 @@ This page is the **documentation entry** opened by the Rhino command `LFDocument
 | Tag Blocks | [Open](./TAG_BLOCKS.md) |
 | Tutorials | [YouTube](https://www.youtube.com/@Chihyu-Oli/playlists) |
 
-Videos are not all updated for LoopFlow 2 yet. Install 2.1.0 from Package Manager. Do not mix with 1.0.
+Videos are not all updated for LoopFlow 2 yet. Install 2.1.1 from Package Manager. Do not mix with 1.0.
 
 ---
 
@@ -26,4 +26,4 @@ Videos are not all updated for LoopFlow 2 yet. Install 2.1.0 from Package Manage
 | Tag Blocks | [開啟](./TAG_BLOCKS_TW.md) |
 | 教學影片 | [YouTube](https://www.youtube.com/@Chihyu-Oli/playlists) |
 
-教學影片尚未全部更新為 LoopFlow 2。請用 Package Manager 安裝 2.1.0，不要與 1.0 混用。
+教學影片尚未全部更新為 LoopFlow 2。請用 Package Manager 安裝 2.1.1，不要與 1.0 混用。

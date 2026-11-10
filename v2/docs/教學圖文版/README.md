@@ -14,7 +14,7 @@
 
 | 檔案 | 產品 | 一句話定位 | 公開版（2026-10-19） |
 |---|---|---|---|
-| [LoopFlow.md](./LoopFlow.md) | LoopFlow 2 | Rhino 3D 模型資料 → 可更新的 Layout 圖紙 | `v2.1.0` |
+| [LoopFlow.md](./LoopFlow.md) | LoopFlow 2 | Rhino 3D 模型資料 → 可更新的 Layout 圖紙 | `v2.1.1` |
 | [R2B.md](./R2B.md) | Rhino to Blender Sync | 模型、相機、燈點送到 Blender | `v3.0.9` |
 | [R2O.md](./R2O.md) | Rhino to Octane Sync | 模型、相機、燈具／家具點位送到 Octane | `v2.0.6` |
 | [R2M.md](./R2M.md) | Rhino to MEP Sync | 建築殼 IFC 往返 Revit／Archicad | `v1.0.4` |

@@ -4,6 +4,15 @@ All notable changes to LoopFlow will be documented here.
 
 ---
 
+## [2.1.1] - 2026-11-10
+
+Install this version. Same workflow as 2.1.0, plus:
+
+- Toolbar buttons now have dedicated light and dark SVG artwork for Rhino 8 themes
+- Do not overwrite `v2.1.0`. Quit Rhino completely after install
+
+---
+
 ## [2.1.0] - 2026-10-12
 
 Install this version. Same workflow as 2.0.7, plus:
