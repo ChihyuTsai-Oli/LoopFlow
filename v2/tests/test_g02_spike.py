@@ -162,6 +162,41 @@ class G02SpikePackagingTests(unittest.TestCase):
         )
         self.assertIn("! _LFOpenDictExport", scripts)
 
+    def test_product_command_icons_have_light_and_dark(self):
+        import re
+
+        text = RUI.read_text(encoding="utf-8")
+        root = ET.parse(RUI).getroot()
+        toolbar_bitmap = root.find("tool_bars/tool_bar").get("bitmap_id")
+        product_ids = set()
+        clipping_ids = set()
+        for macro in root.findall(".//macro_item"):
+            script = (macro.findtext("script") or "").strip()
+            bitmap = macro.get("bitmap_id")
+            if not bitmap or bitmap == toolbar_bitmap:
+                continue
+            if script in SECTION_SCRIPTS:
+                clipping_ids.add(bitmap)
+            else:
+                product_ids.add(bitmap)
+        self.assertEqual(len(product_ids), 19)
+        self.assertEqual(len(clipping_ids), 5)
+        icons = {
+            match.group(1): match.group(2)
+            for match in re.finditer(
+                r'<icon guid="([^"]+)"[^>]*>(.*?)</icon>', text, re.DOTALL
+            )
+        }
+        for guid in product_ids:
+            body = icons[guid]
+            self.assertIn("<light>", body, guid)
+            self.assertIn("<dark>", body, guid)
+            self.assertNotIn("fill-dark=", body, guid)
+        for guid in clipping_ids:
+            body = icons[guid]
+            self.assertIn("<light>", body, guid)
+            self.assertIn("<dark>", body, guid)
+
     def test_product_rui_has_toolbar_group(self):
         root = ET.parse(RUI).getroot()
         self.assertEqual(root.get("guid"), "29b6cc9a-ff44-4c1a-89f2-99536269ecb3")
