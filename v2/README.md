@@ -1,6 +1,6 @@
 # LoopFlow 2.0（出圖）
 
-此資料夾是**已發布**的 LoopFlow 2.0 出圖產品：原始碼、測試與實作文件。對外以 Package Manager `.yak` 從 `main` 安裝。`v1/` 與 `v1.0.0` 是 1.x 唯讀參考。數量計算是同 repo 的另一個產品，在 `qty/`，不在這裡。
+此資料夾是**已發布**的 LoopFlow 2.0 出圖產品：原始碼、測試與實作文件。對外以 Package Manager `.yak` 從 `main` 安裝。`v1/` 與 `v1.0.0` 是 1.x 唯讀參考。數量計算在公開 repo `LoopFlow_QTY`，不在這裡。
 
 ```text
 v2/

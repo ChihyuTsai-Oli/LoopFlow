@@ -6,7 +6,7 @@
 
 ---
 
-## 一、一個 repo，四個產品
+## 一、出圖 repo
 
 ```
 LoopFlow repo
@@ -17,16 +17,11 @@ LoopFlow repo
 +-- v2/        出圖 2.0（現行產品，以 .yak 發布到 Package Manager）
 |     本文件說明的主體：從字典、模型資料到圖面 Tag 的整條工作鏈
 |
-+-- qty/       數量計算（不同產品，前期評估中，尚無程式）
-|     單向讀 2.0 發布的 Registry 與物件資料，自己產出 Excel 估價單
-|     不寫回物件、不進 2.0 安裝包
-|
-+-- forge      私人 repo（不在本 repo；不上架）
-      櫃體、三支 2D 產生工具，以及陣列複製。不是 2.0 的必要相依
-
 +-- docs/      公開使用說明（Rhino 指令 LFDocument 會開這裡）
 +-- releases/  已發布的安裝包
 ```
+
+數量計算在公開 repo LoopFlow_QTY。建模小工具在私人 repo Forge。都不在這個 repo。
 
 ---
 
