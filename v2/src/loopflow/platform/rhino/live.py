@@ -704,17 +704,51 @@ class LiveSession:
         except Exception:
             pass
 
-    def get_object_user_text(self, object_id: str, key: str) -> Optional[str]:
-        value = self._rs.GetUserText(object_id, key)
+    def _attribute_user_string(self, object_id: str, key: str):
+        obj = self._rhino_object(object_id)
+        if obj is None:
+            return None
+        try:
+            value = obj.Attributes.GetUserString(key)
+        except Exception:
+            return None
         if value in (None, ""):
             return None
         return str(value)
 
+    def get_object_user_text(self, object_id: str, key: str) -> Optional[str]:
+        value = self._rs.GetUserText(object_id, key)
+        if value not in (None, ""):
+            return str(value)
+        # 圖塊定義裡的線，rs.GetUserText 常常讀不到。
+        return self._attribute_user_string(object_id, key)
+
     def object_user_text_keys(self, object_id: str):
         keys = self._rs.GetUserText(object_id)
-        if not keys:
+        if keys:
+            return tuple(str(item) for item in keys)
+        obj = self._rhino_object(object_id)
+        if obj is None:
             return ()
-        return tuple(str(item) for item in keys)
+        try:
+            bag = obj.Attributes.GetUserStrings()
+        except Exception:
+            return ()
+        if bag is None:
+            return ()
+        found = []
+        try:
+            count = int(bag.Count)
+        except Exception:
+            return ()
+        for index in range(count):
+            try:
+                name = bag.GetKey(index)
+            except Exception:
+                name = None
+            if name:
+                found.append(str(name))
+        return tuple(found)
 
     def set_object_user_text(self, object_id: str, key: str, value: str) -> None:
         if value in (None, ""):
@@ -1025,9 +1059,34 @@ class LiveSession:
         except Exception:
             return None
         try:
-            return self._sc.doc.Objects.FindId(guid)
+            found = self._sc.doc.Objects.FindId(guid)
+        except Exception:
+            found = None
+        if found is not None:
+            return found
+        return self._definition_object(str(object_id))
+
+    def _definition_object(self, object_id: str):
+        """FindId 找不到時，再到圖塊定義裡找同一條線。"""
+        try:
+            definitions = self._sc.doc.InstanceDefinitions
         except Exception:
             return None
+        target = str(object_id).lower()
+        try:
+            count = int(definitions.Count)
+            items = (definitions[index] for index in range(count))
+        except Exception:
+            items = definitions
+        for definition in items or ():
+            try:
+                objects = definition.GetObjects()
+            except Exception:
+                continue
+            for obj in objects or ():
+                if str(getattr(obj, "Id", "")).lower() == target:
+                    return obj
+        return None
 
     def _iter_rhino_objects(self, *, include_linked: bool = True):
         rhino = self._rhino

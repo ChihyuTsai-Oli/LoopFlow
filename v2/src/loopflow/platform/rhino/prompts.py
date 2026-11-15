@@ -1403,6 +1403,15 @@ def pick_block_instance(
     return str(object_id)
 
 
+def picked_member_id(part_id, sub_id, top_id, is_instance, component_index, member_ids):
+    """圖塊優先用被點到的定義內物件。沒有才退回整顆或一般物件。"""
+    if part_id:
+        return str(part_id)
+    if sub_id:
+        return str(sub_id)
+    return selected_source_id(top_id, is_instance, component_index, member_ids)
+
+
 def selected_source_id(top_id, is_instance, component_index, member_ids):
     """一般物件用自己的 Id。圖塊只取定義裡被點到的那一層，不往下猜。"""
     if not top_id:
@@ -1441,15 +1450,29 @@ def _pick_grab_source(message: str, filter_value: int, Rhino):
     rhobj = objref.Object()
     if rhobj is None:
         return None
-    index = -1
+    part_id = None
     try:
-        comp = objref.GeometryComponentIndex
-        if comp is not None:
-            index = int(comp.Index)
+        part = objref.InstanceDefinitionPart()
+        if part is not None and getattr(part, "Id", None):
+            part_id = str(part.Id)
     except Exception:
-        index = -1
-    members = ()
+        part_id = None
+    sub_id = None
+    index = -1
     is_instance = isinstance(rhobj, Rhino.DocObjects.InstanceObject)
+    if is_instance:
+        try:
+            comp = objref.GeometryComponentIndex
+            if comp is not None:
+                index = int(comp.Index)
+            unset = bool(comp.IsUnset()) if comp is not None and hasattr(comp, "IsUnset") else False
+            if comp is not None and not unset:
+                sub = rhobj.SubObjectFromComponentIndex(comp)
+                if sub is not None and getattr(sub, "Id", None):
+                    sub_id = str(sub.Id)
+        except Exception:
+            sub_id = None
+    members = ()
     if is_instance:
         try:
             definition = rhobj.InstanceDefinition
@@ -1457,7 +1480,7 @@ def _pick_grab_source(message: str, filter_value: int, Rhino):
             members = tuple(str(item.Id) for item in objects)
         except Exception:
             members = ()
-    return selected_source_id(str(rhobj.Id), is_instance, index, members)
+    return picked_member_id(part_id, sub_id, str(rhobj.Id), is_instance, index, members)
 
 
 def pick_source_through_detail(
