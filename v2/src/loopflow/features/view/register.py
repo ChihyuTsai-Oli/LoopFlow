@@ -93,6 +93,51 @@ def match_clipping_planes(session: RhinoSession, hint: str):
     )
 
 
+def section_block_name(session: RhinoSession, object_id: str) -> Optional[str]:
+    """圖塊先用物件名稱，沒有再用定義名稱。不是圖塊則沒有名稱。"""
+    if not session.is_block_instance(object_id):
+        return None
+    return _text(session.object_name(object_id)) or _text(session.block_definition_name(object_id))
+
+
+def matching_user_text_keys(session: RhinoSession, object_id: str) -> tuple:
+    """UserText 鍵名能唯一對上 Clipping Plane 的那些鍵。不看鍵的值。"""
+    found = []
+    for key in session.object_user_text_keys(object_id):
+        name = _text(key)
+        if name and len(match_clipping_planes(session, name)) == 1:
+            found.append(name)
+    return tuple(found)
+
+
+def resolve_section_hint(session: RhinoSession, dots: Sequence[str], geom: Sequence[str]):
+    """三種對名只採用一種。回傳 (hint, reason)；reason 為 None 代表可以再對剖面。"""
+    if len(dots) > 1:
+        return None, "ambiguous_text_dot"
+    if len(dots) == 1:
+        displayed = session.text_dot_text(dots[0])
+        if displayed and match_clipping_planes(session, displayed):
+            return displayed, None
+        keys = matching_user_text_keys(session, dots[0])
+        if len(keys) == 1:
+            return keys[0], None
+        if len(keys) > 1:
+            return None, "ambiguous_text_dot"
+        if not displayed:
+            return None, "missing_text_dot"
+        return displayed, None
+    names = []
+    for object_id in geom:
+        name = section_block_name(session, object_id)
+        if name:
+            names.append(name)
+    if len(names) == 1:
+        return names[0], None
+    if len(names) > 1:
+        return None, "ambiguous_text_dot"
+    return None, "missing_text_dot"
+
+
 def split_selection(session: RhinoSession, selected_ids: Sequence[str]):
     dots = []
     hosts = []
@@ -148,8 +193,10 @@ def register_view(
 ) -> results.Result:
     """依選取寫入 View。測試可直接呼叫，不經選取。"""
     dots, hosts, geom = split_selection(session, selected_ids)
-    if len(dots) != 1:
-        reason = "missing_text_dot" if not dots else "ambiguous_text_dot"
+    hint, reason = resolve_section_hint(session, dots, geom)
+    # 空白 Text Dot 且沒有對得上的鍵，落到下面的 005。其餘缺名稱或多名稱用 004。
+    blank_dot = reason == "missing_text_dot" and len(dots) == 1
+    if reason in ("missing_text_dot", "ambiguous_text_dot") and not blank_dot:
         return results.blocked(
             "register_view",
             t("anchor_frame.004"),
@@ -157,7 +204,6 @@ def register_view(
             command_id=COMMAND_ID,
             details={"text_dot_count": len(dots)},
         )
-    hint = session.text_dot_text(dots[0])
     if hint is None:
         return results.blocked(
             "register_view",

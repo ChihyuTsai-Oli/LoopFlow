@@ -630,7 +630,7 @@ English 欄是定稿，可直接改這份檔。`%s` 是程式填入的數字或�
 | `anchor_frame.001` | 天花 | Ceiling |
 | `anchor_frame.002` | 已登記 View。 | View registered. |
 | `anchor_frame.003` | 輸入框線外擴距離 | Enter frame offset distance |
-| `anchor_frame.004` | 請恰好選一個 Text Dot 作為剖面名稱提示。已停止，不寫入。 | Select exactly one Text Dot as the section-name label. Operation stopped; no changes were made. |
+| `anchor_frame.004` | 請恰好選一個 Text Dot，或一個與剖面同名的圖塊。已停止，不寫入。 | Select exactly one Text Dot, or one block with the section name. Operation stopped; no changes were made. |
 | `anchor_frame.005` | Text Dot 沒有文字，已停止，不寫入。 | The Text Dot is blank. Operation stopped; no changes were made. |
 | `anchor_frame.006` | 選到多個既有 View 框，已停止，不猜測要升級哪一個。 | More than one existing View frame was selected. Operation stopped; no frame was chosen automatically. |
 | `anchor_frame.007` | 沒有可用的剖面幾何，已停止，不寫入。 | No usable section geometry was found. Operation stopped; no changes were made. |
@@ -767,7 +767,7 @@ English 欄是定稿，可直接改這份檔。`%s` 是程式填入的數字或�
 | `prompts.005` | 點選要查看的物件（Enter／Esc 結束） | Select objects to inspect (Enter or Esc to finish) |
 | `prompts.006` | 選取圖塊（Esc 取消） | Select a Block (Esc to cancel) |
 | `prompts.007` | 在目標 Detail 內點一下（Esc 取消） | Click inside the target Detail (Esc to cancel) |
-| `prompts.008` | 框選剖面物件與對應的 Text Dot（Esc 取消） | Window-select the section objects and matching Text Dot (Esc to cancel) |
+| `prompts.008` | 框選剖面圖塊，或框選剖面物件與對應的 Text Dot（Esc 取消） | Window-select the section block, or the section objects and matching Text Dot (Esc to cancel) |
 | `prompts.009` | 選取目錄定位點（獨立 Point，Esc 取消） | Select a drawing-index anchor (standalone Point; Esc to cancel) |
 | `prompts.010` | 選取封閉曲線，按 Enter 完成 | Select closed curves, then press Enter |
 | `prompts.011` | 可按住 Ctrl 或 Shift 一次選多頁。選取列會反白。 | Hold Ctrl or Shift to select multiple pages. Selected rows highlight. |

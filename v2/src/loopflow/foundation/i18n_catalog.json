@@ -2064,8 +2064,8 @@
     "en": "Enter frame offset distance"
   },
   "anchor_frame.004": {
-    "zh-TW": "請恰好選一個 Text Dot 作為剖面名稱提示。已停止，不寫入。",
-    "en": "Select exactly one Text Dot as the section-name label. Operation stopped; no changes were made."
+    "zh-TW": "請恰好選一個 Text Dot，或一個與剖面同名的圖塊。已停止，不寫入。",
+    "en": "Select exactly one Text Dot, or one block with the section name. Operation stopped; no changes were made."
   },
   "anchor_frame.005": {
     "zh-TW": "Text Dot 沒有文字，已停止，不寫入。",
@@ -2472,8 +2472,8 @@
     "en": "Click inside the target Detail (Esc to cancel)"
   },
   "prompts.008": {
-    "zh-TW": "框選剖面物件與對應的 Text Dot（Esc 取消）",
-    "en": "Window-select the section objects and matching Text Dot (Esc to cancel)"
+    "zh-TW": "框選剖面圖塊，或框選剖面物件與對應的 Text Dot（Esc 取消）",
+    "en": "Window-select the section block, or the section objects and matching Text Dot (Esc to cancel)"
   },
   "prompts.009": {
     "zh-TW": "選取目錄定位點（獨立 Point，Esc 取消）",

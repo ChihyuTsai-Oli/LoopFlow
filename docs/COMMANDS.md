@@ -180,10 +180,10 @@ Registers a section as a fixed 2D↔3D map for [09 Laser](#09-laser-projection).
 
 **Where**: **2D model space** (not Layout).
 
-1. Window-select that section’s linework / blocks / hatches, plus **exactly one** Text Dot (the text must match a Clipping Plane name).
+1. Window-select the whole section block, or that section’s linework / hatches plus **exactly one** Text Dot. Either way works. Rhino 8 and Rhino 9 share this command.
 2. A popup asks for frame offset (default 50).
-3. LoopFlow first looks for a Clipping Plane whose full name matches the Text Dot (case-insensitive). If none, it allows a longer unique name that contains that text. If candidates are not unique, it stops and does not guess.
-4. The new frame is drawn on `LoopFlow::Anchor_Frame`. Its name is the Text Dot text. If you selected a 1.x frame or one already registered, that frame is updated and the name is filled in; a second frame is not added.
+3. Only one name is used, and the first match wins: the Text Dot’s displayed text; if that does not match, a UserText key on that dot (not the object name, and not the key’s value); if there is no Text Dot, the block name (object name, otherwise the block definition name). LoopFlow first looks for a Clipping Plane whose full name matches (case-insensitive). If none, it allows a longer unique name that contains that text. If candidates are not unique, it stops and does not guess.
+4. The new frame is drawn on `LoopFlow::Anchor_Frame`. Its name is the matched text. If you selected a 1.x frame or one already registered, that frame is updated and the name is filled in; a second frame is not added. The block is not exploded.
 
 Register each section once. Later, if you **move the frame with the drawing** (no re-cut, rotate, or mirror), you do not rerun this command. Reflected ceiling plans should be mirrored left-right before you register.
 

@@ -195,6 +195,86 @@ class RegisterTests(unittest.TestCase):
             ("cp2",),
         )
 
+    def test_named_block_registers_without_text_dot(self):
+        session = _session()
+        session.add_object("block", name="A-A Section")
+        session.set_block("block", (0, 0, 0), name="Other Definition")
+        session.set_bbox("block", (0, 0, 0), (20, 10, 0))
+        result = register_view(session, ("block",), 50)
+        self.assertTrue(result.ok, result.message)
+        frame_id = result.details["frame_id"]
+        self.assertEqual(session.object_name(frame_id), "A-A Section")
+        self.assertEqual(session.get_object_user_text(frame_id, VIEW_NAME_KEY), "A-A Section")
+        self.assertEqual(session.get_object_user_text(frame_id, CLIPPING_PLANE_ID_KEY), "cp")
+
+    def test_block_definition_name_when_object_unnamed(self):
+        session = _session()
+        session.add_object("block")
+        session.set_block("block", (0, 0, 0), name="A-A Section")
+        session.set_bbox("block", (0, 0, 0), (20, 10, 0))
+        result = register_view(session, ("block",), 50)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.object_name(result.details["frame_id"]), "A-A Section")
+
+    def test_two_named_blocks_zero_write(self):
+        session = _session()
+        session.add_object("block", name="A-A Section")
+        session.set_block("block", (0, 0, 0), name="A-A Section")
+        session.set_bbox("block", (0, 0, 0), (20, 10, 0))
+        session.add_object("block2", name="A-A Section")
+        session.set_block("block2", (30, 0, 0), name="A-A Section")
+        session.set_bbox("block2", (30, 0, 0), (50, 10, 0))
+        before = _snapshot(session)
+        result = register_view(session, ("block", "block2"), 50)
+        self.assertEqual(result.blocking, ("ambiguous_text_dot",))
+        self.assertEqual(_snapshot(session)["ids"], before["ids"])
+
+    def test_exploded_dot_uses_usertext_key_not_object_name(self):
+        session = _session()
+        session.add_text_dot("dot", "NOTE")
+        session.set_object_user_text("dot", "A-A Section", "1")
+        result = register_view(session, ("curve", "dot"), 50)
+        self.assertTrue(result.ok, result.message)
+        frame_id = result.details["frame_id"]
+        self.assertEqual(session.object_name(frame_id), "A-A Section")
+        self.assertEqual(session.get_object_user_text(frame_id, CLIPPING_PLANE_ID_KEY), "cp")
+        self.assertIsNone(session.object_name("dot"))
+
+    def test_two_usertext_keys_zero_write(self):
+        session = _session()
+        session.add_clipping_plane("cp2", name="B-B", section_bbox_local=(0, 0, 20, 10))
+        session.add_text_dot("dot", "NOTE")
+        session.set_object_user_text("dot", "A-A Section", "1")
+        session.set_object_user_text("dot", "B-B", "1")
+        before = _snapshot(session)
+        result = register_view(session, ("curve", "dot"), 50)
+        self.assertEqual(result.blocking, ("ambiguous_text_dot",))
+        self.assertEqual(_snapshot(session)["ids"], before["ids"])
+
+    def test_displayed_text_wins_over_usertext_key(self):
+        session = _session()
+        session.add_clipping_plane("cp2", name="B-B", section_bbox_local=(0, 0, 20, 10))
+        session.set_object_user_text("dot", "B-B", "1")
+        result = register_view(session, ("curve", "dot"), 50)
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(session.object_name(result.details["frame_id"]), "A-A")
+        self.assertEqual(
+            session.get_object_user_text(result.details["frame_id"], CLIPPING_PLANE_ID_KEY),
+            "cp",
+        )
+
+    def test_ceiling_key_mirrors_x(self):
+        session = _session()
+        session.add_text_dot("dot", "NOTE")
+        session.add_clipping_plane("cp", name="1F_CEILING", section_bbox_local=(0, 0, 20, 10))
+        session.set_object_user_text("dot", "1F_CEILING", "1")
+        result = register_view(session, ("curve", "dot"), 50)
+        self.assertTrue(result.ok, result.message)
+        payload = decode_transform(
+            session.get_object_user_text(result.details["frame_id"], VIEW_TRANSFORM_KEY)
+        )
+        self.assertEqual(payload["scale_x"], -1.0)
+
     def test_missing_section_intersection_zero_write(self):
         session = _session()
         session.add_clipping_plane("cp", name="A-A Section", section_bbox_local=None)
