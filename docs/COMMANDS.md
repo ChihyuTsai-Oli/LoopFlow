@@ -20,7 +20,7 @@ Save the `.3dm` first. **The folder of that file is the project folder**: the of
 | Project / model | `LFNexus` | Project console: write Dictionary data into the model (6-step menu) |
 | Registry | `LFPublishExchange` | Publish model data as a 2D-readable Registry |
 | Section | Rhino Section (native) | Build drawings with Rhino’s built-in section tools |
-| View | `LFAnchorFrame` | Register a section as a fixed 2D↔3D map and store the Text Dot name |
+| View | `LFAnchorFrame` | Register a section as a fixed 2D↔3D map and store the matched section name |
 | Drawing | `LFExtractCP` | Copy section linework into an independently editable drawing |
 | Sheet | `LFDuplicateLayout` | Duplicate whole Layouts, usually before numbering |
 | Sheet | `LFTaggerLayoutID` | Number and name sheets by rule |
@@ -274,7 +274,7 @@ No projection. Pick the source object directly — useful when section linework 
 
 1. On **Layout**, pick a tag.
 2. Click into the target Detail to enter model space.
-3. Pick the source: a 2D section curve, a 3D object, or a furniture block. When the section drawing is one block, pick the curve inside it. Do not explode the block.
+3. Pick the source: a 2D section curve, a 3D object, or a furniture block. When the section drawing is one block, click on the line. Do not explode the block. Grab uses that point to find the nearest curve inside the block and reads that curve’s `_07_UUID`. A click in the middle of a hatch, or two curves that are almost on top of each other, stops and writes nothing.
 
 - Height / Finish tags bind the object ID. Structure objects are not sources; Grab makes no change.
 - Item (furniture) tags bind the **block name** (e.g. `FF-01__Chair-1`) **and that instance**. Later rename or delete then shows up in [12/13 Infuse](#1213-infuse-data) and [14 Health](#14-health-check-tag-o). The same furniture type can share one block name. **`TAG_ITEM` and the furniture Block must be in the same `.3dm`**. A 2D/3D worksession split cannot pick furniture from a linked 3D file.
