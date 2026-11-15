@@ -1403,6 +1403,34 @@ def pick_block_instance(
     return str(object_id)
 
 
+def closest_member_id(hits, tolerance):
+    """在容許距離內取最近的一條。兩條幾乎一樣近，或都太遠，就不要猜。"""
+    valid = []
+    for item in hits or ():
+        if not item or len(item) < 2 or not item[0]:
+            continue
+        try:
+            distance = float(item[1])
+        except (TypeError, ValueError):
+            continue
+        if distance < 0:
+            continue
+        valid.append((str(item[0]), distance))
+    try:
+        limit = float(tolerance)
+    except (TypeError, ValueError):
+        return None
+    if limit < 0:
+        return None
+    near = [item for item in valid if item[1] <= limit]
+    if not near:
+        return None
+    near.sort(key=lambda item: (item[1], item[0]))
+    if len(near) >= 2 and (near[1][1] - near[0][1]) <= max(limit * 0.25, 1e-9):
+        return None
+    return near[0][0]
+
+
 def picked_member_id(part_id, sub_id, top_id, is_instance, component_index, member_ids):
     """圖塊優先用被點到的定義內物件。沒有才退回整顆或一般物件。"""
     if part_id:
@@ -1480,7 +1508,112 @@ def _pick_grab_source(message: str, filter_value: int, Rhino):
             members = tuple(str(item.Id) for item in objects)
         except Exception:
             members = ()
-    return picked_member_id(part_id, sub_id, str(rhobj.Id), is_instance, index, members)
+    if part_id or sub_id:
+        return picked_member_id(part_id, sub_id, str(rhobj.Id), is_instance, index, members)
+    if is_instance and int(filter_value) != int(GRAB_BLOCK_FILTER):
+        # 剖面圖塊不能點進內部。用這一點去對定義裡的線，不把整顆圖塊當來源。
+        return _closest_curve_in_block(rhobj, objref, Rhino)
+    return str(rhobj.Id)
+
+
+def _selection_point(objref, Rhino):
+    point = getattr(objref, "SelectionPoint", None)
+    if callable(point):
+        try:
+            point = point()
+        except Exception:
+            return None
+    if point is None:
+        return None
+    try:
+        if hasattr(point, "IsValid") and not bool(point.IsValid):
+            return None
+    except Exception:
+        return None
+    return point
+
+
+def _screen_pick_tolerance(point, Rhino, pixels=10.0):
+    """約略的點選寬度，換成這一點所在深度的模型距離。"""
+    try:
+        import scriptcontext as sc  # type: ignore
+    except ImportError:
+        return None
+    try:
+        view = sc.doc.Views.ActiveView
+        viewport = view.ActiveViewport
+        client = viewport.WorldToClient(point)
+        if isinstance(client, tuple):
+            if not client or client[0] is False:
+                return None
+            client = client[-1]
+        neighbor = viewport.ClientToWorld(
+            Rhino.Geometry.Point2d(float(client.X) + float(pixels), float(client.Y))
+        )
+        if isinstance(neighbor, tuple):
+            neighbor = neighbor[-1]
+        try:
+            return abs(float(neighbor.DistanceTo(point, False)))
+        except TypeError:
+            return abs(float(neighbor.DistanceTo(point)))
+    except Exception:
+        return None
+
+
+def _curve_distance(geometry, xform, point, Rhino):
+    if not isinstance(geometry, Rhino.Geometry.Curve):
+        return None
+    try:
+        curve = geometry.DuplicateCurve()
+    except Exception:
+        return None
+    if curve is None:
+        return None
+    try:
+        if xform is not None and not curve.Transform(xform):
+            return None
+        found = curve.ClosestPoint(point)
+    except Exception:
+        return None
+    parameter = None
+    if isinstance(found, tuple):
+        if not found or found[0] is False:
+            return None
+        parameter = found[1] if len(found) > 1 else None
+    elif found is False or found is None:
+        return None
+    else:
+        parameter = found
+    try:
+        if parameter is None:
+            return None
+        return float(curve.PointAt(parameter).DistanceTo(point))
+    except Exception:
+        return None
+
+
+def _closest_curve_in_block(instance, objref, Rhino):
+    point = _selection_point(objref, Rhino)
+    tolerance = _screen_pick_tolerance(point, Rhino) if point is not None else None
+    if point is None or tolerance is None:
+        return None
+    try:
+        definition = instance.InstanceDefinition
+        objects = definition.GetObjects() if definition is not None else ()
+        xform = instance.InstanceXform
+    except Exception:
+        return None
+    hits = []
+    for member in objects or ():
+        member_id = getattr(member, "Id", None)
+        geometry = getattr(member, "Geometry", None)
+        if not member_id or geometry is None:
+            continue
+        distance = _curve_distance(geometry, xform, point, Rhino)
+        if distance is None:
+            continue
+        hits.append((str(member_id), distance))
+    return closest_member_id(hits, tolerance)
 
 
 def pick_source_through_detail(

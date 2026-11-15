@@ -121,7 +121,15 @@ class PromptFilterTests(unittest.TestCase):
         self.assertIn("GetObject(message, 0, preselect=True)", text)
 
     def test_block_member_id_stops_at_one_level(self):
-        from loopflow.platform.rhino.prompts import picked_member_id, selected_source_id
+        from loopflow.platform.rhino.prompts import (
+            closest_member_id,
+            picked_member_id,
+            selected_source_id,
+        )
+
+        self.assertEqual(closest_member_id((("line", 0.2), ("other", 4.0)), 5.0), "line")
+        self.assertIsNone(closest_member_id((("line", 0.2), ("other", 0.3)), 5.0))
+        self.assertIsNone(closest_member_id((("line", 8.0),), 5.0))
 
         self.assertEqual(
             picked_member_id("line", None, "block", True, -1, ()),
