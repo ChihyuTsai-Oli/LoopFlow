@@ -120,6 +120,16 @@ class PromptFilterTests(unittest.TestCase):
         self.assertNotIn("GetObject(message, preselect=True)", text)
         self.assertIn("GetObject(message, 0, preselect=True)", text)
 
+    def test_block_member_id_stops_at_one_level(self):
+        from loopflow.platform.rhino.prompts import selected_source_id
+
+        self.assertEqual(selected_source_id("curve", False, -1, ()), "curve")
+        self.assertEqual(selected_source_id("block", True, -1, ("line", "hatch")), "block")
+        self.assertEqual(selected_source_id("block", True, 0, ("line", "hatch")), "line")
+        self.assertIsNone(selected_source_id("block", True, 4, ("line", "hatch")))
+        self.assertIsNone(selected_source_id("block", True, 0, ()))
+        self.assertIsNone(selected_source_id("", True, 0, ("line",)))
+
 
 class BindTests(unittest.TestCase):
     def test_height_grab_writes_source_object_id_not_source_usertext(self):

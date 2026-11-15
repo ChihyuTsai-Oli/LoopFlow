@@ -1403,6 +1403,62 @@ def pick_block_instance(
     return str(object_id)
 
 
+def selected_source_id(top_id, is_instance, component_index, member_ids):
+    """一般物件用自己的 Id。圖塊只取定義裡被點到的那一層，不往下猜。"""
+    if not top_id:
+        return None
+    if not is_instance:
+        return str(top_id)
+    try:
+        index = int(component_index)
+    except (TypeError, ValueError):
+        return str(top_id)
+    if index < 0:
+        return str(top_id)
+    members = tuple(member_ids or ())
+    if index >= len(members) or not members[index]:
+        return None
+    return str(members[index])
+
+
+def _pick_grab_source(message: str, filter_value: int, Rhino):
+    """可點圖塊裡的線。回傳定義內那個物件的 Id，而不是整顆圖塊。"""
+    getter = Rhino.Input.Custom.GetObject()
+    getter.SetCommandPrompt(message)
+    getter.GeometryFilter = filter_value
+    getter.SubObjectSelect = True
+    try:
+        getter.EnablePreSelect(False, True)
+    except Exception:
+        pass
+    getter.Get()
+    if getter.CommandResult() != Rhino.Commands.Result.Success:
+        return None
+    objref = getter.Object(0)
+    if objref is None:
+        return None
+    rhobj = objref.Object()
+    if rhobj is None:
+        return None
+    index = -1
+    try:
+        comp = objref.GeometryComponentIndex
+        if comp is not None:
+            index = int(comp.Index)
+    except Exception:
+        index = -1
+    members = ()
+    is_instance = isinstance(rhobj, Rhino.DocObjects.InstanceObject)
+    if is_instance:
+        try:
+            definition = rhobj.InstanceDefinition
+            objects = definition.GetObjects() if definition is not None else ()
+            members = tuple(str(item.Id) for item in objects)
+        except Exception:
+            members = ()
+    return selected_source_id(str(rhobj.Id), is_instance, index, members)
+
+
 def pick_source_through_detail(
     message: str,
     filter_value: int = GRAB_SOURCE_FILTER,
@@ -1410,7 +1466,6 @@ def pick_source_through_detail(
     """Layout 點進 Detail 再選來源。Esc／點在 Detail 外不寫入；結束必回紙空間。"""
     try:
         import Rhino  # type: ignore
-        import rhinoscriptsyntax as rs  # type: ignore
         import scriptcontext as sc  # type: ignore
     except ImportError:
         return None
@@ -1439,7 +1494,7 @@ def pick_source_through_detail(
     try:
         page_view.SetActiveDetail(target_detail_id)
         sc.doc.Views.Redraw()
-        object_id = rs.GetObject(message, filter_value, preselect=False)
+        object_id = _pick_grab_source(message, filter_value, Rhino)
     finally:
         page_view.SetPageAsActive()
         sc.doc.Views.Redraw()
