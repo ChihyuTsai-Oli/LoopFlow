@@ -274,7 +274,7 @@ No projection. Pick the source object directly — useful when section linework 
 
 1. On **Layout**, pick a tag.
 2. Click into the target Detail to enter model space.
-3. Pick the source: a 2D section curve, a 3D object, or a furniture block. When the section drawing is one block, click on the line. Do not explode the block. Grab uses that point to find the nearest curve inside the block and reads that curve’s `_07_UUID`. A click in the middle of a hatch, or two curves that are almost on top of each other, stops and writes nothing.
+3. Pick the source: a 2D section curve, a 3D object, or a furniture block. Rhino 8 and Rhino 9 share this command. On Rhino 8 the section curves are separate objects: click the curve. On Rhino 9 the section is one block: click on the line and do not explode the block. Grab uses that point to find the nearest curve inside the block and reads that curve’s `_07_UUID`. A click in the middle of a hatch, or two curves that are almost on top of each other, stops and writes nothing.
 
 - Height / Finish tags bind the object ID. Structure objects are not sources; Grab makes no change.
 - Item (furniture) tags bind the **block name** (e.g. `FF-01__Chair-1`) **and that instance**. Later rename or delete then shows up in [12/13 Infuse](#1213-infuse-data) and [14 Health](#14-health-check-tag-o). The same furniture type can share one block name. **`TAG_ITEM` and the furniture Block must be in the same `.3dm`**. A 2D/3D worksession split cannot pick furniture from a linked 3D file.
