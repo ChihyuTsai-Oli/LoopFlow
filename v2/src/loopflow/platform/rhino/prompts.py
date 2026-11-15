@@ -1425,7 +1425,8 @@ def _pick_grab_source(message: str, filter_value: int, Rhino):
     """可點圖塊裡的線。回傳定義內那個物件的 Id，而不是整顆圖塊。"""
     getter = Rhino.Input.Custom.GetObject()
     getter.SetCommandPrompt(message)
-    getter.GeometryFilter = filter_value
+    # Rhino 9 的 Python.NET 3 不會把整數隱含轉成列舉。
+    getter.GeometryFilter = Rhino.DocObjects.ObjectType(int(filter_value))
     getter.SubObjectSelect = True
     try:
         getter.EnablePreSelect(False, True)
