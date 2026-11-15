@@ -1334,54 +1334,33 @@ class LiveSession:
             float(box.Max.Z),
         )
 
-    def drawing_content_bbox(self, frame_id: str):
-        """框內剖面 Hatch／Curve 的 bbox。不含外框、文字、標註，也不含 Visible 背景。"""
+    def _center_in_frame(self, box, frame_box) -> bool:
+        center = box.Center
+        return (
+            frame_box[0] - 1e-9 <= float(center.X) <= frame_box[3] + 1e-9
+            and frame_box[1] - 1e-9 <= float(center.Y) <= frame_box[4] + 1e-9
+        )
+
+    def _union_section_content(self, geom, path, item_box, boxes) -> None:
+        """剖面層優先；否則填充，再否則曲線。圖層名含 VISIBLE 的背景不算。"""
         rhino = self._rhino
-        frame_box = self.object_bbox(frame_id)
-        if rhino is None or not frame_box:
-            return None
-        cut_box = rhino.Geometry.BoundingBox.Empty
-        hatch_box = rhino.Geometry.BoundingBox.Empty
-        curve_box = rhino.Geometry.BoundingBox.Empty
-        annotation = getattr(rhino.Geometry, "AnnotationBase", None)
-        for item in self._iter_rhino_objects(include_linked=False):
-            if str(item.Id) == str(frame_id):
-                continue
-            if getattr(item, "IsReference", False):
-                continue
-            geom = getattr(item, "Geometry", None)
-            if geom is None:
-                continue
-            if isinstance(geom, (rhino.Geometry.TextEntity, rhino.Geometry.TextDot)):
-                continue
-            if annotation is not None and isinstance(geom, annotation):
-                continue
-            is_hatch = isinstance(geom, rhino.Geometry.Hatch)
-            is_curve = isinstance(geom, rhino.Geometry.Curve)
-            if not is_hatch and not is_curve:
-                continue
-            path = self._object_layer_path(item)
-            terminal = str(path or "").rsplit("::", 1)[-1].upper()
-            if "VISIBLE" in terminal:
-                continue
-            try:
-                item_box = geom.GetBoundingBox(True)
-            except Exception:
-                continue
-            if item_box is None or not getattr(item_box, "IsValid", False):
-                continue
-            center = item_box.Center
-            if not (
-                frame_box[0] - 1e-9 <= float(center.X) <= frame_box[3] + 1e-9
-                and frame_box[1] - 1e-9 <= float(center.Y) <= frame_box[4] + 1e-9
-            ):
-                continue
-            if is_section_cut_layer(path):
-                cut_box.Union(item_box)
-            if is_hatch:
-                hatch_box.Union(item_box)
-            else:
-                curve_box.Union(item_box)
+        is_hatch = isinstance(geom, rhino.Geometry.Hatch)
+        is_curve = isinstance(geom, rhino.Geometry.Curve)
+        if not is_hatch and not is_curve:
+            return
+        terminal = str(path or "").rsplit("::", 1)[-1].upper()
+        if "VISIBLE" in terminal:
+            return
+        cut_box, hatch_box, curve_box = boxes
+        if is_section_cut_layer(path):
+            cut_box.Union(item_box)
+        if is_hatch:
+            hatch_box.Union(item_box)
+        else:
+            curve_box.Union(item_box)
+
+    def _section_bbox_tuple(self, boxes):
+        cut_box, hatch_box, curve_box = boxes
         chosen = cut_box if cut_box.IsValid else (hatch_box if hatch_box.IsValid else curve_box)
         if not chosen.IsValid:
             return None
@@ -1393,6 +1372,107 @@ class LiveSession:
             float(chosen.Max.Y),
             float(chosen.Max.Z),
         )
+
+    def _empty_section_boxes(self, rhino):
+        return (
+            rhino.Geometry.BoundingBox.Empty,
+            rhino.Geometry.BoundingBox.Empty,
+            rhino.Geometry.BoundingBox.Empty,
+        )
+
+    def _skip_section_annotation(self, geom, rhino, annotation) -> bool:
+        if isinstance(geom, (rhino.Geometry.TextEntity, rhino.Geometry.TextDot)):
+            return True
+        return annotation is not None and isinstance(geom, annotation)
+
+    def drawing_content_bbox(self, frame_id: str):
+        """框內剖面 Hatch／Curve 的 bbox。不含外框、文字、標註，也不含 Visible 背景。
+
+        最外層已有線或填充就用它。沒有時才讀中心落在框內的圖塊，只展開一層。
+        """
+        rhino = self._rhino
+        frame_box = self.object_bbox(frame_id)
+        if rhino is None or not frame_box:
+            return None
+        annotation = getattr(rhino.Geometry, "AnnotationBase", None)
+        loose = self._section_bbox_from_loose(frame_id, frame_box, rhino, annotation)
+        if loose is not None:
+            return loose
+        return self._section_bbox_from_blocks(frame_box, rhino, annotation)
+
+    def _section_bbox_from_loose(self, frame_id, frame_box, rhino, annotation):
+        boxes = self._empty_section_boxes(rhino)
+        for item in self._iter_rhino_objects(include_linked=False):
+            if str(item.Id) == str(frame_id):
+                continue
+            if getattr(item, "IsReference", False):
+                continue
+            geom = getattr(item, "Geometry", None)
+            if geom is None or self._skip_section_annotation(geom, rhino, annotation):
+                continue
+            if not isinstance(geom, (rhino.Geometry.Hatch, rhino.Geometry.Curve)):
+                continue
+            try:
+                item_box = geom.GetBoundingBox(True)
+            except Exception:
+                continue
+            if item_box is None or not getattr(item_box, "IsValid", False):
+                continue
+            if not self._center_in_frame(item_box, frame_box):
+                continue
+            self._union_section_content(geom, self._object_layer_path(item), item_box, boxes)
+        return self._section_bbox_tuple(boxes)
+
+    def _section_bbox_from_blocks(self, frame_box, rhino, annotation):
+        """剖面整顆是圖塊時，用定義裡的線與填充。文字點不拉動中心。"""
+        boxes = self._empty_section_boxes(rhino)
+        for item in self._iter_rhino_objects(include_linked=False):
+            if not isinstance(item, rhino.DocObjects.InstanceObject):
+                continue
+            if getattr(item, "IsReference", False):
+                continue
+            geom = getattr(item, "Geometry", None)
+            if geom is None:
+                continue
+            try:
+                inst_box = geom.GetBoundingBox(True)
+            except Exception:
+                continue
+            if inst_box is None or not getattr(inst_box, "IsValid", False):
+                continue
+            if not self._center_in_frame(inst_box, frame_box):
+                continue
+            try:
+                definition = item.InstanceDefinition
+                members = definition.GetObjects() if definition is not None else ()
+                xform = item.InstanceXform
+            except Exception:
+                continue
+            for member in members or ():
+                member_geom = getattr(member, "Geometry", None)
+                if member_geom is None or self._skip_section_annotation(member_geom, rhino, annotation):
+                    continue
+                if isinstance(member_geom, rhino.Geometry.InstanceReferenceGeometry):
+                    continue
+                try:
+                    duplicate = member_geom.Duplicate()
+                    if duplicate is None:
+                        continue
+                    duplicate.Transform(xform)
+                    member_box = duplicate.GetBoundingBox(True)
+                except Exception:
+                    continue
+                if member_box is None or not getattr(member_box, "IsValid", False):
+                    continue
+                if not self._center_in_frame(member_box, frame_box):
+                    continue
+                self._union_section_content(
+                    member_geom,
+                    self._object_layer_path(member),
+                    member_box,
+                    boxes,
+                )
+        return self._section_bbox_tuple(boxes)
 
     def objects_bbox(self, object_ids):
         ids = [item for item in object_ids if item]
