@@ -453,11 +453,13 @@ def ask_ceiling_projection_choice(message: str, manual: str, reflected: str) -> 
             for label, handler in ((manual, self._choose_manual), (reflected, self._choose_reflected)):
                 button = forms.Button()
                 button.Text = label
-                button.Width = 680
+                button.Width = 510
                 button.Height = 40
-                button.MinimumSize = drawing.Size(680, 40)
+                button.Size = drawing.Size(510, 40)
+                button.MinimumSize = button.Size
+                button.MaximumSize = button.Size
                 button.Click += handler
-                layout.AddRow(button)
+                layout.AddRow(None, button, None)
 
             cancel = forms.Button()
             cancel.Visible = False
