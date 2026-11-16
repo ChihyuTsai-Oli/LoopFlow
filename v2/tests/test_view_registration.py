@@ -9,6 +9,7 @@ import sys
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 WIP = Path(__file__).resolve().parents[1]
 SRC = WIP / "src"
@@ -29,7 +30,8 @@ from loopflow.features.view.keys import (
     VIEW_SCHEMA_ID,
     VIEW_TRANSFORM_KEY,
 )
-from loopflow.features.view.register import match_clipping_planes, register_view, run_anchor_frame
+from loopflow.features.view.register import _default_ceiling_projection, match_clipping_planes, register_view, run_anchor_frame
+from loopflow.foundation.i18n import t
 from loopflow.features.view.transform import decode_transform, map_2d_to_cp_local
 from loopflow.platform.rhino.memory import MemorySession
 from loopflow.platform.rhino.state import ObjectViewState
@@ -289,6 +291,17 @@ class RegisterTests(unittest.TestCase):
         payload = decode_transform(session.get_object_user_text(result.details["frame_id"], VIEW_TRANSFORM_KEY))
         self.assertEqual(payload["scale_x"], 1.0)
         self.assertEqual(map_2d_to_cp_local(payload, (20, 5)), (20, 5))
+
+    def test_ceiling_choice_labels_map_to_projection(self):
+        manual = t("anchor_frame.015")
+        reflected = t("anchor_frame.016")
+        with patch("loopflow.platform.rhino.prompts.ask_ceiling_projection_choice", return_value=manual) as choose:
+            self.assertEqual(_default_ceiling_projection(_session()), -1.0)
+            choose.assert_called_once_with(t("anchor_frame.014"), manual, reflected)
+        with patch("loopflow.platform.rhino.prompts.ask_ceiling_projection_choice", return_value=reflected):
+            self.assertEqual(_default_ceiling_projection(_session()), 1.0)
+        with patch("loopflow.platform.rhino.prompts.ask_ceiling_projection_choice", return_value=None):
+            self.assertIsNone(_default_ceiling_projection(_session()))
 
     def test_cancel_ceiling_projection_does_not_write(self):
         session = _session()

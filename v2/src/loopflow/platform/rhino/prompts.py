@@ -422,6 +422,69 @@ def ask_popup_choice(
     return str(value)
 
 
+def ask_ceiling_projection_choice(message: str, manual: str, reflected: str) -> Optional[str]:
+    """天花投影的兩個選項完整列出；不使用會裁字或出現卷軸的清單。"""
+    try:
+        import Eto.Drawing as drawing  # type: ignore
+        import Eto.Forms as forms  # type: ignore
+        import Rhino  # type: ignore
+        import Rhino.UI  # type: ignore
+    except ImportError:
+        return None
+
+    class _CeilingProjectionDialog(forms.Dialog[bool]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.Title = "LoopFlow"
+            self.Padding = _dialog_padding(drawing)
+            self.Resizable = False
+            self.Width = 860
+            self.Height = 190
+            self.MinimumSize = drawing.Size(860, 190)
+            self.choice = None
+
+            layout = forms.DynamicLayout()
+            layout.Spacing = _dialog_spacing(drawing)
+            heading = forms.Label()
+            heading.Text = message
+            heading.Font = _ui_font(drawing)
+            layout.AddRow(heading)
+
+            for label, handler in ((manual, self._choose_manual), (reflected, self._choose_reflected)):
+                button = forms.Button()
+                button.Text = label
+                button.Width = 820
+                button.Height = 40
+                button.MinimumSize = drawing.Size(820, 40)
+                button.Click += handler
+                layout.AddRow(button)
+
+            cancel = forms.Button()
+            cancel.Text = "Cancel"
+            _apply_dialog_button_size(cancel, drawing)
+            cancel.Click += self._cancel
+            layout.AddRow(None, cancel)
+            self.Content = layout
+            self.AbortButton = cancel
+
+        def _choose_manual(self, sender, e) -> None:
+            self.choice = manual
+            self.Close(True)
+
+        def _choose_reflected(self, sender, e) -> None:
+            self.choice = reflected
+            self.Close(True)
+
+        def _cancel(self, sender, e) -> None:
+            self.Close(False)
+
+    dialog = _CeilingProjectionDialog()
+    dialog.Shown += lambda sender, e: _center_dialog_on_screen(dialog, drawing)
+    if dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow):
+        return dialog.choice
+    return None
+
+
 LOCALE_PROMPT_TITLE = "LoopFlow"
 # 定稿仍有「選擇介面語言」；此窗與 ListBox 後備都不顯示該行。
 LOCALE_PROMPT_HEADING = "選擇介面語言 / Choose interface language"

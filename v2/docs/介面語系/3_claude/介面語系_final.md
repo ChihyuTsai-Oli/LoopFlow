@@ -643,9 +643,9 @@ English 欄是定稿，可直接改這份檔。`%s` 是程式填入的數字或�
 | `anchor_frame.011` | 找不到名稱包含「%s」的 Clipping Plane。已停止，不寫入。 | No Clipping Plane with a name containing "%s" was found. Operation stopped; no changes were made. |
 | `anchor_frame.012` | 名稱包含「%s」的 Clipping Plane 有 %s 個，已停止，不猜測。 | The name filter "%s" matches %s Clipping Planes. Operation stopped; no match was guessed. |
 | `anchor_frame.013` | 已取消登記 View。 | View registration cancelled. |
-| `anchor_frame.014` | 天花圖面如何產生？請選擇實際使用的投影方式。 | How was the ceiling drawing created? Choose the projection used. |
-| `anchor_frame.015` | 手動水平翻轉（Rhino 8 流程） | Manually flipped horizontally (Rhino 8 workflow) |
-| `anchor_frame.016` | ClippingDrawings Reflected 投影 | ClippingDrawings Reflected projection |
+| `anchor_frame.014` | 天花圖面生成方式 | Ceiling drawing generation method |
+| `anchor_frame.015` | Rhino 8｜由 _ClippingDrawings 生成，並手動水平翻轉圖面 | Rhino 8 — Generated with _ClippingDrawings, then manually flipped horizontally |
+| `anchor_frame.016` | Rhino 9｜由 _ClippingDrawings 以 Reflected 投影生成 | Rhino 9 — Generated with _ClippingDrawings using Reflected projection |
 
 ## Data Viewer
 

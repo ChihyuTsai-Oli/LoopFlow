@@ -336,11 +336,11 @@ def _default_offset(_session: RhinoSession) -> Optional[float]:
 
 
 def _default_ceiling_projection(_session: RhinoSession) -> Optional[float]:
-    from loopflow.platform.rhino.prompts import ask_popup_choice
+    from loopflow.platform.rhino.prompts import ask_ceiling_projection_choice
 
     manual = t("anchor_frame.015")
     reflected = t("anchor_frame.016")
-    chosen = ask_popup_choice(t("anchor_frame.014"), (manual, reflected))
+    chosen = ask_ceiling_projection_choice(t("anchor_frame.014"), manual, reflected)
     return -1.0 if chosen == manual else 1.0 if chosen == reflected else None
 
 
