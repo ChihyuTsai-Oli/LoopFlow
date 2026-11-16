@@ -410,7 +410,7 @@ Cancel, a source with no objects, or a failed run leaves no half-copied pages. B
 
 **Command**: `LFDocument`
 
-Opens LoopFlow’s public documentation entry (not the project homepage). It does not change the model and does not guess Rhino / Windows UI language. If the page cannot open, it only explains why.
+Opens LoopFlow’s public documentation entry (not the project homepage) and the Documents\LoopFlow templates folder containing the official `Tag_Blocks.3dm`. If either fails to open, the command still tries the other and reports the error. It does not change the model or guess Rhino / Windows UI language.
 
 ## A6　Switch interface language
 

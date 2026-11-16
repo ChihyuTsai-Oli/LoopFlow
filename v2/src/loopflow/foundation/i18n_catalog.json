@@ -539,6 +539,14 @@
     "zh-TW": "無法開啟 LoopFlow 文件頁。 / %s",
     "en": "Could not open the LoopFlow documentation page. / %s"
   },
+  "document.009": {
+    "zh-TW": "已開啟 LoopFlow 使用說明與文件\\LoopFlow 範本資料夾。",
+    "en": "Opened the LoopFlow documentation and the Documents\\LoopFlow templates folder."
+  },
+  "document.010": {
+    "zh-TW": "無法開啟文件\\LoopFlow 範本資料夾。 / %s",
+    "en": "Could not open the Documents\\LoopFlow templates folder. / %s"
+  },
   "extract_cp.001": {
     "zh-TW": "沒有對到 View。",
     "en": "No matching View was found."

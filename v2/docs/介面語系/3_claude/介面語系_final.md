@@ -184,6 +184,8 @@ English 欄是定稿，可直接改這份檔。`%s` 是程式填入的數字或�
 | `document.006` | 找不到語系選單介面。 | Language menu is not available. |
 | `document.007` | 已開啟 LoopFlow 使用說明。 | Opened the LoopFlow documentation. |
 | `document.008` | 無法開啟 LoopFlow 文件頁。 / %s | Could not open the LoopFlow documentation page. / %s |
+| `document.009` | 已開啟 LoopFlow 使用說明與文件\LoopFlow 範本資料夾。 | Opened the LoopFlow documentation and the Documents\LoopFlow templates folder. |
+| `document.010` | 無法開啟文件\LoopFlow 範本資料夾。 / %s | Could not open the Documents\LoopFlow templates folder. / %s |
 
 ## Extract CP
 
@@ -622,6 +624,7 @@ English 欄是定稿，可直接改這份檔。`%s` 是程式填入的數字或�
 | `layout_id.024` | 跳過 %s 頁，詳見報告。 | Skipped %s pages. See the report for details. |
 | `layout_id.025` | 頁名是空的 | Page name is blank |
 | `layout_id.026` | 手動頁格式不正確，需 //圖類別__圖號__圖名 | Invalid manual-page format. Use //DrawingType__DrawingNumber__DrawingName. |
+| `layout_id.027` | 這些頁的頁名沒有改成新圖號：%s。 | These page names were not changed to the new drawing number: %s. |
 
 ## Anchor Frame
 

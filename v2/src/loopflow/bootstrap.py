@@ -43,7 +43,7 @@ def run_command(command_id: str) -> Result:
     try:
         from loopflow.foundation.templates import seed_official_templates
 
-        seed_official_templates()
+        seed_official_templates(open_folder=command_id != "LF_Document")
     except Exception:
         pass
     spec = get_command(command_id)
