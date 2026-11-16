@@ -336,6 +336,107 @@ def _write_page_tags(
     return written
 
 
+def _listed_page_names(session: RhinoSession) -> set:
+    """目前 Layout 頁名。改名後用來確認名稱真的換了。"""
+    listed = getattr(session, "listed_layout_pages", None)
+    if not callable(listed):
+        return set()
+    names = set()
+    for page in listed() or ():
+        name = str(page.get("name") or "")
+        if name:
+            names.add(name)
+    return names
+
+
+def _temporary_page_names(session: RhinoSession, count: int) -> Tuple[str, ...]:
+    """一次配好暫時名稱，不在改名途中再問現有頁名。"""
+    reserved = _listed_page_names(session)
+    temps = []
+    for index in range(count):
+        candidate = "lf-tmp-%s" % index
+        serial = 0
+        while candidate in reserved:
+            serial += 1
+            candidate = "lf-tmp-%s-%s" % (index, serial)
+        reserved.add(candidate)
+        temps.append(candidate)
+    return tuple(temps)
+
+
+def _rename_verified(session: RhinoSession, rename_fn, old_name: str, new_name: str) -> bool:
+    """改名並讀回頁列表。回報成功但名稱沒變，也當成沒改成。"""
+    old = str(old_name or "")
+    new = str(new_name or "")
+    if not old or not new:
+        return False
+    if old == new:
+        return new in _listed_page_names(session)
+    if not rename_fn(old, new):
+        return False
+    names = _listed_page_names(session)
+    return new in names and old not in names
+
+
+def _rename_pages(
+    session: RhinoSession, rows: Sequence[SheetRow], rename_fn
+) -> Tuple[int, Tuple[str, ...]]:
+    """先讓出舊頁名，再改成正式圖號。
+
+    暫時名稱沒寫進文件就直接改正式圖號。正式名稱還被別頁佔著時，等其他頁讓出後再試。
+    不要在第一次失敗時改回舊號。最後仍寫不上的原頁名留在回傳的第二項。
+    """
+    pending = [row for row in rows if row.renames_page]
+    temps = _temporary_page_names(session, len(pending))
+    parked = {}
+    direct = []
+    for row, temp in zip(pending, temps):
+        if _rename_verified(session, rename_fn, row.page_name, temp):
+            parked[row.page_name] = temp
+        else:
+            direct.append(row)
+
+    renamed_ids = set()
+
+    def finish(row: SheetRow, source: str) -> bool:
+        if row.page_name in renamed_ids:
+            return True
+        final = row.plan.new_page_name or ""
+        if not _rename_verified(session, rename_fn, source, final):
+            return False
+        renamed_ids.add(row.page_name)
+        _remap_index_target_layouts(session, row.page_name, final)
+        return True
+
+    for row in reversed(direct):
+        finish(row, row.page_name)
+    for row in reversed(pending):
+        temp = parked.get(row.page_name)
+        if temp:
+            finish(row, temp)
+    for row in reversed(direct):
+        if row.page_name not in renamed_ids:
+            finish(row, row.page_name)
+    for row in reversed(pending):
+        if row.page_name in renamed_ids:
+            continue
+        temp = parked.get(row.page_name)
+        if not temp:
+            continue
+        source = temp if temp in _listed_page_names(session) else row.page_name
+        finish(row, source)
+
+    stuck = []
+    for row in pending:
+        if row.page_name in renamed_ids:
+            continue
+        temp = parked.get(row.page_name)
+        if temp and temp in _listed_page_names(session):
+            _rename_verified(session, rename_fn, temp, row.page_name)
+        stuck.append(row.page_name)
+    return len(renamed_ids), tuple(stuck)
+
+
 def apply_sheet_rows(
     session: RhinoSession,
     rows: Sequence[SheetRow],
@@ -347,6 +448,7 @@ def apply_sheet_rows(
     scan_by_page = {scan.page_name: scan for scan in scans}
     created = 0
     renamed = 0
+    stuck: Tuple[str, ...] = ()
     tagged = 0
     rename_fn = getattr(session, "rename_layout_page", None)
     for row in rows:
@@ -369,19 +471,15 @@ def apply_sheet_rows(
                 "page_position": row.page_number,
             },
         )
-        session.set_object_user_text(row.frame_id, DRAWING_NO_KEY, row.plan.drawing_no or "")
-        session.set_object_user_text(row.frame_id, DRAWING_NAME_KEY, row.plan.drawing_name or "")
+        _write_frame_display(session, row)
         scan = scan_by_page.get(row.page_name)
         if scan is not None:
             sheet_code = format_sheet_ref(rules, row.plan.number or "")
             tagged += _write_page_tags(session, scan, catalog, sheet_code)
     if callable(rename_fn):
-        for row in reversed(list(rows)):
-            if row.renames_page and rename_fn(row.page_name, row.plan.new_page_name):
-                renamed += 1
-                _remap_index_target_layouts(
-                    session, row.page_name, row.plan.new_page_name
-                )
+        renamed, stuck = _rename_pages(session, rows, rename_fn)
+    for row in rows:
+        _write_frame_display(session, row)
     redraw = getattr(session, "redraw", None)
     if callable(redraw):
         redraw()
@@ -389,8 +487,15 @@ def apply_sheet_rows(
         "sheets": len(rows),
         "created_sheet_ids": created,
         "renamed_pages": renamed,
+        "stuck_pages": stuck,
         "page_tags": tagged,
     }
+
+
+def _write_frame_display(session: RhinoSession, row: SheetRow) -> None:
+    """圖框圖號與圖名。頁名確認後再寫一次，讓畫面上的字跟新頁名一致。"""
+    session.set_object_user_text(row.frame_id, DRAWING_NO_KEY, row.plan.drawing_no or "")
+    session.set_object_user_text(row.frame_id, DRAWING_NAME_KEY, row.plan.drawing_name or "")
 
 
 def _remap_index_target_layouts(session: RhinoSession, old_name: str, new_name: str) -> None:
@@ -523,6 +628,16 @@ def run_tagger_layout_id(
         )
         if skipped:
             message += t("layout_id.024") % len(skipped)
+        stuck = tuple(summary.get("stuck_pages") or ())
+        if stuck:
+            message += t("layout_id.027") % "、".join(stuck)
+            return results.ok_with_warnings(
+                STAGE,
+                message,
+                stuck,
+                command_id=COMMAND_ID,
+                details=summary,
+            )
         return results.ok(STAGE, message, command_id=COMMAND_ID, details=summary)
 
     return run_guarded(session, action, command_id=COMMAND_ID)

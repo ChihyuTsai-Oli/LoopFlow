@@ -379,6 +379,108 @@ class ExtractTests(unittest.TestCase):
         self.assertTrue(result.ok, result.message)
         self.assertEqual(len(_extract_ids(session)), 3)
 
+    def test_copies_named_block_members_and_leaves_block(self):
+        session = MemorySession()
+        session.set_layout_active(False)
+        for path, rgb in (
+            ("A-A::Visible", drawing_keys.COLOR_VISIBLE),
+            ("A-A::Hatch", drawing_keys.COLOR_HATCH),
+            ("A-A::Curve_Red", (255, 0, 0)),
+        ):
+            session.ensure_layer(path)
+            session.set_layer_appearance(path, rgb)
+        session.add_object("section-block", layer="A-A::Visible")
+        session.set_block("section-block", (0.0, 0.0, 0.0), name="A-A")
+        session.set_block_members(
+            "section-block",
+            (
+                {
+                    "id": "m-vis",
+                    "layer": "A-A::Visible",
+                    "user_text": {
+                        OBJECT_ID_KEY: SOURCE_A,
+                        "_01_空間名稱": "廊道",
+                    },
+                },
+                {"id": "m-hat", "layer": "A-A::Hatch"},
+                {
+                    "id": "m-crv",
+                    "layer": "A-A::Curve_Red",
+                    "color": (255, 0, 0),
+                    "color_by_layer": False,
+                },
+                {"id": "m-text", "layer": "A-A::Visible", "kind": "text"},
+                {"id": "m-other-parent", "layer": "B-B::Visible"},
+            ),
+        )
+        session.add_object("other-block", name="Other", layer="A-A::Visible")
+        session.set_block("other-block", (1.0, 0.0, 0.0), name="A-A")
+        session.set_block_members(
+            "other-block",
+            ({"id": "m-decoy", "layer": "A-A::Visible"},),
+        )
+        session.add_object("prefix-block", layer="A-A::Visible")
+        session.set_block("prefix-block", (2.0, 0.0, 0.0), name="A-A2")
+        session.set_block_members(
+            "prefix-block",
+            ({"id": "m-prefix", "layer": "A-A2::Visible"},),
+        )
+        session.add_object(
+            "frame",
+            name="A-A",
+            layer="LoopFlow::Anchor_Frame",
+            user_text={
+                SCHEMA_ID_KEY: VIEW_SCHEMA_ID,
+                SCHEMA_VERSION_KEY: VIEW_SCHEMA_VERSION,
+                VIEW_ID_KEY: VIEW_ID,
+            },
+        )
+
+        result, _messages = _run(session)
+        self.assertTrue(result.ok, result.message)
+        ids = _extract_ids(session)
+        self.assertEqual(len(ids), 3)
+        self.assertTrue(
+            all(not session.is_block_instance(object_id) for object_id in ids)
+        )
+        self.assertEqual(
+            {session.object_layer(object_id) for object_id in ids},
+            {
+                drawing_keys.LAYER_VISIBLE,
+                drawing_keys.LAYER_HATCH,
+                "LoopFlow_Extract::Curve_#FF0000",
+            },
+        )
+        for object_id in ("section-block", "other-block", "prefix-block"):
+            self.assertIn(object_id, session.iter_object_ids())
+            self.assertTrue(session.is_block_instance(object_id))
+        vis = next(
+            object_id
+            for object_id in ids
+            if session.object_layer(object_id) == drawing_keys.LAYER_VISIBLE
+        )
+        self.assertIsNone(session.get_object_user_text(vis, "_01_空間名稱"))
+        self.assertIn(
+            SOURCE_A,
+            session.get_object_user_text(vis, drawing_keys.SOURCE_OBJECT_IDS_KEY),
+        )
+        self.assertEqual(
+            session.get_object_user_text(vis, VIEW_ID_KEY),
+            VIEW_ID,
+        )
+
+    def test_checklist_uses_eto_not_rhino_box(self):
+        prompts = (WIP / "src" / "loopflow" / "platform" / "rhino" / "prompts.py").read_text(
+            encoding="utf-8"
+        )
+        start = prompts.index("def ask_checklist")
+        end = prompts.index("\ndef ask_popup_choice")
+        body = prompts[start:end]
+        self.assertNotIn("CheckListBox", body)
+        self.assertNotIn("GridView", body)
+        self.assertIn("forms.CheckBox", body)
+        self.assertIn("forms.Scrollable", body)
+
 
 if __name__ == "__main__":
     unittest.main()

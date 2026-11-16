@@ -54,6 +54,48 @@ def _is_extract_path(path: str) -> bool:
     return text_path == EXTRACT_LAYER_ROOT or text_path.startswith(EXTRACT_LAYER_ROOT + "::")
 
 
+def _parent_name(path: str) -> str:
+    return str(path or "").split("::", 1)[0]
+
+
+def _is_block(session: RhinoSession, object_id: str) -> bool:
+    checker = getattr(session, "is_block_instance", None)
+    return bool(callable(checker) and checker(object_id))
+
+
+def _block_label(session: RhinoSession, object_id: str) -> Optional[str]:
+    """圖塊對名。有物件名稱就用它，沒有才用圖塊定義名稱。"""
+    if not _is_block(session, object_id):
+        return None
+    name = session.object_name(object_id)
+    if name:
+        return name
+    definition = getattr(session, "block_definition_name", None)
+    if callable(definition):
+        return definition(object_id)
+    return None
+
+
+def _section_block_ids(session: RhinoSession, root: str) -> Tuple[str, ...]:
+    """名稱與剖面根圖層完整相同的圖塊。`LF_立面` 不會用到 `LF_立面2`。"""
+    needle = _norm(root)
+    if needle is None:
+        return ()
+    found = []
+    for object_id in session.iter_object_ids():
+        if _norm(_block_label(session, object_id)) == needle:
+            found.append(object_id)
+    return tuple(found)
+
+
+def _source_color(session: RhinoSession, object_id: str, path: str):
+    color_fn = getattr(session, "object_display_color", None)
+    color = color_fn(object_id) if callable(color_fn) else None
+    if not color:
+        color = getattr(session, "layer_color", lambda _path: None)(path)
+    return color
+
+
 def listed_section_roots(session: RhinoSession) -> Tuple[str, ...]:
     roots = []
     for path in session.layer_paths():
@@ -262,6 +304,42 @@ def _clear_object_user_text(session: RhinoSession, object_id: str) -> None:
         session.set_object_user_text(object_id, str(key), "")
 
 
+def _finish_copy(
+    session: RhinoSession,
+    new_id: Optional[str],
+    source_id: str,
+    *,
+    target: str,
+    drawing_id: str,
+    view_id: Optional[str],
+    source_root: str,
+    revision,
+    coverage: Dict[str, int],
+) -> bool:
+    if not new_id:
+        return False
+    source_ids = source_object_ids(session, source_id)
+    session.set_object_layer(new_id, target)
+    reset = getattr(session, "reset_object_to_bylayer", None)
+    if callable(reset):
+        reset(new_id)
+    _clear_object_user_text(session, new_id)
+    state, bucket, method = classify_sources(source_ids)
+    coverage[bucket] = coverage.get(bucket, 0) + 1
+    _write_element(
+        session,
+        new_id,
+        drawing_id=drawing_id,
+        view_id=view_id,
+        source_root=source_root,
+        revision=revision,
+        source_ids=source_ids,
+        state=state,
+        method=method,
+    )
+    return True
+
+
 def _ensure_extract_layer(session: RhinoSession, path: str, rgb=None) -> None:
     session.ensure_layer(path)
     if rgb is not None:
@@ -371,6 +449,22 @@ def extract_root(
     copied = 0
     coverage = {"indexed": 0, "unindexed": 0, "ambiguous": 0}
     prefix = root + "::"
+    copier = getattr(session, "copy_object", None)
+    if not callable(copier):
+        return results.failed(
+            STAGE,
+            t("extract_cp.023"),
+            command_id=COMMAND_ID,
+        )
+    member_lister = getattr(session, "block_members", None)
+    member_copier = getattr(session, "copy_block_member", None)
+    section_blocks = _section_block_ids(session, root)
+    if section_blocks and not (callable(member_lister) and callable(member_copier)):
+        return results.failed(
+            STAGE,
+            t("extract_cp.023"),
+            command_id=COMMAND_ID,
+        )
     for path in session.layer_paths():
         if path != root and not str(path).startswith(prefix):
             continue
@@ -378,45 +472,53 @@ def extract_root(
         if kind is None:
             continue
         for object_id in session.objects_on_layer(path):
-            color = None
-            color_fn = getattr(session, "object_display_color", None)
-            if callable(color_fn):
-                color = color_fn(object_id)
-            if not color:
-                color = getattr(session, "layer_color", lambda _path: None)(path)
+            if _is_block(session, object_id):
+                continue
+            color = _source_color(session, object_id, path)
             target = target_layer_for(kind, color)
             if kind == drawing_keys.KIND_CURVE:
                 _ensure_extract_layer(session, target, color)
-            copier = getattr(session, "copy_object", None)
-            if not callable(copier):
-                return results.failed(
-                    STAGE,
-                    t("extract_cp.023"),
-                    command_id=COMMAND_ID,
-                )
-            new_id = copier(object_id)
-            if not new_id:
-                continue
-            source_ids = source_object_ids(session, object_id)
-            session.set_object_layer(new_id, target)
-            reset = getattr(session, "reset_object_to_bylayer", None)
-            if callable(reset):
-                reset(new_id)
-            _clear_object_user_text(session, new_id)
-            state, bucket, method = classify_sources(source_ids)
-            coverage[bucket] = coverage.get(bucket, 0) + 1
-            _write_element(
+            if _finish_copy(
                 session,
-                new_id,
+                copier(object_id),
+                object_id,
+                target=target,
                 drawing_id=drawing_id,
                 view_id=view_id,
                 source_root=root,
                 revision=revision,
-                source_ids=source_ids,
-                state=state,
-                method=method,
-            )
-            copied += 1
+                coverage=coverage,
+            ):
+                copied += 1
+
+    root_name = _norm(root)
+    for instance_id in section_blocks:
+        for member in member_lister(instance_id) or ():
+            layer = str(member.get("layer") or "")
+            if _norm(_parent_name(layer)) != root_name:
+                continue
+            kind = _layer_kind(layer)
+            if kind is None:
+                continue
+            member_id = str(member.get("id") or "")
+            if not member_id:
+                continue
+            color = _source_color(session, member_id, layer)
+            target = target_layer_for(kind, color)
+            if kind == drawing_keys.KIND_CURVE:
+                _ensure_extract_layer(session, target, color)
+            if _finish_copy(
+                session,
+                member_copier(instance_id, member_id),
+                member_id,
+                target=target,
+                drawing_id=drawing_id,
+                view_id=view_id,
+                source_root=root,
+                revision=revision,
+                coverage=coverage,
+            ):
+                copied += 1
 
     return results.ok(
         STAGE,

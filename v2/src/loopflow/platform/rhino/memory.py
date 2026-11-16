@@ -26,6 +26,7 @@ class MemorySession:
         self._bboxes: Dict[str, tuple] = {}
         self._blocks: Dict[str, tuple] = {}
         self._block_names: Dict[str, str] = {}
+        self._block_members: Dict[str, list] = {}
         self._points: Dict[str, tuple] = {}
         self._texts: Dict[str, dict] = {}
         self._text_dots: Dict[str, dict] = {}
@@ -87,6 +88,7 @@ class MemorySession:
         self._bboxes.pop(object_id, None)
         self._blocks.pop(object_id, None)
         self._block_names.pop(object_id, None)
+        self._block_members.pop(object_id, None)
         self._points.pop(object_id, None)
         self._texts.pop(object_id, None)
         self._text_dots.pop(object_id, None)
@@ -310,10 +312,22 @@ class MemorySession:
             color_by_layer=True,
         )
 
+    def _definition_member(self, object_id: str):
+        for members in self._block_members.values():
+            for member in members:
+                if member.get("id") == object_id:
+                    return member
+        return None
+
     def object_display_color(self, object_id: str):
         state = self._objects.get(object_id)
         if state is None:
-            return None
+            member = self._definition_member(object_id)
+            if member is None:
+                return None
+            if member.get("color_by_layer", True):
+                return self.layer_color(member.get("layer"))
+            return member.get("color")
         if state.color_by_layer:
             layer = self.object_layer(object_id)
             return self.layer_color(layer) if layer else state.color
@@ -363,12 +377,23 @@ class MemorySession:
         self._modified = True
 
     def get_object_user_text(self, object_id: str, key: str) -> Optional[str]:
+        if object_id not in self._objects:
+            member = self._definition_member(object_id)
+            if member is not None:
+                value = (member.get("user_text") or {}).get(key)
+                if value in (None, ""):
+                    return None
+                return str(value)
         value = self._meta(object_id)["user_text"].get(key)
         if value in (None, ""):
             return None
         return str(value)
 
     def object_user_text_keys(self, object_id: str):
+        if object_id not in self._objects:
+            member = self._definition_member(object_id)
+            if member is not None:
+                return tuple((member.get("user_text") or {}).keys())
         return tuple(self._meta(object_id)["user_text"].keys())
 
     def set_object_user_text(self, object_id: str, key: str, value: str) -> None:
@@ -553,6 +578,59 @@ class MemorySession:
 
     def block_definition_name(self, object_id: str) -> Optional[str]:
         return self._block_names.get(object_id)
+
+    def set_block_members(self, instance_id: str, members) -> None:
+        """圖塊定義裡的成員。它們不是文件上的獨立物件。"""
+        stored = []
+        for member in members or ():
+            stored.append(
+                {
+                    "id": str(member.get("id") or ""),
+                    "layer": member.get("layer"),
+                    "user_text": dict(member.get("user_text") or {}),
+                    "color": member.get("color"),
+                    "color_by_layer": bool(member.get("color_by_layer", True)),
+                    "name": member.get("name"),
+                    "kind": member.get("kind"),
+                }
+            )
+        self._block_members[instance_id] = stored
+
+    def block_members(self, instance_id: str):
+        """一層成員。文字、標註與再包的圖塊不列出。"""
+        if not self.is_block_instance(instance_id):
+            return ()
+        found = []
+        for member in self._block_members.get(instance_id, ()):
+            if member.get("kind") in ("text", "annotation", "block"):
+                continue
+            member_id = str(member.get("id") or "")
+            if not member_id:
+                continue
+            found.append({"id": member_id, "layer": str(member.get("layer") or "")})
+        return tuple(found)
+
+    def copy_block_member(self, instance_id: str, member_id: str) -> Optional[str]:
+        """把圖塊成員複製成文件物件。來源圖塊留在原地。"""
+        member = None
+        for item in self._block_members.get(instance_id, ()):
+            if item.get("id") == member_id:
+                member = item
+                break
+        if member is None:
+            return None
+        new_id = "mem-%s" % self._next_id
+        self._next_id += 1
+        color = member.get("color") or (0, 0, 0)
+        self.add_object(
+            new_id,
+            color=color,
+            color_by_layer=bool(member.get("color_by_layer", True)),
+            name=member.get("name"),
+            layer=member.get("layer"),
+            user_text=member.get("user_text"),
+        )
+        return new_id
 
     def insertion_point(self, object_id: str):
         point = self._blocks.get(object_id)

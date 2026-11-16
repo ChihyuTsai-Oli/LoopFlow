@@ -2051,6 +2051,10 @@
     "zh-TW": "手動頁格式不正確，需 //圖類別__圖號__圖名",
     "en": "Invalid manual-page format. Use //DrawingType__DrawingNumber__DrawingName."
   },
+  "layout_id.027": {
+    "zh-TW": "這些頁的頁名沒有改成新圖號：%s。",
+    "en": "These page names were not changed to the new drawing number: %s."
+  },
   "anchor_frame.001": {
     "zh-TW": "天花",
     "en": "Ceiling"

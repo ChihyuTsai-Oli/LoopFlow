@@ -408,7 +408,13 @@ class CommandTests(unittest.TestCase):
         self.assertIn("ask_popup_real", register)
         self.assertNotIn("ask_real(", register)
         self.assertIn("def ask_popup_real", prompts)
-        self.assertIn("RealBox", prompts)
+        start = prompts.index("def ask_popup_real")
+        end = prompts.index("\ndef ask_popup_integer")
+        body = prompts[start:end]
+        self.assertNotIn("RealBox", body)
+        self.assertIn("forms.Keys.Enter", body)
+        self.assertIn("DefaultButton", body)
+        self.assertIn("AbortButton", body)
 
 
 if __name__ == "__main__":

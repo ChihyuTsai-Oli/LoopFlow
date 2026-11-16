@@ -161,6 +161,89 @@ class LayoutIdCommandTests(unittest.TestCase):
         self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NO_KEY), "IN 103")
         self.assertEqual(session.get_object_user_text("frame-new", DRAWING_NO_KEY), "IN 102")
 
+    def test_delete_middle_closes_number_gap(self):
+        pages = ["**IN__1__一", "二", "三", "四"]
+        session = _session(pages)
+        for index, name in enumerate(pages, 1):
+            _add_block(session, "frame-%s" % index, name, "Sample_Frame")
+        run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        kept_ids = {
+            index: session.get_object_user_text("frame-%s" % index, SHEET_ID_KEY)
+            for index in (1, 2, 4)
+        }
+        names = [page["name"] for page in session.listed_layout_pages()]
+        session.set_layout_pages([names[0], names[1], names[3]])
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(
+            [page["name"] for page in session.listed_layout_pages()],
+            ["**IN__1__一", "IN__2__二", "IN__3__四"],
+        )
+        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 1")
+        self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NO_KEY), "IN 2")
+        self.assertEqual(session.get_object_user_text("frame-4", DRAWING_NO_KEY), "IN 3")
+        for index, sheet_id in kept_ids.items():
+            self.assertEqual(session.get_object_user_text("frame-%s" % index, SHEET_ID_KEY), sheet_id)
+
+    def test_same_drawing_name_delete_does_not_leave_gap(self):
+        pages = ["**IN__1__平面", "甲", "乙", "丙"]
+        session = _session(pages)
+        for index, name in enumerate(pages, 1):
+            _add_block(session, "frame-%s" % index, name, "Sample_Frame")
+        run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        names = [page["name"] for page in session.listed_layout_pages()]
+        self.assertTrue(session.rename_layout_page(names[2], "IN__3__平面"))
+        self.assertTrue(session.rename_layout_page(names[3], "IN__4__平面"))
+        names = [page["name"] for page in session.listed_layout_pages()]
+        session.set_layout_pages([names[0], names[2], names[3]])
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(
+            [page["name"] for page in session.listed_layout_pages()],
+            ["**IN__1__平面", "IN__2__平面", "IN__3__平面"],
+        )
+        self.assertEqual(session.get_object_user_text("frame-3", DRAWING_NO_KEY), "IN 2")
+        self.assertEqual(session.get_object_user_text("frame-4", DRAWING_NO_KEY), "IN 3")
+        self.assertEqual(session.get_object_user_text("frame-4", DRAWING_NAME_KEY), "平面")
+
+    def test_changed_baseline_renumbers_like_first_run(self):
+        pages = ["**IN__1__一", "IN__2__二", "IN__4__四"]
+        session = _session(pages)
+        for index, name in enumerate(pages, 1):
+            _add_block(session, "frame-%s" % index, name, "Sample_Frame")
+        self.assertTrue(session.rename_layout_page(pages[0], "**IN__10__一"))
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(
+            [page["name"] for page in session.listed_layout_pages()],
+            ["**IN__10__一", "IN__11__二", "IN__12__四"],
+        )
+        self.assertEqual(session.get_object_user_text("frame-1", DRAWING_NO_KEY), "IN 10")
+        self.assertEqual(session.get_object_user_text("frame-2", DRAWING_NO_KEY), "IN 11")
+        self.assertEqual(session.get_object_user_text("frame-3", DRAWING_NO_KEY), "IN 12")
+
+    def test_temp_rename_that_does_not_stick_still_writes_final_name(self):
+        pages = ["**IN__1__一", "IN__2__二", "IN__4__四"]
+        session = _session(pages)
+        for index, name in enumerate(pages, 1):
+            _add_block(session, "frame-%s" % index, name, "Sample_Frame")
+        real_rename = session.rename_layout_page
+
+        def lie(old_name, new_name):
+            if str(new_name).startswith("lf-tmp"):
+                return True
+            return real_rename(old_name, new_name)
+
+        session.rename_layout_page = lie
+        result = run_tagger_layout_id(session, confirm=lambda _lines: True, ask_register=lambda _names: ())
+        self.assertTrue(result.ok, result.message)
+        self.assertEqual(
+            [page["name"] for page in session.listed_layout_pages()],
+            ["**IN__1__一", "IN__2__二", "IN__3__四"],
+        )
+        self.assertEqual(session.get_object_user_text("frame-3", DRAWING_NO_KEY), "IN 3")
+        self.assertNotIn("lf-tmp", result.message)
+
     def test_manual_page_rename_restored_from_metadata(self):
         session = _session([START_IN, "天花詳圖"])
         _add_block(session, "frame-1", START_IN, "Sample_Frame")

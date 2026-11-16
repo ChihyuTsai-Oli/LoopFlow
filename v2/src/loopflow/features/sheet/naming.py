@@ -218,10 +218,13 @@ def assign_sheet_numbers(
 ) -> Tuple[PagePlan, ...]:
     """依 Layout 頁序推導每頁的系列、編號、圖號與應有頁名。
 
-    `known_names` 是 `{page_name: drawing_name}`，僅在頁名不是三欄結構時使用
-    （誤改頁名則恢復舊圖名）。沒有 `**` 時不得用舊 metadata 當起點。
-    `//` 手動頁不改系列尾數。圖框圖號不含 `**`／`//`。
+    每次都只認 `**` 的號碼當起點，像第一次執行。沒有 `**` 的頁不採用頁名第二欄，
+    也不採用 `known_series` 裡的舊號碼，只從起點往下 +1。
+    `known_names` 是 `{page_name: drawing_name}`，僅在頁名不是三欄結構時恢復圖名。
+    另一個 `**` 是新起點。`//` 手動頁維持自己的號碼，不改系列尾數。
+    圖框圖號不含 `**`／`//`。
     """
+    del known_series  # 舊 sequence 不當號碼。
     lookup = dict(known_names or {})
     plans = []
     prefix: Optional[str] = None

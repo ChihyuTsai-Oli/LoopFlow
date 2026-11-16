@@ -72,13 +72,13 @@ def _lock_control_height(control, drawing, height: int) -> None:
         pass
 
 
-def _center_dialog_on_screen(dialog, drawing) -> None:
-    """放到螢幕工作區正中。Shown 後再呼叫，避免 ShowModal 依主窗重算。"""
+def _dialog_screen_point(dialog, drawing):
+    """螢幕工作區正中。尺寸還沒出來時回 None。"""
     try:
         import Eto.Forms as forms  # type: ignore
         area = forms.Screen.PrimaryScreen.WorkingArea
     except Exception:
-        return
+        return None
     width = int(getattr(dialog, "Width", 0) or 0)
     height = int(getattr(dialog, "Height", 0) or 0)
     size = getattr(dialog, "Size", None)
@@ -86,10 +86,48 @@ def _center_dialog_on_screen(dialog, drawing) -> None:
         width = int(getattr(size, "Width", 0) or width)
         height = int(getattr(size, "Height", 0) or height)
     if width <= 0 or height <= 0:
-        return
+        return None
     x = int(area.X + (area.Width - width) / 2)
     y = int(area.Y + (area.Height - height) / 2)
-    dialog.Location = drawing.Point(x, y)
+    return drawing.Point(x, y)
+
+
+def _center_dialog_on_screen(dialog, drawing) -> None:
+    """放到螢幕工作區正中。Shown 後再呼叫，避免 ShowModal 依主窗重算。"""
+    point = _dialog_screen_point(dialog, drawing)
+    if point is None:
+        return
+    dialog.Location = point
+
+
+def _hold_dialog_on_screen(dialog, drawing) -> None:
+    """顯示後若位置再被改掉，放回工作區正中。自己改位置時不遞迴。"""
+    state = {"busy": False, "left": 4}
+
+    def _place(sender, e) -> None:
+        if state["busy"] or state["left"] <= 0:
+            return
+        target = _dialog_screen_point(dialog, drawing)
+        if target is None:
+            return
+        current = getattr(dialog, "Location", None)
+        if current is not None:
+            cx = int(getattr(current, "X", 0) or 0)
+            cy = int(getattr(current, "Y", 0) or 0)
+            if abs(cx - int(target.X)) <= 2 and abs(cy - int(target.Y)) <= 2:
+                return
+        state["left"] -= 1
+        state["busy"] = True
+        try:
+            dialog.Location = target
+        finally:
+            state["busy"] = False
+
+    try:
+        dialog.Shown += _place
+        dialog.LocationChanged += _place
+    except Exception:
+        _center_dialog_on_screen(dialog, drawing)
 
 
 def _apply_dialog_button_size(button, drawing, width: int = DIALOG_BUTTON_WIDTH) -> None:
@@ -270,16 +308,103 @@ def ask_checklist(
     message: str,
     title: str = "LoopFlow",
 ) -> Optional[Tuple[str, ...]]:
-    """多選清單。取消回傳 None；確定但一項都沒勾回傳空 tuple。"""
+    """勾選清單。取消、Esc 或一項都沒勾回傳 None。不用 Rhino 內建勾選框。"""
+    names = [str(item).strip() for item in items if str(item).strip()]
+    if not names:
+        return None
     try:
-        import rhinoscriptsyntax as rs  # type: ignore
+        import Eto.Drawing as drawing  # type: ignore
+        import Eto.Forms as forms  # type: ignore
+        import Rhino  # type: ignore
+        import Rhino.UI  # type: ignore
     except ImportError:
         return None
-    rows = [(str(item), False) for item in items]
-    result = rs.CheckListBox(rows, message, title)
-    if result is None:
+
+    class _CheckListDialog(forms.Dialog[bool]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.Title = title
+            self.Padding = _dialog_padding(drawing)
+            self.Resizable = True
+            self.Width = 360
+            self.Height = 420
+            self._boxes = []
+
+            layout = forms.DynamicLayout()
+            layout.Spacing = _dialog_spacing(drawing)
+            hint = forms.Label()
+            hint.Text = message
+            hint.Wrap = forms.WrapMode.Word
+            layout.AddRow(hint)
+
+            scroll = forms.Scrollable()
+            scroll.Border = forms.BorderType.Line
+            try:
+                scroll.ExpandContentWidth = True
+                scroll.ExpandContentHeight = False
+            except Exception:
+                pass
+            table = forms.TableLayout()
+            table.Spacing = drawing.Size(0, DIALOG_SPACING)
+            table.Padding = drawing.Padding(DIALOG_ROW_PAD_X, DIALOG_ROW_PAD_Y)
+            for name in names:
+                box = forms.CheckBox()
+                box.Text = name
+                box.Checked = False
+                self._boxes.append(box)
+                row = forms.TableRow()
+                row.ScaleHeight = False
+                row.Cells.Add(forms.TableCell(box, True))
+                table.Rows.Add(row)
+            spacer = forms.TableRow()
+            spacer.ScaleHeight = True
+            table.Rows.Add(spacer)
+            scroll.Content = table
+            layout.Add(scroll, True, True)
+
+            btn_layout, btn_ok, btn_cancel = _ok_cancel_row(
+                forms, drawing, self._on_ok, self._on_cancel
+            )
+            layout.Add(btn_layout, True, False)
+            self.Content = layout
+            self.DefaultButton = btn_ok
+            self.AbortButton = btn_cancel
+
+        def _checked_names(self):
+            chosen = []
+            for box in self._boxes:
+                try:
+                    checked = bool(box.Checked)
+                except Exception:
+                    checked = False
+                if checked:
+                    chosen.append(str(box.Text))
+            return tuple(chosen)
+
+        def _on_ok(self, sender, e) -> None:
+            if not self._checked_names():
+                self.Close(False)
+                return
+            self.Close(True)
+
+        def _on_cancel(self, sender, e) -> None:
+            self.Close(False)
+
+    dialog = _CheckListDialog()
+
+    def _on_shown(sender, e) -> None:
+        _center_dialog_on_screen(dialog, drawing)
+
+    try:
+        dialog.Shown += _on_shown
+    except Exception:
+        _center_dialog_on_screen(dialog, drawing)
+    if not dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow):
         return None
-    return tuple(str(name) for name, checked in result if checked)
+    chosen = dialog._checked_names()
+    if not chosen:
+        return None
+    return chosen
 
 
 def ask_popup_choice(
@@ -886,6 +1011,7 @@ def ask_confirm_table(
             self.Close(False)
 
     dialog = _ConfirmTableDialog()
+    _hold_dialog_on_screen(dialog, drawing)
     return bool(dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow))
 
 
@@ -1803,25 +1929,106 @@ def ask_real(
     return float(value)
 
 
+def _popup_real_text(value: float) -> str:
+    """整數不帶小數，方便打開時全選再改。"""
+    number = float(value)
+    if number.is_integer():
+        return str(int(number))
+    return str(number)
+
+
 def ask_popup_real(
     message: str,
     default: float = 50.0,
     minimum: float = 0.0,
     title: str = "LoopFlow",
 ) -> Optional[float]:
-    """彈窗輸入數字；取消或小於下限回傳 None。"""
+    """彈窗輸入數字。Enter 確定，Esc 或 Cancel 回傳 None。
+
+    不是數字或小於下限時視窗留著，不當成取消。
+    """
     try:
-        import rhinoscriptsyntax as rs  # type: ignore
+        import Eto.Drawing as drawing  # type: ignore
+        import Eto.Forms as forms  # type: ignore
+        import Rhino  # type: ignore
+        import Rhino.UI  # type: ignore
     except ImportError:
         return None
-    value = rs.RealBox(message, default, title)
-    if value is None:
+
+    class _RealDialog(forms.Dialog[bool]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.Title = title
+            self.Padding = _dialog_padding(drawing)
+            self.Resizable = False
+            self.Width = 320
+            self.value = None
+            self._closed = False
+            self._checking = False
+            hint = forms.Label()
+            hint.Text = message
+            hint.Wrap = forms.WrapMode.Word
+            self._box = forms.TextBox()
+            self._box.Text = _popup_real_text(default)
+            self._box.KeyDown += self._on_key_down
+            layout = forms.DynamicLayout()
+            layout.Spacing = _dialog_spacing(drawing)
+            layout.AddRow(hint)
+            layout.AddRow(self._box)
+            btn_layout, btn_ok, btn_cancel = _ok_cancel_row(
+                forms, drawing, self._on_ok, self._on_cancel
+            )
+            layout.AddRow(btn_layout)
+            self.Content = layout
+            self.DefaultButton = btn_ok
+            self.AbortButton = btn_cancel
+            self.Shown += self._select_number
+
+        def _select_number(self, sender, e) -> None:
+            try:
+                self._box.Focus()
+                self._box.SelectAll()
+            except Exception:
+                pass
+
+        def _on_key_down(self, sender, e) -> None:
+            try:
+                if e.Key == forms.Keys.Enter:
+                    e.Handled = True
+                    self._on_ok(sender, e)
+            except Exception:
+                pass
+
+        def _on_ok(self, sender, e) -> None:
+            if self._closed or self._checking:
+                return
+            self._checking = True
+            try:
+                text = str(self._box.Text or "").strip()
+                try:
+                    number = float(text)
+                except ValueError:
+                    number = None
+                if number is None or number < minimum:
+                    show_message(t("prompts.021") % minimum, title)
+                    return
+                self.value = number
+                self._closed = True
+                self.Close(True)
+            finally:
+                self._checking = False
+
+        def _on_cancel(self, sender, e) -> None:
+            if self._closed:
+                return
+            self._closed = True
+            self.Close(False)
+
+    dialog = _RealDialog()
+    accepted = bool(dialog.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow))
+    if not accepted or dialog.value is None:
         return None
-    number = float(value)
-    if number < minimum:
-        show_message(t("prompts.021") % minimum, title)
-        return None
-    return number
+    return float(dialog.value)
 
 
 def ask_popup_integer(

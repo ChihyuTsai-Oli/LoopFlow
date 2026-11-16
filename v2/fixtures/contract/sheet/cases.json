@@ -115,6 +115,12 @@
       "expect_drawing_no": ["IN 201", "IN 202", "IN 203"]
     },
     {
+      "id": "rerun-ignores-number-already-on-page",
+      "pages": ["**IN__10__一", "IN__2__二", "IN__4__四"],
+      "expect_drawing_no": ["IN 10", "IN 11", "IN 12"],
+      "expect_page_name": ["**IN__10__一", "IN__11__二", "IN__12__四"]
+    },
+    {
       "id": "blank-new-page-inherits-series",
       "pages": ["**IN__201__立面圖", "Layout 05"],
       "expect_drawing_no": ["IN 201", "IN 202"],

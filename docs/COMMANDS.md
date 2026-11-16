@@ -227,7 +227,7 @@ If the file has no `**` and no legal `//`, the command stops and only shows the 
 3. A review list appears (original name / new name / status, same order as the Layout list). Confirm to write; cancel writes nothing.
 4. What is written: Layout page names as three columns, title frame number and title, `TAG_ELEV_0` current-page number, and Sheet metadata in the document. **Scale (`lf_scale`) is filled by hand; this command does not touch it.**
 
-A page with no title frame, or with two or more, is skipped and listed in the report. Other pages still write. **After inserting pages or reordering, run this again** so numbers follow the new order. Features that read this data (drawing list, and so on) should report stale data if you skip the rerun; they must not quietly show old values.
+A page with no title frame, or with two or more, is skipped and listed in the report. Other pages still write. Each run uses only the `**` number and ignores numbers already written on the following pages, the same as the first run. A Rhino 9 Layout group lists the same page again; that page is still counted once. **After inserting, deleting a middle page, reordering, or changing the `**` number, run this again** so the series is continuous from the new start, with no gap left. Features that read this data (drawing list, and so on) should report stale data if you skip the rerun; they must not quietly show old values.
 
 ---
 
@@ -373,7 +373,7 @@ Copies Rhino Section linework kept as a live source (drawing A) into an independ
 **Where**: **2D model space**.
 
 1. Tick section root layers (the ones with Visible / Hatch / Curve children).
-2. Copy under `LoopFlow_Extract` and strip 3D / drawing-A data fields, leaving drawing identity only.
+2. Copy under `LoopFlow_Extract` and strip 3D / drawing-A data fields, leaving drawing identity only. In Rhino 8 the section is loose curves, and those curves are copied directly. In Rhino 9 the section is one block: the block name, the clipping-plane name, and the parent layer of the objects inside the block are the same name. Tick that root. The block can stay intact or be exploded first; both can be extracted. The block stays in place.
 3. If it maps to a registered View, source and publish revision are stored for later stale checks.
 4. If that section was extracted before, you are asked to **replace**, **add**, or **skip** — a drawing you already edited by hand is not overwritten on replace unless you choose it.
 

@@ -35,6 +35,89 @@ MODEL_OBJECT_TYPE_VALUES = frozenset(
 )
 
 
+def select_layout_pages(pages, tab_ids=None):
+    """All Layouts 順序、每頁只留一次。
+
+    `pages` 的每一項要有 `id`、`page_number`，可有 `deleted`。
+    同一 Id 出現在 All Layouts 和群組裡只留一次。`tab_ids` 有給時，不在頁籤上的頁不列入。
+    沒有身分的頁仍保留。沒有 `tab_ids`（Rhino 8，或尚未分組）則只去掉已刪除與重複頁。
+    """
+    chosen = []
+    seen = set()
+    for index, page in enumerate(pages or ()):
+        if page.get("deleted"):
+            continue
+        pid = page.get("id")
+        if tab_ids is not None and pid is not None and pid not in tab_ids:
+            continue
+        key = pid if pid is not None else ("row", index)
+        if key in seen:
+            continue
+        seen.add(key)
+        chosen.append((int(page.get("page_number") or 0), index, page))
+    chosen.sort(key=lambda item: (item[0], item[1]))
+    return [page for _number, _index, page in chosen]
+
+
+def layout_tab_ids(pages, groups):
+    """Rhino 9 有群組時，決定哪些頁要進入編號。沒有群組時回 None。
+
+    `groups` 每個項目是該群組成員的 id。成員一律保留。
+    沒有群組、而且頁碼落在同一個群組的最小號與最大號之間，是刪頁留下的空位，不列入。
+    群組範圍外的無群組頁（例如 //Preset）仍保留。`group_count` 不是 0 或空、又不是成員的頁不列入。
+    """
+    member_groups = []
+    for group in groups or ():
+        ids = [pid for pid in group if pid is not None]
+        if ids:
+            member_groups.append(ids)
+    if not member_groups:
+        return None
+    members = set()
+    for ids in member_groups:
+        members.update(ids)
+    number_by_id = {}
+    for page in pages or ():
+        if page.get("deleted"):
+            continue
+        pid = page.get("id")
+        if pid is None:
+            continue
+        number_by_id[pid] = int(page.get("page_number") or 0)
+    spans = []
+    for ids in member_groups:
+        numbers = [number_by_id[pid] for pid in ids if pid in number_by_id]
+        if len(numbers) >= 2:
+            spans.append((min(numbers), max(numbers)))
+    visible = set(members)
+    for page in pages or ():
+        if page.get("deleted"):
+            continue
+        pid = page.get("id")
+        if pid is None or pid in visible:
+            continue
+        if page.get("group_count", None) not in (None, 0):
+            continue
+        number = int(page.get("page_number") or 0)
+        if any(low < number < high for low, high in spans):
+            continue
+        visible.add(pid)
+    return visible
+
+
+def _page_view_deleted(page) -> bool:
+    return bool(getattr(page, "IsDeleted", False))
+
+
+def _page_view_key(page):
+    """Layout 頁沒有 Id。同一頁在 All Layouts 與群組裡共用 MainViewport.Id。"""
+    viewport = getattr(page, "MainViewport", None)
+    viewport_id = getattr(viewport, "Id", None) if viewport is not None else None
+    if viewport_id is not None:
+        return viewport_id
+    return getattr(page, "Id", None)
+
+
 def rgb_tuple(color) -> Tuple[int, int, int]:
     """把 Rhino／.NET 顏色或 (r,g,b) 轉成整數 RGB。"""
     if color is None:
@@ -657,8 +740,8 @@ class LiveSession:
             if color is not None:
                 return rgb_tuple(color)
         except Exception:
-            return None
-        return None
+            return self._definition_display_color(object_id)
+        return self._definition_display_color(object_id)
 
     def object_color_by_layer(self, object_id: str) -> bool:
         try:
@@ -1041,6 +1124,92 @@ class LiveSession:
         if value in (None, ""):
             return None
         return str(value)
+
+    def block_members(self, object_id: str):
+        """圖塊定義的一層成員。不含文字、標註，以及再包的圖塊。"""
+        rhino = self._rhino
+        if rhino is None or not self.is_block_instance(object_id):
+            return ()
+        obj = self._rhino_object(object_id)
+        if obj is None or not isinstance(obj, rhino.DocObjects.InstanceObject):
+            return ()
+        try:
+            definition = obj.InstanceDefinition
+            members = definition.GetObjects() if definition is not None else ()
+        except Exception:
+            return ()
+        annotation = getattr(rhino.Geometry, "AnnotationBase", None)
+        found = []
+        for member in members or ():
+            geom = getattr(member, "Geometry", None)
+            if geom is None or self._skip_section_annotation(geom, rhino, annotation):
+                continue
+            if isinstance(geom, rhino.Geometry.InstanceReferenceGeometry):
+                continue
+            member_id = str(getattr(member, "Id", "") or "")
+            if not member_id:
+                continue
+            found.append({"id": member_id, "layer": self._object_layer_path(member)})
+        return tuple(found)
+
+    def copy_block_member(self, instance_id: str, member_id: str) -> Optional[str]:
+        """複製圖塊成員成文件物件，並套上圖塊位移。來源圖塊不刪除。"""
+        rhino = self._rhino
+        if rhino is None:
+            return None
+        obj = self._rhino_object(instance_id)
+        if obj is None or not isinstance(obj, rhino.DocObjects.InstanceObject):
+            return None
+        try:
+            xform = obj.InstanceXform
+            definition = obj.InstanceDefinition
+            members = definition.GetObjects() if definition is not None else ()
+        except Exception:
+            return None
+        target = str(member_id).lower()
+        for member in members or ():
+            if str(getattr(member, "Id", "")).lower() != target:
+                continue
+            geom = getattr(member, "Geometry", None)
+            if geom is None:
+                return None
+            try:
+                duplicate = geom.Duplicate()
+                if duplicate is None:
+                    return None
+                duplicate.Transform(xform)
+                attributes = member.Attributes.Duplicate()
+                added = self._sc.doc.Objects.Add(duplicate, attributes)
+            except Exception:
+                return None
+            if not added or str(added) == "00000000-0000-0000-0000-000000000000":
+                return None
+            return str(added)
+        return None
+
+    def _definition_display_color(self, object_id: str):
+        obj = self._definition_object(str(object_id))
+        if obj is None:
+            return None
+        try:
+            source = int(obj.Attributes.ColorSource)
+        except Exception:
+            return None
+        if source == COLOR_SOURCE_BY_LAYER:
+            layer = self._object_layer_path(obj)
+            if not layer:
+                return None
+            try:
+                color = self._rs.LayerColor(layer)
+            except Exception:
+                return None
+            if color is None:
+                return None
+            return rgb_tuple(color)
+        try:
+            return rgb_tuple(obj.Attributes.ObjectColor)
+        except Exception:
+            return None
 
     def insertion_point(self, object_id: str):
         if not self._rs.IsBlockInstance(object_id):
@@ -1770,9 +1939,63 @@ class LiveSession:
                 )
         return tuple(items)
 
+    def _layout_tab_ids(self, pages):
+        """Rhino 9 群組裡的頁，加上群組範圍外的無群組頁。沒有群組時不篩。"""
+        doc = getattr(self._sc, "doc", None)
+        groups = getattr(doc, "PageViewGroups", None)
+        if groups is None:
+            return None
+        try:
+            group_list = list(groups)
+        except Exception:
+            return None
+        member_groups = []
+        for group in group_list:
+            if _page_view_deleted(group):
+                continue
+            getter = getattr(group, "GetMembers", None)
+            if not callable(getter):
+                continue
+            try:
+                members = list(getter() or ())
+            except Exception:
+                continue
+            ids = []
+            for page in members:
+                if _page_view_deleted(page):
+                    continue
+                pid = _page_view_key(page)
+                if pid is not None:
+                    ids.append(pid)
+            if ids:
+                member_groups.append(ids)
+        records = [
+            {
+                "id": _page_view_key(page),
+                "page_number": int(getattr(page, "PageNumber", 0) or 0),
+                "deleted": _page_view_deleted(page),
+                "group_count": getattr(page, "PageViewGroupCount", None),
+            }
+            for page in pages
+        ]
+        return layout_tab_ids(records, member_groups)
+
     def _ordered_page_views(self):
-        pages = self._sc.doc.Views.GetPageViews() or ()
-        return sorted(pages, key=lambda page: int(getattr(page, "PageNumber", 0) or 0))
+        pages = list(self._sc.doc.Views.GetPageViews() or ())
+        tab_ids = self._layout_tab_ids(pages)
+        records = [
+            {
+                "id": _page_view_key(page),
+                "page_number": int(getattr(page, "PageNumber", 0) or 0),
+                "deleted": _page_view_deleted(page),
+                "page": page,
+            }
+            for page in pages
+        ]
+        selected = select_layout_pages(records, tab_ids)
+        if not selected and any(not item.get("deleted") for item in records):
+            selected = select_layout_pages(records, None)
+        return [item["page"] for item in selected]
 
     def _page_view(self, page_name: str):
         target = str(page_name or "")
@@ -1923,7 +2146,9 @@ class LiveSession:
             page.PageName = target
         except Exception:
             return False
-        return True
+        if str(getattr(page, "PageName", "") or "") == target:
+            return True
+        return self._page_view(target) is not None
 
     def layout_page_size(self, page_name: str):
         page = self._page_view(page_name)
