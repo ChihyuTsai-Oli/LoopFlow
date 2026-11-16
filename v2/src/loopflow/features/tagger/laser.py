@@ -17,6 +17,7 @@ from loopflow.features.view.keys import (
     VIEW_NAME_KEY,
     VIEW_SCHEMA_ID,
     VIEW_TRANSFORM_KEY,
+    CLIPPING_PLANE_ID_KEY,
 )
 from loopflow.features.view.transform import (
     bbox_center_2d,
@@ -439,6 +440,8 @@ def run_tagger_laser(
         payload = apply_live_view_origins(current, frame_id, payload)
         origin, direction = ray_from_transform(payload, point_2d)
         if debug_ray_enabled():
+            cp_id = current.get_object_user_text(frame_id, CLIPPING_PLANE_ID_KEY)
+            live_3d_box = current.clipping_plane_section_bbox_local(cp_id) if cp_id else None
             print(
                 "LoopFlow Laser DebugRay: point_2d=%s, stored_origin_2d=%s, "
                 "live_origin_2d=%s, origin_3d_local=%s, cp_origin=%s, "
@@ -447,6 +450,14 @@ def run_tagger_laser(
                     tuple(point_2d), stored_origin_2d, tuple(payload["origin_2d"]),
                     tuple(payload["origin_3d_local"]), tuple(payload["cp_origin"]),
                     origin, direction,
+                )
+            )
+            print(
+                "LoopFlow Laser DebugRay: frame_bbox=%s, content_bbox=%s, "
+                "stored_cp_section_center=%s, live_cp_section_bbox=%s"
+                % (
+                    current.object_bbox(frame_id), current.drawing_content_bbox(frame_id),
+                    tuple(payload["origin_3d_local"]), live_3d_box,
                 )
             )
         probe_origin = origin_behind_plane(origin, direction)
