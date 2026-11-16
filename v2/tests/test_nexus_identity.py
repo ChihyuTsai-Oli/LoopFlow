@@ -160,6 +160,27 @@ class IdentityScanApplyTests(unittest.TestCase):
         self.assertTrue(rolled.ok, rolled.message)
         self.assertEqual(session.get_object_user_text("b", OBJECT_ID_KEY), OLD_ID)
 
+    def test_duplicate_rewrites_type_without_changing_uuid(self):
+        session = _session()
+        floor_layer = "03_Floor_地坪::Finish.地坪"
+        session.ensure_layer(to_full_path(floor_layer))
+        _add_model(session, "wall")
+        _add_model(session, "floor", layer=to_full_path(floor_layer))
+        for rhino_id in ("wall", "floor"):
+            session.set_object_user_text(rhino_id, OBJECT_ID_KEY, OLD_ID)
+            session.set_object_user_text(rhino_id, TYPE_ID_KEY, "FL-02")
+        catalog = _catalog(_row(), _row(layer_path=floor_layer, type_id="FL-02"))
+
+        result = apply_identity(session, catalog=catalog)
+
+        self.assertEqual(result.status, "ok_with_warnings")
+        self.assertEqual(session.get_object_user_text("wall", TYPE_ID_KEY), "WL-01")
+        self.assertEqual(session.get_object_user_text("floor", TYPE_ID_KEY), "FL-02")
+        self.assertEqual(session.get_object_user_text("wall", OBJECT_ID_KEY), OLD_ID)
+        self.assertEqual(session.get_object_user_text("floor", OBJECT_ID_KEY), OLD_ID)
+        self.assertIn("floor", result.details["remaining"])
+        self.assertIn("floor", result.details["metadata_updated"])
+
     def test_invalid_id_and_uppercase_need_mapping(self):
         session = _session()
         _add_model(session, "not-uuid")

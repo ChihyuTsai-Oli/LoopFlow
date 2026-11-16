@@ -340,10 +340,13 @@ def apply_identity(
         assigned: Dict[str, str] = {}
         planned = []
         remaining = []
+        metadata_only = []
         for item in items:
             object_id = _planned_id(item, mapping_table, assigned)
             if object_id is None:
                 remaining.append(item)
+                if "duplicate_object_id" in item["issues"] and item["type_id"] is not None:
+                    metadata_only.append(item)
                 continue
             planned.append((item, object_id))
         seen = {}
@@ -358,6 +361,14 @@ def apply_identity(
             seen[object_id] = item["rhino_id"]
         id_mappings = []
         applied = []
+        for item in metadata_only:
+            rhino_id = item["rhino_id"]
+            record, _issue = _resolve_type(current, rhino_id, type_catalog)
+            if record is None:
+                continue
+            write_text(current, rhino_id, TYPE_ID_KEY, record.type_id)
+            write_text(current, rhino_id, TYPE_CATEGORY_KEY, record.type_category)
+            write_text(current, rhino_id, TYPE_SEQUENCE_KEY, record.type_sequence)
         for item, object_id in planned:
             rhino_id = item["rhino_id"]
             record, _issue = _resolve_type(current, rhino_id, type_catalog)
@@ -381,11 +392,12 @@ def apply_identity(
         payload = {
             "publish_ready": False,
             "applied": tuple(applied),
+            "metadata_updated": tuple(item["rhino_id"] for item in metadata_only),
             "remaining": tuple(item["rhino_id"] for item in remaining),
             "id_mappings": tuple(id_mappings),
             "scope": "partial" if selected_only else "full",
         }
-        if not applied and remaining:
+        if not applied and not metadata_only and remaining:
             return results.blocked(
                 "apply_identity",
                 t("nexus_metadata.014") % len(remaining),
