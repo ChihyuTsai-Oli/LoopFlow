@@ -275,6 +275,34 @@ class RegisterTests(unittest.TestCase):
         )
         self.assertEqual(payload["scale_x"], -1.0)
 
+    def test_reflected_ceiling_keeps_x_direction(self):
+        session = _session()
+        session.add_text_dot("dot", "1F_CEILING")
+        session.add_clipping_plane("cp", name="1F_CEILING", section_bbox_local=(0, 0, 20, 10))
+        result = run_anchor_frame(
+            session,
+            pick_selection=lambda _s: ("curve", "dot"),
+            ask_offset=lambda _s: 50,
+            ask_ceiling_projection=lambda _s: 1.0,
+        )
+        self.assertTrue(result.ok, result.message)
+        payload = decode_transform(session.get_object_user_text(result.details["frame_id"], VIEW_TRANSFORM_KEY))
+        self.assertEqual(payload["scale_x"], 1.0)
+        self.assertEqual(map_2d_to_cp_local(payload, (20, 5)), (20, 5))
+
+    def test_cancel_ceiling_projection_does_not_write(self):
+        session = _session()
+        session.add_text_dot("dot", "1F_CEILING")
+        session.add_clipping_plane("cp", name="1F_CEILING")
+        result = run_anchor_frame(
+            session,
+            pick_selection=lambda _s: ("curve", "dot"),
+            ask_offset=lambda _s: 50,
+            ask_ceiling_projection=lambda _s: None,
+        )
+        self.assertEqual(result.status, "cancelled")
+        self.assertEqual(_frame_ids(session), [])
+
     def test_missing_section_intersection_zero_write(self):
         session = _session()
         session.add_clipping_plane("cp", name="A-A Section", section_bbox_local=None)

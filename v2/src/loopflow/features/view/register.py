@@ -41,6 +41,7 @@ UUID_V4_RE = re.compile(
 )
 PickSelection = Callable[[RhinoSession], Optional[Sequence[str]]]
 AskOffset = Callable[[RhinoSession], Optional[float]]
+AskCeilingProjection = Callable[[RhinoSession], Optional[float]]
 
 
 def _text(value) -> Optional[str]:
@@ -190,6 +191,7 @@ def register_view(
     offset: float,
     *,
     detail_id: Optional[str] = None,
+    scale_x: Optional[float] = None,
 ) -> results.Result:
     """依選取寫入 View。測試可直接呼叫，不經選取。"""
     dots, hosts, geom = split_selection(session, selected_ids)
@@ -268,7 +270,7 @@ def register_view(
     payload = build_transform(
         origin_2d=origin_2d,
         origin_3d_local=origin_3d_local,
-        scale_x=mirror_scale(hint),
+        scale_x=mirror_scale(hint) if scale_x is None else scale_x,
         scale_y=-1.0 if INVERT_Y else 1.0,
         plane=plane,
     )
@@ -333,15 +335,26 @@ def _default_offset(_session: RhinoSession) -> Optional[float]:
     return ask_popup_real(t("anchor_frame.003"), DEFAULT_OFFSET, 0.0)
 
 
+def _default_ceiling_projection(_session: RhinoSession) -> Optional[float]:
+    from loopflow.platform.rhino.prompts import ask_popup_choice
+
+    manual = t("anchor_frame.015")
+    reflected = t("anchor_frame.016")
+    chosen = ask_popup_choice(t("anchor_frame.014"), (manual, reflected))
+    return -1.0 if chosen == manual else 1.0 if chosen == reflected else None
+
+
 def run_anchor_frame(
     session: RhinoSession,
     *,
     pick_selection: Optional[PickSelection] = None,
     ask_offset: Optional[AskOffset] = None,
+    ask_ceiling_projection: Optional[AskCeilingProjection] = None,
 ) -> results.Result:
     """框選剖面物件與 Text Dot，再問 offset。Esc 取消不寫入。"""
     picker = pick_selection or _default_pick
     offsetter = ask_offset or _default_offset
+    projection_picker = ask_ceiling_projection or _default_ceiling_projection
 
     def action(current: RhinoSession) -> results.Result:
         selected = picker(current)
@@ -358,6 +371,15 @@ def run_anchor_frame(
                 t("anchor_frame.013"),
                 command_id=COMMAND_ID,
             )
-        return register_view(current, selected, offset)
+        dots, _hosts, geom = split_selection(current, selected)
+        hint, _reason = resolve_section_hint(current, dots, geom)
+        scale_x = None
+        if hint and mirror_scale(hint) < 0:
+            scale_x = projection_picker(current)
+            if scale_x is None:
+                return results.cancelled(
+                    "register_view", t("anchor_frame.013"), command_id=COMMAND_ID
+                )
+        return register_view(current, selected, offset, scale_x=scale_x)
 
     return run_guarded(session, action, command_id=COMMAND_ID)

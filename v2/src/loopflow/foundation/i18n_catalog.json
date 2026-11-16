@@ -2107,6 +2107,18 @@
     "zh-TW": "已取消登記 View。",
     "en": "View registration cancelled."
   },
+  "anchor_frame.014": {
+    "zh-TW": "天花圖面如何產生？請選擇實際使用的投影方式。",
+    "en": "How was the ceiling drawing created? Choose the projection used."
+  },
+  "anchor_frame.015": {
+    "zh-TW": "手動水平翻轉（Rhino 8 流程）",
+    "en": "Manually flipped horizontally (Rhino 8 workflow)"
+  },
+  "anchor_frame.016": {
+    "zh-TW": "ClippingDrawings Reflected 投影",
+    "en": "ClippingDrawings Reflected projection"
+  },
   "data_viewer.001": {
     "zh-TW": "找不到物件。",
     "en": "Object not found."
