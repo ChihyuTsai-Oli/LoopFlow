@@ -8,6 +8,7 @@ import sys
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from types import SimpleNamespace
 
 WIP = Path(__file__).resolve().parents[1]
 SRC = WIP / "src"
@@ -39,6 +40,7 @@ from loopflow.features.tagger.laser import (
     run_tagger_laser,
     view_frames_containing,
 )
+from loopflow.platform.rhino.live import LiveSession
 import loopflow.features.tagger.laser as laser_mod
 
 laser_mod.DRAW_DEBUG_RAY = False
@@ -61,6 +63,27 @@ from project_fixture import bind_project  # noqa: E402
 PROJECT_ID = "大安邸"
 OBJECT_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
 SOURCE_LAYER = "M3D::02_Wall_牆面::_Partition_Lightweight.輕隔間"
+
+
+class DrawingBoundsTests(unittest.TestCase):
+    def test_cross_frame_geometry_does_not_move_laser_center(self):
+        def box(min_x, min_y, max_x, max_y):
+            return SimpleNamespace(
+                Min=SimpleNamespace(X=min_x, Y=min_y),
+                Max=SimpleNamespace(X=max_x, Y=max_y),
+            )
+
+        frame = (1933.693, -18.165, 0, 2357.693, 405.835, 0)
+        self.assertFalse(
+            LiveSession._within_frame(
+                None, box(829.697, -414.039, 3580.185, 805.708), frame
+            )
+        )
+        self.assertTrue(
+            LiveSession._within_frame(
+                None, box(1983.693, 31.835, 2307.693, 355.835), frame
+            )
+        )
 STRUCTURE_LAYER = "M3D::00_STR_結構::Beam.樑"
 STRUCTURE_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
 POINT_2D = (10.0, 5.0, 0.0)

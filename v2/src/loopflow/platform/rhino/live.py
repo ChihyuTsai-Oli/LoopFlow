@@ -1503,11 +1503,13 @@ class LiveSession:
             float(box.Max.Z),
         )
 
-    def _center_in_frame(self, box, frame_box) -> bool:
-        center = box.Center
+    def _within_frame(self, box, frame_box) -> bool:
+        """只收完整落在 Anchor 框內的剖面幾何，避免跨框物件拉動中心。"""
         return (
-            frame_box[0] - 1e-9 <= float(center.X) <= frame_box[3] + 1e-9
-            and frame_box[1] - 1e-9 <= float(center.Y) <= frame_box[4] + 1e-9
+            frame_box[0] - 1e-9 <= float(box.Min.X)
+            and float(box.Max.X) <= frame_box[3] + 1e-9
+            and frame_box[1] - 1e-9 <= float(box.Min.Y)
+            and float(box.Max.Y) <= frame_box[4] + 1e-9
         )
 
     def _union_section_content(self, geom, path, item_box, boxes) -> None:
@@ -1587,7 +1589,7 @@ class LiveSession:
                 continue
             if item_box is None or not getattr(item_box, "IsValid", False):
                 continue
-            if not self._center_in_frame(item_box, frame_box):
+            if not self._within_frame(item_box, frame_box):
                 continue
             self._union_section_content(geom, self._object_layer_path(item), item_box, boxes)
         return self._section_bbox_tuple(boxes)
@@ -1609,7 +1611,7 @@ class LiveSession:
                 continue
             if inst_box is None or not getattr(inst_box, "IsValid", False):
                 continue
-            if not self._center_in_frame(inst_box, frame_box):
+            if not self._within_frame(inst_box, frame_box):
                 continue
             try:
                 definition = item.InstanceDefinition
@@ -1633,7 +1635,7 @@ class LiveSession:
                     continue
                 if member_box is None or not getattr(member_box, "IsValid", False):
                     continue
-                if not self._center_in_frame(member_box, frame_box):
+                if not self._within_frame(member_box, frame_box):
                     continue
                 self._union_section_content(
                     member_geom,
