@@ -8,7 +8,7 @@ An open-source workflow automation tool developed by **蔡智聿 (Chihyu Tsai)**
 
 > **Embrace the loop. Let it flow.**
 
-LoopFlow 2 is a Rhino 8-based, semi-automated design and documentation workflow built to carry a project from schematic design (SD), through design development (DD), to construction documentation (CD). It is not another BIM system, and it does not require fixed templates or a parametric workflow. You remain in control of every step while LoopFlow handles data updates, drawing synchronization, and other repetitive work.
+LoopFlow 2 is a Rhino 8/9-based, semi-automated design and documentation workflow built to carry a project from schematic design (SD), through design development (DD), to construction documentation (CD). It is not another BIM system, and it does not require fixed templates or a parametric workflow. You remain in control of every step while LoopFlow handles data updates, drawing synchronization, and other repetitive work.
 
 The main workflow stays inside Rhino, allowing model data, drawings, and Layout documentation to evolve continuously with the design. LoopFlow has been used on multiple real-world design projects. Its goal is to preserve Rhino's design freedom while reducing repetitive cleanup after design changes.
 
@@ -34,7 +34,11 @@ For complete command and workflow instructions, see the [LoopFlow 2 documentatio
 
 ## System requirements
 
-- **Rhino 8** (required; 2D drawings use native Rhino Section / Clipping Drawing)
+### Version 2.2.0
+
+Rhino 8 and Rhino 9 use the same LoopFlow package. Rhino 9 section blocks can be registered, extracted, and used by Grab and Laser without exploding them. For reflected ceiling drawings, `LFAnchorFrame` asks whether the drawing was manually flipped or generated with Rhino 9 Reflected projection. Nexus also checks the published Rhino object ID to UUID mapping and can restore a copied UUID after `MatchProperties` when the original identity is known. The package includes the updated LoopFlow toolbar.
+
+- **Rhino 8 or Rhino 9** (2D drawings use native Section / Clipping Drawing)
 - Windows 10 or Windows 11
 
 Bilingual interface: English / Traditional Chinese
@@ -47,10 +51,10 @@ Bilingual interface: English / Traditional Chinese
 
 Do not use the 1.x ZIP, `install_LoopFlow.bat`, or drag-and-drop `.rhc` toolbar. Do not mix 1.x and LoopFlow 2 in the same project.
 
-1. Open Rhino 8, run `PackageManager`, search for `LoopFlow`, and install 2.1.1.
+1. Open Rhino 8 or 9, run `PackageManager`, search for `LoopFlow`, and install 2.2.0.
 2. **Quit Rhino completely and reopen it.**
 
-You can also download `loopflow-2.1.1-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) and install from file. Do not download the 1.x ZIP.
+You can also download `loopflow-2.2.0-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) and install from file. Do not download the 1.x ZIP.
 
 After install:
 

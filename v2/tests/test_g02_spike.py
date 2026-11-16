@@ -22,7 +22,7 @@ SECTION_SCRIPTS = (
     "! _ClippingSections",
     "! _ClippingDrawings",
     "! _ClearClippingSections",
-    "! _EditClippingDrawings",
+    "! _AlignClippingDrawings",
     "! _UpdateClippingDrawings",
 )
 
@@ -112,7 +112,7 @@ class G02SpikePackagingTests(unittest.TestCase):
     def test_manifest_includes_toolbar(self):
         text = (SPIKE / "manifest.yml").read_text(encoding="utf-8")
         self.assertIn("name: loopflow", text)
-        self.assertIn("version: 2.1.1", text)
+        self.assertIn("version: 2.2.0", text)
         self.assertIn("icon: icon.png", text)
         self.assertIn("Half-automatic 2D/3D Sync", text)
         self.assertNotIn("Toolbar RUI is not included yet", text)
@@ -124,7 +124,7 @@ class G02SpikePackagingTests(unittest.TestCase):
         self.assertIn("docs\\toolbar\\LoopFlow.rui", text)
         self.assertIn("Replace generated LoopFlow.rui", text)
         self.assertIn("yak must contain exactly one rui", text)
-        self.assertIn('Version = "2.1.1"', text)
+        self.assertIn('Version = "2.2.0"', text)
         self.assertIn("LoopFlow_2.png", text)
         self.assertIn("icon.png", text)
         self.assertIn("Tag_Blocks_3dm\\Tag_Blocks.3dm", text)
@@ -192,10 +192,9 @@ class G02SpikePackagingTests(unittest.TestCase):
             self.assertIn("<light>", body, guid)
             self.assertIn("<dark>", body, guid)
             self.assertNotIn("fill-dark=", body, guid)
-        for guid in clipping_ids:
-            body = icons[guid]
-            self.assertIn("<light>", body, guid)
-            self.assertIn("<dark>", body, guid)
+        # Rhino 9 匯出的五顆原生剖切按鈕沿用 Rhino 的圖示 ID；
+        # 產品指令的圖示仍須在 RUI 內提供淺色與深色版本。
+        self.assertTrue(clipping_ids.isdisjoint(product_ids))
 
     def test_product_rui_has_toolbar_group(self):
         root = ET.parse(RUI).getroot()
@@ -208,7 +207,7 @@ class G02SpikePackagingTests(unittest.TestCase):
         group = groups.find("tool_bar_group")
         self.assertIsNotNone(group)
         self.assertEqual(group.get("guid"), "628ae8b4-9e46-4b71-973e-63e11045642f")
-        self.assertEqual(group.get("active_tool_bar"), "c5997a99-3f10-4b7b-9601-ab25397a3234")
+        self.assertEqual(group.get("active_tool_bar_group"), "c5997a99-3f10-4b7b-9601-ab25397a3234")
         self.assertEqual((group.findtext("text/locale_1033") or "").strip(), "LoopFlow")
         item = group.find("tool_bar_group_item")
         self.assertIsNotNone(item)

@@ -174,7 +174,7 @@ On failure, the last good official file stays. The popup lists the same mismatch
 
 ## Rhino Section (native)
 
-Not a LoopFlow command. Use Rhino 8 built-in `Section` / `Clipping` commands for plans, elevations, or sections. LoopFlow does not replace this step; the next command registers the result.
+Not a LoopFlow command. Use Rhino 8 or 9 built-in `Section` / `Clipping` commands for plans, elevations, or sections. LoopFlow does not replace this step; the next command registers the result.
 
 ---
 
@@ -191,7 +191,7 @@ Registers a section as a fixed 2D↔3D map for [09 Laser](#09-laser-projection).
 3. Only one name is used, and the first match wins: the Text Dot’s displayed text; if that does not match, a UserText key on that dot (not the object name, and not the key’s value); if there is no Text Dot, the block name (object name, otherwise the block definition name). LoopFlow first looks for a Clipping Plane whose full name matches (case-insensitive). If none, it allows a longer unique name that contains that text. If candidates are not unique, it stops and does not guess.
 4. The new frame is drawn on `LoopFlow::Anchor_Frame`. Its name is the matched text. If you selected a 1.x frame or one already registered, that frame is updated and the name is filled in; a second frame is not added. The block is not exploded.
 
-Register each section once. Later, if you **move the frame with the drawing** (no re-cut, rotate, or mirror), you do not rerun this command. Reflected ceiling plans should be mirrored left-right before you register.
+Register each section once. Later, if you **move the frame with the drawing** (no re-cut, rotate, or mirror), you do not rerun this command. For ceiling drawings, choose the actual generation method in the prompt: Rhino 8 drawings manually flipped left-right, or Rhino 9 Clipping Drawings using Reflected projection. After a 3D size change and a rebuilt 2D section, register the existing frame again with the new drawing.
 
 ---
 

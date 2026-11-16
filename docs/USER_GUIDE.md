@@ -32,7 +32,7 @@ The project Dictionary is whichever `.xlsx` Nexus remembered after **Sync Type L
 
 ## The 2D / 3D boundary: Rhino Section
 
-LoopFlow does not ship its own section engine. The 2D geometry flow sits on **Rhino 8 native Section / Clipping Drawing**. That step is the main geometric handoff:
+LoopFlow does not ship its own section engine. The 2D geometry flow sits on **Rhino 8/9 native Section / Clipping Drawing**. That step is the main geometric handoff:
 
 - **Before the line**: the 3D world — free modelling, spaces, data, and publish all happen in the model.
 - **After the line**: the 2D world — sheet numbering, tag binding, and display organise data that already exists. They do not rebuild geometry or redefine model data. You still choose which Views to make, how to arrange Layouts, and whether to lock tags. 2D is not a fully automatic dump.
