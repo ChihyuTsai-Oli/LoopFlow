@@ -443,8 +443,8 @@ def ask_ceiling_projection_choice(message: str, manual: str, reflected: str) -> 
             self.MinimumSize = drawing.Size(550, 165)
             self.choice = None
 
-            layout = forms.DynamicLayout()
-            layout.Spacing = _dialog_spacing(drawing)
+            layout = forms.TableLayout()
+            layout.Spacing = drawing.Size(0, DIALOG_SPACING)
             heading = forms.Label()
             heading.Text = message
             heading.Font = _ui_font(drawing)
@@ -454,7 +454,10 @@ def ask_ceiling_projection_choice(message: str, manual: str, reflected: str) -> 
                 pass
             heading.Width = 510
             _lock_control_height(heading, drawing, 24)
-            layout.AddRow(heading)
+            heading_row = forms.TableRow()
+            heading_row.ScaleHeight = False
+            heading_row.Cells.Add(forms.TableCell(heading, False))
+            layout.Rows.Add(heading_row)
 
             for label, handler in ((manual, self._choose_manual), (reflected, self._choose_reflected)):
                 button = forms.Button()
@@ -465,7 +468,10 @@ def ask_ceiling_projection_choice(message: str, manual: str, reflected: str) -> 
                 button.MinimumSize = button.Size
                 button.MaximumSize = button.Size
                 button.Click += handler
-                layout.AddRow(button)
+                button_row = forms.TableRow()
+                button_row.ScaleHeight = False
+                button_row.Cells.Add(forms.TableCell(button, False))
+                layout.Rows.Add(button_row)
 
             cancel = forms.Button()
             cancel.Visible = False
