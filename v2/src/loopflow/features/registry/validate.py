@@ -154,6 +154,18 @@ def validate_payload(payload) -> results.Result:
         if space_id != schema.RESERVED_SPACE_ID and not UUID_V4_RE.match(str(space_id or "")):
             return _blocked("invalid_space_id", t("registry.048") % index)
 
+    identity_map = payload["extension"].get("identity_map_v1")
+    if identity_map is not None:
+        from loopflow.features.model_data.identity_map import IdentityMapError, validate_map
+
+        try:
+            checked_map = validate_map(identity_map)
+        except IdentityMapError as exc:
+            return _blocked("invalid_identity_map", str(exc))
+        object_ids = [item["object_id"] for item in objects]
+        if len(set(object_ids)) != len(object_ids) or set(checked_map["pairs"].values()) != set(object_ids):
+            return _blocked("invalid_identity_map", "Registry 物件與 A→B 對照不一致。")
+
     return results.ok(
         "validate_registry",
         t("registry.025"),

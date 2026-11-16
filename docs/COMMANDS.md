@@ -138,6 +138,8 @@ Pick one or more closed curves as a space, and type one space name for them. The
 
 Writes each ordinary object’s ID, Type mapping, space, elevation, and data revision onto the object. If an object sits in two space frames, LoopFlow zooms to it and asks you to pick one space.
 
+After publishing, if `MatchProperties` copies another object's UUID, step 5 restores the original UUID from the published object identity map. A new copied object gets a new UUID. Automatic repair stops when an object was rebuilt or its previous identity cannot be determined, protecting existing Tag bindings.
+
 **Objects on `00_STR` structure layers are skipped and not asked for a space.** The same run clears leftover object UserText on them. Type layers and layer `lf_type_id` are still created. Structure objects are omitted from step 6 mismatches and from the Registry.
 
 ### 6　Validate model metadata (no write)
@@ -146,6 +148,8 @@ Recomputes in memory “what a write would produce now” and compares it with t
 
 - Full match: a popup says it is fine.
 - Mismatch: a popup lists differences, reminds you to run step 5, and selects the problem objects.
+
+When a published identity map exists, this step also checks each Rhino object against its UUID. Validation does not change objects.
 
 ---
 
@@ -161,6 +165,8 @@ Packs model data into a new Registry (the read-only snapshot for 2D). The offici
 2. Re-read current state and bump the revision.
 3. Write a temp file and fully validate it; only then replace the official file (no half-written official file).
 4. On success, objects in the official scope get this publish revision in their data-revision field.
+
+The first publish also records a map between Rhino objects and LoopFlow UUIDs in the Registry for later repair and validation. For older projects without this map, the next successful publish establishes it.
 
 On failure, the last good official file stays. The popup lists the same mismatches as step 6 and selects the related objects.
 

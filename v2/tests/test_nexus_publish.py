@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -16,6 +17,8 @@ from loopflow.features.dictionary import schema
 from loopflow.features.dictionary.layer_paths import to_full_path
 from loopflow.features.dictionary.loader import load_from_table
 from loopflow.features.model_data.identity import apply_identity
+from loopflow.features.model_data.identity import UUID_V4_RE
+from loopflow.features.model_data.verify import compare_apply_usertext
 from loopflow.features.model_data.placement import apply_placement
 from loopflow.features.model_data.space import (
     SPACE_BOUNDARY_LAYER,
@@ -24,6 +27,7 @@ from loopflow.features.model_data.space import (
 )
 from loopflow.features.registry.handoff import publish_from_session, run_publish_exchange
 from loopflow.features.registry.lock import acquire_lock, release_lock
+from loopflow.features.registry.validate import validate_payload
 from loopflow.foundation.atomic_io import read_json
 from loopflow.foundation.paths import CONFIG_DIR_NAME, PRODUCT_DIR_NAME
 from loopflow.foundation.usertext import DATA_REVISION_KEY, LEVEL_ID_KEY, OBJECT_ID_KEY
@@ -108,6 +112,80 @@ def _apply(session, catalog):
 
 
 class PublishHandoffTests(unittest.TestCase):
+    def test_published_identity_map_restores_copied_uuid_and_preserves_tag_source(self):
+        catalog = _catalog(_row())
+        with tempfile.TemporaryDirectory(prefix="loopflow-identity-map-") as raw:
+            session = _session(raw)
+            _add_space(session)
+            _add_wall(session)
+            session.add_object("other", layer=FULL)
+            session.set_bbox("other", (4, 2, 0), (5, 3, 270))
+            _apply(session, catalog)
+            wall_b = session.get_object_user_text("wall", OBJECT_ID_KEY)
+            other_b = session.get_object_user_text("other", OBJECT_ID_KEY)
+            published = publish_from_session(session, catalog=catalog, show_message=lambda _msg: None)
+            self.assertTrue(published.ok, published.message)
+            official = _registry_folder(raw) / "Project_Registry.json"
+            payload = read_json(official).details["payload"]
+            self.assertEqual(payload["extension"]["identity_map_v1"]["pairs"], {"wall": wall_b, "other": other_b})
+
+            session.set_object_user_text("wall", OBJECT_ID_KEY, other_b)
+            checked = compare_apply_usertext(session, catalog=catalog)
+            self.assertIn("wall", checked.details["mismatch_object_ids"])
+            refused = publish_from_session(session, catalog=catalog, show_message=lambda _msg: None)
+            self.assertEqual(refused.blocking, ("verify_not_passed",))
+            self.assertEqual(read_json(official).details["payload"]["registry_revision"], 1)
+            repaired = apply_identity(session, catalog=catalog, guarded=False)
+            self.assertTrue(repaired.ok, repaired.message)
+            self.assertEqual(session.get_object_user_text("wall", OBJECT_ID_KEY), wall_b)
+            self.assertEqual(session.get_object_user_text("other", OBJECT_ID_KEY), other_b)
+            self.assertEqual(repaired.details["id_mappings"][0]["new_id"], wall_b)
+            self.assertTrue(publish_from_session(session, catalog=catalog, show_message=lambda _msg: None).ok)
+            revised = read_json(official).details["payload"]
+            self.assertEqual(revised["registry_revision"], 2)
+            self.assertEqual(revised["extension"]["identity_map_v1"]["pairs"]["wall"], wall_b)
+
+    def test_new_copy_gets_new_uuid_but_retired_source_blocks(self):
+        catalog = _catalog(_row())
+        with tempfile.TemporaryDirectory(prefix="loopflow-identity-map-") as raw:
+            session = _session(raw)
+            _add_space(session)
+            _add_wall(session)
+            _apply(session, catalog)
+            old_b = session.get_object_user_text("wall", OBJECT_ID_KEY)
+            self.assertTrue(publish_from_session(session, catalog=catalog, show_message=lambda _msg: None).ok)
+            session.add_object("copy", layer=FULL)
+            session.set_object_user_text("copy", OBJECT_ID_KEY, old_b)
+            fixed = apply_identity(session, catalog=catalog, guarded=False)
+            self.assertTrue(fixed.ok, fixed.message)
+            copy_b = session.get_object_user_text("copy", OBJECT_ID_KEY)
+            self.assertTrue(UUID_V4_RE.fullmatch(copy_b))
+            self.assertNotEqual(copy_b, old_b)
+            session.delete_object("wall")
+            session.add_object("replacement", layer=FULL)
+            session.set_object_user_text("replacement", OBJECT_ID_KEY, old_b)
+            blocked = apply_identity(session, catalog=catalog, guarded=False)
+            self.assertEqual(blocked.blocking, ("identity_map_conflict",))
+            self.assertEqual(session.get_object_user_text("replacement", OBJECT_ID_KEY), old_b)
+
+    def test_invalid_published_map_blocks_repair_and_registry_validation(self):
+        catalog = _catalog(_row())
+        with tempfile.TemporaryDirectory(prefix="loopflow-identity-map-") as raw:
+            session = _session(raw)
+            _add_space(session)
+            _add_wall(session)
+            _apply(session, catalog)
+            self.assertTrue(publish_from_session(session, catalog=catalog, show_message=lambda _msg: None).ok)
+            official = _registry_folder(raw) / "Project_Registry.json"
+            payload = read_json(official).details["payload"]
+            payload["extension"]["identity_map_v1"]["pairs"]["wall"] = "not-a-uuid"
+            self.assertEqual(validate_payload(payload).blocking, ("invalid_identity_map",))
+            official.write_text(json.dumps(payload), encoding="utf-8")
+            before = session.get_object_user_text("wall", OBJECT_ID_KEY)
+            refused = apply_identity(session, catalog=catalog, guarded=False)
+            self.assertEqual(refused.blocking, ("invalid_identity_map",))
+            self.assertEqual(session.get_object_user_text("wall", OBJECT_ID_KEY), before)
+
     def test_before_verify_cannot_publish(self):
         with tempfile.TemporaryDirectory(prefix="loopflow-nx07-") as raw:
             session = _session(raw)

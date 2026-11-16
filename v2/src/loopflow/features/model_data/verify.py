@@ -35,6 +35,7 @@ from loopflow.foundation.usertext import (
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 from loopflow.platform.rhino.state import ObjectViewState
 from loopflow.foundation.i18n import t
+from loopflow.features.model_data.identity_map import IdentityMapError, load_identity_map
 
 COMMAND_ID = "LF_Nexus"
 
@@ -194,6 +195,12 @@ def compare_apply_usertext(
 
     identity_by_id = {item["rhino_id"]: item for item in identity.details.get("items") or ()}
     placement_by_id = {item["rhino_id"]: item for item in placement.details.get("items") or ()}
+    try:
+        baseline = load_identity_map(session)
+    except IdentityMapError as exc:
+        return results.blocked("verify_model", str(exc), blocking=("invalid_identity_map",), command_id=command_id)
+    pairs = baseline["pairs"] if baseline else {}
+    used = set(baseline["used_uuids"]) if baseline else set()
     mismatches = []
     for object_id in iter_scan_targets(session, selected_only=selected_only):
         ident = identity_by_id.get(object_id) or {}
@@ -201,6 +208,12 @@ def compare_apply_usertext(
         notes = []
         for issue in ident.get("issues") or ():
             notes.append(issue_labels().get(issue, issue))
+        actual_b = read_text(session, object_id, OBJECT_ID_KEY)
+        expected_b = pairs.get(str(object_id))
+        if expected_b and actual_b != expected_b:
+            notes.append("UUID 與已發布身分不符：應為 %s" % expected_b)
+        elif baseline and not expected_b and actual_b in used:
+            notes.append("新物件沿用已發布或已退役的 UUID")
         for issue in place.get("issues") or ():
             if issue == "migration_th_bh":
                 continue

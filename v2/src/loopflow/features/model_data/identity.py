@@ -37,6 +37,7 @@ from loopflow.foundation.usertext import (
 )
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 from loopflow.foundation.i18n import t
+from loopflow.features.model_data.identity_map import IdentityMapError, load_identity_map
 
 COMMAND_ID = "LF_Nexus"
 UUID_V4_RE = re.compile(
@@ -324,7 +325,6 @@ def apply_identity(
         if not loaded.ok:
             return loaded
         type_catalog = loaded.details["catalog"]
-        strip_structure_metadata(current, selected_only=selected_only)
         revision = expected_data_revision(current)
         mapping_table = dict(mappings or {})
         for new_id in mapping_table.values():
@@ -335,7 +335,38 @@ def apply_identity(
                     blocking=("invalid_mapping",),
                     command_id=command_id,
                 )
+        try:
+            baseline = load_identity_map(current)
+        except IdentityMapError as exc:
+            return results.blocked("apply_identity", str(exc), blocking=("invalid_identity_map",), command_id=command_id)
         targets = iter_scan_targets(current, selected_only=selected_only)
+        if baseline is not None:
+            pairs = baseline["pairs"]
+            owners = {b: a for a, b in pairs.items()}
+            all_targets = set(iter_scan_targets(current, selected_only=False))
+            used = set(baseline["used_uuids"])
+            for rhino_id in targets:
+                a = str(rhino_id)
+                old = read_text(current, rhino_id, OBJECT_ID_KEY)
+                expected = pairs.get(a)
+                explicit = mapping_table.get(rhino_id)
+                if expected:
+                    if explicit is not None and explicit != expected:
+                        return results.blocked("apply_identity", "已發布物件不得改換 UUID。", blocking=("identity_map_conflict",), command_id=command_id)
+                    if old != expected:
+                        mapping_table[rhino_id] = expected
+                elif old and old in used:
+                    owner = owners.get(old)
+                    if owner not in all_targets and explicit is None:
+                        return results.blocked("apply_identity", "新物件沿用已退役物件的 UUID；請確認原身分。", blocking=("identity_map_conflict",), command_id=command_id)
+                    if explicit is None:
+                        fresh = _new_id()
+                        while fresh in used:
+                            fresh = _new_id()
+                        mapping_table[rhino_id] = fresh
+                        used.add(fresh)
+                if explicit is not None and a not in pairs and explicit in used:
+                    return results.blocked("apply_identity", "新物件不得沿用已發布 UUID。", blocking=("identity_map_conflict",), command_id=command_id)
         items = _build_items(current, type_catalog, targets)
         assigned: Dict[str, str] = {}
         planned = []
@@ -359,6 +390,12 @@ def apply_identity(
                     command_id=command_id,
                 )
             seen[object_id] = item["rhino_id"]
+        if baseline is not None:
+            used = set(baseline["used_uuids"])
+            for item, object_id in planned:
+                if str(item["rhino_id"]) not in baseline["pairs"] and object_id in used:
+                    return results.blocked("apply_identity", "新物件不得沿用已發布 UUID。", blocking=("identity_map_conflict",), command_id=command_id)
+        strip_structure_metadata(current, selected_only=selected_only)
         id_mappings = []
         applied = []
         for item in metadata_only:

@@ -12,6 +12,7 @@ from loopflow.features.registry.publisher import publish_registry
 from loopflow.foundation import results
 from loopflow.platform.rhino.session import RhinoSession, run_guarded
 from loopflow.foundation.i18n import t
+from loopflow.features.model_data.identity_map import IdentityMapError, KEY as IDENTITY_MAP_KEY, load_identity_map, snapshot_identity_map
 
 COMMAND_ID = "LF_Publish_Exchange"
 
@@ -78,6 +79,15 @@ def publish_from_session(
             project_id=project_id,
             model_unit=current.model_unit_system(),
         )
+        from loopflow.features.model_data.identity import iter_scan_targets
+
+        try:
+            previous = load_identity_map(current)
+            payload["extension"][IDENTITY_MAP_KEY] = snapshot_identity_map(
+                current, previous, iter_scan_targets(current, selected_only=False)
+            )
+        except IdentityMapError as exc:
+            return results.blocked("publish_registry", str(exc), blocking=("invalid_identity_map",), command_id=command_id)
         written = publish_registry(
             payload,
             document_path=current.document_path() if hasattr(current, "document_path") else None,
