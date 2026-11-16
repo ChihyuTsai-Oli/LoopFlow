@@ -438,9 +438,9 @@ def ask_ceiling_projection_choice(message: str, manual: str, reflected: str) -> 
             self.Title = "LoopFlow"
             self.Padding = _dialog_padding(drawing)
             self.Resizable = False
-            self.Width = 860
-            self.Height = 190
-            self.MinimumSize = drawing.Size(860, 190)
+            self.Width = 720
+            self.Height = 165
+            self.MinimumSize = drawing.Size(720, 165)
             self.choice = None
 
             layout = forms.DynamicLayout()
@@ -453,19 +453,29 @@ def ask_ceiling_projection_choice(message: str, manual: str, reflected: str) -> 
             for label, handler in ((manual, self._choose_manual), (reflected, self._choose_reflected)):
                 button = forms.Button()
                 button.Text = label
-                button.Width = 820
+                button.Width = 680
                 button.Height = 40
-                button.MinimumSize = drawing.Size(820, 40)
+                button.MinimumSize = drawing.Size(680, 40)
                 button.Click += handler
                 layout.AddRow(button)
 
             cancel = forms.Button()
-            cancel.Text = "Cancel"
-            _apply_dialog_button_size(cancel, drawing)
+            cancel.Visible = False
             cancel.Click += self._cancel
-            layout.AddRow(None, cancel)
             self.Content = layout
             self.AbortButton = cancel
+            try:
+                self.KeyDown += self._on_key_down
+            except Exception:
+                pass
+
+        def _on_key_down(self, sender, e) -> None:
+            try:
+                if e.Key == forms.Keys.Escape:
+                    e.Handled = True
+                    self._cancel(sender, e)
+            except Exception:
+                pass
 
         def _choose_manual(self, sender, e) -> None:
             self.choice = manual
