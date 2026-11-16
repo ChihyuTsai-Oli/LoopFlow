@@ -438,9 +438,9 @@ def ask_ceiling_projection_choice(message: str, manual: str, reflected: str) -> 
             self.Title = "LoopFlow"
             self.Padding = _dialog_padding(drawing)
             self.Resizable = False
-            self.Width = 720
+            self.Width = 550
             self.Height = 165
-            self.MinimumSize = drawing.Size(720, 165)
+            self.MinimumSize = drawing.Size(550, 165)
             self.choice = None
 
             layout = forms.DynamicLayout()
@@ -448,6 +448,12 @@ def ask_ceiling_projection_choice(message: str, manual: str, reflected: str) -> 
             heading = forms.Label()
             heading.Text = message
             heading.Font = _ui_font(drawing)
+            try:
+                heading.Wrap = getattr(forms.WrapMode, "None")
+            except Exception:
+                pass
+            heading.Width = 510
+            _lock_control_height(heading, drawing, 24)
             layout.AddRow(heading)
 
             for label, handler in ((manual, self._choose_manual), (reflected, self._choose_reflected)):
@@ -459,7 +465,7 @@ def ask_ceiling_projection_choice(message: str, manual: str, reflected: str) -> 
                 button.MinimumSize = button.Size
                 button.MaximumSize = button.Size
                 button.Click += handler
-                layout.AddRow(None, button, None)
+                layout.AddRow(button)
 
             cancel = forms.Button()
             cancel.Visible = False
