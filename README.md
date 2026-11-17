@@ -34,6 +34,10 @@ For complete command and workflow instructions, see the [LoopFlow 2 documentatio
 
 ## System requirements
 
+### Version 2.2.2
+
+Toolbar icons and the Package Manager icon are replaced. Commands are unchanged. Rhino 8 and Rhino 9 still share one package.
+
 ### Version 2.2.1
 
 - Embeds the five Rhino 9 clipping toolbar SVGs so the same icons display correctly in Rhino 8.
@@ -57,10 +61,10 @@ Bilingual interface: English / Traditional Chinese
 
 Do not use the 1.x ZIP, `install_LoopFlow.bat`, or drag-and-drop `.rhc` toolbar. Do not mix 1.x and LoopFlow 2 in the same project.
 
-1. Open Rhino 8 or 9, run `PackageManager`, search for `LoopFlow`, and install 2.2.1.
+1. Open Rhino 8 or 9, run `PackageManager`, search for `LoopFlow`, and install 2.2.2.
 2. **Quit Rhino completely and reopen it.**
 
-You can also download `loopflow-2.2.1-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) and install from file. Do not download the 1.x ZIP.
+You can also download `loopflow-2.2.2-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) and install from file. Do not download the 1.x ZIP.
 
 After install:
 
