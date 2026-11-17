@@ -156,6 +156,12 @@ class G02SpikePackagingTests(unittest.TestCase):
         self.assertNotIn("2D_Cabinet", blob)
         self.assertNotIn("! _LFLanguage", scripts)
         self.assertEqual(_right_scripts_for_button(root, "! _LFDocument"), ["! _LFLanguage"])
+        language = next(
+            macro
+            for macro in root.findall(".//macro_item")
+            if (macro.findtext("script") or "").strip() == "! _LFLanguage"
+        )
+        self.assertEqual((language.findtext("tooltip/locale_1033") or "").strip(), "Language")
         self.assertEqual(
             _right_scripts_for_button(root, "! _LFOpenDictionary"),
             [""],
@@ -192,9 +198,11 @@ class G02SpikePackagingTests(unittest.TestCase):
             self.assertIn("<light>", body, guid)
             self.assertIn("<dark>", body, guid)
             self.assertNotIn("fill-dark=", body, guid)
-        # Rhino 9 匯出的五顆原生剖切按鈕沿用 Rhino 的圖示 ID；
-        # 產品指令的圖示仍須在 RUI 內提供淺色與深色版本。
         self.assertTrue(clipping_ids.isdisjoint(product_ids))
+        for guid in clipping_ids:
+            body = icons[guid]
+            self.assertIn("<light>", body, guid)
+            self.assertIn("<dark>", body, guid)
 
     def test_product_rui_has_toolbar_group(self):
         root = ET.parse(RUI).getroot()

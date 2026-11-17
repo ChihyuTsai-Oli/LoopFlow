@@ -577,6 +577,9 @@
       <menu_text>
         <locale_1033>Language</locale_1033>
       </menu_text>
+      <tooltip>
+        <locale_1033>Language</locale_1033>
+      </tooltip>
       <script>! _LFLanguage</script>
     </macro_item>
   </macros>
@@ -1399,6 +1402,176 @@
 </svg>
         </svg>
       </dark>
+    </icon>
+    <icon guid="e08b0252-9f29-49ef-9073-710394d75874" name="e08b0252-9f29-49ef-9073-710394d75874.svg">
+      <light><svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0pt 0pt 48pt 48pt">
+  <svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 48 48" fill-dark="#FFF" stroke-dark="none">
+  <svg fill="none" fill-rule="evenodd" stroke="black" stroke-linejoin="bevel" stroke-miterlimit="10" font-family="Times New Roman" font-size="16" style="font-variant-ligatures:none" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" version="1.1" overflow="visible" viewBox="0 -36 36 36">
+    <defs xmlns="http://www.w3.org/2000/svg">
+      <style type="text/css">@import url('https://themes.googleusercontent.com/fonts/css?family=Open Sans:400,600');</style>
+    </defs>
+    <g id="Layer 1" transform="scale(1 -1)" stroke-width="0.501" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 22.49,2.348 L 18.986,2.287 L 17.457,14.403 L 9.915,14.398 L 10.155,21.861 L 10.045,29.671 L 15.97,32.39 L 23.25,32.39 L 23.25,21.752 L 27.75,21.752 L 27.75,5.903 L 22.49,2.348 Z" stroke="#868e96" fill="#f8f9fa" stroke-linejoin="miter" stroke-width="1.5" stroke-linecap="round" marker-start="none" marker-end="none" />
+      <rect x="11.248" y="2.288" width="10.492" height="16.516" stroke="#868e96" fill="#f8f9fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="miter" />
+      <path d="M 9.763,29.237 L 9.763,18.75 L 5.25,18.75 L 5.25,11.25 L 17.25,11.25 L 17.25,29.237 L 9.763,29.237 Z" stroke="#868e96" fill="#f8f9fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="miter" marker-start="none" marker-end="none" />
+      <path d="M 23.247,32.39 L 17.258,28.941" fill="none" stroke="#868e96" stroke-linejoin="miter" stroke-width="1.5" />
+      <path d="M 23.504,22.077 L 17.769,19.389" fill="none" stroke="#868e96" stroke-linejoin="miter" stroke-width="1.5" />
+      <path d="M 27.74,21.561 L 22.064,18.621" fill="none" stroke="#868e96" stroke-linejoin="miter" stroke-width="1.5" />
+      <path d="M 30.76,28.497 L 26.973,23.998 L 34.483,24.074 L 30.76,28.497 Z" fill="#212529" stroke-linejoin="miter" stroke-linecap="round" stroke="none" stroke-width="1.102" marker-start="none" marker-end="none" />
+      <path d="M 30.772,26.276 L 30.772,17.25 L 5.25,17.253 L 5.25,24.749" fill="none" stroke="#212529" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M 5.287,28.5 L 1.5,24 L 9.01,24.076 L 5.287,28.5 Z" fill="#212529" stroke-linejoin="miter" stroke-linecap="round" stroke="none" stroke-width="1.102" marker-start="none" marker-end="none" />
+    </g>
+  </svg>
+</svg>
+</svg></light>
+      <dark><svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0pt 0pt 48pt 48pt">
+  <svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 48 48" fill-dark="#FFF" stroke-dark="none">
+  <svg fill="none" fill-rule="evenodd" stroke="black" stroke-linejoin="bevel" stroke-miterlimit="10" font-family="Times New Roman" font-size="16" style="font-variant-ligatures:none" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" version="1.1" overflow="visible" viewBox="0 -36 36 36">
+    <defs xmlns="http://www.w3.org/2000/svg">
+      <style type="text/css">@import url('https://themes.googleusercontent.com/fonts/css?family=Open Sans:400,600');</style>
+    </defs>
+    <g id="Layer 1" transform="scale(1 -1)" stroke-width="0.501" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 22.49,2.348 L 18.986,2.287 L 17.457,14.403 L 9.915,14.398 L 10.155,21.861 L 10.045,29.671 L 15.97,32.39 L 23.25,32.39 L 23.25,21.752 L 27.75,21.752 L 27.75,5.903 L 22.49,2.348 Z" stroke="#868e96" fill="#f8f9fa" stroke-linejoin="miter" stroke-width="1.5" stroke-linecap="round" marker-start="none" marker-end="none" />
+      <rect x="11.248" y="2.288" width="10.492" height="16.516" stroke="#868e96" fill="#f8f9fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="miter" />
+      <path d="M 9.763,29.237 L 9.763,18.75 L 5.25,18.75 L 5.25,11.25 L 17.25,11.25 L 17.25,29.237 L 9.763,29.237 Z" stroke="#868e96" fill="#f8f9fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="miter" marker-start="none" marker-end="none" />
+      <path d="M 23.247,32.39 L 17.258,28.941" fill="none" stroke="#868e96" stroke-linejoin="miter" stroke-width="1.5" />
+      <path d="M 23.504,22.077 L 17.769,19.389" fill="none" stroke="#868e96" stroke-linejoin="miter" stroke-width="1.5" />
+      <path d="M 27.74,21.561 L 22.064,18.621" fill="none" stroke="#868e96" stroke-linejoin="miter" stroke-width="1.5" />
+      <path d="M 30.76,28.497 L 26.973,23.998 L 34.483,24.074 L 30.76,28.497 Z" fill="#212529" stroke-linejoin="miter" stroke-linecap="round" stroke="none" stroke-width="1.102" marker-start="none" marker-end="none" />
+      <path d="M 30.772,26.276 L 30.772,17.25 L 5.25,17.253 L 5.25,24.749" fill="none" stroke="#212529" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M 5.287,28.5 L 1.5,24 L 9.01,24.076 L 5.287,28.5 Z" fill="#212529" stroke-linejoin="miter" stroke-linecap="round" stroke="none" stroke-width="1.102" marker-start="none" marker-end="none" />
+    </g>
+  </svg>
+</svg>
+</svg></dark>
+    </icon>
+    <icon guid="c1f7213f-3be9-449c-a629-5680712a1d8a" name="c1f7213f-3be9-449c-a629-5680712a1d8a.svg">
+      <light><svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0pt 0pt 48pt 48pt">
+  <svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 48 48" fill-dark="#FFF" stroke-dark="none">
+  <svg fill="none" fill-rule="evenodd" stroke="black" stroke-linejoin="bevel" stroke-miterlimit="10" font-family="Times New Roman" font-size="16" style="font-variant-ligatures:none" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" version="1.1" overflow="visible" viewBox="0 -36 36 36">
+    <defs xmlns="http://www.w3.org/2000/svg">
+      <style type="text/css">@import url('https://themes.googleusercontent.com/fonts/css?family=Open Sans:400,600');</style>
+    </defs>
+    <g id="Layer 1" transform="scale(1 -1)" stroke-width="0.501" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 14.25,14.125 L 14.25,5.25 L 24.743,5.25 L 24.743,21.767 L 20.277,21.767" fill="none" stroke="#000000" stroke-linejoin="miter" stroke-width="1.5" />
+      <path d="M 12.771,32.214 L 12.771,21.727 L 8.258,21.727 L 8.258,14.227 L 20.258,14.227 L 20.258,32.214 L 12.771,32.214 Z" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="miter" marker-start="none" marker-end="none" />
+    </g>
+  </svg>
+</svg>
+</svg></light>
+      <dark><svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0pt 0pt 48pt 48pt">
+  <svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 48 48" fill-dark="#FFF" stroke-dark="none">
+  <svg fill="none" fill-rule="evenodd" stroke="black" stroke-linejoin="bevel" stroke-miterlimit="10" font-family="Times New Roman" font-size="16" style="font-variant-ligatures:none" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" version="1.1" overflow="visible" viewBox="0 -36 36 36">
+    <defs xmlns="http://www.w3.org/2000/svg">
+      <style type="text/css">@import url('https://themes.googleusercontent.com/fonts/css?family=Open Sans:400,600');</style>
+    </defs>
+    <g id="Layer 1" transform="scale(1 -1)" stroke-width="0.501" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 14.25,14.125 L 14.25,5.25 L 24.743,5.25 L 24.743,21.767 L 20.277,21.767" fill="none" stroke="#000000" stroke-linejoin="miter" stroke-width="1.5" />
+      <path d="M 12.771,32.214 L 12.771,21.727 L 8.258,21.727 L 8.258,14.227 L 20.258,14.227 L 20.258,32.214 L 12.771,32.214 Z" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="miter" marker-start="none" marker-end="none" />
+    </g>
+  </svg>
+</svg>
+</svg></dark>
+    </icon>
+    <icon guid="cfb2d808-909d-44ae-a57a-4c66f018811a" name="cfb2d808-909d-44ae-a57a-4c66f018811a.svg">
+      <light><svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0pt 0pt 48pt 48pt">
+  <svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 48 48" fill-dark="#FFF" stroke-dark="none">
+  <svg fill="none" fill-rule="evenodd" stroke="black" stroke-linejoin="bevel" stroke-miterlimit="10" font-family="Times New Roman" font-size="16" style="font-variant-ligatures:none" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" version="1.1" overflow="visible" viewBox="0 -36 36 36">
+    <defs xmlns="http://www.w3.org/2000/svg">
+      <style type="text/css">@import url('https://themes.googleusercontent.com/fonts/css?family=Open Sans:400,600');</style>
+    </defs>
+    <g id="Layer 1" transform="scale(1 -1)" stroke-width="0.501" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 1.5,10.5 L 34.5,10.5" fill="none" stroke="#5c940d" stroke-width="3" stroke-linejoin="round" />
+      <path d="M 8.263,32.237 L 8.263,21.75 L 3.75,21.75 L 3.75,14.25 L 15.75,14.25 L 15.75,32.237 L 8.263,32.237 Z" stroke="#212529" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="miter" marker-start="none" marker-end="none" />
+      <rect x="21.777" y="14.296" width="10.493" height="16.479" stroke-linecap="round" stroke-width="1.5" stroke="#212529" stroke-linejoin="miter" />
+    </g>
+  </svg>
+</svg>
+</svg></light>
+      <dark><svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0pt 0pt 48pt 48pt">
+  <svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 48 48" fill-dark="#FFF" stroke-dark="none">
+  <svg fill="none" fill-rule="evenodd" stroke="black" stroke-linejoin="bevel" stroke-miterlimit="10" font-family="Times New Roman" font-size="16" style="font-variant-ligatures:none" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" version="1.1" overflow="visible" viewBox="0 -36 36 36">
+    <defs xmlns="http://www.w3.org/2000/svg">
+      <style type="text/css">@import url('https://themes.googleusercontent.com/fonts/css?family=Open Sans:400,600');</style>
+    </defs>
+    <g id="Layer 1" transform="scale(1 -1)" stroke-width="0.501" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 1.5,10.5 L 34.5,10.5" fill="none" stroke="#5c940d" stroke-width="3" stroke-linejoin="round" />
+      <path d="M 8.263,32.237 L 8.263,21.75 L 3.75,21.75 L 3.75,14.25 L 15.75,14.25 L 15.75,32.237 L 8.263,32.237 Z" stroke="#212529" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="miter" marker-start="none" marker-end="none" />
+      <rect x="21.777" y="14.296" width="10.493" height="16.479" stroke-linecap="round" stroke-width="1.5" stroke="#212529" stroke-linejoin="miter" />
+    </g>
+  </svg>
+</svg>
+</svg></dark>
+    </icon>
+    <icon guid="23c562b1-b837-4d9a-b47c-30a736e063bd" name="23c562b1-b837-4d9a-b47c-30a736e063bd.svg">
+      <light><svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0pt 0pt 48pt 48pt">
+  <svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 48 48" fill-dark="#FFF" stroke-dark="none">
+  <svg fill="none" fill-rule="evenodd" stroke="black" stroke-linejoin="bevel" stroke-miterlimit="10" font-family="Times New Roman" font-size="16" style="font-variant-ligatures:none" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" version="1.1" overflow="visible" viewBox="0 -36 36 36">
+    <defs xmlns="http://www.w3.org/2000/svg">
+      <style type="text/css">@import url('https://themes.googleusercontent.com/fonts/css?family=Open Sans:400,600');</style>
+    </defs>
+    <g id="Layer 1" transform="scale(1 -1)" stroke-width="0.501" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 30.76,25.497 L 26.973,20.998 L 34.483,21.074 L 30.76,25.497 Z" fill="#212529" stroke-linejoin="miter" stroke-linecap="round" stroke="none" stroke-width="1.102" marker-start="none" marker-end="none" />
+      <path d="M 30.772,23.276 L 30.772,14.25 L 5.25,14.253 L 5.25,21.749" fill="none" stroke="#212529" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M 5.287,25.5 L 1.5,21 L 9.01,21.076 L 5.287,25.5 Z" fill="#212529" stroke-linejoin="miter" stroke-linecap="round" stroke="none" stroke-width="1.102" marker-start="none" marker-end="none" />
+      <g id="Group" fill-rule="evenodd" stroke="none" stroke-width="0.5" fill="#e03131" fill-opacity="0.996078">
+        <path d="M 27.285,6 L 6.001,27.288 L 8.716,30.001 L 30,8.713 L 27.285,6 Z" marker-start="none" marker-end="none" fill-opacity="0.996078" />
+        <path d="M 8.713,5.999 L 6,8.714 L 27.286,29.998 L 29.999,27.283 L 8.713,5.999 Z" marker-start="none" marker-end="none" fill-opacity="0.996078" />
+      </g>
+    </g>
+  </svg>
+</svg>
+</svg></light>
+      <dark><svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0pt 0pt 48pt 48pt">
+  <svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 48 48" fill-dark="#FFF" stroke-dark="none">
+  <svg fill="none" fill-rule="evenodd" stroke="black" stroke-linejoin="bevel" stroke-miterlimit="10" font-family="Times New Roman" font-size="16" style="font-variant-ligatures:none" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" version="1.1" overflow="visible" viewBox="0 -36 36 36">
+    <defs xmlns="http://www.w3.org/2000/svg">
+      <style type="text/css">@import url('https://themes.googleusercontent.com/fonts/css?family=Open Sans:400,600');</style>
+    </defs>
+    <g id="Layer 1" transform="scale(1 -1)" stroke-width="0.501" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 30.76,25.497 L 26.973,20.998 L 34.483,21.074 L 30.76,25.497 Z" fill="#212529" stroke-linejoin="miter" stroke-linecap="round" stroke="none" stroke-width="1.102" marker-start="none" marker-end="none" />
+      <path d="M 30.772,23.276 L 30.772,14.25 L 5.25,14.253 L 5.25,21.749" fill="none" stroke="#212529" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M 5.287,25.5 L 1.5,21 L 9.01,21.076 L 5.287,25.5 Z" fill="#212529" stroke-linejoin="miter" stroke-linecap="round" stroke="none" stroke-width="1.102" marker-start="none" marker-end="none" />
+      <g id="Group" fill-rule="evenodd" stroke="none" stroke-width="0.5" fill="#e03131" fill-opacity="0.996078">
+        <path d="M 27.285,6 L 6.001,27.288 L 8.716,30.001 L 30,8.713 L 27.285,6 Z" marker-start="none" marker-end="none" fill-opacity="0.996078" />
+        <path d="M 8.713,5.999 L 6,8.714 L 27.286,29.998 L 29.999,27.283 L 8.713,5.999 Z" marker-start="none" marker-end="none" fill-opacity="0.996078" />
+      </g>
+    </g>
+  </svg>
+</svg>
+</svg></dark>
+    </icon>
+    <icon guid="e2be1d31-eef1-45a9-a43d-04b6715f86c9" name="e2be1d31-eef1-45a9-a43d-04b6715f86c9.svg">
+      <light><svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0pt 0pt 48pt 48pt">
+  <svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 48 48" fill-dark="#FFF" stroke-dark="none">
+  <svg fill="none" fill-rule="evenodd" stroke="black" stroke-linejoin="bevel" stroke-miterlimit="10" font-family="Times New Roman" font-size="16" style="font-variant-ligatures:none" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" version="1.1" overflow="visible" viewBox="0 -36 36 36">
+    <defs xmlns="http://www.w3.org/2000/svg">
+      <style type="text/css">@import url('https://themes.googleusercontent.com/fonts/css?family=Open Sans:400,600');</style>
+    </defs>
+    <g id="Layer 1" transform="scale(1 -1)" stroke-width="0.501" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 15,4.5 L 15,14.321 L 16.5,14.321 L 16.5,6 L 25.493,6 L 25.493,21.017 L 21.834,21.017 L 21.834,22.517 L 26.993,22.517 L 26.993,4.5 L 15,4.5 Z" stroke-width="0.5" stroke="none" fill="#212529" fill-rule="evenodd" marker-start="none" marker-end="none" fill-opacity="1.000000" />
+      <path d="M 14.263,32.237 L 14.263,21.75 L 9.75,21.75 L 9.75,14.25 L 21.75,14.25 L 21.75,32.237 L 14.263,32.237 Z" stroke="#212529" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="miter" marker-start="none" marker-end="none" />
+      <path d="M 8.551,4.885 L 5.725,11.085 L 12.238,10.742 L 10.995,8.515 C 14.731,5.795 17.531,5.822 21.838,6.985 C 25.928,8.938 29.358,13.168 28.848,17.445 L 30.871,17.475 C 31.235,14.175 29.131,7.635 22.538,4.885 C 18.681,3.275 13.248,4.002 9.848,6.855 L 8.551,4.885 Z" stroke="#426a08" fill="#426a08" stroke-linejoin="miter" stroke-width="1.5" fill-rule="evenodd" marker-start="none" marker-end="none" />
+      <path d="M 26.848,30.525 L 29.758,23.178 L 22.488,23.415 L 24.135,26.428 C 20.398,29.155 16.621,29.448 13.291,27.958 C 9.458,26.248 5.768,21.775 6.278,17.498 L 4.258,17.475 C 3.895,20.772 5.998,27.312 12.588,30.062 C 16.448,31.675 21.878,30.945 25.278,28.092 L 26.848,30.525 Z" stroke="#426a08" fill="#426a08" stroke-width="1.5" stroke-linejoin="miter" fill-rule="evenodd" marker-start="none" marker-end="none" />
+    </g>
+  </svg>
+</svg>
+</svg></light>
+      <dark><svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0pt 0pt 48pt 48pt">
+  <svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 48 48" fill-dark="#FFF" stroke-dark="none">
+  <svg fill="none" fill-rule="evenodd" stroke="black" stroke-linejoin="bevel" stroke-miterlimit="10" font-family="Times New Roman" font-size="16" style="font-variant-ligatures:none" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" version="1.1" overflow="visible" viewBox="0 -36 36 36">
+    <defs xmlns="http://www.w3.org/2000/svg">
+      <style type="text/css">@import url('https://themes.googleusercontent.com/fonts/css?family=Open Sans:400,600');</style>
+    </defs>
+    <g id="Layer 1" transform="scale(1 -1)" stroke-width="0.501" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 15,4.5 L 15,14.321 L 16.5,14.321 L 16.5,6 L 25.493,6 L 25.493,21.017 L 21.834,21.017 L 21.834,22.517 L 26.993,22.517 L 26.993,4.5 L 15,4.5 Z" stroke-width="0.5" stroke="none" fill="#212529" fill-rule="evenodd" marker-start="none" marker-end="none" fill-opacity="1.000000" />
+      <path d="M 14.263,32.237 L 14.263,21.75 L 9.75,21.75 L 9.75,14.25 L 21.75,14.25 L 21.75,32.237 L 14.263,32.237 Z" stroke="#212529" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="miter" marker-start="none" marker-end="none" />
+      <path d="M 8.551,4.885 L 5.725,11.085 L 12.238,10.742 L 10.995,8.515 C 14.731,5.795 17.531,5.822 21.838,6.985 C 25.928,8.938 29.358,13.168 28.848,17.445 L 30.871,17.475 C 31.235,14.175 29.131,7.635 22.538,4.885 C 18.681,3.275 13.248,4.002 9.848,6.855 L 8.551,4.885 Z" stroke="#426a08" fill="#426a08" stroke-linejoin="miter" stroke-width="1.5" fill-rule="evenodd" marker-start="none" marker-end="none" />
+      <path d="M 26.848,30.525 L 29.758,23.178 L 22.488,23.415 L 24.135,26.428 C 20.398,29.155 16.621,29.448 13.291,27.958 C 9.458,26.248 5.768,21.775 6.278,17.498 L 4.258,17.475 C 3.895,20.772 5.998,27.312 12.588,30.062 C 16.448,31.675 21.878,30.945 25.278,28.092 L 26.848,30.525 Z" stroke="#426a08" fill="#426a08" stroke-width="1.5" stroke-linejoin="miter" fill-rule="evenodd" marker-start="none" marker-end="none" />
+    </g>
+  </svg>
+</svg>
+</svg></dark>
     </icon>
   </icons>
   <bitmaps>

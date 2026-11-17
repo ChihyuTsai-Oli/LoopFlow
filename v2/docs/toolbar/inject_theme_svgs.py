@@ -1,7 +1,8 @@
-"""把淺／深色 SVG 寫進現行 Rhino 8 產品 LoopFlow.rui。
+"""把 SVG 寫進現行 Rhino 8／9 共用的產品 LoopFlow.rui。
 
-來源資料夾以參數傳入，不寫死 Dropbox 路徑。不改 icon GUID、不改剖切內建圖、
-不改工具列分頁小圖。產品圖拿掉 fill-dark，改走獨立 <dark> 稿。
+來源資料夾以參數傳入，不寫死 Dropbox 路徑。不改 icon GUID 或工具列分頁小圖。
+產品圖拿掉 fill-dark，改走獨立 <dark> 稿；Rhino 9 剖切 SVG 另以 --section
+寫入 RUI，讓 Rhino 8 不必依賴 Rhino 9 的內建圖示資源。
 """
 from __future__ import annotations
 
@@ -36,6 +37,14 @@ SCRIPT_TO_SVG = {
     "! _LFLanguage": "LF_Document.svg",
 }
 
+SECTION_SCRIPT_TO_SVG = {
+    "! _ClippingSections": "Create clipping sections.svg",
+    "! _ClippingDrawings": "Create clipping drawings.svg",
+    "! _AlignClippingDrawings": "Align clipping drawings.svg",
+    "! _ClearClippingSections": "Clear clipping sections.svg",
+    "! _UpdateClippingDrawings": "Update clipping drawings.svg",
+}
+
 MACRO_RE = re.compile(
     r'<macro_item\b([^>]*)>.*?<script>(.*?)</script>',
     re.DOTALL,
@@ -65,11 +74,11 @@ def wrap(inner: str, slot: str) -> str:
     return "      <%s>%s\n  %s\n</svg></%s>" % (slot, OUTER, inner, slot)
 
 
-def bitmap_ids(rui_text: str) -> dict[str, str]:
+def bitmap_ids(rui_text: str, script_to_svg: dict[str, str]) -> dict[str, str]:
     found: dict[str, str] = {}
     for attrs, script in MACRO_RE.findall(rui_text):
         command = re.sub(r"\s+", " ", script).strip()
-        svg_name = SCRIPT_TO_SVG.get(command)
+        svg_name = script_to_svg.get(command)
         if svg_name is None:
             continue
         match = BITMAP_RE.search(attrs)
@@ -80,7 +89,7 @@ def bitmap_ids(rui_text: str) -> dict[str, str]:
         if previous and previous != svg_name:
             raise SystemExit("同一 icon GUID 對到兩份 SVG：%s" % guid)
         found[guid] = svg_name
-    missing = set(SCRIPT_TO_SVG) - {
+    missing = set(script_to_svg) - {
         re.sub(r"\s+", " ", script).strip() for _attrs, script in MACRO_RE.findall(rui_text)
     }
     if missing:
@@ -89,7 +98,7 @@ def bitmap_ids(rui_text: str) -> dict[str, str]:
 
 
 def inject(rui_text: str, light_dir: Path, dark_dir: Path) -> str:
-    targets = bitmap_ids(rui_text)
+    targets = bitmap_ids(rui_text, SCRIPT_TO_SVG)
     used: set[str] = set()
 
     def replace(match: re.Match[str]) -> str:
@@ -120,17 +129,61 @@ def inject(rui_text: str, light_dir: Path, dark_dir: Path) -> str:
     return updated
 
 
+def inject_sections(rui_text: str, svg_dir: Path) -> str:
+    """內嵌 R9 剖切 SVG；同一原稿放入 light/dark，保留其 fill-dark 資訊。"""
+    targets = bitmap_ids(rui_text, SECTION_SCRIPT_TO_SVG)
+    used: set[str] = set()
+    blocks = []
+
+    def icon_body(guid: str, svg_name: str) -> str:
+        inner = load_inner(svg_dir / svg_name)
+        return "\n%s\n%s\n    " % (wrap(inner, "light"), wrap(inner, "dark"))
+
+    def replace(match: re.Match[str]) -> str:
+        open_tag, guid, close_tag = match.group(1), match.group(2), match.group(4)
+        svg_name = targets.get(guid)
+        if svg_name is None:
+            return match.group(0)
+        used.add(guid)
+        return open_tag + icon_body(guid, svg_name) + close_tag
+
+    updated = ICON_RE.sub(replace, rui_text)
+    for guid in set(targets) - used:
+        blocks.append(
+            '    <icon guid="%s" name="%s.svg">%s</icon>'
+            % (guid, guid, icon_body(guid, targets[guid]))
+        )
+    if not blocks:
+        return updated
+    marker = "  </icons>"
+    if marker not in updated:
+        raise SystemExit("rui 找不到 </icons>")
+    return updated.replace(marker, "\n".join(blocks) + "\n" + marker, 1)
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="寫入 Rhino 8 工具列淺／深色 SVG")
-    parser.add_argument("--light", required=True, type=Path, help="淺色 SVG 資料夾")
-    parser.add_argument("--dark", required=True, type=Path, help="深色 SVG 資料夾")
+    parser = argparse.ArgumentParser(description="寫入 Rhino 8／9 共用工具列 SVG")
+    parser.add_argument("--light", type=Path, help="產品按鈕淺色 SVG 資料夾")
+    parser.add_argument("--dark", type=Path, help="產品按鈕深色 SVG 資料夾")
+    parser.add_argument("--section", type=Path, help="Rhino 9 剖切按鈕 SVG 資料夾")
     args = parser.parse_args(argv)
-    light_dir = args.light.expanduser().resolve()
-    dark_dir = args.dark.expanduser().resolve()
-    if not light_dir.is_dir() or not dark_dir.is_dir():
-        raise SystemExit("找不到淺色或深色資料夾")
+    if bool(args.light) != bool(args.dark):
+        raise SystemExit("--light 與 --dark 必須一起提供")
+    if not args.light and not args.section:
+        raise SystemExit("至少提供 --light/--dark 或 --section")
     text = RUI.read_text(encoding="utf-8")
-    RUI.write_text(inject(text, light_dir, dark_dir), encoding="utf-8", newline="\n")
+    if args.light:
+        light_dir = args.light.expanduser().resolve()
+        dark_dir = args.dark.expanduser().resolve()
+        if not light_dir.is_dir() or not dark_dir.is_dir():
+            raise SystemExit("找不到淺色或深色資料夾")
+        text = inject(text, light_dir, dark_dir)
+    if args.section:
+        section_dir = args.section.expanduser().resolve()
+        if not section_dir.is_dir():
+            raise SystemExit("找不到剖切 SVG 資料夾")
+        text = inject_sections(text, section_dir)
+    RUI.write_text(text, encoding="utf-8", newline="\n")
     print("updated", RUI)
     return 0
 

@@ -152,7 +152,7 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\v2\src\entrypoints\LF_G01_Check_Sample.
 | Section | `! _ClippingSections` | — |
 | Clipping Drawings | `! _ClippingDrawings` | — |
 | Clear Sections | `! _ClearClippingSections` | — |
-| Edit Drawings | `! _EditClippingDrawings` | — |
+| Align Drawings | `! _AlignClippingDrawings` | — |
 | Update Drawings | `! _UpdateClippingDrawings` | — |
 | 註冊 View | `! _LFAnchorFrame` | — |
 | Extract | `! _LFExtractCP` | — |
