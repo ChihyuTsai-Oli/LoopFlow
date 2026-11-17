@@ -6,7 +6,7 @@
 
 > **Embrace the loop. Let it flow.**
 
-LoopFlow 2 是一套以 Rhino 8 為核心、貫穿 SD（Schematic Design）、DD（Design Development）至 CD（Construction Documentation）的半自動化設計與文件工作流。它不是另一個 BIM 系統，也不要求使用固定範本或參數化流程；你仍然掌控每個步驟，LoopFlow 負責資料更新、圖紙同步與其他重複工作。
+LoopFlow 2 是一套支援 Rhino 8／9、貫穿 SD（Schematic Design）、DD（Design Development）至 CD（Construction Documentation）的半自動化設計與文件工作流。它不是另一個 BIM 系統，也不要求使用固定範本或參數化流程；你仍然掌控每個步驟，LoopFlow 負責資料更新、圖紙同步與其他重複工作。
 
 主要流程都在 Rhino 中完成，讓模型資料、圖面與 Layout 文件能隨著設計發展持續演進。LoopFlow 已在多個實際設計專案中使用，目標是保留 Rhino 的設計自由，同時減少設計變更後的重複整理。
 
@@ -19,7 +19,7 @@ LoopFlow 2 是一套以 Rhino 8 為核心、貫穿 SD（Schematic Design）、DD
 - 同資料夾雙機或多人出圖時，可監看 3D 檔更新
 - 每一步、每個動作都需要自己執行，隨時可以停下，不是黑盒模式，不會一次自動執行完畢
 
-完整指令與操作方式請參考 [LoopFlow 2 使用說明](./3_codex/README.md)。
+完整指令與操作方式請參考 [LoopFlow 2 使用說明](../../../docs/README.md)。
 
 ## 與 1.0 的差異
 
@@ -32,7 +32,11 @@ LoopFlow 2 是一套以 Rhino 8 為核心、貫穿 SD（Schematic Design）、DD
 
 ## 系統需求
 
-- **Rhino 8**（必要；2D 出圖使用 Rhino 原生 Section / Clipping Drawing）
+### 2.2.3 版
+
+Package Manager 的套件縮圖為淺色稿，工具列圖示與指令不變。Rhino 8 與 Rhino 9 共用同一份 `rh8_0` 套件。
+
+- **Rhino 8 或 Rhino 9**（2D 出圖使用 Rhino 原生 Section / Clipping Drawing）
 - Windows 10 或 Windows 11
 
 支援雙語介面：English / 正體中文
@@ -45,10 +49,10 @@ LoopFlow 2 是一套以 Rhino 8 為核心、貫穿 SD（Schematic Design）、DD
 
 不要使用 1.x 的 ZIP、`install_LoopFlow.bat` 或拖放 `.rhc` 工具列。同一專案不可混用 1.x 與 LoopFlow 2
 
-1. 開啟 Rhino 8，命令列執行 `PackageManager`，搜尋 `LoopFlow`，安裝 2.1.1
+1. 開啟 Rhino 8 或 Rhino 9，命令列執行 `PackageManager`，搜尋 `LoopFlow`，安裝 2.2.3
 2. **完全關掉 Rhino 再開**
 
-也可從 [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 下載 `loopflow-2.1.1-rh8_0-win.yak`，在 Package Manager 選擇從檔案安裝。不要下載 1.x 的 ZIP。
+也可從 [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 下載 `loopflow-2.2.3-rh8_0-win.yak`，在 Package Manager 選擇從檔案安裝。不要下載 1.x 的 ZIP。
 
 裝完後：
 
