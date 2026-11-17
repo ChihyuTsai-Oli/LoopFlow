@@ -112,7 +112,7 @@ class G02SpikePackagingTests(unittest.TestCase):
     def test_manifest_includes_toolbar(self):
         text = (SPIKE / "manifest.yml").read_text(encoding="utf-8")
         self.assertIn("name: loopflow", text)
-        self.assertIn("version: 2.2.1", text)
+        self.assertIn("version: 2.2.2", text)
         self.assertIn("icon: icon.png", text)
         self.assertIn("Half-automatic 2D/3D Sync", text)
         self.assertNotIn("Toolbar RUI is not included yet", text)
@@ -124,8 +124,8 @@ class G02SpikePackagingTests(unittest.TestCase):
         self.assertIn("docs\\toolbar\\LoopFlow.rui", text)
         self.assertIn("Replace generated LoopFlow.rui", text)
         self.assertIn("yak must contain exactly one rui", text)
-        self.assertIn('Version = "2.2.1"', text)
-        self.assertIn("LoopFlow_2.png", text)
+        self.assertIn('Version = "2.2.2"', text)
+        self.assertIn('Join-Path $Spike "icon.png"', text)
         self.assertIn("icon.png", text)
         self.assertIn("Tag_Blocks_3dm\\Tag_Blocks.3dm", text)
         self.assertIn("LoopFlow_Dictionary_tw.xlsx", text)
@@ -240,7 +240,7 @@ class G02SpikePackagingTests(unittest.TestCase):
         self.assertGreater(tag_blocks.stat().st_size, 1000)
         self.assertTrue((dict_dir / "LoopFlow_Dictionary_tw.xlsx").is_file())
         self.assertTrue((dict_dir / "LoopFlow_Dictionary_en.xlsx").is_file())
-        icon = WIP.parent / "docs" / "images" / "icon" / "LoopFlow_2.png"
+        icon = SPIKE / "icon.png"
         self.assertTrue(icon.is_file())
         self.assertGreater(icon.stat().st_size, 1000)
 

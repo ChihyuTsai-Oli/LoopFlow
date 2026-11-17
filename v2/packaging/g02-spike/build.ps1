@@ -10,7 +10,7 @@ $RhinoCode = "C:\Program Files\Rhino 8\System\RhinoCode.exe"
 $Rhproj = Join-Path $Spike "LoopFlow.rhproj"
 $CommandsDir = Join-Path $Spike "commands"
 $ProductRui = Join-Path $RepoWip "docs\toolbar\LoopFlow.rui"
-$Version = "2.2.1"
+$Version = "2.2.2"
 
 if (-not (Test-Path $Rhproj)) { throw "找不到 LoopFlow.rhproj" }
 if (-not (Test-Path (Join-Path $CommandsDir "LFLanguage.py"))) { throw "找不到 commands\LFLanguage.py" }
@@ -60,9 +60,8 @@ $TagTemplates = Join-Path $RepoWip "fixtures\schema\tag_templates.json"
 if (-not (Test-Path -LiteralPath $TagTemplates)) { throw "missing tag_templates.json" }
 Copy-Item -LiteralPath $TagTemplates (Join-Path $TemplatesDir "tag_templates.json")
 
-$IconSrc = Join-Path $RepoWip "..\docs\images\icon\LoopFlow_2.png"
-$IconSrc = [System.IO.Path]::GetFullPath($IconSrc)
-if (-not (Test-Path -LiteralPath $IconSrc)) { throw "missing docs/images/icon/LoopFlow_2.png" }
+$IconSrc = Join-Path $Spike "icon.png"
+if (-not (Test-Path -LiteralPath $IconSrc)) { throw "missing packaging icon.png" }
 Copy-Item -LiteralPath $IconSrc (Join-Path $StageDir "icon.png")
 
 Get-ChildItem $StageDir -Filter "*.yak" | Remove-Item -Force
