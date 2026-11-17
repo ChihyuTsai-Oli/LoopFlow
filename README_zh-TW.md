@@ -34,6 +34,10 @@ LoopFlow 2 是一套支援 Rhino 8／9、貫穿 SD（Schematic Design）、DD（
 
 ## 系統需求
 
+### 2.2.3 版更新
+
+Package Manager 的套件縮圖改為淺色稿。工具列圖示與指令不變。
+
 ### 2.2.2 版更新
 
 只換工具列圖示與 Package Manager 圖示。指令不變。Rhino 8 與 Rhino 9 仍裝同一份套件。
@@ -61,10 +65,10 @@ Rhino 8 與 Rhino 9 共用同一套 LoopFlow。Rhino 9 的剖面圖塊可直接�
 
 不要使用 1.x 的 ZIP、`install_LoopFlow.bat` 或拖放 `.rhc` 工具列。同一專案不可混用 1.x 與 LoopFlow 2
 
-1. 開啟 Rhino 8 或 Rhino 9，命令列執行 `PackageManager`，搜尋 `LoopFlow`，安裝 2.2.2
+1. 開啟 Rhino 8 或 Rhino 9，命令列執行 `PackageManager`，搜尋 `LoopFlow`，安裝 2.2.3
 2. **完全關掉 Rhino 再開**
 
-也可從 [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 下載 `loopflow-2.2.2-rh8_0-win.yak`，在 Package Manager 選擇從檔案安裝。不要下載 1.x 的 ZIP。
+也可從 [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 下載 `loopflow-2.2.3-rh8_0-win.yak`，在 Package Manager 選擇從檔案安裝。不要下載 1.x 的 ZIP。
 
 裝完後：
 
