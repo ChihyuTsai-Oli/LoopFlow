@@ -34,6 +34,12 @@ For complete command and workflow instructions, see the [LoopFlow 2 documentatio
 
 ## System requirements
 
+### Version 2.2.1
+
+- Embeds the five Rhino 9 clipping toolbar SVGs so the same icons display correctly in Rhino 8.
+- Restores the right-click `Language` tooltip on the Document button.
+- Rhino 8 keeps the Align clipping drawings button for a toolbar layout matching Rhino 9; the command itself is available only in Rhino 9.
+
 ### Version 2.2.0
 
 Rhino 8 and Rhino 9 use the same LoopFlow package. Rhino 9 section blocks can be registered, extracted, and used by Grab and Laser without exploding them. For reflected ceiling drawings, `LFAnchorFrame` asks whether the drawing was manually flipped or generated with Rhino 9 Reflected projection. Nexus also checks the published Rhino object ID to UUID mapping and can restore a copied UUID after `MatchProperties` when the original identity is known. The package includes the updated LoopFlow toolbar.
@@ -51,10 +57,10 @@ Bilingual interface: English / Traditional Chinese
 
 Do not use the 1.x ZIP, `install_LoopFlow.bat`, or drag-and-drop `.rhc` toolbar. Do not mix 1.x and LoopFlow 2 in the same project.
 
-1. Open Rhino 8 or 9, run `PackageManager`, search for `LoopFlow`, and install 2.2.0.
+1. Open Rhino 8 or 9, run `PackageManager`, search for `LoopFlow`, and install 2.2.1.
 2. **Quit Rhino completely and reopen it.**
 
-You can also download `loopflow-2.2.0-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) and install from file. Do not download the 1.x ZIP.
+You can also download `loopflow-2.2.1-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) and install from file. Do not download the 1.x ZIP.
 
 After install:
 

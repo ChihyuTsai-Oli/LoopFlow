@@ -34,6 +34,12 @@ LoopFlow 2 是一套支援 Rhino 8／9、貫穿 SD（Schematic Design）、DD（
 
 ## 系統需求
 
+### 2.2.1 版更新
+
+- 內嵌五顆 Rhino 9 剖切工具 SVG，讓 Rhino 8 顯示與 Rhino 9 相同的圖示。
+- 補回 Document 按鈕右鍵 `Language` 說明。
+- Rhino 8 保留「Align clipping drawings」按鈕以維持相同版面；該指令只有 Rhino 9 可執行。
+
 ### 2.2.0 版更新
 
 Rhino 8 與 Rhino 9 共用同一套 LoopFlow。Rhino 9 的剖面圖塊可直接登記、擷取，並供 Grab／Laser 使用，不必炸開。天花圖面登記時，`LFAnchorFrame` 會詢問圖面是手動水平翻轉，或以 Rhino 9 Reflected 投影產生。Nexus 也會核對已發布的 Rhino 物件 ID 與 UUID 對照；`MatchProperties` 複製 UUID 後，若能確認原物件身分，可寫回正確 UUID。套件附新版 LoopFlow 工具列。
@@ -51,10 +57,10 @@ Rhino 8 與 Rhino 9 共用同一套 LoopFlow。Rhino 9 的剖面圖塊可直接�
 
 不要使用 1.x 的 ZIP、`install_LoopFlow.bat` 或拖放 `.rhc` 工具列。同一專案不可混用 1.x 與 LoopFlow 2
 
-1. 開啟 Rhino 8 或 Rhino 9，命令列執行 `PackageManager`，搜尋 `LoopFlow`，安裝 2.2.0
+1. 開啟 Rhino 8 或 Rhino 9，命令列執行 `PackageManager`，搜尋 `LoopFlow`，安裝 2.2.1
 2. **完全關掉 Rhino 再開**
 
-也可從 [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 下載 `loopflow-2.2.0-rh8_0-win.yak`，在 Package Manager 選擇從檔案安裝。不要下載 1.x 的 ZIP。
+也可從 [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 下載 `loopflow-2.2.1-rh8_0-win.yak`，在 Package Manager 選擇從檔案安裝。不要下載 1.x 的 ZIP。
 
 裝完後：
 
