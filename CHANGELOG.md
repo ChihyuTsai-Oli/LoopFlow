@@ -2,6 +2,59 @@
 
 All notable changes to LoopFlow will be documented here.
 
+[繁體中文版](./CHANGELOG_zh-TW.md)
+
+---
+
+## [2.2.5] - 2026-11-23
+
+Install this version. Same workflow as 2.2.3, plus:
+
+- Anchor Update sits after Anchor Frame. After the 3D model changes size and the 2D section is rebuilt, it updates the existing frames so Laser stays aligned
+- Extract copies section Text Dots to `LoopFlow_Extract::Text`, so Anchor Frame can name the extracted drawing
+- Do not overwrite `v2.2.3`. Quit Rhino completely after install
+
+---
+
+## [2.2.3] - 2026-11-17
+
+Install this version. Same workflow as 2.2.2, plus:
+
+- The Package Manager thumbnail is the light icon. Toolbar icons and commands are unchanged
+- Do not overwrite `v2.2.2`. Quit Rhino completely after install
+
+---
+
+## [2.2.2] - 2026-11-17
+
+Install this version. Same workflow as 2.2.1, plus:
+
+- Toolbar icons and the Package Manager icon are replaced. Commands are unchanged
+- Do not overwrite `v2.2.1`. Quit Rhino completely after install
+
+---
+
+## [2.2.1] - 2026-11-17
+
+Install this version. Same workflow as 2.2.0, plus:
+
+- The five Rhino 9 clipping toolbar icons are embedded, so Rhino 8 shows the same artwork
+- The Document button’s right-click tooltip is `Language`
+- Rhino 8 keeps the Align clipping drawings button so the toolbar matches Rhino 9. That command does not run on Rhino 8
+- Do not overwrite `v2.2.0`. Quit Rhino completely after install
+
+---
+
+## [2.2.0] - 2026-11-17
+
+Install this version. Rhino 8 and Rhino 9 share one package.
+
+- Rhino 9 section blocks can be registered, extracted, and used by Grab and Laser without exploding them
+- For ceiling drawings, Anchor Frame asks whether the drawing was flipped by hand or made with Rhino 9 Reflected projection
+- Nexus can restore a UUID copied by `MatchProperties` when it can confirm the original object
+- The package includes the updated LoopFlow toolbar
+- Do not overwrite `v2.1.1`. Quit Rhino completely after install
+
 ---
 
 ## [2.1.1] - 2026-11-10

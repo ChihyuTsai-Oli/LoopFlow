@@ -23,66 +23,21 @@ The main workflow stays inside Rhino, allowing model data, drawings, and Layout 
 
 For complete command and workflow instructions, see the [LoopFlow 2 documentation](./docs/README.md).
 
-## What changed from 1.0
-
-- LoopFlow 2 is a rebuild, not a patched 1.x. Do not mix data, Tag Blocks, commands, or toolbars in the same project.
-- Changing the model does not automatically fill the drawings. Write, validate, then publish a revision for the sheets to read.
-- Cabinets and some 2D tools from 1.0 are not part of LoopFlow 2. They will become a separate project later.
-- LoopFlow 2 does not calculate size or quantity.
-- Installation is a single `.yak` (Package Manager). Do not use the 1.x extract-and-drag-toolbar steps.
-- The interface can be English or Traditional Chinese. Stale or disconnected tags are marked, but they are not auto-repaired.
-
-## System requirements
-
-### Version 2.2.5
-
-The Anchor Update icon is replaced. Extract also copies the section Text Dot to `LoopFlow_Extract::Text`, so Anchor Frame can name the extracted drawing. Rhino 8 and Rhino 9 share one package.
-
-### Version 2.2.4
-
-Anchor Update is the new button immediately after Anchor Frame. After the 3D model changes size and the 2D section is regenerated, it updates the existing frames so Laser stays aligned. Rhino 8 and Rhino 9 share one package.
-
-### Version 2.2.3
-
-The Package Manager thumbnail is the light icon. Toolbar icons and commands are unchanged.
-
-### Version 2.2.2
-
-Toolbar icons and the Package Manager icon are replaced. Commands are unchanged. Rhino 8 and Rhino 9 still share one package.
-
-### Version 2.2.1
-
-- Embeds the five Rhino 9 clipping toolbar SVGs so the same icons display correctly in Rhino 8.
-- Restores the right-click `Language` tooltip on the Document button.
-- Rhino 8 keeps the Align clipping drawings button for a toolbar layout matching Rhino 9; the command itself is available only in Rhino 9.
-
-### Version 2.2.0
-
-Rhino 8 and Rhino 9 use the same LoopFlow package. Rhino 9 section blocks can be registered, extracted, and used by Grab and Laser without exploding them. For reflected ceiling drawings, `LFAnchorFrame` asks whether the drawing was manually flipped or generated with Rhino 9 Reflected projection. Nexus also checks the published Rhino object ID to UUID mapping and can restore a copied UUID after `MatchProperties` when the original identity is known. The package includes the updated LoopFlow toolbar.
-
-- **Rhino 8 or Rhino 9** (2D drawings use native Section / Clipping Drawing)
-- Windows 10 or Windows 11
-
-Bilingual interface: English / Traditional Chinese
-
 ## Quick start
 
 - [Tutorial playlists](https://www.youtube.com/@Chihyu-Oli/playlists) (not all videos have been updated for LoopFlow 2 yet)
 
 ### Installation
 
-Do not use the 1.x ZIP, `install_LoopFlow.bat`, or drag-and-drop `.rhc` toolbar. Do not mix 1.x and LoopFlow 2 in the same project.
-
 1. Open Rhino 8 or 9, run `PackageManager`, search for `LoopFlow`, and install 2.2.5.
 2. **Quit Rhino completely and reopen it.**
 
-You can also download `loopflow-2.2.5-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) and install from file. Do not download the 1.x ZIP.
+You can also download `loopflow-2.2.5-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) and install from file.
 
 After install:
 
 - The first LoopFlow command asks English / 正體中文 if this computer has not chosen a language yet.
 - Official `Tag_Blocks.3dm` and both Dictionary workbooks copy to `Documents\LoopFlow`. If that default folder is missing (for example you moved it), any formal command copies it again. After you install a new version, the next command replaces those official files so they match the package. Extra files in that folder are left alone. Copy what you need beside your saved `.3dm`.
-- Use the LoopFlow 2 toolbar. Do not press old 1.x buttons.
 - If the toolbar does not appear after restart: **Tools → Options → Plug-ins**, enable **LoopFlow**. If it still does not show, type `LFDocument` once.
 - If the toolbar is blank, in Toolbars change the file back to Default, then File > Open the package `LoopFlow.rui` and check LoopFlow.
 
@@ -95,6 +50,17 @@ After install:
 5. Infuse the published data into Tag Blocks so the model, drawings, and sheets point at the same revision.
 
 Each step can pause, rerun, or continue later. You do not have to finish the chain in one sitting.
+
+## System requirements
+
+- **Rhino 8 or Rhino 9** (2D drawings use native Section / Clipping Drawing)
+- Windows 10 or Windows 11
+
+Bilingual interface: English / Traditional Chinese
+
+## What changed from 1.0
+
+LoopFlow 2 is a rebuild. Commands, Tag Blocks, and the rest cannot be shared with 1.0.
 
 ## Support
 

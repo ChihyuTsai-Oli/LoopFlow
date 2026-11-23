@@ -23,66 +23,21 @@ LoopFlow 2 是一套支援 Rhino 8／9、貫穿 SD（Schematic Design）、DD（
 
 完整指令與操作方式請參考 [LoopFlow 2 使用說明](./docs/README.md)。
 
-## 與 1.0 的差異
-
-- LoopFlow 2 是重建，不是 1.x 的修補版；同一專案不可混用資料、Tag Block、指令或工具列
-- 模型改完不會自動灌進圖面；要先寫入、檢核，再發布一版給圖紙讀取
-- 1.0 的櫃體與部分 2D 工具，不併入 LoopFlow 2；獨立為日後獨立專案
-- LoopFlow 2 不算尺寸或數量
-- 安裝改為一份 `.yak`（Package Manager），不再用 1.x 的解壓與拖工具列
-- 介面可選 English / 正體中文；Tag 過期或斷開會標示，但不自動修
-
-## 系統需求
-
-### 2.2.5 版更新
-
-Anchor Update 換成新圖示。Extract 會把剖面的 Text Dot 一起複製到 `LoopFlow_Extract::Text`，給抽出後的圖跑 Anchor Frame。Rhino 8 與 Rhino 9 共用同一份 yak。
-
-### 2.2.4 版更新
-
-Anchor Frame 後面新增 Anchor Update。3D 尺寸改過、並已重出 2D 剖面後，用它更新既有外框，讓 Laser 對位跟上。Rhino 8 與 Rhino 9 共用同一份 yak。
-
-### 2.2.3 版更新
-
-Package Manager 的套件縮圖改為淺色稿。工具列圖示與指令不變。
-
-### 2.2.2 版更新
-
-只換工具列圖示與 Package Manager 圖示。指令不變。Rhino 8 與 Rhino 9 仍裝同一份套件。
-
-### 2.2.1 版更新
-
-- 內嵌五顆 Rhino 9 剖切工具 SVG，讓 Rhino 8 顯示與 Rhino 9 相同的圖示。
-- 補回 Document 按鈕右鍵 `Language` 說明。
-- Rhino 8 保留「Align clipping drawings」按鈕以維持相同版面；該指令只有 Rhino 9 可執行。
-
-### 2.2.0 版更新
-
-Rhino 8 與 Rhino 9 共用同一套 LoopFlow。Rhino 9 的剖面圖塊可直接登記、擷取，並供 Grab／Laser 使用，不必炸開。天花圖面登記時，`LFAnchorFrame` 會詢問圖面是手動水平翻轉，或以 Rhino 9 Reflected 投影產生。Nexus 也會核對已發布的 Rhino 物件 ID 與 UUID 對照；`MatchProperties` 複製 UUID 後，若能確認原物件身分，可寫回正確 UUID。套件附新版 LoopFlow 工具列。
-
-- **Rhino 8 或 Rhino 9**（2D 出圖使用 Rhino 原生 Section / Clipping Drawing）
-- Windows 10 或 Windows 11
-
-支援雙語介面：English / 正體中文
-
 ## 快速開始
 
 - [教學播放清單](https://www.youtube.com/@Chihyu-Oli/playlists)（尚未全部更新為 LoopFlow 2）
 
 ### 安裝
 
-不要使用 1.x 的 ZIP、`install_LoopFlow.bat` 或拖放 `.rhc` 工具列。同一專案不可混用 1.x 與 LoopFlow 2
-
 1. 開啟 Rhino 8 或 Rhino 9，命令列執行 `PackageManager`，搜尋 `LoopFlow`，安裝 2.2.5
 2. **完全關掉 Rhino 再開**
 
-也可從 [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 下載 `loopflow-2.2.5-rh8_0-win.yak`，在 Package Manager 選擇從檔案安裝。不要下載 1.x 的 ZIP。
+也可從 [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 下載 `loopflow-2.2.5-rh8_0-win.yak`，在 Package Manager 選擇從檔案安裝。
 
 裝完後：
 
 - 第一次執行任一 LoopFlow 指令時，若這台電腦還沒選過語系，會問 English／正體中文
 - 官方 `Tag_Blocks.3dm` 與兩本 Dictionary 會拷到「文件\LoopFlow」。這個預設資料夾不見時（例如被移走），跑任一正式指令會再拷一份。裝了新版本後，下一次執行指令會換成與套件相同的官方檔；該資料夾裡多出來的檔不會刪。請把需要的檔再複製到你的 `.3dm` 同一層
-- 使用 LoopFlow 2 工具列；不要按舊的 1.x 按鈕
 - 若重開後工具列沒出現：到 **Tools → Options → Plug-ins**（工具 → 選項 → 外掛程式）勾選 **LoopFlow**。仍沒有時，命令列打一次 `LFDocument`
 - 若工具列是空白：工具列視窗最上面改回 Default，再「檔案 → 開啟」套件裡的 `LoopFlow.rui` 並勾選 LoopFlow
 
@@ -96,11 +51,22 @@ Rhino 8 與 Rhino 9 共用同一套 LoopFlow。Rhino 9 的剖面圖塊可直接�
 
 各步驟可依專案狀況暫停、重跑或日後接續，不需要一次做到底
 
+## 系統需求
+
+- **Rhino 8 或 Rhino 9**（2D 出圖使用 Rhino 原生 Section / Clipping Drawing）
+- Windows 10 或 Windows 11
+
+支援雙語介面：English / 正體中文
+
+## 與 1.0 的差異
+
+LoopFlow 2 是重構版。指令、Tag Block 等不能和 1.0 共用。
+
 ## 支援與回報
 
 - [Discussions](https://github.com/ChihyuTsai-Oli/LoopFlow/discussions)：提問與分享使用經驗
 - [Issues](https://github.com/ChihyuTsai-Oli/LoopFlow/issues)：回報錯誤或提出建議
-- [Changelog](./CHANGELOG.md)：查看已發布版本內容
+- [Changelog](./CHANGELOG_zh-TW.md)：查看已發布版本內容
 
 LoopFlow 是由建築及室內設計師從實際工作中發展的單人專案。程式開發與文件整理使用 AI 協助；工作流程需求、設計決策與實務驗證仍以作者本人的專業經驗為基礎。
 
