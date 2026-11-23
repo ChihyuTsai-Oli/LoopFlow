@@ -775,6 +775,31 @@ class MemorySession:
         )
         return object_id
 
+    def replace_closed_polyline(self, object_id: str, points) -> bool:
+        """就地改既有封閉框線，保留物件 ID 與 UserText。"""
+        if object_id not in self._objects:
+            return False
+        pts = [tuple(float(v) for v in pt) for pt in points]
+        if len(pts) < 3:
+            raise ValueError(t("rhino.006"))
+        closed = list(pts)
+        if closed[0] != closed[-1]:
+            closed.append(closed[0])
+        self.set_curve(object_id, closed, closed=True)
+        xs = [pt[0] for pt in pts]
+        ys = [pt[1] for pt in pts]
+        zs = [pt[2] if len(pt) > 2 else 0.0 for pt in pts]
+        self.set_bbox(
+            object_id,
+            (min(xs), min(ys), min(zs)),
+            (max(xs), max(ys), max(zs)),
+        )
+        self._modified = True
+        return True
+
+    def is_curve_or_hatch(self, object_id: str) -> bool:
+        return object_id in self._curves
+
     def set_ray_hits(self, hits) -> None:
         self._ray_hits = [dict(item) for item in hits]
 

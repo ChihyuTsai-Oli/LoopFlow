@@ -1692,6 +1692,42 @@ class LiveSession:
             pass
         return object_id
 
+    def replace_closed_polyline(self, object_id: str, points) -> bool:
+        """就地改既有封閉框線，保留物件 ID 與 UserText。"""
+        rhino = self._rhino
+        obj = self._rhino_object(object_id)
+        if rhino is None or obj is None:
+            return False
+        pts = [tuple(float(v) for v in pt) for pt in points]
+        if len(pts) < 3:
+            raise ValueError(t("rhino.006"))
+        if len(pts[0]) < 3:
+            pts = [pt + (0.0,) for pt in pts]
+        if pts[0] != pts[-1]:
+            pts = pts + [pts[0]]
+        try:
+            polyline = rhino.Geometry.Polyline(
+                [rhino.Geometry.Point3d(pt[0], pt[1], pt[2]) for pt in pts]
+            )
+            curve = polyline.ToNurbsCurve()
+            if curve is None:
+                return False
+            return bool(self._sc.doc.Objects.Replace(obj.Id, curve))
+        except Exception:
+            return False
+
+    def is_curve_or_hatch(self, object_id: str) -> bool:
+        rhino = self._rhino
+        obj = self._rhino_object(object_id)
+        geom = getattr(obj, "Geometry", None) if obj is not None else None
+        if rhino is None or geom is None:
+            return False
+        kinds = [rhino.Geometry.Curve]
+        hatch = getattr(rhino.Geometry, "Hatch", None)
+        if hatch is not None:
+            kinds.append(hatch)
+        return isinstance(geom, tuple(kinds))
+
     def _first_model_view(self):
         rhino = self._rhino
         if rhino is None:

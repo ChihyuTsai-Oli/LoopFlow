@@ -48,6 +48,9 @@ _-ScriptEditor _Run "E:\_GitHub\LoopFlow\v2\src\entrypoints\LF_Tagger_Layout_ID.
 LF_Anchor_Frame
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\v2\src\entrypoints\LF_Anchor_Frame.py"
 
+LF_Anchor_Update
+_-ScriptEditor _Run "E:\_GitHub\LoopFlow\v2\src\entrypoints\LF_Anchor_Update.py"
+
 LF_Catalog
 _-ScriptEditor _Run "E:\_GitHub\LoopFlow\v2\src\entrypoints\LF_Catalog.py"
 
@@ -175,7 +178,7 @@ Index：在 **Layout** 選 `TAG_SECTION_DETAIL` 或 `TAG_ELEV_1`～`4`，再從�
 
 Layout ID：跑全檔 Layout。系列第一頁寫 `**圖類別__圖號__圖名`（例如 `**IN__201__立面圖`、`**IN__A01__平面`），後面的頁只寫圖名。`//S__901__結構平面圖` 不編號但仍寫圖框，執行後保留 `//`。圖號只要尾端是數字就放行；`101.9` 下一頁為 `101.10`。核對清單三欄（原始名稱／修改後名稱／狀態、依 Layout 列表頁序）確認才寫入；取消整批零寫入。Layout 起點頁名保留 `**`，接續頁為三欄無星號；圖框 `lf_drawing_no` 寫空格格式（不含 `**`／`//`），並寫 `lf_drawing_name`、`lf_sheet_id`。不寫 `lf_scale`。不寫舊欄 `DWG_NO`／`DWG_NAME`。`TAG_ELEV_0` 寫目前頁編號。未登錄 Block 勾選真正的圖框（預設全不勾）。只改圖名：改第三欄再跑。要改編號：該頁再加 `**` 再跑。圖框已就緒但缺 `**`（也沒有可寫入的 `//`）時停止，警告只顯示命名規則與 Sample。同一 `lf_sheet_id` 出現在多頁時，第一頁沿用、其餘發新 id。詳細命名與操作見 `工作流程.md` §9。一頁沒有圖框或有兩個圖框則跳過。不進 Nexus。**家中 Rhino 8 已測（2026-08-18）；核對清單三欄與 Layout 列表順序 2026-08-20 再測。公司 Rhino 9 已測（2026-11-16）：刪頁後不留空號，順序只跟 All Layouts。自訂群組頁序日後再做。核對表置中已於家中 Rhino 9 確認（2026-11-16）。已安裝 2.1.1 沒有這次修正。**
 
-註冊 View：在 **2D 模型空間**，以 `LFAnchorFrame` 選取整顆剖面圖塊，或剖面線／填充與 Text Dot，輸入框線外擴距離。依 Text Dot 顯示文字、UserText 鍵名或圖塊名稱對應 Clipping Plane，找不到或無法唯一對應就停止。框寫入 `lf_view_id`、`lf_view_name`、Clipping Plane 物件 ID 與固定 2D↔3D transform。天花依實際圖面選 Rhino 8 手動水平翻轉或 Rhino 9 Reflected 投影；選擇視窗中英共用尺寸、兩顆按鈕高度相同，家中 Rhino 9 已實機確認（2026-11-16）。取消不寫入。3D 尺寸改變並重出 2D 剖面後，須重跑並選入原框。`LF_Anchor_Update.py`／`LFAnchorUpdate` 是 `LF-E07` 待辦，尚未實作或登錄指令。
+註冊 View：在 **2D 模型空間**，以 `LFAnchorFrame` 選取整顆剖面圖塊，或剖面線／填充與 Text Dot，輸入框線外擴距離。依 Text Dot 顯示文字、UserText 鍵名或圖塊名稱對應 Clipping Plane，找不到或無法唯一對應就停止。框寫入 `lf_view_id`、`lf_view_name`、Clipping Plane 物件 ID 與固定 2D↔3D transform。天花依實際圖面選 Rhino 8 手動水平翻轉或 Rhino 9 Reflected 投影；選擇視窗中英共用尺寸、兩顆按鈕高度相同，家中 Rhino 9 已實機確認（2026-11-16）。取消不寫入。3D 尺寸改變並重出 2D 剖面後，可在 2D 模型空間跑開發入口 `LF_Anchor_Update.py`，一次更新既有框的框線與對位，保留 View 身分。外擴沿用舊框留白，對不齊用 50。對不到的框不改。2D 尚未重出不要跑。此指令不進工具列與目前 yak，尚未 Rhino 實機。未跑此入口時，仍須重跑 `LFAnchorFrame` 並選入原框。
 
 圖目錄：開 Eto 面板。選獨立 Point 作為圖號（紅 `LoopFlow::Drawing_Number`）與圖名（綠 `LoopFlow::Drawing_Name`）定位點；選 Sheet 為頁序／圖號／圖名／頁名四欄，Shift 連選、Ctrl 加選或取消，反白即選取。圖號／圖名來自 Sheet metadata。Build 預覽後寫 `lf_catalog_sheet_id` 並在 `LoopFlow::Drawing_Text`（`#CDB38B`）產生文字，左下角對齊定位點。Refresh 只改內容，已移動的文字留在原處。成功不另彈確認窗；失敗才彈窗。「清除定位點並還原圖層」會還原選取前的圖層並刪除目錄文字。匯出 TXT 為 `圖名, 圖號`（UTF-8）。定位點綁 `sheet_id` 不綁目前圖號；空位可不綁。`LoopFlow` 與其子圖層不列印（列印寬度設為 `No Print`／`PlotWeight = -1`）。選到 Block、逐頁數量不符、同列失敗、Sheet 多於空位、metadata 過期、Esc／取消，都不寫入。missing／orphan Sheet 略過並報告。新 Layout 不會自動納入。不進 Nexus。**家中 Rhino 8 已測（2026-08-18）；關閉鈕與選 Sheet OK／Cancel 2026-08-20 再測。公司 Rhino 9 已測（2026-11-16），運作正常，不改程式。**
 

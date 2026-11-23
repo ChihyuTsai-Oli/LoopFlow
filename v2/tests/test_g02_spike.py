@@ -224,7 +224,7 @@ class G02SpikePackagingTests(unittest.TestCase):
     def test_dev_entrypoint_filename_unchanged(self):
         self.assertTrue((SRC / "entrypoints" / "LF_Document.py").is_file())
         self.assertIn("LF_Document", CORE_COMMANDS)
-        self.assertEqual(len(CORE_COMMANDS), 20)
+        self.assertEqual(len(CORE_COMMANDS), 21)
         self.assertEqual(COMMAND_ID, "LF_Document")
         self.assertTrue(DOCUMENT_URL.endswith("/docs/README.md"))
 

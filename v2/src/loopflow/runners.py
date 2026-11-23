@@ -121,6 +121,15 @@ def run_anchor_frame() -> Result:
     return _present_failure(run_register(opened.details["session"]))
 
 
+def run_anchor_update() -> Result:
+    from loopflow.features.view.update import run_anchor_update as run_update
+
+    opened = _open_live_session()
+    if not opened.ok:
+        return opened
+    return _present_failure(run_update(opened.details["session"]))
+
+
 def run_catalog() -> Result:
     from loopflow.features.catalog.catalog import run_catalog as run_catalog_command
 
@@ -257,6 +266,7 @@ RUNNERS: Dict[str, Runner] = {
     "LF_Tagger_Index": run_tagger_index,
     "LF_Tagger_Layout_ID": run_tagger_layout_id,
     "LF_Anchor_Frame": run_anchor_frame,
+    "LF_Anchor_Update": run_anchor_update,
     "LF_Catalog": run_catalog,
     "LF_Infuser_Part": run_infuser_part,
     "LF_Infuser_All": run_infuser_all,

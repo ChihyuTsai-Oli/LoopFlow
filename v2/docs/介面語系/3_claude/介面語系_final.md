@@ -646,6 +646,14 @@ English 欄是定稿，可直接改這份檔。`%s` 是程式填入的數字或�
 | `anchor_frame.014` | 天花圖面生成方式 | Ceiling drawing generation method |
 | `anchor_frame.015` | Rhino 8｜由 _ClippingDrawings 生成，並手動水平翻轉圖面 | Rhino 8 — Generated with _ClippingDrawings, then manually flipped horizontally |
 | `anchor_frame.016` | Rhino 9｜由 _ClippingDrawings 以 Reflected 投影生成 | Rhino 9 — Generated with _ClippingDrawings using Reflected projection |
+| `anchor_update.001` | 已更新 %s 個 Anchor Frame。 | Updated %s Anchor Frames. |
+| `anchor_update.003` | %s：找不到原來的剖切面，維持原框。 | %s: the original Clipping Plane is missing. The frame was left unchanged. |
+| `anchor_update.004` | %s：2D 剖面不是恰好一個，維持原框。 | %s: the 2D section is not exactly one match. The frame was left unchanged. |
+| `anchor_update.005` | %s：3D 與剖切面沒有相交，維持原框。 | %s: the 3D model does not intersect the Clipping Plane. The frame was left unchanged. |
+| `anchor_update.006` | %s：既有對位無法沿用，維持原框。 | %s: the stored alignment could not be reused. The frame was left unchanged. |
+| `anchor_update.007` | 請在 2D 模型空間執行。 | Run this in the 2D model space. |
+| `anchor_update.008` | 沒有既有 Anchor Frame。 | There is no existing Anchor Frame. |
+| `anchor_update.009` | 沒有可更新的 Anchor Frame。 | No Anchor Frame could be updated. |
 
 ## Data Viewer
 
