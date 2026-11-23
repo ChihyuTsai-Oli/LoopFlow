@@ -58,6 +58,11 @@ def _parent_name(path: str) -> str:
     return str(path or "").split("::", 1)[0]
 
 
+def _is_text_dot(session: RhinoSession, object_id: str) -> bool:
+    checker = getattr(session, "is_text_dot", None)
+    return bool(callable(checker) and checker(object_id))
+
+
 def _is_block(session: RhinoSession, object_id: str) -> bool:
     checker = getattr(session, "is_block_instance", None)
     return bool(callable(checker) and checker(object_id))
@@ -340,6 +345,47 @@ def _finish_copy(
     return True
 
 
+def _copy_loose_text_dots(
+    session: RhinoSession,
+    root: str,
+    *,
+    copier,
+    drawing_id: str,
+    view_id: Optional[str],
+    revision,
+    coverage: Dict[str, int],
+) -> int:
+    """複製剖面根圖層底下已散開的 Text Dot。圖塊裡的點由成員迴圈處理。"""
+    prefix = root + "::"
+    copied = 0
+    ensured = False
+    ids = tuple(session.iter_object_ids(include_hidden=True, include_locked=True))
+    for object_id in ids:
+        if _is_block(session, object_id) or not _is_text_dot(session, object_id):
+            continue
+        layer = str(session.object_layer(object_id) or "")
+        if _is_extract_path(layer):
+            continue
+        if layer != root and not layer.startswith(prefix):
+            continue
+        if not ensured:
+            _ensure_extract_layer(session, drawing_keys.LAYER_TEXT)
+            ensured = True
+        if _finish_copy(
+            session,
+            copier(object_id),
+            object_id,
+            target=drawing_keys.LAYER_TEXT,
+            drawing_id=drawing_id,
+            view_id=view_id,
+            source_root=root,
+            revision=revision,
+            coverage=coverage,
+        ):
+            copied += 1
+    return copied
+
+
 def _ensure_extract_layer(session: RhinoSession, path: str, rgb=None) -> None:
     session.ensure_layer(path)
     if rgb is not None:
@@ -472,7 +518,7 @@ def extract_root(
         if kind is None:
             continue
         for object_id in session.objects_on_layer(path):
-            if _is_block(session, object_id):
+            if _is_block(session, object_id) or _is_text_dot(session, object_id):
                 continue
             color = _source_color(session, object_id, path)
             target = target_layer_for(kind, color)
@@ -498,15 +544,20 @@ def extract_root(
             if _norm(_parent_name(layer)) != root_name:
                 continue
             kind = _layer_kind(layer)
-            if kind is None:
+            is_dot = bool(member.get("text_dot"))
+            if kind is None and not is_dot:
                 continue
             member_id = str(member.get("id") or "")
             if not member_id:
                 continue
-            color = _source_color(session, member_id, layer)
-            target = target_layer_for(kind, color)
-            if kind == drawing_keys.KIND_CURVE:
-                _ensure_extract_layer(session, target, color)
+            if is_dot:
+                target = drawing_keys.LAYER_TEXT
+                _ensure_extract_layer(session, target)
+            else:
+                color = _source_color(session, member_id, layer)
+                target = target_layer_for(kind, color)
+                if kind == drawing_keys.KIND_CURVE:
+                    _ensure_extract_layer(session, target, color)
             if _finish_copy(
                 session,
                 member_copier(instance_id, member_id),
@@ -519,6 +570,16 @@ def extract_root(
                 coverage=coverage,
             ):
                 copied += 1
+
+    copied += _copy_loose_text_dots(
+        session,
+        root,
+        copier=copier,
+        drawing_id=drawing_id,
+        view_id=view_id,
+        revision=revision,
+        coverage=coverage,
+    )
 
     return results.ok(
         STAGE,

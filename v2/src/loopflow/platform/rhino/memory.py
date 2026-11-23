@@ -592,12 +592,14 @@ class MemorySession:
                     "color_by_layer": bool(member.get("color_by_layer", True)),
                     "name": member.get("name"),
                     "kind": member.get("kind"),
+                    "text": member.get("text"),
+                    "point": member.get("point"),
                 }
             )
         self._block_members[instance_id] = stored
 
     def block_members(self, instance_id: str):
-        """一層成員。文字、標註與再包的圖塊不列出。"""
+        """一層成員。含 text_dot。文字、標註與再包的圖塊不列出。"""
         if not self.is_block_instance(instance_id):
             return ()
         found = []
@@ -607,7 +609,13 @@ class MemorySession:
             member_id = str(member.get("id") or "")
             if not member_id:
                 continue
-            found.append({"id": member_id, "layer": str(member.get("layer") or "")})
+            found.append(
+                {
+                    "id": member_id,
+                    "layer": str(member.get("layer") or ""),
+                    "text_dot": member.get("kind") == "text_dot",
+                }
+            )
         return tuple(found)
 
     def copy_block_member(self, instance_id: str, member_id: str) -> Optional[str]:
@@ -630,6 +638,9 @@ class MemorySession:
             layer=member.get("layer"),
             user_text=member.get("user_text"),
         )
+        if member.get("kind") == "text_dot":
+            point = member.get("point") or (0.0, 0.0, 0.0)
+            self.add_text_dot(new_id, str(member.get("text") or ""), point)
         return new_id
 
     def insertion_point(self, object_id: str):

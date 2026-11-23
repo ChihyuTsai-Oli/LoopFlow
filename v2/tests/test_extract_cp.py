@@ -469,6 +469,59 @@ class ExtractTests(unittest.TestCase):
             VIEW_ID,
         )
 
+    def test_copies_block_text_dot_and_skips_text(self):
+        session = MemorySession()
+        session.set_layout_active(False)
+        session.ensure_layer("A-A::Visible")
+        session.add_object("section-block", layer="A-A::Visible")
+        session.set_block("section-block", (0.0, 0.0, 0.0), name="A-A")
+        session.set_block_members(
+            "section-block",
+            (
+                {"id": "m-vis", "layer": "A-A::Visible"},
+                {
+                    "id": "m-dot",
+                    "layer": "A-A",
+                    "kind": "text_dot",
+                    "text": "A-A",
+                    "point": (12.0, 8.0, 0.0),
+                },
+                {"id": "m-text", "layer": "A-A::Visible", "kind": "text"},
+                {"id": "m-note", "layer": "A-A::Notes", "kind": "annotation"},
+            ),
+        )
+        result, _messages = _run(session)
+        self.assertTrue(result.ok, result.message)
+        dots = [
+            object_id
+            for object_id in _extract_ids(session)
+            if session.is_text_dot(object_id)
+        ]
+        self.assertEqual(len(dots), 1)
+        self.assertEqual(session.object_layer(dots[0]), drawing_keys.LAYER_TEXT)
+        self.assertEqual(session.text_dot_text(dots[0]), "A-A")
+        self.assertEqual(len(_extract_ids(session)), 2)
+
+    def test_copies_loose_text_dot_under_section_root(self):
+        session = _session()
+        session.ensure_layer("A-A")
+        session.add_text_dot("dot", "A-A", (4.0, 5.0, 0.0))
+        session.set_object_layer("dot", "A-A")
+        session.add_text_dot("other", "B-B", (1.0, 1.0, 0.0))
+        session.ensure_layer("B-B")
+        session.set_object_layer("other", "B-B")
+        result, _messages = _run(session)
+        self.assertTrue(result.ok, result.message)
+        dots = [
+            object_id
+            for object_id in _extract_ids(session)
+            if session.is_text_dot(object_id)
+        ]
+        self.assertEqual(len(dots), 1)
+        self.assertEqual(session.text_dot_text(dots[0]), "A-A")
+        self.assertEqual(session.object_layer(dots[0]), drawing_keys.LAYER_TEXT)
+        self.assertIn("other", session.iter_object_ids())
+
     def test_checklist_uses_eto_not_rhino_box(self):
         prompts = (WIP / "src" / "loopflow" / "platform" / "rhino" / "prompts.py").read_text(
             encoding="utf-8"

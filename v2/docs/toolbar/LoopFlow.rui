@@ -1600,7 +1600,7 @@
 </svg>
 </svg></dark>
     </icon>
-    <icon guid="9f2c6b84-1d37-4a58-b0e6-3c8a7d5e12f4">
+        <icon guid="9f2c6b84-1d37-4a58-b0e6-3c8a7d5e12f4">
       <light><svg width="48" height="48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0pt 0pt 48pt 48pt">
   <svg width="100%" height="100%" viewBox="0 0 900 900" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;">
     <g transform="matrix(15,0,0,15,0,0)">
@@ -1631,10 +1631,10 @@
     </g>
     <g transform="matrix(12.128346,-12.128346,12.052516,12.052516,13.687629,439.746544)">
         <g transform="matrix(1,0,0,-1,0,36)">
-            <path d="M8.551,4.885L5.725,11.085L12.238,10.742L10.995,8.515C14.731,5.795 17.531,5.822 21.838,6.985C25.928,8.938 29.358,13.168 28.848,17.445L30.871,17.475C31.235,14.175 29.131,7.635 22.538,4.885C18.681,3.275 13.248,4.002 9.848,6.855L8.551,4.885Z" style="fill:rgb(89,166,125);stroke:rgb(89,166,125);stroke-width:1.5px;stroke-linecap:butt;stroke-miterlimit:10;"/>
+            <path d="M8.551,4.885L5.725,11.085L12.238,10.742L10.995,8.515C14.731,5.795 17.531,5.822 21.838,6.985C25.928,8.938 29.358,13.168 28.848,17.445L30.871,17.475C31.235,14.175 29.131,7.635 22.538,4.885C18.681,3.275 13.248,4.002 9.848,6.855L8.551,4.885Z" style="fill:rgb(166,91,89);stroke:rgb(166,91,89);stroke-width:1.5px;stroke-linecap:butt;stroke-miterlimit:10;"/>
         </g>
         <g transform="matrix(1,0,0,-1,0,36)">
-            <path d="M26.848,30.525L29.758,23.178L22.488,23.415L24.135,26.428C20.398,29.155 16.621,29.448 13.291,27.958C9.458,26.248 5.768,21.775 6.278,17.498L4.258,17.475C3.895,20.772 5.998,27.312 12.588,30.062C16.448,31.675 21.878,30.945 25.278,28.092L26.848,30.525Z" style="fill:rgb(89,166,125);stroke:rgb(89,166,125);stroke-width:1.5px;stroke-linecap:butt;stroke-miterlimit:10;"/>
+            <path d="M26.848,30.525L29.758,23.178L22.488,23.415L24.135,26.428C20.398,29.155 16.621,29.448 13.291,27.958C9.458,26.248 5.768,21.775 6.278,17.498L4.258,17.475C3.895,20.772 5.998,27.312 12.588,30.062C16.448,31.675 21.878,30.945 25.278,28.092L26.848,30.525Z" style="fill:rgb(166,91,89);stroke:rgb(166,91,89);stroke-width:1.5px;stroke-linecap:butt;stroke-miterlimit:10;"/>
         </g>
     </g>
 </svg>

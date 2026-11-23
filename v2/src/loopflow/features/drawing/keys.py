@@ -21,6 +21,7 @@ SCHEMA_VERSION_KEY = "lf_schema_version"
 EXTRACT_LAYER_ROOT = "LoopFlow_Extract"
 LAYER_VISIBLE = "LoopFlow_Extract::Visible"
 LAYER_HATCH = "LoopFlow_Extract::Hatch"
+LAYER_TEXT = "LoopFlow_Extract::Text"
 CURVE_LAYER_PREFIX = "LoopFlow_Extract::Curve_"
 
 COLOR_VISIBLE = (134, 160, 174)

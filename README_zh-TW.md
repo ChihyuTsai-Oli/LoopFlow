@@ -34,6 +34,10 @@ LoopFlow 2 是一套支援 Rhino 8／9、貫穿 SD（Schematic Design）、DD（
 
 ## 系統需求
 
+### 2.2.5 版更新
+
+Anchor Update 換成新圖示。Extract 會把剖面的 Text Dot 一起複製到 `LoopFlow_Extract::Text`，給抽出後的圖跑 Anchor Frame。Rhino 8 與 Rhino 9 共用同一份 yak。
+
 ### 2.2.4 版更新
 
 Anchor Frame 後面新增 Anchor Update。3D 尺寸改過、並已重出 2D 剖面後，用它更新既有外框，讓 Laser 對位跟上。Rhino 8 與 Rhino 9 共用同一份 yak。
@@ -69,10 +73,10 @@ Rhino 8 與 Rhino 9 共用同一套 LoopFlow。Rhino 9 的剖面圖塊可直接�
 
 不要使用 1.x 的 ZIP、`install_LoopFlow.bat` 或拖放 `.rhc` 工具列。同一專案不可混用 1.x 與 LoopFlow 2
 
-1. 開啟 Rhino 8 或 Rhino 9，命令列執行 `PackageManager`，搜尋 `LoopFlow`。已上架的是 2.2.3。2.2.4 尚未上架，要先完全關閉 Rhino，再用 Package Manager 從檔案安裝 `loopflow-2.2.4-rh8_0-win.yak`
+1. 開啟 Rhino 8 或 Rhino 9，命令列執行 `PackageManager`，搜尋 `LoopFlow`。已上架的是 2.2.3。2.2.5 尚未上架，要先完全關閉 Rhino，再用 Package Manager 從檔案安裝 `loopflow-2.2.5-rh8_0-win.yak`
 2. **完全關掉 Rhino 再開**
 
-[Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 目前仍是 `loopflow-2.2.3-rh8_0-win.yak`。2.2.4 要等上架後才會出現在那裡。不要下載 1.x 的 ZIP。
+[Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 目前仍是 `loopflow-2.2.3-rh8_0-win.yak`。2.2.5 要等上架後才會出現在那裡。不要下載 1.x 的 ZIP。
 
 裝完後：
 

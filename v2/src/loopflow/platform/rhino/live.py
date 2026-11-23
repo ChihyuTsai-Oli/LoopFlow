@@ -1126,7 +1126,7 @@ class LiveSession:
         return str(value)
 
     def block_members(self, object_id: str):
-        """圖塊定義的一層成員。不含文字、標註，以及再包的圖塊。"""
+        """圖塊定義的一層成員。含 Text Dot。不含文字、標註，以及再包的圖塊。"""
         rhino = self._rhino
         if rhino is None or not self.is_block_instance(object_id):
             return ()
@@ -1142,14 +1142,23 @@ class LiveSession:
         found = []
         for member in members or ():
             geom = getattr(member, "Geometry", None)
-            if geom is None or self._skip_section_annotation(geom, rhino, annotation):
+            if geom is None:
+                continue
+            is_dot = isinstance(geom, rhino.Geometry.TextDot)
+            if not is_dot and self._skip_section_annotation(geom, rhino, annotation):
                 continue
             if isinstance(geom, rhino.Geometry.InstanceReferenceGeometry):
                 continue
             member_id = str(getattr(member, "Id", "") or "")
             if not member_id:
                 continue
-            found.append({"id": member_id, "layer": self._object_layer_path(member)})
+            found.append(
+                {
+                    "id": member_id,
+                    "layer": self._object_layer_path(member),
+                    "text_dot": is_dot,
+                }
+            )
         return tuple(found)
 
     def copy_block_member(self, instance_id: str, member_id: str) -> Optional[str]:
