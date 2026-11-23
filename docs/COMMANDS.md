@@ -21,6 +21,7 @@ Save the `.3dm` first. **The folder of that file is the project folder**: the of
 | Registry | `LFPublishExchange` | Publish model data as a 2D-readable Registry |
 | Section | Rhino Section (native) | Build drawings with Rhino’s built-in section tools |
 | View | `LFAnchorFrame` | Register a section as a fixed 2D↔3D map and store the matched section name |
+| View | `LFAnchorUpdate` | After the 3D size changes and the 2D section is rebuilt, update the existing frame and keep its View |
 | Drawing | `LFExtractCP` | Copy section linework into an independently editable drawing |
 | Sheet | `LFDuplicateLayout` | Duplicate whole Layouts, usually before numbering |
 | Sheet | `LFTaggerLayoutID` | Number and name sheets by rule |
@@ -191,7 +192,9 @@ Registers a section as a fixed 2D↔3D map for [09 Laser](#09-laser-projection).
 3. Only one name is used, and the first match wins: the Text Dot’s displayed text; if that does not match, a UserText key on that dot (not the object name, and not the key’s value); if there is no Text Dot, the block name (object name, otherwise the block definition name). LoopFlow first looks for a Clipping Plane whose full name matches (case-insensitive). If none, it allows a longer unique name that contains that text. If candidates are not unique, it stops and does not guess.
 4. The new frame is drawn on `LoopFlow::Anchor_Frame`. Its name is the matched text. If you selected a 1.x frame or one already registered, that frame is updated and the name is filled in; a second frame is not added. The block is not exploded.
 
-Register each section once. Later, if you **move the frame with the drawing** (no re-cut, rotate, or mirror), you do not rerun this command. For ceiling drawings, choose the actual generation method in the prompt: Rhino 8 drawings manually flipped left-right, or Rhino 9 Clipping Drawings using Reflected projection. After a 3D size change and a rebuilt 2D section, register the existing frame again with the new drawing.
+Register each section once. Later, if you **move the frame with the drawing** (no re-cut, rotate, or mirror), you do not rerun this command. For ceiling drawings, choose the actual generation method in the prompt: Rhino 8 drawings manually flipped left-right, or Rhino 9 Clipping Drawings using Reflected projection.
+
+After the 3D size changes and the 2D section is rebuilt, do not delete the old frame. In **2D model space**, run `LFAnchorUpdate` (the toolbar button immediately after Anchor Frame). It redraws the existing frame from the new section, recomputes the alignment, and keeps the same View. The margin stays at the gap that is still consistent on the old frame; if the sides do not agree, it uses 50. A frame that does not match exactly one section is left unchanged. Do not run this before the 2D section is rebuilt.
 
 ---
 
@@ -264,7 +267,7 @@ Click on the drawing; LoopFlow shoots along a fixed direction to find the model 
 
 1. On **Layout**, pick a Height or Finish Laser tag.
 2. Click a location on the section inside the target Detail. **That point must fall inside an [06 Register View](#06-register-view-anchor-frame) frame**, or you are told to run 06 first. If the point is inside more than one frame, a popup lists the Text Dot names; pick one. A single frame does not add this popup. Cancelling the list writes nothing.
-3. Using the chosen frame, the 2D origin is the current section linework centre. The ray uses the direction frozen at register time. Each object is counted once. On Rhino 8 that centre is the loose section curves and hatches. On Rhino 9, when the section is one block and the frame has no loose curves, the centre is the curves and hatches inside the block. The text dot does not move it. Do not explode the block. After the 3D model changes size and the 2D section is rebuilt, run [06 Register View](#06-register-view-anchor-frame) again, and include the existing frame in the selection, so the ray matches the new model. Moving the frame and the drawing together does not require this. If several objects are hit, a candidate list appears (layer names only, no object IDs) for you to pick.
+3. Using the chosen frame, the 2D origin is the current section linework centre. The ray uses the direction frozen at register time. Each object is counted once. On Rhino 8 that centre is the loose section curves and hatches. On Rhino 9, when the section is one block and the frame has no loose curves, the centre is the curves and hatches inside the block. The text dot does not move it. Do not explode the block. After the 3D model changes size and the 2D section is rebuilt, run `LFAnchorUpdate` so the ray matches the new model. Do not delete the frame and rerun Anchor Frame. Moving the frame and the drawing together does not require this. If several objects are hit, a candidate list appears (layer names only, no object IDs) for you to pick.
 
 **No write if**: Esc, click outside the Detail, the tag is locked, the wrong block type (Grab / Index / `TAG_DW` / title frame), the click is inside no registered frame, you cancel the frame list, the ray hits nothing (including hits only on structure objects), or the source has no usable ID. Index still stops when two frames match; it does not offer this list.
 
@@ -379,7 +382,7 @@ Copies Rhino Section linework kept as a live source (drawing A) into an independ
 **Where**: **2D model space**.
 
 1. Tick section root layers (the ones with Visible / Hatch / Curve children).
-2. Copy under `LoopFlow_Extract` and strip 3D / drawing-A data fields, leaving drawing identity only. In Rhino 8 the section is loose curves, and those curves are copied directly. In Rhino 9 the section is one block: the block name, the clipping-plane name, and the parent layer of the objects inside the block are the same name. Tick that root. The block can stay intact or be exploded first; both can be extracted. The block stays in place.
+2. Copy under `LoopFlow_Extract` and strip 3D / drawing-A data fields, leaving drawing identity only. In Rhino 8 the section is loose curves, and those curves are copied directly. In Rhino 9 the section is one block: the block name, the clipping-plane name, and the parent layer of the objects inside the block are the same name. Tick that root. The block can stay intact or be exploded first; both can be extracted. The block stays in place. Text Dots are copied to `LoopFlow_Extract::Text` with their text kept, so Anchor Frame can name the extracted drawing. Annotations and nested blocks are not copied.
 3. If it maps to a registered View, source and publish revision are stored for later stale checks.
 4. If that section was extracted before, you are asked to **replace**, **add**, or **skip** — a drawing you already edited by hand is not overwritten on replace unless you choose it.
 

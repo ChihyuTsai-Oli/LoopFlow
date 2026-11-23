@@ -10,7 +10,7 @@ This page is the **documentation entry** opened by the Rhino command `LFDocument
 | Tag Blocks | [Open](./TAG_BLOCKS.md) |
 | Tutorials | [YouTube](https://www.youtube.com/@Chihyu-Oli/playlists) |
 
-Videos are not all updated for LoopFlow 2 yet. The published Package Manager version is 2.2.3. Version 2.2.5 updates the Anchor Update icon and makes Extract copy Text Dots. It is not published yet. Do not mix with 1.0.
+Videos are not all updated for LoopFlow 2 yet. Install 2.2.5 from Package Manager. Do not mix with 1.0.
 
 ---
 
@@ -26,4 +26,4 @@ Videos are not all updated for LoopFlow 2 yet. The published Package Manager ver
 | Tag Blocks | [開啟](./TAG_BLOCKS_TW.md) |
 | 教學影片 | [YouTube](https://www.youtube.com/@Chihyu-Oli/playlists) |
 
-教學影片尚未全部更新為 LoopFlow 2。Package Manager 已上架的是 2.2.3。2.2.5 更新 Anchor Update 圖示，並讓 Extract 帶出 Text Dot，尚未上架。不要與 1.0 混用。
+教學影片尚未全部更新為 LoopFlow 2。請用 Package Manager 安裝 2.2.5，不要與 1.0 混用。

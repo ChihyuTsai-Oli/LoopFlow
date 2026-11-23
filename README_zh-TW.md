@@ -73,10 +73,10 @@ Rhino 8 與 Rhino 9 共用同一套 LoopFlow。Rhino 9 的剖面圖塊可直接�
 
 不要使用 1.x 的 ZIP、`install_LoopFlow.bat` 或拖放 `.rhc` 工具列。同一專案不可混用 1.x 與 LoopFlow 2
 
-1. 開啟 Rhino 8 或 Rhino 9，命令列執行 `PackageManager`，搜尋 `LoopFlow`。已上架的是 2.2.3。2.2.5 尚未上架，要先完全關閉 Rhino，再用 Package Manager 從檔案安裝 `loopflow-2.2.5-rh8_0-win.yak`
+1. 開啟 Rhino 8 或 Rhino 9，命令列執行 `PackageManager`，搜尋 `LoopFlow`，安裝 2.2.5
 2. **完全關掉 Rhino 再開**
 
-[Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 目前仍是 `loopflow-2.2.3-rh8_0-win.yak`。2.2.5 要等上架後才會出現在那裡。不要下載 1.x 的 ZIP。
+也可從 [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) 下載 `loopflow-2.2.5-rh8_0-win.yak`，在 Package Manager 選擇從檔案安裝。不要下載 1.x 的 ZIP。
 
 裝完後：
 

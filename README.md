@@ -73,10 +73,10 @@ Bilingual interface: English / Traditional Chinese
 
 Do not use the 1.x ZIP, `install_LoopFlow.bat`, or drag-and-drop `.rhc` toolbar. Do not mix 1.x and LoopFlow 2 in the same project.
 
-1. Open Rhino 8 or 9, run `PackageManager`, and search for `LoopFlow`. The published package is still 2.2.3. Version 2.2.5 is not published yet; quit Rhino completely, then install `loopflow-2.2.5-rh8_0-win.yak` from file.
+1. Open Rhino 8 or 9, run `PackageManager`, search for `LoopFlow`, and install 2.2.5.
 2. **Quit Rhino completely and reopen it.**
 
-[Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) still has `loopflow-2.2.3-rh8_0-win.yak`. Version 2.2.5 is the local yak until it is published. Do not download the 1.x ZIP.
+You can also download `loopflow-2.2.5-rh8_0-win.yak` from [Releases](https://github.com/ChihyuTsai-Oli/LoopFlow/releases/latest) and install from file. Do not download the 1.x ZIP.
 
 After install:
 
