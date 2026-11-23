@@ -106,7 +106,7 @@ class CommandLocateTests(unittest.TestCase):
             if line.strip() and not line.startswith("#")
         ]
         pairs = list(zip(lines[0::2], lines[1::2]))
-        self.assertEqual(len(pairs), 20)
+        self.assertEqual(len(pairs), 21)
         for dev_id, official in pairs:
             path = SPIKE / "commands" / ("%s.py" % official)
             text = path.read_text(encoding="utf-8").replace("\r\n", "\n")

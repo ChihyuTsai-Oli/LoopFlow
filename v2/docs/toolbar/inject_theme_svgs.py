@@ -21,6 +21,7 @@ SCRIPT_TO_SVG = {
     "! _LFInfuserPart": "LF_Infuser_Part.svg",
     "! _LFDuplicateLayout": "LF_Duplicate_Layout.svg",
     "! _LFAnchorFrame": "LF_Anchor_Frame.svg",
+    "! _LFAnchorUpdate": "LF_Anchor_Update.svg",
     "! _LFTaggerIndex": "LF_Tagger_Index.svg",
     "! _LFSyncWorksession": "LF_LiveLink_Worksession.svg",
     "! _LFTaggerLaser": "LF_Tagger_Laser.svg",

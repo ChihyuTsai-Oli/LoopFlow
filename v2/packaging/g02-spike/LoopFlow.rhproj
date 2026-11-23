@@ -141,6 +141,16 @@
       "path": "commands/LFAnchorFrame.py"
     },
     {
+      "id": "b8e1d4a6-3c57-4f09-8a21-6d0c9e5b41f7",
+      "name": "LFAnchorUpdate",
+      "title": "LFAnchorUpdate",
+      "language": {
+        "id": "*.*.python",
+        "version": "3.*.*"
+      },
+      "path": "commands/LFAnchorUpdate.py"
+    },
+    {
       "id": "02bf282d-8d8b-5df3-bcbd-886d4d91fe67",
       "name": "LFCatalog",
       "title": "LFCatalog",

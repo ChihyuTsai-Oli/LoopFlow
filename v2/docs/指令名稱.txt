@@ -32,6 +32,9 @@ LFTaggerLayoutID
 LF_Anchor_Frame
 LFAnchorFrame
 
+LF_Anchor_Update
+LFAnchorUpdate
+
 LF_Catalog
 LFCatalog
 

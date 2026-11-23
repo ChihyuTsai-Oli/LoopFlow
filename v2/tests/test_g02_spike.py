@@ -76,7 +76,7 @@ def _right_scripts_for_button(root, left_script):
 class G02SpikePackagingTests(unittest.TestCase):
     def test_command_scripts_match_name_table(self):
         pairs = _official_pairs()
-        self.assertEqual(len(pairs), 20)
+        self.assertEqual(len(pairs), 21)
         for dev_id, official in pairs:
             script_path = SPIKE / "commands" / ("%s.py" % official)
             self.assertTrue(script_path.is_file(), official)
@@ -92,7 +92,7 @@ class G02SpikePackagingTests(unittest.TestCase):
         pairs = _official_pairs()
         data = json.loads((SPIKE / "LoopFlow.rhproj").read_text(encoding="utf-8"))
         codes = data["codes"]
-        self.assertEqual(len(codes), 20)
+        self.assertEqual(len(codes), 21)
         names = [code["name"] for code in codes]
         self.assertEqual(names, [official for _dev, official in pairs])
         ids = [code["id"] for code in codes]
@@ -112,7 +112,7 @@ class G02SpikePackagingTests(unittest.TestCase):
     def test_manifest_includes_toolbar(self):
         text = (SPIKE / "manifest.yml").read_text(encoding="utf-8")
         self.assertIn("name: loopflow", text)
-        self.assertIn("version: 2.2.3", text)
+        self.assertIn("version: 2.2.4", text)
         self.assertIn("icon: icon.png", text)
         self.assertIn("Half-automatic 2D/3D Sync", text)
         self.assertNotIn("Toolbar RUI is not included yet", text)
@@ -124,7 +124,7 @@ class G02SpikePackagingTests(unittest.TestCase):
         self.assertIn("docs\\toolbar\\LoopFlow.rui", text)
         self.assertIn("Replace generated LoopFlow.rui", text)
         self.assertIn("yak must contain exactly one rui", text)
-        self.assertIn('Version = "2.2.3"', text)
+        self.assertIn('Version = "2.2.4"', text)
         self.assertIn('Join-Path $Spike "icon.png"', text)
         self.assertIn("icon.png", text)
         self.assertIn("Tag_Blocks_3dm\\Tag_Blocks.3dm", text)
@@ -185,7 +185,7 @@ class G02SpikePackagingTests(unittest.TestCase):
                 clipping_ids.add(bitmap)
             else:
                 product_ids.add(bitmap)
-        self.assertEqual(len(product_ids), 19)
+        self.assertEqual(len(product_ids), 20)
         self.assertEqual(len(clipping_ids), 5)
         icons = {
             match.group(1): match.group(2)
